@@ -399,6 +399,8 @@ export default function Home() {
               alt="Stackly drag and drop website builder preview"
               className="absolute inset-0 h-full w-full object-cover object-center md:object-right"
               loading="eager"
+              fetchPriority="high"
+              decoding="async"
             />
           </picture>
           <div className="relative z-10 flex min-h-[480px] items-end justify-center p-8 md:min-h-[540px] md:justify-start md:p-16">

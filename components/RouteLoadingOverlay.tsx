@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import StacklyLoader from "./StacklyLoader";
 
-const MIN_VISIBLE_MS = 420;
-const MAX_VISIBLE_MS = 3500;
+const SHOW_DELAY_MS = 140;
+const MIN_VISIBLE_MS = 220;
+const MAX_VISIBLE_MS = 1600;
 
 function isModifiedClick(event: globalThis.MouseEvent) {
   return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
@@ -15,10 +16,16 @@ export default function RouteLoadingOverlay() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const startedAt = useRef(0);
+  const showTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
   const maxTimer = useRef<number | null>(null);
 
   const clearTimers = useCallback(() => {
+    if (showTimer.current) {
+      window.clearTimeout(showTimer.current);
+      showTimer.current = null;
+    }
+
     if (hideTimer.current) {
       window.clearTimeout(hideTimer.current);
       hideTimer.current = null;
@@ -32,9 +39,12 @@ export default function RouteLoadingOverlay() {
 
   const show = useCallback(() => {
     clearTimers();
-    startedAt.current = Date.now();
-    setVisible(true);
-    maxTimer.current = window.setTimeout(() => setVisible(false), MAX_VISIBLE_MS);
+    showTimer.current = window.setTimeout(() => {
+      startedAt.current = Date.now();
+      setVisible(true);
+      maxTimer.current = window.setTimeout(() => setVisible(false), MAX_VISIBLE_MS);
+      showTimer.current = null;
+    }, SHOW_DELAY_MS);
   }, [clearTimers]);
 
   useEffect(() => {
@@ -67,16 +77,19 @@ export default function RouteLoadingOverlay() {
     };
 
     document.addEventListener("click", handleDocumentClick);
-    window.addEventListener("beforeunload", show);
 
     return () => {
       document.removeEventListener("click", handleDocumentClick);
-      window.removeEventListener("beforeunload", show);
       clearTimers();
     };
   }, [clearTimers, show]);
 
   useEffect(() => {
+    if (showTimer.current) {
+      window.clearTimeout(showTimer.current);
+      showTimer.current = null;
+    }
+
     if (!visible) {
       return;
     }

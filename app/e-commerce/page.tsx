@@ -145,7 +145,6 @@ const licenseBullets = [
 ];
 
 const NAVY = "#06224C";
-const MOBILE_HERO_IMAGE_URL = "https://images.pexels.com/photos/325153/pexels-photo-325153.jpeg?auto=compress&cs=tinysrgb&w=900&h=1125&fit=crop";
 
 /** Fits ~1–5 cards in one row from track width (zoom / resize safe). */
 function getCarouselColumnCount(widthPx: number): number {
@@ -1349,8 +1348,8 @@ export default function ECommercePage() {
           <div className="space-y-10 px-4 py-8 sm:space-y-12 sm:px-8 sm:py-10 lg:py-12">
             <section className="buyscreen-hero relative flex aspect-[4/5] items-center overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] sm:aspect-[16/10] sm:p-8 lg:aspect-[16/8] lg:p-12">
               <picture className="absolute inset-0 block h-full w-full">
-                <source media="(max-width: 767px)" srcSet={MOBILE_HERO_IMAGE_URL} />
-                <img src={assetPath("/background.webp")} alt="Electronics hero background" className="h-full w-full object-cover object-center" />
+                <source media="(max-width: 767px)" srcSet={assetPath("/mobilebackground.png")} />
+                <img src={assetPath("/background.webp")} alt="Electronics hero background" className="h-full w-full object-cover object-center" loading="eager" fetchPriority="high" decoding="async" />
               </picture>
               <div className="buyscreen-hero-overlay absolute inset-0 z-[1]" aria-hidden />
               <div ref={heroContentRef} className="buyscreen-hero-content relative z-10 w-full min-w-0 max-w-full px-1 text-center sm:max-w-2xl sm:px-0 lg:text-left">
