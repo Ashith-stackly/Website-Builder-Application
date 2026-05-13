@@ -703,8 +703,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto my-12 max-w-7xl px-4 md:px-8">
-        <div className="overflow-hidden rounded-[2rem] bg-gradient-to-b from-[#5B8FB9] to-[#A8D5E2] p-8 text-center shadow-2xl md:rounded-[3rem] md:p-16">
+      <section className="mx-auto my-12 max-w-7xl bg-[#FFF1F1] px-4 py-12 md:px-8 md:py-20">
+        <div className="overflow-hidden rounded-[2.5rem] bg-[#082A5A] p-8 text-center shadow-[0_24px_70px_rgba(8,42,90,0.20)] md:rounded-[3rem] md:p-16">
           <h2 className="mb-3 font-serif text-2xl font-black leading-tight text-white md:text-5xl">
             Drag & drop your vision to life
           </h2>
