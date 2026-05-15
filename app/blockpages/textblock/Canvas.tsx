@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ChevronDown, Eye, Redo2, Save, Send, Undo2 } from "lucide-react";
+import { assetPath } from "@/lib/paths";
 import PortfolioPreview from "./PortfolioPreview";
 import StorefrontPreview from "./StorefrontPreview";
 import type { TextBlockState, TextEditorTarget, TextStyles, TextTemplateType } from "./types";
@@ -133,7 +134,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     previewClone?.querySelector("[data-textblock-canvas]")?.removeAttribute("class");
 
     window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewClone?.innerHTML ?? "");
-    window.open("/blockpages/preview", "_blank", "noopener,noreferrer");
+    window.open(assetPath("/blockpages/preview/"), "_blank", "noopener,noreferrer");
   };
 
   return (
