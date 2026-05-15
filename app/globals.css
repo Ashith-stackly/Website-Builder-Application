@@ -1801,12 +1801,14 @@ body.auth-visible {
     min-height: 100svh !important;
     height: auto;
     margin: 0;
-    padding: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    overflow: visible !important;
-    background: transparent !important;
-    background-image: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    /* Same gradient as html/body backdrop — full bleed + original card look */
+    background: var(--auth-surface-gradient) !important;
+    background-image: var(--auth-surface-gradient) !important;
+    background-color: #3f66c9 !important;
   }
 
   .auth-form-card.login-card .auth-card-content,
@@ -1819,8 +1821,8 @@ body.auth-visible {
     flex-direction: column;
     justify-content: flex-start !important;
     overflow: visible !important;
-    padding-top: max(1rem, env(safe-area-inset-top, 0px));
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+    position: relative;
+    z-index: 10;
   }
 
   .auth-image-col {
