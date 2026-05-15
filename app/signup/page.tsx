@@ -99,52 +99,6 @@ export default function SignupPage() {
     };
   }, []);
 
-  useEffect(() => {
-    const page = document.querySelector(".auth-page") as HTMLElement | null;
-    if (!page) return;
-
-    let startY = 0;
-    let canPull = false;
-    let triggered = false;
-    const threshold = 88;
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (window.innerWidth >= 1024 || event.touches.length !== 1) return;
-      startY = event.touches[0].clientY;
-      canPull = page.scrollTop <= 0;
-      triggered = false;
-    };
-
-    const onTouchMove = (event: TouchEvent) => {
-      if (!canPull || triggered || window.innerWidth >= 1024) return;
-      const deltaY = event.touches[0].clientY - startY;
-      if (deltaY > threshold && page.scrollTop <= 0) {
-        triggered = true;
-        window.location.reload();
-      } else if (deltaY < 0) {
-        canPull = false;
-      }
-    };
-
-    const onTouchEnd = () => {
-      canPull = false;
-      triggered = false;
-    };
-
-    page.addEventListener("touchstart", onTouchStart, { passive: true });
-    page.addEventListener("touchmove", onTouchMove, { passive: true });
-    page.addEventListener("touchend", onTouchEnd);
-    page.addEventListener("touchcancel", onTouchEnd);
-
-    return () => {
-      page.removeEventListener("touchstart", onTouchStart);
-      page.removeEventListener("touchmove", onTouchMove);
-      page.removeEventListener("touchend", onTouchEnd);
-      page.removeEventListener("touchcancel", onTouchEnd);
-    };
-  }, []);
-
-
   const validate = (values: SignupFormState): SignupFormErrors => {
     const newErrors: SignupFormErrors = {};
 
@@ -274,12 +228,12 @@ export default function SignupPage() {
     getSignupPhoneCountry(form.phoneCountryId) ?? getDefaultSignupPhoneCountry();
 
   return (
-    <div className="auth-page min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:bg-transparent bg-white px-0 py-0 lg:px-6 lg:py-4 overflow-y-auto">
+    <div className="auth-page min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:bg-transparent bg-white px-0 py-0 lg:px-6 lg:py-4 max-lg:overflow-visible lg:overflow-y-auto">
       <div className="w-full max-lg:max-w-none max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row gap-0 lg:gap-8 auth-layout">
         {/* Card first on mobile (top), right on desktop */}
         <div className="flex w-full flex-1 flex-col items-stretch justify-center order-1 lg:order-2 lg:w-1/2 lg:flex-none">
           <div
-            className="relative flex w-full max-w-[520px] flex-1 flex-col overflow-x-hidden overflow-y-visible self-center px-6 sm:px-10 max-lg:max-w-none lg:flex-none lg:rounded-[10px] lg:bg-gradient-to-b lg:from-[#5f82e8] lg:via-[#3f66c9] lg:to-[#021a46] signup-card auth-form-card"
+            className="relative flex w-full max-w-[520px] flex-1 flex-col max-lg:overflow-visible lg:overflow-x-hidden overflow-y-visible self-center px-6 sm:px-10 max-lg:max-w-none lg:flex-none lg:rounded-[10px] lg:bg-gradient-to-b lg:from-[#5f82e8] lg:via-[#3f66c9] lg:to-[#021a46] signup-card auth-form-card"
           >
             <div className="auth-inner-panel pointer-events-none absolute inset-y-0 left-1/2 w-[78%] -translate-x-1/2 bg-gradient-to-b from-white/10 via-black/10 to-black/35" />
             <div className="pointer-events-none absolute inset-0 rounded-none lg:rounded-[10px] shadow-[inset_20px_0_45px_rgba(0,0,0,0.55),inset_-20px_0_45px_rgba(0,0,0,0.55)]" />

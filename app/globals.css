@@ -1537,15 +1537,15 @@ input[type="password"]::-ms-reveal {
   }
   .login-card-inner,
   .signup-card-content {
-    /* 78% of card; px-6 → 48px padding: 0.78×48 = 37.44 */
-    width: calc(78% + 37.44px);
-    max-width: calc(78% + 37.44px);
+    width: 100% !important;
+    max-width: 100% !important;
     margin-left: auto;
     margin-right: auto;
     min-width: 0;
-    /* Mobile zoom up to 200%: never clip; let page scroll */
     overflow: visible !important;
     box-sizing: border-box;
+    padding-left: clamp(0.75rem, 4vw, 1.5rem) !important;
+    padding-right: clamp(0.75rem, 4vw, 1.5rem) !important;
   }
   .login-card-inner form,
   .signup-card-content form,
@@ -1574,13 +1574,14 @@ input[type="password"]::-ms-reveal {
 /* Narrow/zoomed mobile: give inputs more width so placeholder/value never clips */
 @media (max-width: 420px) {
   .auth-inner-panel {
-    width: 86% !important;
+    width: 92% !important;
   }
-  /* 86% of card; px-6 → 48px padding: 0.86×48 = 41.28 */
   .login-card-inner,
   .signup-card-content {
-    width: calc(86% + 41.28px) !important;
-    max-width: 100% !important; /* prevent left-side clipping (looks like content shifts right) */
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: clamp(0.5rem, 3vw, 1rem) !important;
+    padding-right: clamp(0.5rem, 3vw, 1rem) !important;
   }
   .login-card-inner input::placeholder,
   .signup-card-content input::placeholder {
@@ -1668,12 +1669,12 @@ input[type="password"]::-ms-reveal {
   }
 }
 
-/* Card uses sm:px-10 (80px) from 640px – match inner box width */
+/* sm+ mobile: keep full inner width (decorative panel stays 78% via .auth-inner-panel) */
 @media (min-width: 640px) and (max-width: 1023px) {
   .login-card-inner,
   .signup-card-content {
-    width: calc(78% + 62.4px);
-    max-width: calc(78% + 62.4px);
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 
@@ -1690,7 +1691,7 @@ input[type="password"]::-ms-reveal {
   }
 }
 
-/* Mobile auth: one full-screen gradient — no second colour when scrolling (iOS rubber-band) */
+/* Mobile auth: gradient on document + natural scroll (100–200% zoom, iOS Safari) */
 @media (max-width: 1023px) {
   html:has(.auth-page),
   html.auth-visible,
@@ -1699,49 +1700,52 @@ input[type="password"]::-ms-reveal {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     min-height: 100% !important;
-    overflow: hidden !important;
-    overscroll-behavior: none !important;
+    min-height: 100dvh !important;
+    min-height: 100svh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
     background-color: #021a46 !important;
     background-image: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
-    background-attachment: fixed !important;
   }
 
   .auth-page {
     --auth-safe-top: env(safe-area-inset-top, 0px);
     --auth-safe-bottom: env(safe-area-inset-bottom, 0px);
-    position: fixed;
-    inset: 0;
+    position: relative !important;
+    inset: auto !important;
     width: 100%;
-    height: 100%;
     min-height: 100dvh;
     min-height: 100svh;
-    max-height: none;
+    height: auto !important;
+    max-height: none !important;
     margin: 0;
     padding: 0 !important;
+    padding-top: var(--auth-safe-top) !important;
+    padding-bottom: var(--auth-safe-bottom) !important;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: visible !important;
     overscroll-behavior: none;
-    -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    background-color: #021a46 !important;
-    background-image: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
-    background-attachment: fixed !important;
+    background: transparent !important;
+    background-image: none !important;
   }
 
   .auth-page .auth-layout {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     display: flex;
     flex-direction: column;
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 100%;
-    height: auto;
+    min-height: 0;
+    height: auto !important;
     margin: 0 !important;
     gap: 0 !important;
     justify-content: flex-start;
@@ -1749,44 +1753,41 @@ input[type="password"]::-ms-reveal {
   }
 
   .auth-page .auth-layout > div:first-child {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     display: flex;
     flex-direction: column;
     width: 100%;
-    min-height: 100%;
-    height: auto;
+    min-height: 0;
+    height: auto !important;
     align-items: stretch;
   }
 
-  /* Card is transparent on mobile — only the page gradient shows (no double layer / bands) */
   .auth-form-card.login-card,
   .auth-form-card.signup-card {
-    flex: 1 1 auto !important;
+    flex: 0 1 auto !important;
     width: 100% !important;
     max-width: none !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     height: auto !important;
     margin: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     background: transparent !important;
     background-image: none !important;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    overflow-x: hidden !important;
+    overflow-x: visible !important;
     overflow-y: visible !important;
   }
 
   .auth-form-card .auth-card-content,
   .auth-form-card .signup-card-content,
   .auth-form-card .login-card-inner {
-    flex: 1 1 auto;
-    min-height: auto;
+    flex: 0 1 auto;
+    min-height: 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-start !important;
-    overflow: visible;
+    overflow: visible !important;
   }
 
   .auth-image-col {
@@ -1794,10 +1795,6 @@ input[type="password"]::-ms-reveal {
   }
 }
 
-/*
- * iOS Safari (mobile auth): use -webkit-fill-available ONLY as a plain min-height (no calc()).
- * calc(-webkit-fill-available ± env()) is unreliable in WebKit and can break the whole layout.
- */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 1023px) {
     .auth-page {
@@ -1805,43 +1802,16 @@ input[type="password"]::-ms-reveal {
       min-height: 100dvh;
       min-height: 100svh;
     }
-    .auth-form-card.login-card,
-    .auth-form-card.signup-card {
-      min-height: -webkit-fill-available;
-      min-height: 100dvh;
-      min-height: 100svh;
-    }
   }
 }
 
-/*
- * Some phones render with wider CSS viewports (or desktop-site mode), which can bypass
- * width breakpoints and reintroduce white bands. Force edge-to-edge auth layout on
- * touch-first devices regardless of reported width.
- */
 @media (hover: none) and (pointer: coarse) and (max-width: 1023px) {
   html:has(.auth-page),
   html.auth-visible,
   body:has(.auth-page),
   body.auth-visible {
-    overscroll-behavior: none !important;
     background-color: #021a46 !important;
     background-image: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
-    background-attachment: fixed !important;
-  }
-
-  .auth-page {
-    overscroll-behavior: none;
-    background-color: #021a46 !important;
-    background-image: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
-    background-attachment: fixed !important;
-  }
-
-  .auth-form-card.login-card,
-  .auth-form-card.signup-card {
-    background: transparent !important;
-    background-image: none !important;
-    min-height: 100% !important;
   }
 }
 
@@ -2019,8 +1989,7 @@ input[type="password"]::-ms-reveal {
   }
   .auth-form-card {
     max-width: 100%;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
   }
   .auth-card-content,
   .auth-form-card .signup-card-content,
