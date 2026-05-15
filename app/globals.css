@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --auth-mobile-gradient: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%);
+  --auth-mobile-bg: #021a46;
 }
 
 @theme inline {
@@ -1691,8 +1693,8 @@ input[type="password"]::-ms-reveal {
 }
 
 /*
- * Mobile auth: fixed full-viewport gradient layer + solid #021a46 on html/body.
- * Content scrolls over the gradient so 100–200% zoom never shows a cut line or extra bands.
+ * Mobile auth (login/signup): gradient on html + body, grows with content at all zoom levels.
+ * No fixed heights, no 100vh, no nested gradient containers.
  */
 @media (max-width: 1023px) {
   html:has(.auth-page),
@@ -1702,6 +1704,7 @@ input[type="password"]::-ms-reveal {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
     min-height: 100dvh;
     min-height: 100svh;
     height: auto !important;
@@ -1709,52 +1712,33 @@ input[type="password"]::-ms-reveal {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;
-    background-color: #021a46 !important;
-    background-image: none !important;
+    background-color: var(--auth-mobile-bg) !important;
+    background-image: var(--auth-mobile-gradient) !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100% !important;
+    background-attachment: scroll !important;
   }
 
   .auth-page {
     --auth-safe-top: env(safe-area-inset-top, 0px);
     --auth-safe-bottom: env(safe-area-inset-bottom, 0px);
     position: relative;
-    isolation: isolate;
-    inset: auto;
     width: 100%;
+    max-width: 100%;
     min-height: 100dvh;
     min-height: 100svh;
-    height: auto;
-    max-height: none;
     margin: 0;
     padding: 0 !important;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
     touch-action: pan-y;
     background: transparent !important;
     background-image: none !important;
-  }
-
-  .auth-page::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    height: 100dvh;
-    height: 100svh;
-    z-index: 0;
-    pointer-events: none;
-    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%);
-  }
-
-  .auth-page > * {
-    position: relative;
-    z-index: 1;
+    box-shadow: none !important;
   }
 
   .auth-page .auth-layout {
@@ -1763,12 +1747,15 @@ input[type="password"]::-ms-reveal {
     flex-direction: column;
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 0;
-    height: auto;
+    min-height: 100dvh;
+    min-height: 100svh;
     margin: 0 !important;
+    padding: 0 !important;
     gap: 0 !important;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: stretch;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
   .auth-page .auth-layout > div:first-child {
@@ -1776,26 +1763,27 @@ input[type="password"]::-ms-reveal {
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100%;
     min-height: 0;
-    height: auto;
     align-items: stretch;
+    justify-content: center;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
-  /* Card is transparent on mobile — html/body gradient covers all content */
   .auth-form-card.login-card,
   .auth-form-card.signup-card {
-    flex: 1 1 auto !important;
+    flex: 0 1 auto !important;
     width: 100% !important;
-    max-width: none !important;
+    max-width: 100% !important;
     min-height: auto !important;
-    height: auto !important;
     margin: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     background: transparent !important;
     background-image: none !important;
-    padding-top: max(env(safe-area-inset-top, 0px), var(--auth-safe-top, 0px));
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--auth-safe-bottom, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     overflow-x: hidden !important;
     overflow-y: visible !important;
   }
@@ -1803,9 +1791,10 @@ input[type="password"]::-ms-reveal {
   .auth-form-card .auth-card-content,
   .auth-form-card .signup-card-content,
   .auth-form-card .login-card-inner {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: auto;
     min-width: 0;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start !important;
@@ -1822,10 +1811,9 @@ input[type="password"]::-ms-reveal {
     html:has(.auth-page),
     html.auth-visible,
     body:has(.auth-page),
-    body.auth-visible {
-      min-height: -webkit-fill-available;
-    }
-    .auth-page {
+    body.auth-visible,
+    .auth-page,
+    .auth-page .auth-layout {
       min-height: -webkit-fill-available;
       min-height: 100dvh;
       min-height: 100svh;
@@ -1838,16 +1826,10 @@ input[type="password"]::-ms-reveal {
   html.auth-visible,
   body:has(.auth-page),
   body.auth-visible {
-    overscroll-behavior-y: none !important;
-    background-color: #021a46 !important;
-    background-image: none !important;
-  }
-
-  .auth-form-card.login-card,
-  .auth-form-card.signup-card {
-    background: transparent !important;
-    background-image: none !important;
-    min-height: auto !important;
+    background-color: var(--auth-mobile-bg) !important;
+    background-image: var(--auth-mobile-gradient) !important;
+    background-size: 100% 100% !important;
+    background-attachment: scroll !important;
   }
 }
 
@@ -1858,17 +1840,15 @@ input[type="password"]::-ms-reveal {
  */
 @media (max-width: 1023px) and (hover: hover) and (pointer: fine) {
   html:has(.auth-page),
-  body:has(.auth-page) {
+  html.auth-visible,
+  body:has(.auth-page),
+  body.auth-visible {
     overflow: auto !important;
     background: var(--background) !important;
-  }
-  .auth-page::before {
-    display: none;
+    background-image: none !important;
   }
   .auth-page {
     position: relative;
-    inset: auto;
-    height: auto;
     min-height: 100dvh;
     max-height: none;
     background: transparent !important;

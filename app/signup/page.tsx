@@ -228,7 +228,7 @@ export default function SignupPage() {
     getSignupPhoneCountry(form.phoneCountryId) ?? getDefaultSignupPhoneCountry();
 
   return (
-    <div className="auth-page min-h-[100dvh] lg:min-h-screen flex flex-col bg-transparent lg:bg-white px-0 py-0 lg:px-6 lg:py-4 max-lg:overflow-visible lg:overflow-y-auto">
+    <div className="auth-page min-h-[100dvh] lg:min-h-screen flex flex-col bg-transparent lg:bg-white px-0 py-0 lg:px-6 lg:py-4 max-lg:overflow-x-hidden max-lg:overflow-y-visible lg:overflow-y-auto">
       <div className="w-full max-lg:max-w-none max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row gap-0 lg:gap-8 auth-layout">
         {/* Card first on mobile (top), right on desktop */}
         <div className="flex w-full flex-1 flex-col items-stretch justify-center order-1 lg:order-2 lg:w-1/2 lg:flex-none">
