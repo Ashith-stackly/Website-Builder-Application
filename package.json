@@ -10,6 +10,9 @@
     "deploy": "next build && gh-pages -d out"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "gh-pages": "^6.3.0",
     "html2pdf.js": "^0.14.0",
     "lucide-react": "^1.14.0",
@@ -17,7 +20,9 @@
     "next-auth": "^4.24.13",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "uuid": "^14.0.0",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

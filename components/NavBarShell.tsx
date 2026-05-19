@@ -5,6 +5,7 @@ import NavBar from "@/components/navBar";
 
 const navbarHiddenRoutes = new Set([
   "/",
+  "/aboutus",
   "/login",
   "/signup",
   "/backend-error",

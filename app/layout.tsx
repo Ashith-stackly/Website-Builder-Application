@@ -14,9 +14,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const titleIconPath = `${basePath}/stackly-title-icon.webp`;
+
 export const metadata: Metadata = {
   title: "Stackly | Drag and Drop Website Builder",
   description: "Build responsive websites with Stackly templates and no-code tools.",
+  icons: {
+    icon: [{ url: titleIconPath, type: "image/webp", sizes: "25x35" }],
+  },
 };
 
 /** Edge-to-edge on notched devices; pinch and accessibility zoom allowed (WCAG). */
