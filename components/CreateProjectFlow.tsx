@@ -1,14 +1,38 @@
 "use client";
  
 import React, { useState } from 'react';
-import { FaXmark, FaArrowRight, FaWandMagicSparkles, FaImage, FaPlay } from "react-icons/fa6";
+import { useRouter } from "next/navigation";
+import { FaXmark, FaArrowRight, FaWandMagicSparkles, FaImage, FaPlay, FaCheck } from "react-icons/fa6";
+
+const categories = [
+  { title: "E-commerce", description: "Online store, products, and sales pages" },
+  { title: "Portfolio", description: "Personal brand, work showcase, and contact" },
+  { title: "Blog", description: "Articles, categories, and reader growth" },
+  { title: "Business", description: "Services, company profile, and leads" },
+];
+
+const templateStyles = [
+  { title: "Modern", description: "Balanced sections with soft panels" },
+  { title: "Minimal", description: "Clean layout with more white space" },
+  { title: "Bold", description: "Stronger hero area and clearer action" },
+];
+
+const websiteSections = [
+  { id: "navigation", label: "Navigation", description: "Header with links and action" },
+  { id: "hero", label: "Hero", description: "Main headline section" },
+  { id: "features", label: "Features", description: "Service or value cards" },
+  { id: "gallery", label: "Gallery", description: "Multiple image showcase" },
+  { id: "contact", label: "Contact", description: "Lead capture section" },
+];
  
 const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [projectData, setProjectData] = useState({
     name: '',
     category: '',
-    template: ''
+    template: '',
+    sections: ['navigation', 'hero', 'features', 'contact'],
   });
   const [error, setError] = useState('');
  
@@ -32,10 +56,51 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       setError('Project name is required.');
       return;
     }
+    if (step === 2 && !projectData.category) {
+      setError('Select a website category.');
+      return;
+    }
+    if (step === 3 && !projectData.template) {
+      setError('Select a template style.');
+      return;
+    }
+    if (step === 4 && projectData.sections.length === 0) {
+      setError('Select at least one section.');
+      return;
+    }
+    setError('');
     setStep((s) => s + 1);
   };
  
   const handleBack = () => setStep((s) => s - 1);
+
+  const toggleSection = (sectionId: string) => {
+    setProjectData((current) => {
+      const isSelected = current.sections.includes(sectionId);
+
+      return {
+        ...current,
+        sections: isSelected
+          ? current.sections.filter((section) => section !== sectionId)
+          : [...current.sections, sectionId],
+      };
+    });
+    setError('');
+  };
+
+  const handleBuild = () => {
+    const params = new URLSearchParams({
+      projectName: projectData.name.trim(),
+      category: projectData.category,
+      style: projectData.template,
+      sections: projectData.sections.join(','),
+    });
+
+    onClose();
+    setStep(1);
+    setProjectData({ name: '', category: '', template: '', sections: ['navigation', 'hero', 'features', 'contact'] });
+    router.push(`/builder?${params.toString()}`);
+  };
  
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-6 overflow-hidden">
@@ -51,7 +116,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <h3 className="text-lg sm:text-xl font-black text-[#06224C] uppercase tracking-widest break-words">
               Create Project
             </h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase">Step {step} of 3</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase">Step {step} of 4</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all flex-shrink-0">
             <FaXmark />
@@ -91,38 +156,81 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <div className="space-y-4 sm:space-y-6">
               <h4 className="text-xl sm:text-2xl font-black text-[#06224C] break-words">What are you building?</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {['E-commerce', 'Portfolio', 'Blog', 'Business'].map((cat) => (
+                {categories.map((cat) => (
                   <button
-                    key={cat}
-                    onClick={() => setProjectData({...projectData, category: cat})}
-                    className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all ${projectData.category === cat ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-blue-200'}`}
+                    key={cat.title}
+                    onClick={() => {
+                      setProjectData({...projectData, category: cat.title});
+                      setError('');
+                    }}
+                    className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all ${projectData.category === cat.title ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-blue-200'}`}
                   >
-                    <p className="font-black text-sm sm:text-base text-[#06224C]">{cat}</p>
-                    <p className="text-[9px] text-gray-400 font-bold uppercase">Select category</p>
+                    <p className="font-black text-sm sm:text-base text-[#06224C]">{cat.title}</p>
+                    <p className="text-[9px] text-gray-400 font-bold uppercase">{cat.description}</p>
                   </button>
                 ))}
               </div>
+              {error && <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide">{error}</p>}
             </div>
           )}
  
-          {/* STEP 3: Template */}
+          {/* STEP 3: Template Style */}
           {step === 3 && (
             <div className="space-y-4 sm:space-y-6">
-              <h4 className="text-xl sm:text-2xl font-black text-[#06224C] break-words">Pick a starting point.</h4>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {[1, 2].map((i) => (
-                  <div
-                    key={i}
-                    onClick={() => setProjectData({...projectData, template: `style-${i}`})}
-                    className={`group cursor-pointer space-y-2 p-2 rounded-xl sm:rounded-2xl border-2 transition-all ${projectData.template === `style-${i}` ? 'border-blue-500 bg-blue-50/30' : 'border-transparent'}`}
+              <h4 className="text-xl sm:text-2xl font-black text-[#06224C] break-words">Pick a template style.</h4>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                {templateStyles.map((style) => (
+                  <button
+                    key={style.title}
+                    onClick={() => {
+                      setProjectData({...projectData, template: style.title});
+                      setError('');
+                    }}
+                    className={`group cursor-pointer space-y-2 rounded-xl sm:rounded-2xl border-2 p-3 text-left transition-all ${projectData.template === style.title ? 'border-blue-500 bg-blue-50/30' : 'border-gray-100 hover:border-blue-200'}`}
+                    type="button"
                   >
                     <div className="aspect-video bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center text-gray-300">
                       <FaImage className="text-2xl sm:text-3xl" />
                     </div>
-                    <p className="text-[11px] sm:text-xs font-black text-center text-[#06224C]">Style {i}</p>
-                  </div>
+                    <p className="text-[11px] sm:text-xs font-black text-[#06224C]">{style.title}</p>
+                    <p className="text-[9px] font-bold uppercase text-gray-400">{style.description}</p>
+                  </button>
                 ))}
               </div>
+              {error && <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide">{error}</p>}
+            </div>
+          )}
+
+          {/* STEP 4: Sections */}
+          {step === 4 && (
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <h4 className="text-xl sm:text-2xl font-black text-[#06224C] break-words">Choose website sections.</h4>
+                <p className="mt-1 text-xs font-bold uppercase text-gray-400">These will be added to your builder canvas.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {websiteSections.map((section) => {
+                  const isSelected = projectData.sections.includes(section.id);
+
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => toggleSection(section.id)}
+                      className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl sm:p-4 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-blue-200'}`}
+                      type="button"
+                    >
+                      <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border ${isSelected ? 'border-blue-500 bg-blue-600 text-white' : 'border-gray-200 text-gray-300'}`}>
+                        {isSelected && <FaCheck className="text-[10px]" />}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-black text-[#06224C]">{section.label}</span>
+                        <span className="block text-[9px] font-bold uppercase text-gray-400">{section.description}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {error && <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide">{error}</p>}
             </div>
           )}
         </div>
@@ -136,7 +244,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             Back
           </button>
          
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               onClick={handleNext}
               disabled={!!error || !projectData.name}
@@ -146,13 +254,8 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             </button>
           ) : (
             <button
-              onClick={() => {
-                alert(`Success! Project "${projectData.name}" created.`);
-                onClose();
-                setStep(1);
-                setProjectData({ name: '', category: '', template: '' });
-              }}
-              disabled={!projectData.template}
+              onClick={handleBuild}
+              disabled={!projectData.template || projectData.sections.length === 0}
               className="bg-green-600 text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg disabled:opacity-50 whitespace-nowrap"
             >
               Build <FaWandMagicSparkles className="inline ml-1" />
