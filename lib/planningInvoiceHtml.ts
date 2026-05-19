@@ -1,5 +1,7 @@
 /** Printable / downloadable Stackly invoice (A4-style layout). */
 
+import { assetPath } from "./paths";
+
 export type PlanningInvoiceLine = {
   si: number;
   website: string;
@@ -550,13 +552,23 @@ export function buildPlanningInvoiceHtmlDocument(p: PlanningInvoicePayload): str
 </html>`;
 }
 
-/** Fetches /stackly-logo.webp from the current origin and returns a data URL for offline-safe HTML. */
+/** Fetches stackly-logo.webp (with gh-pages base path) as a data URL for PDF/html2canvas. */
 export async function resolveInvoiceLogoDataUrl(): Promise<string | null> {
   if (typeof window === "undefined") return null;
+  const logoUrls = [
+    new URL(assetPath("/stackly-logo.webp"), window.location.origin).href,
+    new URL("/stackly-logo.webp", window.location.origin).href,
+  ];
   try {
-    const href = new URL("/stackly-logo.webp", window.location.origin).href;
-    const res = await fetch(href, { cache: "force-cache" });
-    if (!res.ok) return null;
+    let res: Response | null = null;
+    for (const href of logoUrls) {
+      const attempt = await fetch(href, { cache: "force-cache" });
+      if (attempt.ok) {
+        res = attempt;
+        break;
+      }
+    }
+    if (!res) return null;
     const blob = await res.blob();
     return await new Promise((resolve) => {
       const r = new FileReader();
