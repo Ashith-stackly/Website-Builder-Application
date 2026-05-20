@@ -70,27 +70,9 @@ const buyProducts: BuyProduct[] = [
 const buyProductById = new Map(buyProducts.map((product) => [product.id, product]));
 
 const buyCategorySpotlights = [
-  {
-    title: "Smartphones",
-    subtitle: "Flagship cameras, all-day power, and smooth displays.",
-    image: assetPath("/phone.webp"),
-    subCategoryKey: "mobiles",
-    accent: "from-[#e0f2fe] to-[#f8fafc]",
-  },
-  {
-    title: "Workstations",
-    subtitle: "Fast laptops and tablets for hybrid work and study.",
-    image: assetPath("/laptop.webp"),
-    subCategoryKey: "laptops",
-    accent: "from-[#eef2ff] to-[#f8fafc]",
-  },
-  {
-    title: "Home Audio",
-    subtitle: "Portable speakers and headphones tuned for daily use.",
-    image: assetPath("/speaker.webp"),
-    subCategoryKey: "audio",
-    accent: "from-[#fff7ed] to-[#f8fafc]",
-  },
+  { title: "Smartphones", subtitle: "Flagship cameras, all-day power, and smooth displays.", image: assetPath("/phone.webp"), subCategoryKey: "mobiles", accent: "from-[#e0f2fe] to-[#f8fafc]" },
+  { title: "Workstations", subtitle: "Fast laptops and tablets for hybrid work and study.", image: assetPath("/laptop.webp"), subCategoryKey: "laptops", accent: "from-[#eef2ff] to-[#f8fafc]" },
+  { title: "Home Audio", subtitle: "Portable speakers and headphones tuned for daily use.", image: assetPath("/speaker.webp"), subCategoryKey: "audio", accent: "from-[#fff7ed] to-[#f8fafc]" },
 ];
 
 const buyDealHighlights = [
@@ -108,21 +90,9 @@ const buyShoppingSteps: Array<{ icon: BuyShoppingStepIcon; title: string; descri
 ];
 
 const buyTestimonials = [
-  {
-    quote: "The catalog feels premium and quick. I can compare accessories and checkout without losing my place.",
-    name: "Maya R.",
-    role: "Product lead",
-  },
-  {
-    quote: "Clean cards, clear pricing, and the wishlist flow make this storefront feel ready for real customers.",
-    name: "Arjun K.",
-    role: "Retail founder",
-  },
-  {
-    quote: "The mobile view is polished. Filters, cart, and product actions stay easy to reach.",
-    name: "Elena P.",
-    role: "UX consultant",
-  },
+  { quote: "The catalog feels premium and quick. I can compare accessories and checkout without losing my place.", name: "Maya R.", role: "Product lead" },
+  { quote: "Clean cards, clear pricing, and the wishlist flow make this storefront feel ready for real customers.", name: "Arjun K.", role: "Retail founder" },
+  { quote: "The mobile view is polished. Filters, cart, and product actions stay easy to reach.", name: "Elena P.", role: "UX consultant" },
 ];
 
 const buyBrandPartners = ["NovaTech", "PulseAudio", "SkyLens", "VoltWare", "PixelBay"];
@@ -181,13 +151,7 @@ function BuyPreviewToolbarIcon({ kind }: { kind: BuyPreviewControl }) {
   if (kind === "preview") {
     return (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
       </svg>
     );
@@ -226,14 +190,7 @@ function BuyPreviewToolbarButton({
   active: boolean;
   onClick: () => void;
 }) {
-  const label =
-    kind === "preview"
-      ? "Preview"
-      : kind === "desktop"
-        ? "Desktop"
-        : kind === "tablet"
-          ? "Tablet"
-          : "Mobile";
+  const label = kind === "preview" ? "Preview" : kind === "desktop" ? "Desktop" : kind === "tablet" ? "Tablet" : "Mobile";
 
   return (
     <button
@@ -294,8 +251,7 @@ function BuyProductActionButtons({
 }) {
   const size = compact ? "h-6 w-6 sm:h-6 sm:w-6" : "h-7 w-7 sm:h-8 sm:w-8";
   const shadow = compact ? "shadow-sm" : "shadow-md";
-  const base =
-    `flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow}`;
+  const base = `flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow}`;
   const inactive = `${base} bg-white text-[#ff664f] hover:bg-[#ff664f] hover:text-white`;
   const favoriteActive = `${base} bg-[#ff664f] text-white hover:bg-[#ff664f] hover:text-white`;
   const favoriteBtn = isFavorite ? favoriteActive : inactive;
@@ -323,14 +279,7 @@ function BuyProductActionButtons({
         }}
       >
         <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-          <path
-            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733C11.285 5.876 9.623 4.75 7.688 4.75 5.099 4.75 3 6.765 3 9.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill={isFavorite ? "currentColor" : "none"}
-          />
+          <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733C11.285 5.876 9.623 4.75 7.688 4.75 5.099 4.75 3 6.765 3 9.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill={isFavorite ? "currentColor" : "none"} />
         </svg>
       </button>
       <button
@@ -717,10 +666,10 @@ export default function ECommercePage() {
     return () => ro.disconnect();
   }, [isCarouselMode]);
 
-  const moveProducts = useCallback((direction: number) => {
+  function moveProducts(direction: number) {
     if (!totalProducts) return;
     setActiveProductStart((prev) => (prev + direction + totalProducts) % totalProducts);
-  }, [totalProducts]);
+  }
 
   const handleCategoryClick = useCallback(
     (label: string) => {
@@ -810,7 +759,7 @@ export default function ECommercePage() {
       if (Math.abs(dx) < 28 || Math.abs(dx) <= Math.abs(dy)) return;
       moveProducts(dx < 0 ? 1 : -1);
     },
-    [isCarouselMode, moveProducts]
+    [isCarouselMode]
   );
 
   function BuyFeatureIcon({ type }: { type: BuyFeatureIconType }) {
@@ -1342,225 +1291,40 @@ export default function ECommercePage() {
 
       <div ref={contentStartRef} className="mx-auto w-full max-w-7xl px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-12">
         <div className="buyscreen-promo-strip mb-5 flex flex-col gap-3 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-[0_18px_45px_rgba(15,35,75,0.08)] backdrop-blur sm:mb-7 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-4 sm:px-5">
-  <div className="min-w-0">
-    <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">
-      Stackly marketplace preview
-    </p>
-    <p className="mt-1 text-sm font-semibold text-[#334155]">
-      Explore electronics with cart, favorites, search, and category filtering.
-    </p>
-  </div>
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">
+              Stackly marketplace preview
+            </p>
+            <p className="mt-1 text-sm font-semibold text-[#334155]">
+              Explore electronics with cart, favorites, search, and category filtering.
+            </p>
+          </div>
 
-  {!isEmbeddedPreview ? (
-    <div className="flex justify-center sm:justify-center">
-      <BuyPreviewToolbar
-        isPreviewOpen={isPreviewOpen}
-        previewDevice={previewDevice}
-        onPreviewToggle={() => setIsPreviewOpen((prev) => !prev)}
-        onDeviceSelect={(device) => {
-          setPreviewDevice(device);
-          setIsPreviewOpen(true);
-        }}
-      />
-    </div>
-  ) : null}
+          {/* Hidden dynamically on actual mobile viewport widths using hidden sm:inline-flex */}
+          {!isEmbeddedPreview ? (
+            <div className="hidden sm:inline-flex justify-center">
+              <BuyPreviewToolbar
+                isPreviewOpen={isPreviewOpen}
+                previewDevice={previewDevice}
+                onPreviewToggle={() => setIsPreviewOpen((prev) => !prev)}
+                onDeviceSelect={(device) => {
+                  setPreviewDevice(device);
+                  setIsPreviewOpen(true);
+                }}
+              />
+            </div>
+          ) : null}
 
-  <button
-    type="button"
-    className="inline-flex w-full shrink-0 items-center justify-center rounded-full bg-[#06224C] px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-white shadow-[0_14px_30px_rgba(6,34,76,0.24)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#0f3b89] sm:w-auto"
-    onClick={() => router.push("/page-not-found")}
-  >
-    Buy Now
-  </button>
-</div>
+          <button
+            type="button"
+            className="inline-flex w-full shrink-0 items-center justify-center rounded-full bg-[#06224C] px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-white shadow-[0_14px_30px_rgba(6,34,76,0.24)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#0f3b89] sm:w-auto"
+            onClick={() => router.push("/page-not-found")}
+          >
+            Buy Now
+          </button>
+        </div>
 
         <section className="buyscreen-shell overflow-hidden rounded-[2rem] border border-white/80 bg-white shadow-[0_28px_90px_rgba(15,35,75,0.13)]">
-          <header className="buyscreen-header flex flex-col gap-4 border-b border-[#e7edf5] bg-white/95 px-4 py-4 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4">
-            <div className="flex shrink-0 items-center justify-between lg:justify-start">
-              <span className="inline-flex items-center gap-2 text-base font-black tracking-tight text-[#06224C] sm:text-lg">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_5px_rgba(34,197,94,0.14)]" aria-hidden />
-                e-shop.
-              </span>
-            </div>
-
-            <div className="buyscreen-header-actions flex w-full min-w-0 items-center justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
-              <label className="buyscreen-search flex h-9 w-[150px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:w-[210px] sm:text-xs">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    const nextValue = e.target.value;
-                    setSearchQuery(nextValue);
-                    setActiveProductStart(0);
-                    setShowAllProducts(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter") return;
-                    e.preventDefault();
-                    setActiveProductStart(0);
-                    setShowAllProducts(false);
-                    featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                  placeholder="Search..."
-                  className="min-w-0 flex-1 bg-transparent text-[#4b5563] outline-none placeholder:text-[#4b5563] placeholder:opacity-100"
-                />
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#374151]" aria-hidden>
-                  <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.7" />
-                  <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
-              </label>
-              <div className="buyscreen-header-trailing flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-                <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsCartOpen(true)}>
-                  <span className="relative shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                      <path d="M3 4h2l1.6 9.2a1 1 0 0 0 1 .8H18a1 1 0 0 0 1-.8L20.6 7H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="10" cy="19" r="1.5" fill="currentColor" />
-                      <circle cx="17" cy="19" r="1.5" fill="currentColor" />
-                    </svg>
-                    {cartItemCount > 0 ? (
-                      <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff664f] px-1 text-[10px] font-bold leading-none text-white">
-                        {cartItemCount}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="min-w-0 leading-tight">
-                    <span className="block text-[11px] font-semibold sm:text-xs">Cart</span>
-                    <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{cartItems.length ? formatUsd(cartTotalCents) : "Empty"}</span>
-                  </span>
-                </button>
-                <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsFavoritesOpen(true)}>
-                  <span className="relative shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                      <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733C11.285 5.876 9.623 4.75 7.688 4.75 5.099 4.75 3 6.765 3 9.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    {favoriteProducts.length > 0 ? (
-                      <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff664f] px-1 text-[10px] font-bold leading-none text-white">
-                        {favoriteProducts.length}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="min-w-0 leading-tight">
-                    <span className="block text-[11px] font-semibold sm:text-xs">Favorites</span>
-                    <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{favoriteProducts.length ? `${favoriteProducts.length} items` : "Empty"}</span>
-                  </span>
-                </button>
-                <span className="h-6 w-px shrink-0 bg-[#d1d5db]" aria-hidden />
-                <div ref={userMenuWrapRef} className="buyscreen-user-menu-wrap relative shrink-0">
-                  <button
-                    type="button"
-                    aria-expanded={isUserMenuOpen}
-                    aria-haspopup="menu"
-                    className="buyscreen-user-summary buyscreen-user-trigger flex min-w-0 items-center gap-2 rounded-md border-0 bg-transparent px-2 py-1 text-left text-inherit"
-                    onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0" aria-hidden>
-                      <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.8" />
-                      <path d="M5.8 19.2c1.1-2.5 3.3-3.8 6.2-3.8s5.1 1.3 6.2 3.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                    <span className="min-w-0 leading-tight">
-                      <span className="block text-[11px] font-semibold sm:text-xs">User</span>
-                      <span className="buyscreen-user-secondary block text-[11px] sm:text-xs">Account</span>
-                    </span>
-                  </button>
-                  <div
-                    className={`buyscreen-user-menu-dropdown ${isUserMenuOpen ? "buyscreen-user-menu-dropdown--open" : ""}`}
-                    role="menu"
-                    aria-hidden={!isUserMenuOpen}
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="buyscreen-user-menu-item"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        router.push("/login");
-                      }}
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <nav className="buyscreen-categories border-b border-[#e7edf5] bg-[#06224C] px-4 py-3 text-[10px] font-semibold text-white sm:px-8 sm:text-xs">
-            <div className="flex items-center justify-end lg:hidden">
-              <button
-                type="button"
-                aria-expanded={isCategoryMenuOpen}
-                aria-controls="buyscreen-category-menu"
-                className="inline-flex items-center gap-2 rounded-md border border-white/30 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors duration-150 hover:bg-white hover:text-[#06224C]"
-                onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-                Menu
-              </button>
-            </div>
-            <div
-              id="buyscreen-category-menu"
-              className={`buyscreen-categories-list ${isCategoryMenuOpen ? "buyscreen-categories-list--open" : ""}`}
-            >
-              {buyCategories.map((item) => (
-                item.label === "All Categories" ? (
-                  <div
-                    key={item.label}
-                    ref={allCategoriesWrapRef}
-                    className="buyscreen-all-categories-wrap relative shrink-0"
-                    onBlur={(e) => {
-                      if (!e.currentTarget.contains(e.relatedTarget)) {
-                        setIsAllCategoriesDropdownOpen(false);
-                      }
-                    }}
-                  >
-                    <button
-                      type="button"
-                      aria-expanded={isAllCategoriesDropdownOpen}
-                      aria-controls="buyscreen-all-categories-menu"
-                      aria-haspopup="menu"
-                      className="buyscreen-all-categories-toggle inline-flex items-center gap-1 rounded-md px-2 py-1 text-left text-[10px] font-semibold transition-colors duration-150 hover:bg-white hover:text-[#06224C] focus-visible:outline-none focus-visible:bg-white focus-visible:text-[#06224C] focus-visible:ring-2 focus-visible:ring-blue-300 sm:text-xs"
-                      onClick={() => setIsAllCategoriesDropdownOpen((prev) => !prev)}
-                    >
-                      All Categories
-                      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" aria-hidden>
-                        <path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                    <div
-                      id="buyscreen-all-categories-menu"
-                      role="menu"
-                      className={`buyscreen-all-categories-dropdown ${isAllCategoriesDropdownOpen ? "buyscreen-all-categories-dropdown--open" : ""}`}
-                    >
-                      {buyAllSubCategories.map((subCategory) => (
-                        <button
-                          key={subCategory.key}
-                          type="button"
-                          role="menuitem"
-                          tabIndex={isAllCategoriesDropdownOpen ? 0 : -1}
-                          className="buyscreen-all-categories-item focus-visible:outline-none focus-visible:bg-[#f1f5f9] focus-visible:text-[#06224C]"
-                          onClick={() => handleSubCategoryClick(subCategory.key)}
-                        >
-                          {subCategory.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className={`buyscreen-category-item shrink-0 rounded-md text-left transition-colors duration-150 hover:bg-white hover:text-[#06224C] ${item.label === "Limited Sale" ? "lg:ml-auto" : ""}`}
-                    onClick={() => handleCategoryClick(item.label)}
-                  >
-                    {item.label}
-                  </button>
-                )
-              ))}
-            </div>
-          </nav>
-
           <div className="space-y-10 px-4 py-8 sm:space-y-12 sm:px-8 sm:py-10 lg:py-12">
             {!isEmbeddedPreview && isPreviewOpen ? (
               <section className="overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] bg-[linear-gradient(180deg,#f8fbff_0%,#eaf1f8_100%)] p-3 shadow-[0_20px_60px_rgba(15,35,75,0.12)] sm:p-5">
