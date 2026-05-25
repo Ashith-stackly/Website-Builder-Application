@@ -23,6 +23,7 @@ html {
   height: 100%;
   /* Prevent horizontal rubber-band showing “empty” on iOS */
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 body {
@@ -30,33 +31,30 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
+  height: 100%;
   min-height: 100%;
   min-height: 100dvh;
   overflow-x: hidden;
-}
-
-html:has(body > main.landing-page) {
-  overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-color: #8fb8e8 #071936;
-  scrollbar-width: thin;
 }
 
 body:has(> main.landing-page) {
   overflow-x: hidden;
-  overflow-y: visible;
+  overflow-y: auto;
   background: #fff1f2;
+  scrollbar-color: #8fb8e8 #071936;
+  scrollbar-width: thin;
 }
 
-html:has(body > main.landing-page)::-webkit-scrollbar {
+body:has(> main.landing-page)::-webkit-scrollbar {
   width: 12px;
 }
 
-html:has(body > main.landing-page)::-webkit-scrollbar-track {
+body:has(> main.landing-page)::-webkit-scrollbar-track {
   background: linear-gradient(180deg, #071936 0%, #0a2357 52%, #071936 100%);
 }
 
-html:has(body > main.landing-page)::-webkit-scrollbar-thumb {
+body:has(> main.landing-page)::-webkit-scrollbar-thumb {
   min-height: 64px;
   border: 3px solid #071936;
   border-radius: 999px;
@@ -64,7 +62,7 @@ html:has(body > main.landing-page)::-webkit-scrollbar-thumb {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 18px rgba(96, 165, 250, 0.35);
 }
 
-html:has(body > main.landing-page)::-webkit-scrollbar-thumb:hover {
+body:has(> main.landing-page)::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #eff6ff 0%, #93c5fd 45%, #2563eb 100%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 24px rgba(96, 165, 250, 0.55);
 }
@@ -197,10 +195,31 @@ body:has(> main.buyscreen-page) {
   background-color: #ffffff;
 }
 
+body:has(> main.buyscreen-page) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+html:has(body > main.buyscreen-page) {
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
 .buyscreen-shell {
   box-sizing: border-box;
   overflow: hidden;
   animation: buyscreen-store-rise 0.55s ease both;
+}
+
+main.buyscreen-page,
+main.buyscreen-page * {
+  scrollbar-width: none;
+}
+
+main.buyscreen-page::-webkit-scrollbar,
+main.buyscreen-page *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 .buyscreen-header > * {
   min-width: 0;
@@ -2994,40 +3013,4 @@ body.auth-visible {
     animation: none !important;
     transition: none !important;
   }
-}
-
-/* Landing page: use body as the only vertical scroll container. */
-html:has(body > main.landing-page) {
-  height: 100% !important;
-  overflow: hidden !important;
-}
-
-body:has(> main.landing-page) {
-  height: 100dvh !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  background: #fff1f2;
-  scrollbar-color: #93c5fd #071936;
-  scrollbar-width: thin;
-}
-
-body:has(> main.landing-page)::-webkit-scrollbar {
-  width: 12px;
-}
-
-body:has(> main.landing-page)::-webkit-scrollbar-track {
-  background: linear-gradient(180deg, #071936 0%, #0a2357 52%, #071936 100%);
-}
-
-body:has(> main.landing-page)::-webkit-scrollbar-thumb {
-  min-height: 64px;
-  border: 3px solid #071936;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #dbeafe 0%, #60a5fa 48%, #1d4ed8 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 18px rgba(96, 165, 250, 0.35);
-}
-
-body:has(> main.landing-page)::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #eff6ff 0%, #93c5fd 45%, #2563eb 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 24px rgba(96, 165, 250, 0.55);
 }

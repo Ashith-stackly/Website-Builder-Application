@@ -3,9 +3,7 @@
   --stackly-nav-height: 3.5rem;
   --blog-header-height: 3.25rem;
   --blog-nav-gap: clamp(0.5rem, 2vw, 1rem);
-  --blog-scroll-offset: calc(
-    var(--stackly-nav-height) + var(--blog-nav-gap) + var(--blog-header-height) + 0.5rem
-  );
+  --blog-scroll-offset: calc(var(--stackly-nav-height) + 0.75rem);
   --blog-navy: #001f3f;
   --blog-navy-muted: #1a3a5c;
   --blog-blue-bg: #eaf2ff;
@@ -63,9 +61,8 @@
   margin-top: var(--blog-nav-gap);
   margin-inline: 0;
   padding-inline: 0;
-  position: sticky;
-  top: calc(var(--stackly-nav-height) + var(--blog-nav-gap));
-  z-index: 40;
+  position: relative;
+  z-index: 1;
   min-width: 0;
 }
 

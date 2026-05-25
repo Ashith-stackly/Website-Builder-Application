@@ -3,9 +3,11 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import CreateProjectFlow from "@/components/CreateProjectFlow";
+import AboutPage from "../aboutus/page";
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, LayoutGroup, motion, type TargetAndTransition, type Variants } from "framer-motion";
+import { motion, type TargetAndTransition, type Variants } from "framer-motion";
 import {
   FaArrowRight,
   FaCartShopping,
@@ -36,11 +38,6 @@ const Footer = dynamic(() => import("@/components/Footer"), {
   loading: () => <div className="h-64 bg-[#0A1E3D]" />,
 });
 
-const AboutPage = dynamic(() => import("../aboutus/page"), {
-  ssr: false,
-  loading: () => <div className="min-h-screen bg-[#FFF1F2]" />,
-});
-
 const popularSearches = [
   "Food",
   "Blog",
@@ -62,13 +59,7 @@ const categories = [
   { title: "Portfolio", image: "/landing-optimized/port.webp", alt: "Portfolio website preview", previewHref: "/portfolio", editHref: "/blockpages?template=portfolio" },
   { title: "E-Commerce Templates", image: "/landing-optimized/ecommerce.webp", alt: "E-commerce website preview", previewHref: "/e-commerce", editHref: "/blockpages?template=ecommerce" },
   { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview" },
-  {
-    title: "Blogging",
-    image: "/landing-optimized/bloggg.webp",
-    alt: "Blogging website preview",
-    previewHref: "/blog",
-    editHref: "/blockpages?template=blog",
-  },
+  { title: "Blogging", image: "/landing-optimized/bloggg.webp", alt: "Blogging website preview" },
   { title: "Construction Themes", image: "/landing-optimized/construction02.webp", alt: "Construction website preview" },
   { title: "Food Restaurant", image: "/landing-optimized/foodd03.webp", alt: "Food restaurant website preview" },
 ];
@@ -357,6 +348,7 @@ function LandingContactSection() {
 }
 
 export default function Home() {
+  const router = useRouter(); // Added router for navigation intercepts
   const [currentPage, setCurrentPage] = useState<"home" | "about">("home");
   const [activeFilter, setActiveFilter] = useState<(typeof templateFilters)[number]["value"]>("all");
   const [activeFeature, setActiveFeature] = useState(0);
@@ -367,6 +359,20 @@ export default function Home() {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [hasLoadedWishlist, setHasLoadedWishlist] = useState(false);
   const [wishlistToast, setWishlistToast] = useState<string | null>(null);
+
+  // --- SUBSCRIPTION CHECK PLACEHOLDER ---
+  // The Backend Team will update this function to check the user's actual subscription status.
+  const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
+    event.preventDefault();
+    const hasActiveSubscription = false; // <-- BACKEND TEAM: Swap this boolean with real API/context state
+
+    if (hasActiveSubscription) {
+      router.push(targetUrl);
+    } else {
+      router.push("/planning");
+    }
+  };
+  // --------------------------------------
 
   const normalizedSearch = submittedSearch.trim().toLowerCase();
   const visibleTemplates = useMemo(
@@ -739,7 +745,12 @@ export default function Home() {
               <div className="p-6 text-center">
                 <h3 className="text-base font-bold uppercase tracking-tight text-gray-800 md:text-lg">{category.title}</h3>
                 <div className="mt-4 flex justify-center gap-6 text-[10px] font-black uppercase text-blue-600 underline">
-                  <Link href={category.editHref ?? "#templates"}>Edit</Link>
+                  <Link
+                    href={category.editHref ?? "#templates"}
+                    onClick={(e) => checkSubscriptionAndRoute(e, category.editHref ?? "#templates")}
+                  >
+                    Edit
+                  </Link>
                   <Link href={category.previewHref ?? "#templates"}>Preview</Link>
                 </div>
               </div>
@@ -789,7 +800,7 @@ export default function Home() {
                     type="button"
                     onClick={() => addToCart(product)}
                     aria-label={`Add ${product.title} to cart`}
-                    className="flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition hover:bg-blue-50"
+                    className="flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-50 transition hover:bg-blue-50"
                   >
                     <FaCartShopping />
                   </button>
@@ -807,36 +818,27 @@ export default function Home() {
       <section id="templates" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>All Templates</SectionHeading>
         <motion.div className="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm md:rounded-[2.5rem] md:p-10" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.14 }}>
-          <LayoutGroup id="template-filters">
-            <div className="mb-12 flex flex-wrap justify-center gap-3" aria-label="Template categories">
-              {templateFilters.map((filter) => {
-                const active = activeFilter === filter.value;
-                return (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setActiveFilter(filter.value)}
-                    className={`relative inline-flex items-center gap-2 overflow-hidden rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] ${
-                      active
-                        ? "border-[#06224C] text-white"
-                        : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                    }`}
-                  >
-                    {active && (
-                      <motion.span
-                        layoutId="filter-pill"
-                        className="absolute inset-0 -z-10 rounded-xl bg-[#06224C]"
-                        transition={{ type: "spring", stiffness: 340, damping: 28 }}
-                      />
-                    )}
-                    <span className="relative">{filter.label}</span>
-                    <FaChevronDown className="relative text-[10px]" />
-                  </button>
-                );
-              })}
-            </div>
-          </LayoutGroup>
+          <div className="mb-12 flex flex-wrap justify-center gap-3" aria-label="Template categories">
+            {templateFilters.map((filter) => {
+              const active = activeFilter === filter.value;
+              return (
+                <button
+                  key={filter.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setActiveFilter(filter.value)}
+                  className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${
+                    active
+                      ? "border-[#06224C] bg-[#06224C] text-white"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                  }`}
+                >
+                  {filter.label}
+                  <FaChevronDown className="text-[10px]" />
+                </button>
+              );
+            })}
+          </div>
 
           <motion.div className="grid grid-cols-1 gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.12 }}>
             {visibleTemplates.map((template) => (
@@ -861,7 +863,13 @@ export default function Home() {
                       Preview
                     </Link>
                     <Link
-                      href={!template.price && template.category === "portfolio" ? "/blockpages?template=portfolio" : "/planning"}
+                      href={template.price ? "/planning" : `/blockpages?template=${template.category}`}
+                      onClick={(e) => {
+                        // Only intercept if it's the "Edit" button (no price)
+                        if (!template.price) {
+                          checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
+                        }
+                      }}
                       className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110"
                     >
                       {template.price ? "Buy" : "Edit"}
@@ -1002,20 +1010,7 @@ export default function Home() {
                     <h3 className="text-sm font-bold leading-snug text-[#06224C] md:text-base">{faq.question}</h3>
                     {isOpen ? <FaMinus className="mt-1 flex-shrink-0 text-[#06224C]" /> : <FaPlus className="mt-1 flex-shrink-0 text-[#06224C]" />}
                   </button>
-                  <AnimatePresence initial={false}>
-                    {isOpen && (
-                      <motion.div
-                        key="answer"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.28, ease: "easeOut" }}
-                        style={{ overflow: "hidden" }}
-                      >
-                        <p className="px-5 pb-5 pt-0 text-sm leading-relaxed text-gray-700 md:px-6 md:pb-6">{faq.answer}</p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {isOpen && <p className="px-5 pb-5 pt-0 text-sm leading-relaxed text-gray-700 md:px-6 md:pb-6">{faq.answer}</p>}
                 </motion.div>
               );
             })}

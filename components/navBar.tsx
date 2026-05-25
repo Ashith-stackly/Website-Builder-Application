@@ -2,7 +2,7 @@
  
 import Link from "next/link";
 import { MouseEvent, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion, useScroll } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   FaBookOpen,
   FaBoxOpen,
@@ -238,7 +238,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [mobileCategory, setMobileCategory] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const { scrollYProgress } = useScroll();
+  const [scrollProgress, setScrollProgress] = useState(0);
   const prefersReducedMotion = useReducedMotion();
   const navRef = useRef<HTMLElement>(null);
   const prevScrollY = useRef(0);
@@ -319,14 +319,22 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
         if (target.clientHeight < window.innerHeight * 0.4) return;
       }
 
-      const current = isDocScroll
-        ? window.scrollY
-        : (target as HTMLElement).scrollTop;
+      const current = target === document.body
+        ? document.body.scrollTop
+        : isDocScroll
+          ? window.scrollY
+          : (target as HTMLElement).scrollTop;
+      const scrollHeight = target === document.body
+        ? document.body.scrollHeight - document.body.clientHeight
+        : isDocScroll
+          ? document.documentElement.scrollHeight - window.innerHeight
+          : (target as HTMLElement).scrollHeight - (target as HTMLElement).clientHeight;
 
       const prev = prevScrollY.current;
       prevScrollY.current = current;
 
       setIsScrolled(current > 8);
+      setScrollProgress(scrollHeight > 0 ? Math.min(current / scrollHeight, 1) : 0);
 
       const locked = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || Boolean(activePanel);
       if (locked) {
@@ -667,7 +675,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       <motion.div
         aria-hidden
         className="pointer-events-none absolute bottom-0 left-0 h-[2.5px] w-full origin-left bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-300"
-        style={{ scaleX: scrollYProgress }}
+        style={{ scaleX: scrollProgress }}
       />
     </motion.header>
 
