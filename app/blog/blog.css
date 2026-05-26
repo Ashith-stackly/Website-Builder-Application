@@ -27,6 +27,7 @@
   --blog-safe-inline: clamp(0.75rem, 4vw, 3rem);
 
   overflow-x: hidden;
+  overflow-y: visible;
   width: 100%;
   max-width: 100%;
   min-width: 0;

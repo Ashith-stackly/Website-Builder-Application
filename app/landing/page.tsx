@@ -573,7 +573,7 @@ export default function Home() {
   };
 
   return (
-    <main className="landing-page min-h-screen bg-[#fff1f2] text-gray-900 flex flex-col justify-between">
+    <main className="landing-page bg-[#fff1f2] text-gray-900">
       <motion.div
         className={`fixed inset-x-0 top-[82px] z-[6000] px-4 transition ${isSearchOpen ? "visible" : "invisible pointer-events-none"}`}
         initial={false}

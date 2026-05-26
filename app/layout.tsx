@@ -44,9 +44,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <RouteLoadingOverlay />
-        <NavBarShell />
-        {children}
+        <div className="stackly-site-layout">
+          <RouteLoadingOverlay />
+          <NavBarShell />
+          {children}
+        </div>
       </body>
     </html>
   );

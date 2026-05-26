@@ -557,7 +557,7 @@ export default function PlanningPage() {
   }
 
   return (
-    <main className="planning-page flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-slate-100">
+    <main className="planning-page flex min-h-[100dvh] w-full flex-col bg-slate-100">
       <div className="w-full flex-1">
         <div className="w-full border border-slate-200 bg-white shadow-sm">
           <section
