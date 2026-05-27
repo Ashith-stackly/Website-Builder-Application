@@ -17,12 +17,14 @@ import {
 import { isApiConnectionError, login as loginApi } from "@/lib/api";
 import { assetPath } from "@/lib/paths";
 import {
+  capSimpleMobileContactInput,
+  countMobileDigits,
   looksLikeMobileContactInput,
-  MAX_MOBILE_INPUT_LENGTH,
-  mobileContactMaxLengthMessage,
-  isValidMobileContact,
-  validateInternationalMobileContact,
-} from "@/lib/signupPhoneCountries";
+  isValidSimpleMobileContact,
+  simpleMobileMaxLengthMessage,
+  SIMPLE_MOBILE_MAX_DIGITS,
+  validateSimpleMobileContact,
+} from "@/lib/simpleMobileContact";
 import AuthGoogleButton from "@/components/AuthGoogleButton";
 
 type LoginFormState = {
@@ -179,7 +181,7 @@ export default function LoginPage() {
     if (!trimmedContact) {
       newErrors.email = "Email or mobile number is required.";
     } else if (looksLikeMobileContactInput(trimmedContact)) {
-      const mobileError = validateInternationalMobileContact(trimmedContact);
+      const mobileError = validateSimpleMobileContact(trimmedContact);
       if (mobileError) {
         newErrors.email = mobileError;
       }
@@ -220,15 +222,27 @@ export default function LoginPage() {
 
       if (field === "email") {
         const treatAsMobile = looksLikeMobileContactInput(contactValue);
-        const cap = treatAsMobile ? MAX_MOBILE_INPUT_LENGTH : EMAIL_MAX_LENGTH;
-        if (contactValue.length > cap) {
+        if (treatAsMobile) {
+          const capped = capSimpleMobileContactInput(contactValue);
+          if (capped !== contactValue) {
+            setForm((prev) => ({ ...prev, email: capped }));
+            if (countMobileDigits(capped) >= SIMPLE_MOBILE_MAX_DIGITS) {
+              setErrors((prev) => ({
+                ...prev,
+                email: simpleMobileMaxLengthMessage(),
+                form: undefined,
+              }));
+            }
+            return;
+          }
+        } else if (contactValue.length > EMAIL_MAX_LENGTH) {
           setForm((prev) => ({
             ...prev,
-            email: contactValue.slice(0, cap),
+            email: contactValue.slice(0, EMAIL_MAX_LENGTH),
           }));
           setErrors((prev) => ({
             ...prev,
-            email: treatAsMobile ? mobileContactMaxLengthMessage() : EMAIL_MAX_ERROR,
+            email: EMAIL_MAX_ERROR,
             form: undefined,
           }));
           return;
@@ -259,7 +273,7 @@ export default function LoginPage() {
     const trimmed = form.email.trim();
     setForm((prev) => ({ ...prev, email: trimmed }));
     if (trimmed && looksLikeMobileContactInput(trimmed)) {
-      const mobileError = validateInternationalMobileContact(trimmed);
+      const mobileError = validateSimpleMobileContact(trimmed);
       setErrors((errs) => ({
         ...errs,
         email: mobileError ?? undefined,
@@ -283,7 +297,7 @@ export default function LoginPage() {
 
       const contact = form.email.trim();
 
-      const isMobileContact = isValidMobileContact(contact);
+      const isMobileContact = isValidSimpleMobileContact(contact);
       const result = await loginApi({
         ...(isMobileContact ? { mobile: contact } : { email: contact.toLowerCase() }),
         password: form.password,
@@ -362,11 +376,7 @@ export default function LoginPage() {
                               fitInputPlaceholderToWidth(emailInputRef.current)
                             );
                           }}
-                          maxLength={
-                            looksLikeMobileContactInput(form.email)
-                              ? MAX_MOBILE_INPUT_LENGTH
-                              : EMAIL_MAX_LENGTH
-                          }
+                          maxLength={EMAIL_MAX_LENGTH}
                           className="bg-transparent outline-none w-full min-w-0 placeholder-white text-sm login-email-input"
                           aria-invalid={!!errors.email}
                           aria-describedby={

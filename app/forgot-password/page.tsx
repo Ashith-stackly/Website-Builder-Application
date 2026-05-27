@@ -8,12 +8,14 @@ import { getEmailValidationError } from "@/lib/emailValidation";
 import { assetPath } from "@/lib/paths";
 import { stripContactWhitespace } from "@/lib/resetFlowValidation";
 import {
+  capSimpleMobileContactInput,
+  countMobileDigits,
   looksLikeMobileContactInput,
-  MAX_MOBILE_INPUT_LENGTH,
-  mobileContactMaxLengthMessage,
-  normalizeInternationalMobileContact,
-  validateInternationalMobileContact,
-} from "@/lib/signupPhoneCountries";
+  isValidSimpleMobileContact,
+  simpleMobileMaxLengthMessage,
+  SIMPLE_MOBILE_MAX_DIGITS,
+  validateSimpleMobileContact,
+} from "@/lib/simpleMobileContact";
 
 const EMAIL_MAX_LENGTH = 254;
 const EMAIL_MAX_ERROR = `Email cannot exceed ${EMAIL_MAX_LENGTH} characters.`;
@@ -43,9 +45,6 @@ function ForgotPasswordContent() {
         ? "Alternative mobile number"
         : "Email or mobile number";
 
-  const treatAsMobile = looksLikeMobileContactInput(contactInput);
-  const inputMaxLength = treatAsMobile ? MAX_MOBILE_INPUT_LENGTH : EMAIL_MAX_LENGTH;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -63,21 +62,20 @@ function ForgotPasswordContent() {
     let verifyContact: string;
 
     if (isMobileFlow) {
-      const mobileError = validateInternationalMobileContact(trimmed);
+      const mobileError = validateSimpleMobileContact(trimmed);
       if (mobileError) {
         setError(mobileError);
         return;
       }
 
-      const normalizedMobile = normalizeInternationalMobileContact(trimmed);
-      if (!normalizedMobile) {
+      if (!isValidSimpleMobileContact(trimmed)) {
         setError("Enter a valid email or mobile number");
         return;
       }
 
       verifyRoute = "/verify-mobile";
-      apiInput = normalizedMobile;
-      verifyContact = normalizedMobile;
+      apiInput = trimmed;
+      verifyContact = trimmed;
     } else {
       const emailError = getEmailValidationError(trimmed.toLowerCase());
       if (emailError) {
@@ -165,20 +163,23 @@ function ForgotPasswordContent() {
                     inputMode="email"
                     placeholder={contactPlaceholder}
                     value={contactInput}
-                    maxLength={inputMaxLength}
+                    maxLength={EMAIL_MAX_LENGTH}
                     onChange={(e) => {
                       const cleaned = stripContactWhitespace(e.target.value);
                       const mobileInput = looksLikeMobileContactInput(cleaned);
-                      const cap = mobileInput
-                        ? MAX_MOBILE_INPUT_LENGTH
-                        : EMAIL_MAX_LENGTH;
-                      if (cleaned.length > cap) {
-                        setContactInput(cleaned.slice(0, cap));
-                        setError(
-                          mobileInput
-                            ? mobileContactMaxLengthMessage()
-                            : EMAIL_MAX_ERROR,
-                        );
+                      if (mobileInput) {
+                        const capped = capSimpleMobileContactInput(cleaned);
+                        setContactInput(capped);
+                        if (countMobileDigits(capped) >= SIMPLE_MOBILE_MAX_DIGITS) {
+                          setError(simpleMobileMaxLengthMessage());
+                        } else {
+                          setError("");
+                        }
+                        return;
+                      }
+                      if (cleaned.length > EMAIL_MAX_LENGTH) {
+                        setContactInput(cleaned.slice(0, EMAIL_MAX_LENGTH));
+                        setError(EMAIL_MAX_ERROR);
                         return;
                       }
                       setContactInput(cleaned);
