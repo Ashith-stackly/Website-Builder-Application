@@ -1,6 +1,7 @@
 "use client";
 
 import type { BuilderComponent } from "@/types/builder";
+import { readFeatureItem } from "@/components/blocks/feature-item/spec";
 import { getIcon } from "./IconComponent";
 import { toReactStyle } from "./componentStyles";
 
@@ -11,12 +12,8 @@ export default function FeatureItemComponent({
   isEditing?: boolean;
   onUpdate?: (content: string | null) => void;
 }) {
-  const parts = component.content.split("|");
-  const iconName  = parts[0] || "Zap";
-  const layout    = parts[1] || "horizontal";
-  const title     = parts[2] || "Feature Title";
-  const desc      = parts[3] || "Feature description goes here.";
-  const btnText   = parts[4] || "";
+  // Typed read — see `@/components/blocks/feature-item/spec` for shape + legacy fallback.
+  const { icon: iconName, layout, title, description: desc, cta: btnText } = readFeatureItem(component);
 
   const Icon = getIcon(iconName);
   const iconColor = component.styles.color || "#0B1D40";

@@ -20,6 +20,9 @@ type TextCanvasProps = {
   isImageEditingMode?: boolean;
   customImages?: Record<string, string>;
   onEditImage?: (imageId: string) => void;
+  isButtonEditingMode?: boolean;
+  customButtons?: Record<string, Record<string, any>>;
+  onEditButton?: (buttonId: string) => void;
 };
  
 const rgbToHex = (rgb: string) => {
@@ -32,7 +35,7 @@ const rgbToHex = (rgb: string) => {
     .join("")}`;
 };
  
-export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onUndo, onRedo, template = "ecommerce", isImageEditingMode = false, customImages = {}, onEditImage }: TextCanvasProps) {
+export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onUndo, onRedo, template = "ecommerce", isImageEditingMode = false, customImages = {}, onEditImage, isButtonEditingMode = false, customButtons = {}, onEditButton }: TextCanvasProps) {
   const isPreviewMode = false;
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -244,7 +247,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               className={template === "ecommerce" ? "h-[calc(100vh-160px)] min-h-[560px] overflow-y-auto" : undefined}
             >
               <div ref={contentRef}>
-                {template === "portfolio" ? <PortfolioPreview isImageEditingMode={isImageEditingMode} customImages={customImages} onEditImage={onEditImage} /> : <StorefrontPreview />}
+                {template === "portfolio" ? <PortfolioPreview isImageEditingMode={isImageEditingMode} customImages={customImages} onEditImage={onEditImage} isButtonEditingMode={isButtonEditingMode} customButtons={customButtons} onEditButton={onEditButton} /> : <StorefrontPreview />}
               </div>
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
   Minus,
   MousePointerSquareDashed,
   PanelsTopLeft,
+  Play,
   Star,
   TextCursorInput,
   Type,
@@ -38,6 +39,7 @@ const TYPE_ICONS: Record<ComponentType, React.ComponentType<{ className?: string
   input: TextCursorInput,
   divider: Minus,
   container: LayoutTemplate,
+  video: Play,
 };
 
 const LayerRow = memo(function LayerRow({

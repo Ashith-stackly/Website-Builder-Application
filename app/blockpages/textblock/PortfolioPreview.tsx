@@ -85,13 +85,56 @@ function AnimatedCount({
 export default function PortfolioPreview({
   isImageEditingMode = false,
   customImages = {},
-  onEditImage
+  onEditImage,
+  isButtonEditingMode = false,
+  customButtons = {},
+  onEditButton
 }: {
   isImageEditingMode?: boolean;
   customImages?: Record<string, string>;
   onEditImage?: (id: string) => void;
+  isButtonEditingMode?: boolean;
+  customButtons?: Record<string, Record<string, any>>;
+  onEditButton?: (id: string) => void;
 } = {}) {
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
+
+  const getCustomButtonStyle = (buttonId: string, defaultClassName: string) => {
+    const props = customButtons?.[buttonId];
+    if (!props) return { className: defaultClassName, style: {} };
+    
+    const w = (props.width as string) || '';
+    const parsedW = (w !== '' && !isNaN(Number(w))) ? `${w}px` : w;
+    const h = (props.height as string) || '';
+    const parsedH = (h !== '' && !isNaN(Number(h))) ? `${h}px` : h;
+    const bg = (props.backgroundColor as string) || '';
+    const op = typeof props.opacity === 'number' ? props.opacity : 100;
+    const variant = props.buttonVariant as string;
+    const br = (props.borderRadius as string) || '6px';
+    const parsedBr = (br !== '' && !isNaN(Number(br))) ? `${br}px` : br;
+    const effect = props.effect as string;
+
+    const style: React.CSSProperties = {
+      borderRadius: variant === 'pill' ? '9999px' : parsedBr,
+      opacity: op / 100,
+      backdropFilter: effect === 'blur' ? 'blur(8px)' : undefined,
+      boxShadow: props.dropShadow ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' : undefined,
+      transform: `rotate(${props.rotation || 0}deg) scaleX(${props.flipH ? -1 : 1}) scaleY(${props.flipV ? -1 : 1})`,
+    };
+
+    if (parsedW && parsedW !== 'auto') style.width = parsedW;
+    if (parsedH && parsedH !== 'auto') style.height = parsedH;
+    if (bg) style.background = bg;
+    if (props.padding !== undefined) style.padding = `${props.padding}px`;
+
+    let className = defaultClassName;
+    if (bg) {
+      className = className.replace(/bg-gradient-to-r\s+from-\[[^\]]+\]\s+to-\[[^\]]+\]/, '');
+      className = className.replace(/bg-\[[^\]]+\]/, '');
+    }
+    
+    return { className: className.trim(), style };
+  };
 
   const [heroImageProps] = useState({
     width: 165,
@@ -420,20 +463,44 @@ export default function PortfolioPreview({
 
                         <div className="flex flex-wrap gap-4 mt-8 justify-center lg:justify-start">
 
-                          <button
-                            type="button"
-                            onClick={() => scrollToSection("projects")}
-                            className="w-40 flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]"
-                          >
-                            View My Works
-                          </button>
+                          <div className="relative inline-block">
+                            <button
+                              type="button"
+                              onClick={() => scrollToSection("projects")}
+                              className={getCustomButtonStyle("hero_btn_1", "w-40 flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]").className}
+                              style={getCustomButtonStyle("hero_btn_1", "").style}
+                            >
+                              View My Works
+                            </button>
+                            {isButtonEditingMode && (
+                              <button
+                                onClick={() => onEditButton?.("hero_btn_1")}
+                                className="absolute -top-3 -right-3 bg-white/90 text-gray-800 p-1.5 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
+                                title="Edit Button"
+                              >
+                                <FaPen size={12} />
+                              </button>
+                            )}
+                          </div>
 
-                          <Link
-                            href="/page-not-found"
-                            className="w-40 flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]"
-                          >
-                            Download CV
-                          </Link>
+                          <div className="relative inline-block">
+                            <Link
+                              href="/page-not-found"
+                              className={getCustomButtonStyle("hero_btn_2", "w-40 flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]").className}
+                              style={getCustomButtonStyle("hero_btn_2", "").style}
+                            >
+                              Download CV
+                            </Link>
+                            {isButtonEditingMode && (
+                              <button
+                                onClick={() => onEditButton?.("hero_btn_2")}
+                                className="absolute -top-3 -right-3 bg-white/90 text-gray-800 p-1.5 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
+                                title="Edit Button"
+                              >
+                                <FaPen size={12} />
+                              </button>
+                            )}
+                          </div>
 
                         </div>
 
@@ -1066,10 +1133,24 @@ export default function PortfolioPreview({
                           <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Message</label>
                           <textarea rows={4} placeholder="Tell us about your project..." className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all resize-none"></textarea>
                         </div>
-                        <button className="w-full bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20">
-                          Send Message
-                          <FaPaperPlane className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        <div className="relative">
+                          <button 
+                            className={getCustomButtonStyle("contact_btn", "w-full bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20").className}
+                            style={getCustomButtonStyle("contact_btn", "").style}
+                          >
+                            Send Message
+                            <FaPaperPlane className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                          </button>
+                          {isButtonEditingMode && (
+                            <button
+                              onClick={() => onEditButton?.("contact_btn")}
+                              className="absolute -top-3 -right-3 bg-white/90 text-gray-800 p-1.5 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
+                              title="Edit Button"
+                            >
+                              <FaPen size={12} />
+                            </button>
+                          )}
+                        </div>
                       </form>
                     </div>
 
@@ -1120,3 +1201,4 @@ export default function PortfolioPreview({
     </main>
   );
 }
+

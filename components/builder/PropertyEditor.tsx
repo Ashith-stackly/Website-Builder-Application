@@ -1,26 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
-import { AlignCenter, AlignLeft, AlignRight, SlidersHorizontal, X } from "lucide-react";
+import { Eye, Layers2, Paintbrush, SlidersHorizontal, SquareMousePointer, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ICON_NAMES } from "@/components/draggable/IconComponent";
-import type { BuilderComponent, ComponentStyles } from "@/types/builder";
+import { blockRegistry } from "@/lib/blockRegistry";
+import type { BuilderComponent } from "@/types/builder";
+import { ContentField, contentInputClass } from "@/components/builder/PanelFields";
+import { StyleTab } from "./panel/StyleTab";
 import LayersPanel from "./LayersPanel";
+import { ImagePanel } from "@/components/blocks/image/ImagePanel";
 
-const styleFields: Array<{ key: keyof ComponentStyles; label: string; type?: string; placeholder?: string }> = [
-  { key: "fontSize", label: "Font Size", placeholder: "16px" },
-  { key: "color", label: "Text Color", type: "color" },
-  { key: "backgroundColor", label: "Background", type: "color" },
-  { key: "padding", label: "Padding", placeholder: "12px" },
-  { key: "margin", label: "Margin", placeholder: "0 0 12px" },
-  { key: "borderRadius", label: "Border Radius", placeholder: "6px" },
-  { key: "width", label: "Width", placeholder: "100%" },
-  { key: "height", label: "Height", placeholder: "auto" },
+type Tab = "content" | "style" | "advanced" | "layers";
+
+const TABS: Array<{ id: Tab; label: string; Icon: LucideIcon }> = [
+  { id: "content",  label: "Content",  Icon: SquareMousePointer },
+  { id: "style",    label: "Style",    Icon: Paintbrush },
+  { id: "advanced", label: "Advanced", Icon: SlidersHorizontal },
+  { id: "layers",   label: "Layers",   Icon: Layers2 },
 ];
-
-const contentInputClass =
-  "w-full rounded-xl border border-[#0B1D40] bg-transparent px-4 py-2.5 text-[14px] font-semibold text-[#0B1D40] outline-none transition focus:ring-2 focus:ring-blue-100";
 
 const imagePresets = [
   "/showcase.webp",
@@ -30,25 +30,6 @@ const imagePresets = [
   "/landing-optimized/construction02.webp",
   "/landing-optimized/foodd03.webp",
 ];
-
-function ContentField({
-  label,
-  onChange,
-  placeholder,
-  value,
-}: {
-  label: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  value: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">{label}</span>
-      <input className={contentInputClass} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} type="text" value={value} />
-    </label>
-  );
-}
 
 export default function PropertyEditor({
   component,
@@ -61,76 +42,18 @@ export default function PropertyEditor({
   className?: string;
   onClose?: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"settings" | "layers">("settings");
-
-  const updateStyle = (styles: ComponentStyles) => {
-    if (!component) return;
-    onUpdate(component.id, { styles: { ...component.styles, ...styles } });
-  };
-
-  const updateContentPart = (index: number, value: string) => {
-    if (!component) return;
-    const parts = component.content.split("|");
-    parts[index] = value;
-    onUpdate(component.id, { content: parts.join("|") });
-  };
+  const [activeTab, setActiveTab] = useState<Tab>("content");
 
   const renderContentEditor = () => {
     if (!component) return null;
 
-    const parts = component.content.split("|");
-
-    if (component.type === "navigation") {
-      return (
-        <div className="space-y-4">
-          <ContentField label="Brand Name" onChange={(value) => updateContentPart(0, value)} placeholder="Stackly Studio" value={parts[0] || ""} />
-          <ContentField label="Menu Links" onChange={(value) => updateContentPart(1, value)} placeholder="Home,About,Services,Contact" value={parts[1] || ""} />
-          <ContentField label="Button Text" onChange={(value) => updateContentPart(2, value)} placeholder="Get Started" value={parts[2] || ""} />
-          <p className="text-xs font-medium leading-5 text-[#566583]">Separate menu items with commas.</p>
-        </div>
-      );
-    }
-
-    if (component.type === "hero") {
-      return (
-        <div className="space-y-4">
-          <ContentField label="Headline" onChange={(value) => updateContentPart(0, value)} placeholder="Create a website in minutes" value={parts[0] || ""} />
-          <label className="block">
-            <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">Description</span>
-            <textarea
-              className={`${contentInputClass} min-h-[86px] resize-none`}
-              onChange={(event) => updateContentPart(1, event.target.value)}
-              placeholder="Design, edit, and export a clean landing page."
-              value={parts[1] || ""}
-            />
-          </label>
-          <ContentField label="Button Text" onChange={(value) => updateContentPart(2, value)} placeholder="Start Building" value={parts[2] || ""} />
-        </div>
-      );
-    }
-
-    if (component.type === "contact") {
-      return (
-        <div className="space-y-4">
-          <ContentField label="Title" onChange={(value) => updateContentPart(0, value)} placeholder="Ready to launch?" value={parts[0] || ""} />
-          <ContentField label="Subtitle" onChange={(value) => updateContentPart(1, value)} placeholder="Leave your email and we will help you go live." value={parts[1] || ""} />
-          <ContentField label="Input Placeholder" onChange={(value) => updateContentPart(2, value)} placeholder="Email address" value={parts[2] || ""} />
-          <ContentField label="Button Text" onChange={(value) => updateContentPart(3, value)} placeholder="Contact Us" value={parts[3] || ""} />
-        </div>
-      );
-    }
-
-    if (component.type === "features") {
-      return (
-        <div className="space-y-3">
-          <textarea
-            className={`${contentInputClass} min-h-[150px] resize-none font-medium leading-6`}
-            onChange={(event) => onUpdate(component.id, { content: event.target.value })}
-            value={component.content}
-          />
-          <p className="text-xs font-medium leading-5 text-[#566583]">Use one feature per line. Format: Title|Description</p>
-        </div>
-      );
+    const spec = blockRegistry[component.type];
+    if (spec) {
+      const data = spec.read(component);
+      const setProp = (key: string, value: unknown) =>
+        onUpdate(component.id, { props: { [key]: value } });
+      const Panel = spec.Panel;
+      return <Panel data={data} setProp={setProp} />;
     }
 
     if (component.type === "gallery") {
@@ -138,22 +61,19 @@ export default function PropertyEditor({
         <div className="space-y-3">
           <textarea
             className={`${contentInputClass} min-h-[150px] resize-none font-medium leading-6`}
-            onChange={(event) => onUpdate(component.id, { content: event.target.value })}
+            onChange={(e) => onUpdate(component.id, { content: e.target.value })}
             value={component.content}
           />
-          <p className="text-xs font-medium leading-5 text-[#566583]">Use one image per line. Format: /image.webp|Caption</p>
+          <p className="text-xs font-medium leading-5 text-[#566583]">One image per line: /path.webp|Caption</p>
           <div className="grid grid-cols-2 gap-2">
-            {imagePresets.slice(1, 5).map((image) => (
-              <button
+            {imagePresets.slice(1, 5).map((img) => (
+              <button key={img} type="button"
                 className="truncate rounded-lg border border-[#0B1D40] px-2 py-2 text-[10px] font-bold text-[#0B1D40] transition hover:bg-black/5"
-                key={image}
                 onClick={() => {
-                  const nextLine = `${image}|Image`;
-                  onUpdate(component.id, { content: component.content ? `${component.content}\n${nextLine}` : nextLine });
-                }}
-                type="button"
-              >
-                Add {image.split("/").pop()?.replace(".webp", "")}
+                  const line = `${img}|Image`;
+                  onUpdate(component.id, { content: component.content ? `${component.content}\n${line}` : line });
+                }}>
+                + {img.split("/").pop()?.replace(".webp", "")}
               </button>
             ))}
           </div>
@@ -162,98 +82,25 @@ export default function PropertyEditor({
     }
 
     if (component.type === "image") {
-      return (
-        <div className="space-y-3">
-          <ContentField label="Image Path or URL" onChange={(value) => onUpdate(component.id, { content: value })} placeholder="/showcase.webp" value={component.content} />
-          <div className="grid grid-cols-2 gap-2">
-            {imagePresets.map((image) => (
-              <button
-                className={`truncate rounded-lg border px-2 py-2 text-[10px] font-bold transition ${component.content === image ? "border-blue-500 bg-blue-50 text-blue-700" : "border-[#0B1D40] text-[#0B1D40] hover:bg-black/5"}`}
-                key={image}
-                onClick={() => onUpdate(component.id, { content: image })}
-                type="button"
-              >
-                {image.split("/").pop()?.replace(".webp", "")}
-              </button>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (component.type === "feature-item") {
-      const currentIcon   = parts[0] || "Zap";
-      const currentLayout = parts[1] || "horizontal";
-
-      return (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <span className="block text-[13px] font-bold text-[#0B1D40]">Icon</span>
-            <div className="grid max-h-[180px] grid-cols-7 gap-1 overflow-y-auto rounded-xl border border-[#0B1D40] p-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#0B1D40]/20">
-              {ICON_NAMES.map((name) => {
-                const Icon = (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[name];
-                if (!Icon) return null;
-                const isActive = currentIcon === name;
-                return (
-                  <button
-                    key={name}
-                    title={name}
-                    type="button"
-                    className={`flex items-center justify-center rounded p-2 transition-all duration-150 ${isActive ? "bg-[#0B1D40]" : "hover:bg-[#0B1D40]/10"}`}
-                    onClick={() => updateContentPart(0, name)}
-                  >
-                    <Icon size={14} color={isActive ? "white" : "#0B1D40"} />
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-[#566583]">
-              Icon: <span className="font-bold text-[#0B1D40]">{currentIcon}</span>
-            </p>
-          </div>
-
-          <div>
-            <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">Layout</span>
-            <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#0B1D40]">
-              {(["horizontal", "card"] as const).map((layout) => (
-                <button
-                  key={layout}
-                  type="button"
-                  className={`py-2 text-xs font-bold capitalize transition ${currentLayout === layout ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
-                  onClick={() => updateContentPart(1, layout)}
-                >
-                  {layout}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <ContentField label="Title"        value={parts[2] || ""} onChange={(v) => updateContentPart(2, v)} placeholder="Feature Title" />
-          <ContentField label="Description"  value={parts[3] || ""} onChange={(v) => updateContentPart(3, v)} placeholder="Describe this feature..." />
-          <ContentField label="Button (opt)" value={parts[4] || ""} onChange={(v) => updateContentPart(4, v)} placeholder="Learn More" />
-        </div>
-      );
+      return <ImagePanel component={component} onUpdate={onUpdate} />;
     }
 
     if (component.type === "columns") {
-      const current = component.content || "3";
+      const cur = component.content || "3";
       return (
         <div className="space-y-3">
-          <span className="block text-[13px] font-bold text-[#0B1D40]">Number of Columns</span>
+          <span className="block text-[13px] font-bold text-[#0B1D40]">Columns</span>
           <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-[#0B1D40]">
             {(["2", "3", "4"] as const).map((n) => (
-              <button
-                key={n}
-                type="button"
-                className={`py-2.5 text-sm font-bold transition ${current === n ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
-                onClick={() => onUpdate(component.id, { content: n })}
-              >
+              <button key={n} type="button"
+                className={`py-2.5 text-sm font-bold transition ${cur === n ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
+                onClick={() => onUpdate(component.id, { content: n })}>
                 {n}
               </button>
             ))}
           </div>
           <p className="rounded-lg bg-[#eef4fb] px-3 py-2 text-[11px] font-medium leading-5 text-[#566583]">
-            Drag <strong className="text-[#0B1D40]">Feature Items</strong> onto this block to create a side-by-side layout.
+            Drag <strong className="text-[#0B1D40]">Feature Items</strong> in to create a side-by-side layout.
           </p>
         </div>
       );
@@ -267,20 +114,12 @@ export default function PropertyEditor({
             {ICON_NAMES.map((name) => {
               const Icon = (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[name];
               if (!Icon) return null;
-              const isActive = component.content === name;
+              const active = component.content === name;
               return (
-                <button
-                  key={name}
-                  title={name}
-                  type="button"
-                  className={`flex items-center justify-center rounded p-2 transition-all duration-150 ${
-                    isActive
-                      ? "bg-[#0B1D40] text-white"
-                      : "text-[#0B1D40] hover:bg-[#0B1D40]/10"
-                  }`}
-                  onClick={() => onUpdate(component.id, { content: name })}
-                >
-                  <Icon size={16} color={isActive ? "white" : "#0B1D40"} />
+                <button key={name} title={name} type="button"
+                  className={`flex items-center justify-center rounded p-2 transition-all duration-150 ${active ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-[#0B1D40]/10"}`}
+                  onClick={() => onUpdate(component.id, { content: name })}>
+                  <Icon size={16} color={active ? "white" : "#0B1D40"} />
                 </button>
               );
             })}
@@ -292,113 +131,140 @@ export default function PropertyEditor({
       );
     }
 
-    const label = component.type === "input" ? "Placeholder Text" : "Text";
-
     return (
       <label className="block">
-        <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">{label}</span>
+        <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">
+          {component.type === "input" ? "Placeholder Text" : "Text Content"}
+        </span>
         <textarea
           className={`${contentInputClass} min-h-[92px] resize-none`}
-          onChange={(event) => onUpdate(component.id, { content: event.target.value })}
+          onChange={(e) => onUpdate(component.id, { content: e.target.value })}
           value={component.content}
         />
       </label>
     );
   };
 
-  const asideClass = className ?? "relative hidden h-full w-[286px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-[#f4d8cc] bg-[#fff7f4] shadow-[0_18px_45px_rgba(113,63,18,0.10)] xl:flex";
+  const renderAdvanced = () => (
+    <div className="space-y-5 px-5 py-5">
+      <div>
+        <span className="mb-2 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">
+          Responsive Visibility
+        </span>
+        <p className="mb-3 text-[11px] text-[#566583]">Hide this block on specific devices.</p>
+        {(["Mobile", "Tablet", "Desktop"] as const).map((label) => (
+          <div key={label} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-[#f7f9fc]">
+            <span className="text-[13px] font-bold text-[#0B1D40]">Hide on {label}</span>
+            <button type="button" className="rounded p-1 text-[#566583] hover:text-[#0B1D40]">
+              <Eye className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div>
+        <span className="mb-2 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">
+          Block ID
+        </span>
+        <input
+          type="text"
+          placeholder={component?.id.slice(0, 8)}
+          className="w-full rounded-lg border border-[#dbe3ef] bg-transparent px-3 py-2 font-mono text-[12px] text-[#0B1D40] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+        />
+        <p className="mt-1.5 text-[11px] text-[#566583]">Use for anchor links: #block-id</p>
+      </div>
+    </div>
+  );
+
+  const asideClass =
+    className ??
+    "relative hidden h-full w-[300px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-[#f4d8cc] bg-[#fff7f4] shadow-[0_18px_45px_rgba(113,63,18,0.10)] xl:flex";
 
   return (
     <aside className={asideClass}>
+      {/* ── Close handle (mobile sheet) ── */}
       {onClose && (
-        <div className="flex items-center justify-between px-6 pt-3 pb-1">
-          <div className="mx-auto h-1 w-10 rounded-full bg-gray-300" />
+        <div className="relative flex items-center justify-center px-6 pb-1 pt-3">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
           <button
+            aria-label="Close"
             className="absolute right-4 top-3 rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
             onClick={onClose}
             type="button"
-            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
-      <div className="flex border-b border-[#f2d8cf] bg-white/45 px-6 pt-5">
-        {(["settings", "layers"] as const).map((tab) => (
+
+      {/* ── Block name header ── */}
+      {component && (
+        <div className="flex items-center gap-2 border-b border-[#f0eae6] px-5 py-3">
+          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#0B1D40]/10">
+            <span className="text-[10px] font-black text-[#0B1D40]">
+              {component.type.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <span className="text-[13px] font-bold text-[#0B1D40]">
+            {component.type.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+          </span>
+        </div>
+      )}
+
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-[#f2d8cf] bg-white/40 px-1 pt-1">
+        {TABS.map(({ id, label, Icon }) => (
           <button
-            key={tab}
-            className={`flex-1 border-b-[2px] pb-4 text-sm font-bold capitalize transition-colors duration-150 ${
-              activeTab === tab
-                ? "border-[#0B1D40] text-[#0B1D40]"
-                : "border-transparent text-[#566583] hover:text-[#0B1D40]"
-            }`}
-            onClick={() => setActiveTab(tab)}
+            key={id}
             type="button"
+            title={label}
+            onClick={() => setActiveTab(id)}
+            className={`flex flex-1 flex-col items-center gap-0.5 rounded-t-md pb-2.5 pt-2 text-[10px] font-bold uppercase tracking-wider transition-colors duration-150 ${
+              activeTab === id
+                ? "border-b-2 border-[#0B1D40] text-[#0B1D40]"
+                : "border-b-2 border-transparent text-[#566583] hover:text-[#0B1D40]"
+            }`}
           >
-            {tab === "settings" ? "Settings" : "Layers"}
+            <Icon className="h-3.5 w-3.5" />
+            <span className="hidden sm:block">{label}</span>
           </button>
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {activeTab === "layers" ? (
-          <LayersPanel />
-        ) : (
-          <div className="space-y-5 px-6 pb-8 pt-6">
-        {!component ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-sm font-medium leading-6 text-[#566583]">
-            <SlidersHorizontal className="mb-3 h-8 w-8 text-[#0B1D40]" />
-            Select a canvas block to edit its content and styles.
-          </div>
-        ) : (
-          <>
-            <div>
-              <h4 className="mb-3 text-[15px] font-bold text-[#0B1D40]">Content</h4>
-              {renderContentEditor()}
-            </div>
-
-            <div>
-              <h4 className="mb-3 text-[15px] font-bold text-[#0B1D40]">Alignment</h4>
-              <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-[#0B1D40]">
-                {[
-                  { value: "left", icon: AlignLeft },
-                  { value: "center", icon: AlignCenter },
-                  { value: "right", icon: AlignRight },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isActive = component.styles.textAlign === item.value;
-                  return (
-                    <button
-                      className={`flex items-center justify-center border-r border-[#0B1D40] py-2.5 last:border-r-0 ${isActive ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
-                      key={item.value}
-                      onClick={() => updateStyle({ textAlign: item.value as ComponentStyles["textAlign"] })}
-                      type="button"
-                    >
-                      <Icon className="h-4 w-4" />
-                    </button>
-                  );
-                })}
+      {/* ── Tab body ── */}
+      <div className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab + (component?.id ?? "none")}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="h-full"
+          >
+            {activeTab === "layers" ? (
+              <LayersPanel />
+            ) : activeTab === "style" && component ? (
+              <StyleTab component={component} onUpdate={onUpdate} />
+            ) : activeTab === "advanced" ? (
+              renderAdvanced()
+            ) : (
+              <div className="px-5 py-5">
+                {!component ? (
+                  <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0B1D40]/[0.08]">
+                      <SlidersHorizontal className="h-6 w-6 text-[#0B1D40]" />
+                    </div>
+                    <p className="max-w-[180px] text-[13px] font-medium leading-5 text-[#566583]">
+                      Click any block on the canvas to edit it
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">{renderContentEditor()}</div>
+                )}
               </div>
-            </div>
-
-            <div className="space-y-4">
-              {styleFields.map((field) => (
-                <label className="block" key={field.key}>
-                  <span className="mb-2 block text-[15px] font-bold text-[#0B1D40]">{field.label}</span>
-                  <input
-                    className="w-full rounded-xl border border-[#0B1D40] bg-transparent px-4 py-2.5 text-center text-[15px] font-bold text-[#0B1D40] outline-none transition focus:ring-2 focus:ring-blue-100"
-                    onChange={(event) => updateStyle({ [field.key]: event.target.value })}
-                    placeholder={field.placeholder}
-                    type={field.type || "text"}
-                    value={component.styles[field.key] || (field.type === "color" ? "#000000" : "")}
-                  />
-                </label>
-              ))}
-            </div>
-          </>
-        )}
-          </div>
-        )}
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </aside>
   );

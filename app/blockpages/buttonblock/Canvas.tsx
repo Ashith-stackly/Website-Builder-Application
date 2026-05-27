@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon } from 'lucide-react';
 import { BlockData } from './types';
-
+ 
 interface CanvasProps {
   blocks: BlockData[];
   selectedBlockId: string | null;
@@ -11,8 +11,11 @@ interface CanvasProps {
   canRedo?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+  editingButtonId?: string | null;
+  onButtonSelected?: (props: any) => void;
+  onOpenMobileSidebar?: () => void;
 }
-
+ 
 export default function Canvas({
   blocks,
   selectedBlockId,
@@ -21,51 +24,124 @@ export default function Canvas({
   canUndo,
   canRedo,
   onUndo,
-  onRedo
+  onRedo,
+  editingButtonId,
+  onButtonSelected,
+  onOpenMobileSidebar
 }: CanvasProps) {
   const renderBlockContent = (block: BlockData) => {
     switch (block.type) {
-      case 'button':
+      case 'button': {
+        const w = (block.props.width as string) || '100%';
+        const parsedW = (w !== '' && !isNaN(Number(w))) ? `${w}px` : w;
+        const h = (block.props.height as string) || 'auto';
+        const parsedH = (h !== '' && !isNaN(Number(h))) ? `${h}px` : h;
+        const bg = (block.props.backgroundColor as string) || '';
+        const op = typeof block.props.opacity === 'number' ? block.props.opacity : 100;
+        const align = (block.props.alignment as string) || 'center';
+        const iconPos = block.props.iconPosition as string;
+        const variant = block.props.buttonVariant as string;
+        const br = (block.props.borderRadius as string) || '6px';
+        const parsedBr = (br !== '' && !isNaN(Number(br))) ? `${br}px` : br;
+        const effect = block.props.effect as string;
+ 
+        const maxWidthValue = parsedW === 'auto' ? 'none' : parsedW.replace(/\s+/g, '');
+        const actualWidth = parsedW === 'auto' ? 'auto' : '100%';
+ 
+        const containerAlignClass = align === 'left' ? 'mr-auto ml-0' : align === 'right' ? 'ml-auto mr-0' : 'mx-auto';
+ 
+        const buttonStyle = {
+          borderRadius: variant === 'pill' ? '9999px' : parsedBr,
+          height: parsedH !== 'auto' ? parsedH : undefined,
+          opacity: op / 100,
+          backdropFilter: effect === 'blur' ? 'blur(8px)' : undefined,
+          boxShadow: block.props.dropShadow ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' : undefined,
+          transform: `rotate(${block.props.rotation || 0}deg) scaleX(${block.props.flipH ? -1 : 1}) scaleY(${block.props.flipV ? -1 : 1})`,
+          padding: `${block.props.padding !== undefined ? block.props.padding : 16}px`,
+        };
+ 
         return (
           <div className="w-full pb-2">
-            <h3 className="text-[#0f3b89] font-bold text-[15px] mb-4">Video Blocks</h3>
+            <h3 className="text-[#0f3b89] font-bold text-[15px] mb-4">Button Blocks</h3>
             {/* BUTTONS SECTION */}
             <div
-              className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-[18px] mx-auto w-full mb-10"
-              style={{ maxWidth: (block.props.width || '100%').replace(/\s+/g, ''), width: '100%' }}
+              className={`grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-[18px] w-full mb-10 ${containerAlignClass}`}
+              style={{ maxWidth: maxWidthValue, width: actualWidth }}
             >
               <button
-                className="w-full bg-[#0f3b89] text-white py-3.5 font-bold hover:bg-[#0c2f6d] text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-lg active:scale-[0.98]"
-                style={{ borderRadius: (block.props.borderRadius || '6px').replace(/\s+/g, '') }}
+                onClick={(e) => {
+                  if (editingButtonId && onButtonSelected) {
+                    e.stopPropagation();
+                    onButtonSelected({ ...block.props, styleVariant: 'primary' });
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 text-white py-3.5 font-bold text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-lg active:scale-[0.98]"
+                style={{ ...buttonStyle, background: bg || '#0f3b89' }}
               >
+                {iconPos === 'left' && <Play className="w-4 h-4 fill-current" />}
                 Click Me !
+                {iconPos === 'right' && <Play className="w-4 h-4 fill-current" />}
               </button>
               <button
-                className="w-full border border-gray-300 text-[#0f3b89] py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"
-                style={{ borderRadius: (block.props.borderRadius || '6px').replace(/\s+/g, '') }}
+                onClick={(e) => {
+                  if (editingButtonId && onButtonSelected) {
+                    e.stopPropagation();
+                    onButtonSelected({ ...block.props, styleVariant: 'secondary' });
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 border py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"
+                style={{
+                  ...buttonStyle,
+                  background: 'transparent',
+                  borderColor: bg || '#d1d5db',
+                  color: bg && !bg.includes('gradient') ? bg : '#0f3b89'
+                }}
               >
+                {iconPos === 'left' && <Play className="w-4 h-4 fill-current" />}
                 Secondary Button
+                {iconPos === 'right' && <Play className="w-4 h-4 fill-current" />}
               </button>
               <button
-                className="w-full border border-gray-300 text-[#0f3b89] py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"
-                style={{ borderRadius: (block.props.borderRadius || '6px').replace(/\s+/g, '') }}
+                onClick={(e) => {
+                  if (editingButtonId && onButtonSelected) {
+                    e.stopPropagation();
+                    onButtonSelected({ ...block.props, styleVariant: 'primary2' });
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 text-white py-3.5 font-bold text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-lg active:scale-[0.98]"
+                style={{ ...buttonStyle, background: bg || '#0f3b89' }}
               >
+                {iconPos === 'left' && <Play className="w-4 h-4 fill-current" />}
                 Primary Button
+                {iconPos === 'right' && <Play className="w-4 h-4 fill-current" />}
               </button>
               <button
-                className="w-full border border-gray-300 text-[#0f3b89] py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"
-                style={{ borderRadius: (block.props.borderRadius || '6px').replace(/\s+/g, '') }}
+                onClick={(e) => {
+                  if (editingButtonId && onButtonSelected) {
+                    e.stopPropagation();
+                    onButtonSelected({ ...block.props, styleVariant: 'outline' });
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 border py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"
+                style={{
+                  ...buttonStyle,
+                  background: 'transparent',
+                  borderColor: bg || '#d1d5db',
+                  color: bg && !bg.includes('gradient') ? bg : '#0f3b89'
+                }}
               >
+                {iconPos === 'left' && <Play className="w-4 h-4 fill-current" />}
                 Outline Button
+                {iconPos === 'right' && <Play className="w-4 h-4 fill-current" />}
               </button>
             </div>
-
+ 
             {/* TEXT LINK & VIDEOS SECTION */}
             <h3 className="text-[#0f3b89] font-bold text-[15px] mb-4">Text Link</h3>
             <div className="w-full h-[1px] bg-gray-200 mb-6"></div>
             <div
-              className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-[18px] w-full"
-              style={{ maxWidth: (block.props.width || '100%').replace(/\s+/g, ''), width: '100%' }}
+              className={`grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-[18px] w-full ${containerAlignClass}`}
+              style={{ maxWidth: maxWidthValue, width: actualWidth }}
             >
               {/* Upload Video Card */}
               <div
@@ -85,7 +161,7 @@ export default function Canvas({
                   <p className="text-[13px] text-gray-500 font-medium">Headro custer mbee 1000%</p>
                 </div>
               </div>
-
+ 
               {/* Embed Video Card */}
               <div
                 className="border border-gray-200 bg-white flex flex-col overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative"
@@ -113,6 +189,7 @@ export default function Canvas({
             </div>
           </div>
         );
+      }
       case 'video':
         return (
           <>
@@ -132,7 +209,7 @@ export default function Canvas({
         );
     }
   };
-
+ 
   return (
     <main
       className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#dbe3ef] bg-[#f7f9fc] shadow-sm"
@@ -147,7 +224,15 @@ export default function Canvas({
           My Website
           <ChevronDown className="h-4 w-4 text-gray-600" />
         </button>
-
+ 
+        {/* Mobile Settings Trigger */}
+        <button
+          className="lg:hidden ml-auto mr-2 flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0f3b89] px-3 py-2 text-[13px] font-bold text-white shadow-sm hover:bg-[#0c2e6b]"
+          onClick={() => onOpenMobileSidebar?.()}
+        >
+          Edit Styles
+        </button>
+ 
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex flex-shrink-0 overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm">
             <button
@@ -167,7 +252,7 @@ export default function Canvas({
               <Redo2 className="h-[18px] w-[18px]" strokeWidth={1.5} />
             </button>
           </div>
-
+ 
           <button
             className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50"
             onClick={() => alert("Draft saved locally!")}
@@ -194,7 +279,7 @@ export default function Canvas({
           </button>
         </div>
       </div>
-
+ 
       {/* Canvas Fixed Area */}
       <div className="flex flex-1 flex-col items-center gap-6 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
         {blocks.length === 0 ? (
@@ -208,7 +293,7 @@ export default function Canvas({
                 <X className="w-[18px] h-[18px]" strokeWidth={2.5} />
               </button>
             </div>
-
+ 
             {/* Block Content Region */}
             <div className="relative flex w-full flex-1 flex-col items-start overflow-y-auto p-5 pb-8 sm:p-8 sm:pb-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {renderBlockContent({ id: 'default', type: 'button', props: {} })}
@@ -217,7 +302,7 @@ export default function Canvas({
         ) : (
           blocks.map(block => {
             const isSelected = selectedBlockId === block.id;
-
+ 
             return (
               <div
                 key={block.id}
@@ -225,6 +310,7 @@ export default function Canvas({
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectBlock(block.id);
+                  onOpenMobileSidebar?.();
                 }}
               >
                 {/* Canvas Header */}
@@ -240,7 +326,7 @@ export default function Canvas({
                     <X className="w-[18px] h-[18px]" strokeWidth={2.5} />
                   </button>
                 </div>
-
+ 
                 {/* Block Content Region */}
                 <div className="relative flex w-full flex-1 flex-col items-start overflow-y-auto p-5 pb-8 sm:p-8 sm:pb-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {renderBlockContent(block)}

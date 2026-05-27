@@ -17,5 +17,9 @@ export const useBuilderActions = () =>
       loadStarterWebsite: s.loadStarterWebsite,
       loadWebsiteFromRequirements: s.loadWebsiteFromRequirements,
       clearCanvas: s.clearCanvas,
+      undo: s.undo,
+      redo: s.redo,
+      saveToLocalStorage: s.saveToLocalStorage,
+      loadFromLocalStorage: s.loadFromLocalStorage,
     })),
   );

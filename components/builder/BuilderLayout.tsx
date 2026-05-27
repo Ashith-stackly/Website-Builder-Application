@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { DndContext, DragOverlay, PointerSensor, closestCenter, pointerWithin, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { ChevronRight, GripVertical, SlidersHorizontal } from "lucide-react";
+import { PreviewModal } from "./PreviewModal";
 import { useSearchParams } from "next/navigation";
 import Canvas from "./Canvas";
 import ComponentPalette from "./ComponentPalette";
@@ -31,14 +33,44 @@ const collisionDetectionStrategy: CollisionDetection = (args) => {
 };
 
 export default function BuilderLayout() {
-  const { components, selectedComponentId, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas } = useBuilder();
+  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveToLocalStorage } = useBuilder();
   const [activePaletteType, setActivePaletteType] = useState<ComponentType | null>(null);
   const [activeCanvasType, setActiveCanvasType] = useState<ComponentType | null>(null);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
   const [isRightOpen, setIsRightOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const searchParams = useSearchParams();
   const hasLoadedRequirements = useRef(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 3 } }));
+
+  /* ── Keyboard shortcuts ── */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (isInlineEditing) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      const inInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement)?.isContentEditable;
+      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      const ctrl = isMac ? e.metaKey : e.ctrlKey;
+
+      if (ctrl) {
+        if (e.key === "z" && !e.shiftKey)         { e.preventDefault(); undo(); return; }
+        if ((e.key === "z" && e.shiftKey) || e.key === "y") { e.preventDefault(); redo(); return; }
+        if (e.key === "s")                         { e.preventDefault(); saveToLocalStorage(); return; }
+        if (e.key === "d" && selectedComponentId) { e.preventDefault(); duplicateComponent(selectedComponentId); return; }
+      }
+
+      if (!inInput) {
+        if ((e.key === "Delete" || e.key === "Backspace") && selectedComponentId) {
+          e.preventDefault(); deleteComponent(selectedComponentId);
+        }
+        if (e.key === "Escape" && selectedComponentId) {
+          selectComponent(null);
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isInlineEditing, selectedComponentId, undo, redo, saveToLocalStorage, duplicateComponent, deleteComponent, selectComponent]);
   const selectedComponent = selectedComponentId ? findByIdDeep(components, selectedComponentId) : null;
 
   useEffect(() => {
@@ -138,12 +170,30 @@ export default function BuilderLayout() {
             <ComponentPalette onAdd={addComponent} onLoadStarter={loadStarterWebsite} />
           </div>
 
-          <div className={`fixed inset-0 z-[60] transition-opacity duration-300 lg:hidden ${isLeftOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}>
-            <button aria-label="Close left sidebar" className="absolute inset-0 bg-black/60" onClick={() => setIsLeftOpen(false)} type="button" />
-            <div className={`absolute bottom-0 left-0 flex h-[65vh] max-h-[800px] w-full transform flex-col overflow-hidden rounded-t-3xl bg-[#0A193A] shadow-2xl transition-transform duration-300 ${isLeftOpen ? "translate-y-0" : "translate-y-full"}`}>
-              <ComponentPalette className="w-full rounded-t-3xl rounded-b-none border-0" onAdd={(type) => { addComponent(type); setIsLeftOpen(false); }} onLoadStarter={() => { loadStarterWebsite(); setIsLeftOpen(false); }} />
-            </div>
-          </div>
+          <AnimatePresence>
+            {isLeftOpen && (
+              <motion.div
+                key="left-panel"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[60] lg:hidden"
+              >
+                <button aria-label="Close left sidebar" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsLeftOpen(false)} type="button" />
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", stiffness: 380, damping: 38 }}
+                  className="absolute bottom-0 left-0 flex h-[65vh] max-h-[800px] w-full flex-col overflow-hidden rounded-t-3xl bg-[#0A193A] shadow-2xl"
+                >
+                  <div className="mx-auto mt-3 h-1 w-10 flex-shrink-0 rounded-full bg-white/20" />
+                  <ComponentPalette className="w-full flex-1 rounded-none border-0" onAdd={(type) => { addComponent(type); setIsLeftOpen(false); }} onLoadStarter={() => { loadStarterWebsite(); setIsLeftOpen(false); }} />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <Canvas
             components={components}
@@ -152,37 +202,69 @@ export default function BuilderLayout() {
             onDuplicate={duplicateComponent}
             onLoadStarter={loadStarterWebsite}
             onSelect={selectComponent}
+            onPreview={() => setIsPreviewOpen(true)}
           />
 
           <PropertyEditor component={selectedComponent} onUpdate={updateComponent} />
 
           {/* Mobile: floating Edit Properties button when a block is selected */}
-          {selectedComponent && (
-            <button
-              aria-label="Edit properties"
-              className="fixed bottom-6 right-5 z-50 flex items-center gap-2 rounded-full bg-[#0B1D40] px-4 py-3 text-sm font-bold text-white shadow-xl transition-all duration-200 hover:bg-[#152B52] active:scale-95 xl:hidden"
-              onClick={() => setIsRightOpen(true)}
-              type="button"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Edit
-            </button>
-          )}
+          <AnimatePresence>
+            {selectedComponent && (
+              <motion.button
+                key="fab-edit"
+                initial={{ opacity: 0, scale: 0.8, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 12 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Edit properties"
+                className="fixed bottom-6 right-5 z-50 flex items-center gap-2 rounded-full bg-[#0B1D40] px-4 py-3 text-sm font-bold text-white shadow-xl xl:hidden"
+                onClick={() => setIsRightOpen(true)}
+                type="button"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Edit
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           {/* Mobile PropertyEditor bottom sheet */}
-          <div className={`fixed inset-0 z-[70] transition-opacity duration-300 xl:hidden ${isRightOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}>
-            <button aria-label="Close properties" className="absolute inset-0 bg-black/60" onClick={() => setIsRightOpen(false)} type="button" />
-            <div className={`absolute bottom-0 left-0 flex h-[72vh] max-h-[740px] w-full transform flex-col overflow-hidden rounded-t-3xl border-t border-[#f4d8cc] bg-[#fff7f4] shadow-2xl transition-transform duration-300 ${isRightOpen ? "translate-y-0" : "translate-y-full"}`}>
-              <PropertyEditor
-                className="relative flex h-full w-full flex-col overflow-hidden bg-[#fff7f4]"
-                component={selectedComponent}
-                onClose={() => setIsRightOpen(false)}
-                onUpdate={updateComponent}
-              />
-            </div>
-          </div>
+          <AnimatePresence>
+            {isRightOpen && (
+              <motion.div
+                key="right-panel"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[70] xl:hidden"
+              >
+                <button aria-label="Close properties" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsRightOpen(false)} type="button" />
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", stiffness: 380, damping: 38 }}
+                  className="absolute bottom-0 left-0 flex h-[72vh] max-h-[740px] w-full flex-col overflow-hidden rounded-t-3xl border-t border-[#f4d8cc] bg-[#fff7f4] shadow-2xl"
+                >
+                  <div className="mx-auto mt-3 h-1 w-10 flex-shrink-0 rounded-full bg-gray-300" />
+                  <PropertyEditor
+                    className="relative flex h-full w-full flex-col overflow-hidden bg-[#fff7f4]"
+                    component={selectedComponent}
+                    onClose={() => setIsRightOpen(false)}
+                    onUpdate={updateComponent}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
+
+      {isPreviewOpen && (
+        <PreviewModal srcDoc={exportHtml()} onClose={() => setIsPreviewOpen(false)} />
+      )}
 
       <DragOverlay dropAnimation={null}>
         {(activePaletteType ?? activeCanvasType) ? (

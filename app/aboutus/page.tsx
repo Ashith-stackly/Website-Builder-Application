@@ -8,18 +8,10 @@ export default function AboutPage({ onBack }: { onBack: () => void }) {
   return (
     <div className="min-h-screen bg-[#FFF1F2] text-[#06224C] font-sans flex flex-col">
       <div className="flex-grow pb-12">
-        {/* Back Button */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-          <button onClick={onBack} className="inline-flex items-center gap-2 text-[#06224C] hover:text-blue-600 uppercase text-[10px] font-black tracking-widest outline-none">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-            Back to Home
-          </button>
-        </div>
-
         {/* ── Marquee Banner ───────────────────────────────────────────────── */}
-        <section className="py-12 md:py-20 bg-white/50 text-center border-y border-[#06224C]/5 overflow-hidden">
+        <section className="py-12 md:py-20 bg-white/30 text-center border-y border-[#06224C]/5 overflow-hidden">
           <h1
-            className="text-5xl md:text-8xl font-black text-[#06224C] opacity-5 tracking-tighter uppercase pointer-events-none select-none break-words"
+            className="text-5xl md:text-8xl font-black text-[#06224C] opacity-25 tracking-tighter uppercase pointer-events-none select-none break-words"
             aria-hidden="true"
           >
             Innovation * Growth
@@ -142,7 +134,7 @@ export default function AboutPage({ onBack }: { onBack: () => void }) {
               </div>
               <div className="w-full lg:w-1/2">
                 <img 
-                  src="https://images.unsplash.com/photo-1556761175-5973dc0f32d7?auto=format&fit=crop&q=80&w=1000" 
+                  src="/about.webp" 
                   alt="Team shaking hands" 
                   className="rounded-2xl shadow-2xl object-cover w-full h-[300px] md:h-[450px]"
                 />
@@ -220,7 +212,7 @@ export default function AboutPage({ onBack }: { onBack: () => void }) {
                 {[
                   { icon: <FaUsers />, stat: "50K+", label: "Happy Users" },
                   { icon: <FaGlobe />, stat: "120+", label: "Countries" },
-                  { icon: <FaLayerGroup />, stat: "500+", label: "Templates" },
+                  { icon: <FaLayerGroup />, stat: "100+", label: "Templates" },
                   { icon: <FaHeadset />, stat: "24/7", label: "Customer Support" },
                 ].map((item, idx) => (
                   <div key={idx} className={`flex items-center gap-4 ${idx !== 0 && idx !== 2 ? 'pl-4 sm:pl-8' : ''} ${idx === 2 ? 'pl-0 md:pl-8' : ''}`}>

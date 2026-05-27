@@ -5,11 +5,11 @@ import {
   HelpCircle, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { BlockType } from './types';
-
+ 
 interface LeftSidebarProps {
   onAddBlock: (type: BlockType) => void;
 }
-
+ 
 export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
   const [activeTab, setActiveTab] = useState<'blocks' | 'pages'>('blocks');
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,15 +18,15 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
     media: false,
     layout: false
   });
-
+ 
   const toggleSection = (section: keyof typeof sections) => {
     setSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
-
+ 
   const matchesSearch = (text: string) => {
     return text.toLowerCase().includes(searchQuery.toLowerCase());
   };
-
+ 
   return (
     <aside className="flex h-full w-[248px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-[#183765] bg-[#0B1D40] text-white shadow-[0_18px_45px_rgba(11,29,64,0.18)]">
       {/* Tabs */}
@@ -45,7 +45,7 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
           Pages
         </button>
       </div>
-
+ 
       <div className="w-full flex-1 overflow-y-auto p-5">
         {activeTab === 'blocks' ? (
           <>
@@ -61,7 +61,7 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
               />
               <Mic className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 cursor-pointer" />
             </div>
-
+ 
             {/* Accordion List */}
             <div className="space-y-4">
               {/* Basic Blocks */}
@@ -104,7 +104,7 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
                         </div>
                       )}
                     </div>
-
+ 
                     {/* Active Tool Sub-options */}
                     <div className="flex bg-white rounded overflow-hidden text-xs mb-6">
                       <button
@@ -124,7 +124,7 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
                   </>
                 )}
               </div>
-
+ 
               {/* Media Blocks */}
               <div>
                 <button
@@ -166,7 +166,7 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
                   </div>
                 )}
               </div>
-
+ 
               {/* Layout Blocks */}
               <div>
                 <button
@@ -208,7 +208,7 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
                   </div>
                 )}
               </div>
-
+ 
             </div>
           </>
         ) : (
@@ -227,7 +227,7 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
           </div>
         )}
       </div>
-
+ 
       <div className="border-t border-[#1A315E] p-5">
         <button
           className="w-full bg-white text-gray-800 rounded py-2.5 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 hover:scale-105 active:scale-95 transition-all duration-300 shadow-sm"
@@ -240,3 +240,5 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
     </aside>
   );
 }
+ 
+ 

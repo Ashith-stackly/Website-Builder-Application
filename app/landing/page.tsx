@@ -562,6 +562,7 @@ export default function Home() {
       setSubmittedSearch("");
       setSearchQuery("");
       setIsSearchOpen(false);
+      setActiveFilter("all");
       return;
     }
 
@@ -674,7 +675,9 @@ export default function Home() {
           <motion.div className="w-full lg:w-1/2 space-y-4 md:space-y-6 text-left" variants={revealContainer}>
             {/* Added About Us box and Blue Line */}
             <motion.div className="" variants={fadeUp}>
-               <span className="inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95">About us</span>
+               <span className="text-xl font-black uppercase tracking-[0.2em] text-blue-600">
+                 About us
+               </span>
             </motion.div>
             
             <motion.div className="flex items-center gap-3" variants={fadeUp}>
@@ -730,6 +733,7 @@ export default function Home() {
                 onClick={() => {
                   setSubmittedSearch("");
                   setSearchQuery("");
+                  setActiveFilter("all"); // Added to ensure reset
                 }}
                 className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-widest text-gray-500 transition hover:border-blue-400 hover:text-blue-600"
               >
@@ -742,7 +746,8 @@ export default function Home() {
 
       <section id="categories" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Categories</SectionHeading>
-        <motion.div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+        {/* Added key to force re-render/re-animation when state changes */}
+        <motion.div key={`categories-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
           {visibleCategories.map((category) => (
             <motion.article key={category.title} className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl" variants={cardReveal} whileHover={softHover}>
               <div className="h-44 overflow-hidden md:h-52">
@@ -767,7 +772,8 @@ export default function Home() {
 
       <section className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Top Selling This Week</SectionHeading>
-        <motion.div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+        {/* Added key to force re-render/re-animation when state changes */}
+        <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
           {visibleTopProducts.map((product) => {
             const isWishlisted = wishlistItems.some((item) => item.title === product.title);
 
@@ -846,7 +852,8 @@ export default function Home() {
             })}
           </div>
 
-          <motion.div className="grid grid-cols-1 gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.12 }}>
+          {/* Added key to force re-render/re-animation when state changes */}
+          <motion.div key={`templates-${activeFilter}-${submittedSearch}`} className="grid grid-cols-1 gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.12 }}>
             {visibleTemplates.map((template) => (
               <motion.article key={template.title} className="group" variants={cardReveal} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
                 <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-md">

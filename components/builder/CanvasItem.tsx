@@ -1,10 +1,11 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { Copy, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Copy, Trash2 } from "lucide-react";
 import { componentRegistry } from "@/lib/componentRegistry";
 import { useBuilderStore } from "@/store/builderStore";
+import { canvasItem, floatUp } from "@/lib/motion";
 import type { BuilderComponent } from "@/types/builder";
 
 function CanvasItem({
@@ -94,6 +95,18 @@ function CanvasItem({
     [updateComponent, component.id],
   );
 
+  /**
+   * Typed structured-patch callback for migrated blocks (`hero`, `feature-item`, ...).
+   * The store shallow-merges `props` and `styles`, so renderers can patch a single
+   * field at a time without clobbering siblings.
+   */
+  const handlePatch = useCallback(
+    (patch: Partial<BuilderComponent>) => {
+      updateComponent(component.id, patch);
+    },
+    [updateComponent, component.id],
+  );
+
   const nestedChildren = useMemo(
     () =>
       component.children.length > 0
@@ -110,47 +123,85 @@ function CanvasItem({
     [component.children, onDelete, onDuplicate, onSelect],
   );
 
+  const [isHovered, setIsHovered] = useState(false);
+  const typeLabel = component.type.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const showOverlay = (isSelected || isHovered) && !isEditing;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={isEditing ? {} : { y: -2, boxShadow: "0 12px 32px rgba(15,35,75,0.12)" }}
-      className={`flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-white transition-[border-color,box-shadow] duration-200 ${isSelected ? "border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.18),0_20px_50px_rgba(15,35,75,0.12)]" : "border-[#dbe3ef] shadow-[0_4px_20px_rgba(15,35,75,0.06)] hover:border-blue-200"}`}
+      variants={canvasItem}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className={`relative w-full cursor-pointer overflow-hidden rounded-xl border bg-white transition-[border-color,box-shadow] duration-200 ${
+        isSelected
+          ? "border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.15),0_20px_50px_rgba(15,35,75,0.12)]"
+          : isHovered
+            ? "border-blue-300 shadow-[0_8px_24px_rgba(15,35,75,0.10)]"
+            : "border-[#e6edf5] shadow-[0_2px_12px_rgba(15,35,75,0.05)]"
+      }`}
       onClick={isEditing ? undefined : handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`flex items-center justify-between border-b px-4 py-3 transition-colors duration-200 sm:px-5 ${isSelected ? "border-blue-100 bg-blue-50/50" : "border-[#e6edf5] bg-white"}`}>
-        <h2 className="text-[18px] font-bold capitalize text-[#0B1D40]">{component.type}</h2>
-        <div className="flex items-center gap-1">
-          <button
-            className="rounded p-1.5 text-[#566583] transition hover:bg-gray-100 hover:text-[#0B1D40]"
-            onClick={handleDuplicate}
-            title="Duplicate block"
-            type="button"
+      {/* ── Floating overlay toolbar (shown on hover / select) ── */}
+      <AnimatePresence>
+        {showOverlay && (
+          <motion.div
+            key="toolbar"
+            variants={floatUp}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-3 py-2"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Copy className="h-[17px] w-[17px]" strokeWidth={2.2} />
-          </button>
-          <button
-            className="rounded p-1.5 text-red-500 transition hover:bg-red-50"
-            onClick={handleDelete}
-            title="Delete block"
-            type="button"
-          >
-            <X className="h-[18px] w-[18px]" strokeWidth={2.5} />
-          </button>
-        </div>
-      </div>
+            {/* Type badge */}
+            <span className="pointer-events-auto flex items-center gap-1.5 rounded-md bg-[#0B1D40]/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+              {typeLabel}
+            </span>
+
+            {/* Actions */}
+            <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-white/20 bg-[#0B1D40]/80 p-0.5 backdrop-blur-sm">
+              <button
+                type="button"
+                title="Duplicate (Ctrl+D)"
+                onClick={handleDuplicate}
+                className="flex h-6 w-6 items-center justify-center rounded text-white/80 transition hover:bg-white/15 hover:text-white"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Delete (Del)"
+                onClick={handleDelete}
+                className="flex h-6 w-6 items-center justify-center rounded text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Component content (WYSIWYG) ── */}
       <div
-        className={`relative flex w-full flex-1 flex-col items-start overflow-y-auto p-4 pb-5 transition-colors duration-150 sm:p-5 sm:pb-7 ${
+        className={`relative flex w-full flex-col items-start transition-colors duration-150 ${
           isEditing
-            ? "bg-blue-50/30"
+            ? "bg-blue-50/20"
             : isDropTarget && (component.type === "container" || component.type === "columns")
-              ? "bg-blue-50/50 ring-2 ring-inset ring-blue-400/50"
+              ? "bg-blue-50/50 ring-2 ring-inset ring-blue-400/40"
               : ""
         } ${isInlineEditable && isSelected && !isEditing ? "cursor-text" : ""}`}
         onDoubleClick={isInlineEditable ? handleDoubleClick : undefined}
       >
-        <Renderer component={component} isEditing={isEditing} onUpdate={isSectionComponent ? handleSectionUpdate : (isEditing ? handleInlineUpdate : undefined)}>
+        <Renderer
+          component={component}
+          isEditing={isEditing}
+          onUpdate={isSectionComponent ? handleSectionUpdate : isEditing ? handleInlineUpdate : undefined}
+          onPatch={handlePatch}
+        >
           {nestedChildren}
         </Renderer>
       </div>

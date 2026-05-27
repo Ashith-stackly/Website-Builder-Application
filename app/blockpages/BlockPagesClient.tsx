@@ -60,6 +60,11 @@ export default function BlockPagesClient() {
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
   const [customImages, setCustomImages] = useState<Record<string, string>>({});
  
+  const [isButtonEditingMode, setIsButtonEditingMode] = useState(false);
+  const [editingButtonId, setEditingButtonId] = useState<string | null>(null);
+  const [customButtons, setCustomButtons] = useState<Record<string, Record<string, any>>>({});
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+ 
   useEffect(() => {
     try {
       const storedImages = localStorage.getItem("stackly-custom-images");
@@ -81,6 +86,15 @@ export default function BlockPagesClient() {
       }
     } catch (e) {
       console.error("Failed to load custom images", e);
+    }
+ 
+    try {
+      const storedButtons = localStorage.getItem("stackly-custom-buttons");
+      if (storedButtons) {
+        setCustomButtons(JSON.parse(storedButtons));
+      }
+    } catch (e) {
+      console.error("Failed to load custom buttons", e);
     }
   }, []);
  
@@ -187,6 +201,13 @@ export default function BlockPagesClient() {
             activeBlockPage={activeBlockPage}
             isImageEditingMode={isImageEditingMode}
             editingImageId={editingImageId}
+            isButtonEditingMode={isButtonEditingMode}
+            editingButtonId={editingButtonId}
+            onUpdateButtonStyle={(newProps) => {
+              if (selectedButtonBlock) {
+                updateButtonBlock(selectedButtonBlock.id, newProps);
+              }
+            }}
             onImageSelected={(url) => {
               if (editingImageId) {
                 setCustomImages((prev) => {
@@ -202,31 +223,73 @@ export default function BlockPagesClient() {
             onSelectBlockPage={(page) => {
               if (page === "image" && activeBlockPage === "text") {
                 setIsImageEditingMode((prev) => !prev);
+                setIsButtonEditingMode(false);
+                return;
+              }
+              if (page === "button" && activeBlockPage === "text") {
+                setIsButtonEditingMode((prev) => !prev);
+                setIsImageEditingMode(false);
                 return;
               }
               setActiveBlockPage(page);
               if (page === "text") {
                 setTextTemplate("ecommerce");
                 setIsImageEditingMode(false);
+                setIsButtonEditingMode(false);
               }
             }}
           />
         </div>
  
         {activeBlockPage === "button" ? (
-          <div className="flex min-w-0 flex-1 gap-4">
-            <ButtonCanvas
-              blocks={buttonBlocks}
-              selectedBlockId={selectedButtonBlockId}
-              onSelectBlock={setSelectedButtonBlockId}
-              onRemoveBlock={removeButtonBlock}
-              canUndo={pastButtonStates.length > 0}
-              canRedo={futureButtonStates.length > 0}
-              onUndo={undoButton}
-              onRedo={redoButton}
-            />
-            <div className="hidden w-[286px] shrink-0 lg:block">
-              <ButtonRightSidebar selectedBlock={selectedButtonBlock} onUpdateBlock={updateButtonBlock} />
+          <div className="flex min-w-0 flex-1 gap-4 relative">
+            <div className="flex-1 min-w-0">
+              <ButtonCanvas
+                blocks={buttonBlocks}
+                selectedBlockId={selectedButtonBlockId}
+                onSelectBlock={setSelectedButtonBlockId}
+                onRemoveBlock={removeButtonBlock}
+                canUndo={pastButtonStates.length > 0}
+                canRedo={futureButtonStates.length > 0}
+                onUndo={undoButton}
+                onRedo={redoButton}
+                editingButtonId={editingButtonId}
+                onButtonSelected={(props) => {
+                  if (editingButtonId) {
+                    setCustomButtons((prev) => {
+                      const next = { ...prev, [editingButtonId]: props };
+                      localStorage.setItem("stackly-custom-buttons", JSON.stringify(next));
+                      return next;
+                    });
+                  }
+                  setActiveBlockPage("text");
+                  setEditingButtonId(null);
+                  setIsButtonEditingMode(false);
+                }}
+                onOpenMobileSidebar={() => setShowMobileSidebar(true)}
+              />
+            </div>
+ 
+            {/* Mobile/Tablet Backdrop */}
+            {showMobileSidebar && (
+              <div
+                className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
+                onClick={() => setShowMobileSidebar(false)}
+              />
+            )}
+ 
+            {/* Sidebar Container: Bottom sheet on mobile, relative flow on desktop */}
+            <div className={`
+              fixed bottom-0 left-0 w-full h-[60vh] z-[100] transition-transform duration-300
+              ${showMobileSidebar ? "translate-y-0" : "translate-y-full"}
+              lg:translate-y-0 lg:static lg:h-auto lg:w-[286px] lg:shrink-0 lg:block
+              bg-white lg:bg-transparent rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] lg:shadow-none lg:rounded-none overflow-hidden
+            `}>
+              <ButtonRightSidebar
+                selectedBlock={selectedButtonBlock}
+                onUpdateBlock={updateButtonBlock}
+                onClose={() => setShowMobileSidebar(false)}
+              />
             </div>
           </div>
         ) : activeBlockPage === "text" ? (
@@ -246,6 +309,12 @@ export default function BlockPagesClient() {
                 if (typeof window !== "undefined" && window.innerWidth >= 1024) {
                   setActiveBlockPage("image");
                 }
+              }}
+              isButtonEditingMode={isButtonEditingMode}
+              customButtons={customButtons}
+              onEditButton={(buttonId) => {
+                setEditingButtonId(buttonId);
+                setActiveBlockPage("button");
               }}
             />
             <div className="hidden w-[286px] shrink-0 lg:block">
@@ -278,4 +347,3 @@ export default function BlockPagesClient() {
     </BuilderProvider>
   );
 }
- 
