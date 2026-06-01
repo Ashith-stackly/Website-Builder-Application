@@ -590,6 +590,16 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                       LOGOUT
                     </Link>
                   </div>
+                  <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
+                    <Link
+                      href="/planning"
+                      onClick={closeMenus}
+                      className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 active:translate-y-0 active:scale-100"
+                    >
+                      <FaLayerGroup className="w-4 opacity-80" />
+                      SUBSCRIPTIONS
+                    </Link>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

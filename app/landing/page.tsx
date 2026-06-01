@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation";
 import CreateProjectFlow from "@/components/CreateProjectFlow";
 import AboutPage from "../aboutus/page";
 import { useEffect, useMemo, useState } from "react";
-import { motion, type TargetAndTransition, type Variants } from "framer-motion";
+import { motion, type TargetAndTransition, type Variants, AnimatePresence } from "framer-motion";
 import {
   FaArrowRight,
   FaCartShopping,
   FaChevronDown,
+  FaChevronLeft,
+  FaChevronRight,
   FaEnvelope,
   FaFacebookF,
   FaGlobe,
@@ -77,6 +79,37 @@ const topProducts = [
   { title: "MegaBasket", type: "Template Website", price: 29, sales: "4.2K", image: "/landing-optimized/megabasket.webp", alt: "MegaBasket template preview" },
   { title: "NexaStore", type: "Template Website", price: 10, sales: "4.7K", image: "/landing-optimized/nexastore1.webp", alt: "NexaStore template preview" },
   { title: "SampleStore", type: "Template Website", price: 35, sales: "5.0K", image: "/landing-optimized/samplestore.webp", alt: "SampleStore template preview" },
+];
+
+const bannerSlides = [
+  {
+    id: "portfolio",
+    title: "Portfolio",
+    description: "A modern and visually engaging portfolio design crafted to showcase creativity, skills and projects with clarity. Designed with clean layouts, smooth user experience and strong visual storytelling to create a lasting impression.",
+    image: "/landing-optimized/port.webp",
+    bg: "linear-gradient(135deg, #4A2F8B 0%, #201048 100%)", // Purple gradient
+  },
+  {
+    id: "blog",
+    title: "BLog",
+    description: "A modern and visually engaging blog design crafted to showcase creativity, skills and projects with clarity. Designed with clean layouts, smooth user experience and strong visual storytelling to create a lasting impression.",
+    image: "/landing-optimized/bloggg.webp",
+    bg: "linear-gradient(135deg, #3a3a3a 0%, #151515 100%)", // Dark Grey gradient
+  },
+  {
+    id: "ecommerce",
+    title: "E-Commerce",
+    description: "A modern and visually engaging e-commerce design crafted to showcase creativity, skills and projects with clarity. Designed with clean layouts, smooth user experience and strong visual storytelling to create a lasting impression.",
+    image: "/landing-optimized/ecommerce.webp",
+    bg: "linear-gradient(135deg, #59331C 0%, #261208 100%)", // Brown gradient
+  },
+  {
+    id: "business",
+    title: "Business",
+    description: "A modern and visually engaging business design crafted to showcase creativity, skills and projects with clarity. Designed with clean layouts, smooth user experience and strong visual storytelling to create a lasting impression.",
+    image: "/landing-optimized/business09.webp",
+    bg: "linear-gradient(135deg, #372173 0%, #150B33 100%)", // Deep Indigo gradient
+  },
 ];
 
 type WishlistItem = {
@@ -366,6 +399,18 @@ export default function Home() {
   const [hasLoadedWishlist, setHasLoadedWishlist] = useState(false);
   const [wishlistToast, setWishlistToast] = useState<string | null>(null);
 
+  // Slider State
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [carouselSpread, setCarouselSpread] = useState(160);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px)");
+    const updateSpread = () => setCarouselSpread(mql.matches ? 240 : 160);
+    updateSpread();
+    mql.addEventListener("change", updateSpread);
+    return () => mql.removeEventListener("change", updateSpread);
+  }, []);
+
   // --- SUBSCRIPTION CHECK PLACEHOLDER ---
   // The Backend Team will update this function to check the user's actual subscription status.
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
@@ -573,6 +618,23 @@ export default function Home() {
     window.setTimeout(() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   };
 
+  // Slider Handlers
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev === bannerSlides.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? bannerSlides.length - 1 : prev - 1));
+  };
+
+  // Auto-play the slider (every 4 seconds)
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentSlide((prev) => (prev === bannerSlides.length - 1 ? 0 : prev + 1));
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <main className="landing-page bg-[#fff1f2] text-gray-900">
       <motion.div
@@ -624,125 +686,184 @@ export default function Home() {
 
       <section className="mx-auto w-full max-w-7xl px-4 pt-8 md:px-8">
         <motion.div
-          className="relative min-h-[480px] overflow-hidden rounded-[2rem] bg-[#fde2e4] md:min-h-[540px] md:rounded-[3rem]"
+          className="landing-hero-slider relative flex min-h-[540px] w-full overflow-hidden rounded-[2rem] shadow-2xl md:rounded-[3rem] lg:min-h-[600px]"
           variants={revealContainer}
           initial="hidden"
           animate="visible"
         >
-          <motion.picture variants={fadeUp}>
-            <source media="(max-width: 768px)" srcSet={assetPath("/landing-optimized/landinmble3.webp")} />
-            <img
-              src={assetPath("/landing-optimized/landing22.webp")}
-              alt="Stackly drag and drop website builder preview"
-              className="absolute inset-0 h-full w-full object-cover object-center md:object-right"
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </motion.picture>
-
           <motion.div
-            className="relative z-10 flex min-h-[480px] items-end justify-center p-8 md:min-h-[540px] md:justify-start md:p-16"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: [0, -8, 0] }}
-            transition={{
-              opacity: { duration: 0.45, ease: "easeOut" },
-              y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
-            }}
-          >
-            <CreateProjectFlow />
-          </motion.div>
-        </motion.div>
+            className="absolute inset-0 z-0"
+            initial={false}
+            animate={{ background: bannerSlides[currentSlide].bg }}
+            style={{ background: bannerSlides[currentSlide].bg }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          />
 
-        {/* ── WHO WE ARE SECTION ─────────────────────────────── */}
-        <motion.div
-          id="about"
-          className="mt-16 md:mt-24 flex flex-col lg:flex-row gap-8 md:gap-12 items-center"
-          variants={revealContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.25 }}
-        >
-          <motion.div className="w-full lg:w-1/2 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white flex-shrink-0" variants={fadeUp} whileHover={softHover}>
-            <img
-              src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800"
-              alt="Stackly office"
-              className="w-full h-auto object-cover transition duration-700 hover:scale-105"
-              loading="lazy"
-            />
-          </motion.div>
+          <div className="relative z-10 flex h-full min-h-[540px] w-full flex-col items-center justify-center p-6 md:min-h-[540px] md:flex-row md:items-center md:justify-between md:p-12 lg:min-h-[600px] lg:p-20">
+            {/* Left Content */}
+            <div className="flex w-full flex-col items-start justify-center text-white md:h-full md:w-1/2 md:pr-12">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                >
+                  <h1 className="mb-6 text-4xl font-black leading-none tracking-tight md:text-5xl lg:text-[5.5rem]">
+                    {bannerSlides[currentSlide].title}
+                  </h1>
+                  <p className="mb-8 max-w-md text-sm leading-relaxed text-white/80 lg:text-base">
+                    {bannerSlides[currentSlide].description}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+              <div className="mt-2 w-full max-w-sm">
+                <CreateProjectFlow />
+              </div>
+            </div>
 
-          <motion.div className="w-full lg:w-1/2 space-y-4 md:space-y-6 text-left" variants={revealContainer}>
-            {/* Added About Us box and Blue Line */}
-            <motion.div className="" variants={fadeUp}>
-               <span className="text-xl font-black uppercase tracking-[0.2em] text-blue-600">
-                 About us
-               </span>
-            </motion.div>
-            
-            <motion.div className="flex items-center gap-3" variants={fadeUp}>
-              <div className="w-1.5 h-6 bg-blue-600"></div>
-              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-[#0A2357]">Who We Are</h2>
-            </motion.div>
-            
-            <motion.p className="text-base md:text-lg leading-relaxed font-bold text-[#0A2357] italic" variants={fadeUp}>
-              Stackly is a powerful platform that streamlines workflow, enhances efficiency, and drives digital success.
-            </motion.p>
-            <motion.p className="text-sm leading-relaxed text-gray-600" variants={fadeUp}>
-              Founded in 2015, Stackly has grown into one of the leading and most trusted companies in the industry.
-            </motion.p>
-            
-            <motion.button
-              onClick={() => {
-                setCurrentPage("about");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className="inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95"
-              variants={fadeUp}
-              whileHover={{ scale: 1.04, filter: "brightness(1.08)" }}
-              whileTap={{ scale: 0.98 }}
-            >
-              READ MORE..
-            </motion.button>
-          </motion.div>
-        </motion.div>
-        {/* ─────────────────────────────────────────────────────────────────── */}
-        {/* ─────────────────────────────────────────────────────────────────── */}
+            {/* Right Image Carousel — centered like original desktop layout */}
+            <div className="relative flex h-[280px] w-full items-center justify-center md:h-[400px] md:w-1/2">
+              {bannerSlides.map((slide, index) => {
+                let offset = index - currentSlide;
+                if (offset < -1) offset += bannerSlides.length;
+                if (offset > 1) offset -= bannerSlides.length;
 
-        <motion.div className="mt-8 text-center md:mt-12" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800">Popular Searches</p>
-          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-            {popularSearches.map((search) => (
+                const isCenter = offset === 0;
+
+                if (offset < -1 || offset > 1) return null;
+
+                return (
+                  <motion.div
+                    key={slide.id}
+                    className={`absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 cursor-pointer overflow-hidden rounded-[1.5rem] shadow-2xl md:h-[260px] md:w-[260px] md:rounded-[2rem] lg:h-[340px] lg:w-[340px] ${isCenter ? "border-2 border-white/20" : "border border-transparent hover:border-white/20"}`}
+                    initial={false}
+                    animate={{
+                      x: offset * carouselSpread,
+                      scale: isCenter ? 1 : 0.8,
+                      opacity: isCenter ? 1 : 0.3,
+                      zIndex: isCenter ? 30 : 20,
+                    }}
+                    transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                    onClick={() => {
+                      if (!isCenter) setCurrentSlide(index);
+                    }}
+                  >
+                    <img
+                      src={assetPath(slide.image)}
+                      alt={slide.title}
+                      className="pointer-events-none h-full w-full object-cover"
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Pagination Dots */}
+          <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-3">
+            {bannerSlides.map((_, index) => (
               <button
-                key={search}
+                key={index}
                 type="button"
-                onClick={() => submitSearch(search)}
-                className="truncate rounded-full border border-gray-100 bg-white px-4 py-2 text-[11px] font-bold text-gray-600 shadow-sm transition hover:border-blue-400 hover:text-blue-600"
-              >
-                {search}
-              </button>
+                onClick={() => setCurrentSlide(index)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${currentSlide === index ? "w-8 bg-white" : "w-2.5 bg-white/30 hover:bg-white/50"}`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
             ))}
           </div>
-          {submittedSearch && (
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-gray-600">
-              <span>
-                Showing websites for <span className="text-blue-600">&quot;{submittedSearch}&quot;</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmittedSearch("");
-                  setSearchQuery("");
-                  setActiveFilter("all"); // Added to ensure reset
-                }}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-widest text-gray-500 transition hover:border-blue-400 hover:text-blue-600"
-              >
-                Clear
-              </button>
-            </div>
-          )}
         </motion.div>
       </section>
+
+      {/* ── WHO WE ARE SECTION ─────────────────────────────── */}
+      <motion.div
+        id="about"
+        className="mt-16 md:mt-24 flex flex-col lg:flex-row gap-8 md:gap-12 items-center max-w-7xl mx-auto px-4 md:px-8"
+        variants={revealContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+      >
+        <motion.div className="w-full lg:w-1/2 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white flex-shrink-0" variants={fadeUp} whileHover={softHover}>
+          <img
+            src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800"
+            alt="Stackly office"
+            className="w-full h-auto object-cover transition duration-700 hover:scale-105"
+            loading="lazy"
+          />
+        </motion.div>
+
+        <motion.div className="w-full lg:w-1/2 space-y-4 md:space-y-6 text-left" variants={revealContainer}>
+          {/* Added About Us box and Blue Line */}
+          <motion.div className="" variants={fadeUp}>
+             <span className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
+               About us
+             </span>
+          </motion.div>
+          
+          <motion.div className="flex items-center gap-3" variants={fadeUp}>
+            <div className="w-1.5 h-6 bg-blue-600"></div>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-[#0A2357]">Who We Are</h2>
+          </motion.div>
+          
+          <motion.p className="text-base md:text-lg leading-relaxed font-bold text-[#0A2357] italic" variants={fadeUp}>
+            Stackly is a powerful platform that streamlines workflow, enhances efficiency, and drives digital success.
+          </motion.p>
+          <motion.p className="text-sm leading-relaxed text-gray-600" variants={fadeUp}>
+            Founded in 2015, Stackly has grown into one of the leading and most trusted companies in the industry.
+          </motion.p>
+          
+          <motion.button
+            onClick={() => {
+              setCurrentPage("about");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95"
+            variants={fadeUp}
+            whileHover={{ scale: 1.04, filter: "brightness(1.08)" }}
+            whileTap={{ scale: 0.98 }}
+          >
+            READ MORE..
+          </motion.button>
+        </motion.div>
+      </motion.div>
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
+      <motion.div className="mt-8 text-center md:mt-12 max-w-7xl mx-auto px-4 md:px-8" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+        <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800">Popular Searches</p>
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+          {popularSearches.map((search) => (
+            <button
+              key={search}
+              type="button"
+              onClick={() => submitSearch(search)}
+              className="truncate rounded-full border border-gray-100 bg-white px-4 py-2 text-[11px] font-bold text-gray-600 shadow-sm transition hover:border-blue-400 hover:text-blue-600"
+            >
+              {search}
+            </button>
+          ))}
+        </div>
+        {submittedSearch && (
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-gray-600">
+            <span>
+              Showing websites for <span className="text-blue-600">&quot;{submittedSearch}&quot;</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSubmittedSearch("");
+                setSearchQuery("");
+                setActiveFilter("all"); // Added to ensure reset
+              }}
+              className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] uppercase tracking-widest text-gray-500 transition hover:border-blue-400 hover:text-blue-600"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      </motion.div>
 
       <section id="categories" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Categories</SectionHeading>
