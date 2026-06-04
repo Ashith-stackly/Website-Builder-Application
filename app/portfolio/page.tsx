@@ -92,7 +92,7 @@ export default function Portfolioedit() {
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [isEditMode, setIsEditMode] = useState(false);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
-  const { scrollY: canvasScrollY } = useScroll({ container: canvasScrollRef });
+  const { scrollY: canvasScrollY } = useScroll();
   const prefersReducedMotion = useReducedMotion();
 
   const [heroImageProps] = useState({
@@ -188,28 +188,29 @@ export default function Portfolioedit() {
       <div className="flex flex-1">
         {/* MAIN CONTENT */}
         <div className="flex-1 bg-white p-4 @md:p-7 flex justify-center min-w-0">
-          <div className="w-full max-w-[1200px] relative flex flex-col h-[calc(100vh-80px)] min-w-0">
+          <div className="w-full max-w-[1200px] relative flex flex-col min-w-0">
             {/* FLOATING DEVICE TOOLBAR */}
-            <div className="flex justify-center mb-6 shrink-0 pt-2">
-              <div className="flex items-center gap-3 bg-white rounded-full border border-[#E5E7EB] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] px-4 py-2">
-                 <Link href="/landing#templates" className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition" title="Preview">
-                    <FaEye size={18} />
+            <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2"
+            >
+              <div className="flex items-center gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
+                 <Link href="/landing#templates" className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition" title="Preview">
+                    <FaEye size={14} />
                  </Link>
-                 <div className="w-px h-8 bg-gray-200 mx-1"></div>
-                 <button onClick={() => setDeviceMode("desktop")} className={`w-12 h-12 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
-                    <FaLaptop size={18} />
+                 <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
+                 <button onClick={() => setDeviceMode("desktop")} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
+                    <FaLaptop size={14} />
                  </button>
-                 <button onClick={() => setDeviceMode("tablet")} className={`w-12 h-12 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "tablet" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Tablet View">
-                    <FaTabletAlt size={18} />
+                 <button onClick={() => setDeviceMode("tablet")} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "tablet" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Tablet View">
+                    <FaTabletAlt size={14} />
                  </button>
-                 <button onClick={() => setDeviceMode("mobile")} className={`w-12 h-12 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "mobile" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Mobile View">
-                    <FaMobileAlt size={18} />
+                 <button onClick={() => setDeviceMode("mobile")} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "mobile" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Mobile View">
+                    <FaMobileAlt size={14} />
                  </button>
               </div>
             </div>
 
             {/* Canvas Box */}
-            <div ref={canvasScrollRef} className={`flex-1 overflow-y-auto min-w-0 relative z-0 transition-colors duration-300 ${deviceMode !== "desktop" ? "bg-gray-200/50 p-2 @sm:p-4 rounded-xl" : ""}`}>
+            <div ref={canvasScrollRef} className={`flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300 ${deviceMode !== "desktop" ? "bg-gray-200/50 p-2 @sm:p-4 rounded-xl" : ""}`}>
               <div className={`@container mx-auto w-full min-h-[530px] bg-[#F2F2F2] rounded-xl border-2 border-gray-300 flex flex-col relative portfolio-shell overflow-hidden transition-all duration-500 ease-in-out ${
                 deviceMode === "mobile"
                   ? "max-w-[375px] shadow-2xl"
@@ -429,6 +430,7 @@ export default function Portfolioedit() {
                           ))}
                         </div>
                       </div>
+
 
                       {/* DESKTOP BLOBS */}
                       <div className="w-[45%] @xl:w-[40%] items-center justify-center relative min-h-[400px] hidden @lg:flex">
