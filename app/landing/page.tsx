@@ -685,46 +685,75 @@ export default function Home() {
       </motion.div>
 
       <section className="mx-auto w-full max-w-7xl px-4 pt-8 md:px-8">
-        <motion.div
-          className="landing-hero-slider relative flex min-h-[540px] w-full overflow-hidden rounded-[2rem] shadow-2xl md:rounded-[3rem] lg:min-h-[600px]"
+        {/* 1. MOBILE VIEW: Static Image Only (Hidden on Desktop) */}
+<motion.div
+          className="relative min-h-[480px] overflow-hidden rounded-[2rem] bg-[#fde2e4] md:hidden"
           variants={revealContainer}
           initial="hidden"
           animate="visible"
-        >
+>
+<motion.picture variants={fadeUp}>
+<img
+              src={assetPath("/landing-optimized/landinmble3.webp")}
+              alt="Stackly drag and drop website builder preview"
+              className="absolute inset-0 h-full w-full object-cover object-center"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+            />
+</motion.picture>
+
           <motion.div
+            className="relative z-10 flex min-h-[480px] items-end justify-center p-8"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: [0, -8, 0] }}
+            transition={{
+              opacity: { duration: 0.45, ease: "easeOut" },
+              y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+            }}
+>
+<CreateProjectFlow />
+</motion.div>
+</motion.div>
+
+        {/* 2. DESKTOP VIEW: Carousel Effect (Hidden on Mobile) */}
+<motion.div
+          className="relative hidden md:flex min-h-[540px] lg:min-h-[600px] w-full overflow-hidden rounded-[3rem] shadow-2xl"
+          variants={revealContainer}
+          initial="hidden"
+          animate="visible"
+>
+          {/* Animated Background */}
+<motion.div 
             className="absolute inset-0 z-0"
-            initial={false}
             animate={{ background: bannerSlides[currentSlide].bg }}
-            style={{ background: bannerSlides[currentSlide].bg }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
           />
 
-          <div className="relative z-10 flex h-full min-h-[540px] w-full flex-col items-center justify-center p-6 md:min-h-[540px] md:flex-row md:items-center md:justify-between md:p-12 lg:min-h-[600px] lg:p-20">
+          <div className="flex w-full flex-row items-center justify-between p-12 lg:p-20 relative z-10 h-full">
             {/* Left Content */}
-            <div className="flex w-full flex-col items-start justify-center text-white md:h-full md:w-1/2 md:pr-12">
-              <AnimatePresence mode="wait">
-                <motion.div
+<div className="flex w-1/2 flex-col items-start pr-12 text-white h-full justify-center">
+<AnimatePresence mode="wait">
+<motion.div
                   key={currentSlide}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                >
-                  <h1 className="mb-6 text-4xl font-black leading-none tracking-tight md:text-5xl lg:text-[5.5rem]">
-                    {bannerSlides[currentSlide].title}
-                  </h1>
-                  <p className="mb-8 max-w-md text-sm leading-relaxed text-white/80 lg:text-base">
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+>
+<h1 className="mb-6 text-5xl font-black lg:text-[5.5rem] tracking-tight leading-none">{bannerSlides[currentSlide].title}</h1>
+<p className="mb-8 text-sm leading-relaxed text-white/80 lg:text-base max-w-md">
                     {bannerSlides[currentSlide].description}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-              <div className="mt-2 w-full max-w-sm">
-                <CreateProjectFlow />
-              </div>
-            </div>
+</p>
+</motion.div>
+</AnimatePresence>
+<div className="mt-2 w-full max-w-sm">
+<CreateProjectFlow />
+</div>
+</div>
 
-            {/* Right Image Carousel — centered like original desktop layout */}
-            <div className="relative flex h-[280px] w-full items-center justify-center md:h-[400px] md:w-1/2">
+            {/* Right Image Carousel */}
+<div className="relative flex h-[400px] w-1/2 items-center justify-center">
               {bannerSlides.map((slide, index) => {
                 let offset = index - currentSlide;
                 if (offset < -1) offset += bannerSlides.length;
@@ -733,11 +762,11 @@ export default function Home() {
                 const isCenter = offset === 0;
 
                 if (offset < -1 || offset > 1) return null;
-
+ 
                 return (
-                  <motion.div
+<motion.div
                     key={slide.id}
-                    className={`absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 cursor-pointer overflow-hidden rounded-[1.5rem] shadow-2xl md:h-[260px] md:w-[260px] md:rounded-[2rem] lg:h-[340px] lg:w-[340px] ${isCenter ? "border-2 border-white/20" : "border border-transparent hover:border-white/20"}`}
+                    className={`absolute w-[260px] h-[260px] lg:w-[340px] lg:h-[340px] rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl ${isCenter ? 'border-2 border-white/20' : 'border border-transparent hover:border-white/20'}`}
                     initial={false}
                     animate={{
                       x: offset * carouselSpread,
@@ -745,26 +774,26 @@ export default function Home() {
                       opacity: isCenter ? 1 : 0.3,
                       zIndex: isCenter ? 30 : 20,
                     }}
-                    transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                    transition={{ type: "spring", stiffness: 150, damping: 25 }}
                     onClick={() => {
                       if (!isCenter) setCurrentSlide(index);
                     }}
-                  >
-                    <img
+>
+<img
                       src={assetPath(slide.image)}
                       alt={slide.title}
-                      className="pointer-events-none h-full w-full object-cover"
+                      className="h-full w-full object-cover pointer-events-none"
                     />
-                  </motion.div>
+</motion.div>
                 );
               })}
-            </div>
-          </div>
-
+</div>
+</div>
+ 
           {/* Pagination Dots */}
-          <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-3">
+<div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-3">
             {bannerSlides.map((_, index) => (
-              <button
+<button
                 key={index}
                 type="button"
                 onClick={() => setCurrentSlide(index)}
@@ -772,9 +801,9 @@ export default function Home() {
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}
-          </div>
-        </motion.div>
-      </section>
+</div>
+</motion.div>
+</section>
 
       {/* ── WHO WE ARE SECTION ─────────────────────────────── */}
       <motion.div
