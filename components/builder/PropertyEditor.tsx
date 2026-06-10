@@ -132,6 +132,55 @@ export default function PropertyEditor({
       );
     }
 
+    if (component.type === "spacer") {
+      const height = String(component.props?.height || component.content || "60px");
+      return (
+        <div className="space-y-3">
+          <span className="block text-[13px] font-bold text-[#0B1D40]">Spacer Height</span>
+          <input
+            type="range"
+            min="10" max="300" step="10"
+            value={parseInt(height)}
+            onChange={(e) => onUpdate(component.id, { content: `${e.target.value}px`, props: { height: `${e.target.value}px` } })}
+            className="w-full accent-[#0B1D40]"
+          />
+          <p className="text-center text-sm font-bold text-[#0B1D40]">{height}</p>
+        </div>
+      );
+    }
+
+    if (component.type === "map") {
+      const p = (component.props || {}) as Record<string, unknown>;
+      return (
+        <div className="space-y-3">
+          <ContentField label="Address" value={String(p.address || "")} onChange={(v) => onUpdate(component.id, { props: { ...p, address: v } })} />
+          <label className="block">
+            <span className="mb-1 block text-[13px] font-bold text-[#0B1D40]">Zoom ({Number(p.zoom) || 12})</span>
+            <input type="range" min="1" max="20" value={Number(p.zoom) || 12}
+              onChange={(e) => onUpdate(component.id, { props: { ...p, zoom: parseInt(e.target.value) } })}
+              className="w-full accent-[#0B1D40]" />
+          </label>
+          <ContentField label="Height" value={String(p.height || "300px")} onChange={(v) => onUpdate(component.id, { props: { ...p, height: v } })} />
+        </div>
+      );
+    }
+
+    if (component.type === "countdown") {
+      const p = (component.props || {}) as Record<string, unknown>;
+      return (
+        <div className="space-y-3">
+          <ContentField label="Label" value={String(p.label || "")} onChange={(v) => onUpdate(component.id, { props: { ...p, label: v } })} />
+          <label className="block">
+            <span className="mb-1 block text-[13px] font-bold text-[#0B1D40]">Target Date</span>
+            <input type="datetime-local" value={String(p.targetDate || "")}
+              onChange={(e) => onUpdate(component.id, { props: { ...p, targetDate: e.target.value } })}
+              className={contentInputClass} />
+          </label>
+          <ContentField label="Finished Text" value={String(p.finishedText || "")} onChange={(v) => onUpdate(component.id, { props: { ...p, finishedText: v } })} />
+        </div>
+      );
+    }
+
     return (
       <label className="block">
         <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">

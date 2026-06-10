@@ -39,3 +39,4 @@ export default function GalleryComponent({ component, onUpdate }: { component: B
     </section>
   );
 }
+

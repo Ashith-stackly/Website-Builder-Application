@@ -10,7 +10,16 @@ import { navigationDefaults } from "@/components/blocks/navigation/spec";
 import { contactDefaults } from "@/components/blocks/contact/spec";
 import { featuresDefaults } from "@/components/blocks/features/spec";
 import { videoDefaults }    from "@/components/blocks/video/spec";
-import type { BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
+import { socialLinksDefaults } from "@/components/draggable/SocialLinksComponent";
+import { countdownDefaults } from "@/components/draggable/CountdownComponent";
+import { pricingTableDefaults } from "@/components/draggable/PricingTableComponent";
+import { testimonialDefaults } from "@/components/draggable/TestimonialComponent";
+import { footerDefaults } from "@/components/draggable/FooterComponent";
+import { formDefaults } from "@/components/draggable/FormComponent";
+import { accordionDefaults } from "@/components/draggable/AccordionComponent";
+import { tabsDefaults } from "@/components/draggable/TabsComponent";
+import { mapDefaults } from "@/components/draggable/MapComponent";
+import type { BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, SEOMetadata, Viewport } from "@/types/builder";
 
 type ComponentDefault = Pick<BuilderComponent, "content" | "styles" | "children"> & {
   props?: BuilderComponent["props"];
@@ -106,6 +115,66 @@ const defaults: Record<ComponentType, ComponentDefault> = {
     content: "",
     props: { ...videoDefaults },
     styles: { margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  map: {
+    content: "",
+    props: { ...mapDefaults },
+    styles: { margin: "0 0 16px", borderRadius: "8px", width: "100%", padding: "16px" },
+    children: [],
+  },
+  accordion: {
+    content: "",
+    props: { ...accordionDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  tabs: {
+    content: "",
+    props: { ...tabsDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  spacer: {
+    content: "60px",
+    props: { height: "60px" },
+    styles: { margin: "0", width: "100%" },
+    children: [],
+  },
+  "social-links": {
+    content: "",
+    props: { ...socialLinksDefaults },
+    styles: { padding: "12px", margin: "0 0 12px", width: "100%" },
+    children: [],
+  },
+  countdown: {
+    content: "",
+    props: { ...countdownDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "32px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  "pricing-table": {
+    content: "",
+    props: { ...pricingTableDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#f7f9fc", padding: "40px 24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  testimonial: {
+    content: "",
+    props: { ...testimonialDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "40px 24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  footer: {
+    content: "",
+    props: { ...footerDefaults },
+    styles: { color: "#ffffff", backgroundColor: "#0B1D40", padding: "0", margin: "0", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  form: {
+    content: "",
+    props: { ...formDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "32px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
     children: [],
   },
 };
@@ -255,7 +324,7 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
       return section as ComponentType;
     })
     .filter((section): section is ComponentType =>
-      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container"].includes(section),
+      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container", "video", "map", "accordion", "tabs", "spacer", "social-links", "countdown", "pricing-table", "testimonial", "footer", "form"].includes(section),
     );
 
   return sectionTypes.map((type, index) => {
@@ -341,6 +410,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   future: [],
   viewport: "desktop",
   setViewport: (v: Viewport) => set({ viewport: v }),
+  canvasMode: "flow",
+  toggleCanvasMode: () =>
+    set((state) => ({ canvasMode: state.canvasMode === "flow" ? "freeform" : "flow" })),
   setInlineEditing: (v) => set({ isInlineEditing: v }),
   addComponent: (type, parentId, afterId) =>
     set((state) => {
@@ -568,11 +640,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     set((state) => ({
       components: updateNodeById(state.components, id, (c) => ({
         ...c,
-        styles: {
-          ...c.styles,
-          position: "absolute",
-          left: `${Math.round(x)}px`,
-          top: `${Math.round(y)}px`,
+        position: {
+          x: Math.round(x / 8) * 8,  // snap to 8px grid
+          y: Math.round(y / 8) * 8,
         },
       })),
     })),
@@ -581,10 +651,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     set((state) => ({
       components: updateNodeById(state.components, id, (c) => ({
         ...c,
-        styles: {
-          ...c.styles,
-          width: `${Math.round(width)}px`,
-          height: `${Math.round(height)}px`,
+        freeformSize: {
+          width: Math.max(120, Math.round(width / 8) * 8),
+          height: Math.max(40, Math.round(height / 8) * 8),
         },
       })),
     })),

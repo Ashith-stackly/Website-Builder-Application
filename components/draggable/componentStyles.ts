@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { ComponentStyles } from "@/types/builder";
+import type { BuilderComponent, ComponentStyles } from "@/types/builder";
 
 /**
  * Convert the builder's `ComponentStyles` to a React `CSSProperties` object.
@@ -31,3 +31,8 @@ export const toReactStyle = (styles: ComponentStyles): CSSProperties => ({
   minWidth: styles.minWidth || undefined,
   minHeight: styles.minHeight || undefined,
 });
+
+/** Convenience wrapper: accept a full BuilderComponent and return CSSProperties. */
+export const getBaseStyles = (component: BuilderComponent): CSSProperties =>
+  toReactStyle(component.styles);
+

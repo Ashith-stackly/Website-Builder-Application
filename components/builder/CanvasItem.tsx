@@ -31,7 +31,7 @@ function CanvasItem({
   const toggleSelectComponent = useBuilderStore((s) => s.toggleSelectComponent);
   const [isEditing, setIsEditing] = useState(false);
   const isInlineEditable = component.type === "heading" || component.type === "text" || component.type === "button";
-  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery";
+  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery" || component.type === "pricing-table" || component.type === "testimonial" || component.type === "footer" || component.type === "accordion" || component.type === "tabs" || component.type === "form";
   const isLocked = component.locked ?? false;
 
   /* ── Resize handle ref ── */

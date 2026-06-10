@@ -2,49 +2,79 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Contact, GripVertical, Heading1, Home, Image, Images, LayoutGrid, LayoutTemplate, Layers, Menu, Minus, MousePointerSquareDashed, PanelsTopLeft, Play, Search, Sparkles, Star, TextCursorInput, Type } from "lucide-react";
+import {
+  AlignLeft, Clock, Contact, FileText, Globe, GripVertical, Heading1, Heart,
+  Home, Image, Images, LayoutGrid, LayoutTemplate, Layers, List, MapPin, Menu,
+  Minus, MousePointerSquareDashed, PanelsTopLeft, Play, Search, Share2,
+  Sparkles, Star, Table, TextCursorInput, Type
+} from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import type { ComponentType } from "@/types/builder";
 import { staggerContainer, staggerChild } from "@/lib/motion";
 
-type PaletteGroup = "Website Sections" | "Basic Blocks";
+type PaletteGroup = "Website Sections" | "Basic Blocks" | "Advanced Blocks";
 
 const BLOCK_COLORS: Record<ComponentType, string> = {
-  navigation:    "bg-blue-500/20 text-blue-300",
-  hero:          "bg-violet-500/20 text-violet-300",
-  features:      "bg-emerald-500/20 text-emerald-300",
-  gallery:       "bg-pink-500/20 text-pink-300",
-  contact:       "bg-orange-500/20 text-orange-300",
-  heading:       "bg-yellow-500/20 text-yellow-300",
-  text:          "bg-sky-500/20 text-sky-300",
-  button:        "bg-indigo-500/20 text-indigo-300",
-  icon:          "bg-amber-500/20 text-amber-300",
-  "feature-item":"bg-teal-500/20 text-teal-300",
-  columns:       "bg-cyan-500/20 text-cyan-300",
-  image:         "bg-rose-500/20 text-rose-300",
-  input:         "bg-lime-500/20 text-lime-300",
-  divider:       "bg-gray-500/20 text-gray-300",
-  container:     "bg-purple-500/20 text-purple-300",
-  video:         "bg-red-500/20 text-red-300",
+  navigation:       "bg-blue-500/20 text-blue-300",
+  hero:             "bg-violet-500/20 text-violet-300",
+  features:         "bg-emerald-500/20 text-emerald-300",
+  gallery:          "bg-pink-500/20 text-pink-300",
+  contact:          "bg-orange-500/20 text-orange-300",
+  heading:          "bg-yellow-500/20 text-yellow-300",
+  text:             "bg-sky-500/20 text-sky-300",
+  button:           "bg-indigo-500/20 text-indigo-300",
+  icon:             "bg-amber-500/20 text-amber-300",
+  "feature-item":   "bg-teal-500/20 text-teal-300",
+  columns:          "bg-cyan-500/20 text-cyan-300",
+  image:            "bg-rose-500/20 text-rose-300",
+  input:            "bg-lime-500/20 text-lime-300",
+  divider:          "bg-gray-500/20 text-gray-300",
+  container:        "bg-purple-500/20 text-purple-300",
+  video:            "bg-red-500/20 text-red-300",
+  map:              "bg-green-500/20 text-green-300",
+  accordion:        "bg-fuchsia-500/20 text-fuchsia-300",
+  tabs:             "bg-blue-400/20 text-blue-200",
+  spacer:           "bg-slate-500/20 text-slate-300",
+  "social-links":   "bg-cyan-400/20 text-cyan-200",
+  countdown:        "bg-orange-400/20 text-orange-200",
+  "pricing-table":  "bg-emerald-400/20 text-emerald-200",
+  testimonial:      "bg-yellow-400/20 text-yellow-200",
+  footer:           "bg-indigo-400/20 text-indigo-200",
+  form:             "bg-violet-400/20 text-violet-200",
 };
 
 const paletteItems: Array<{ type: ComponentType; label: string; group: PaletteGroup; icon: React.ComponentType<{ className?: string }> }> = [
-  { type: "navigation",   label: "Navigation",   group: "Website Sections", icon: Menu },
-  { type: "hero",         label: "Hero",         group: "Website Sections", icon: Home },
-  { type: "features",     label: "Features",     group: "Website Sections", icon: PanelsTopLeft },
-  { type: "gallery",      label: "Gallery",      group: "Website Sections", icon: Images },
-  { type: "contact",      label: "Contact",      group: "Website Sections", icon: Contact },
-  { type: "heading",      label: "Heading",      group: "Basic Blocks",     icon: Heading1 },
-  { type: "text",         label: "Text",         group: "Basic Blocks",     icon: Type },
-  { type: "button",       label: "Button",       group: "Basic Blocks",     icon: MousePointerSquareDashed },
-  { type: "icon",         label: "Icon",         group: "Basic Blocks",     icon: Star },
-  { type: "feature-item", label: "Feature Item", group: "Basic Blocks",     icon: Layers },
-  { type: "columns",      label: "Columns",      group: "Basic Blocks",     icon: LayoutGrid },
-  { type: "image",        label: "Image",        group: "Basic Blocks",     icon: Image },
-  { type: "input",        label: "Input",        group: "Basic Blocks",     icon: TextCursorInput },
-  { type: "divider",      label: "Divider",      group: "Basic Blocks",     icon: Minus },
-  { type: "container",    label: "Container",    group: "Basic Blocks",     icon: LayoutTemplate },
-  { type: "video",        label: "Video",        group: "Basic Blocks",     icon: Play },
+  /* ── Website Sections ── */
+  { type: "navigation",     label: "Navigation",     group: "Website Sections", icon: Menu },
+  { type: "hero",           label: "Hero",           group: "Website Sections", icon: Home },
+  { type: "features",       label: "Features",       group: "Website Sections", icon: PanelsTopLeft },
+  { type: "gallery",        label: "Gallery",        group: "Website Sections", icon: Images },
+  { type: "contact",        label: "Contact",        group: "Website Sections", icon: Contact },
+  { type: "pricing-table",  label: "Pricing",        group: "Website Sections", icon: Table },
+  { type: "testimonial",    label: "Testimonials",   group: "Website Sections", icon: Heart },
+  { type: "footer",         label: "Footer",         group: "Website Sections", icon: AlignLeft },
+
+  /* ── Basic Blocks ── */
+  { type: "heading",        label: "Heading",        group: "Basic Blocks",     icon: Heading1 },
+  { type: "text",           label: "Text",           group: "Basic Blocks",     icon: Type },
+  { type: "button",         label: "Button",         group: "Basic Blocks",     icon: MousePointerSquareDashed },
+  { type: "icon",           label: "Icon",           group: "Basic Blocks",     icon: Star },
+  { type: "feature-item",   label: "Feature Item",   group: "Basic Blocks",     icon: Layers },
+  { type: "columns",        label: "Columns",        group: "Basic Blocks",     icon: LayoutGrid },
+  { type: "image",          label: "Image",          group: "Basic Blocks",     icon: Image },
+  { type: "input",          label: "Input",          group: "Basic Blocks",     icon: TextCursorInput },
+  { type: "divider",        label: "Divider",        group: "Basic Blocks",     icon: Minus },
+  { type: "container",      label: "Container",      group: "Basic Blocks",     icon: LayoutTemplate },
+  { type: "video",          label: "Video",          group: "Basic Blocks",     icon: Play },
+  { type: "spacer",         label: "Spacer",         group: "Basic Blocks",     icon: Minus },
+
+  /* ── Advanced Blocks ── */
+  { type: "accordion",      label: "Accordion",      group: "Advanced Blocks",  icon: List },
+  { type: "tabs",           label: "Tabs",           group: "Advanced Blocks",  icon: LayoutTemplate },
+  { type: "map",            label: "Map",            group: "Advanced Blocks",  icon: MapPin },
+  { type: "social-links",   label: "Social Links",   group: "Advanced Blocks",  icon: Share2 },
+  { type: "countdown",      label: "Countdown",      group: "Advanced Blocks",  icon: Clock },
+  { type: "form",           label: "Form Builder",   group: "Advanced Blocks",  icon: FileText },
 ];
 
 function PaletteItem({ item, onAdd }: { item: (typeof paletteItems)[number]; onAdd: (type: ComponentType) => void }) {
@@ -84,7 +114,12 @@ function PaletteItem({ item, onAdd }: { item: (typeof paletteItems)[number]; onA
   );
 }
 
-const GROUPS: PaletteGroup[] = ["Website Sections", "Basic Blocks"];
+const GROUPS: PaletteGroup[] = ["Website Sections", "Basic Blocks", "Advanced Blocks"];
+const GROUP_LABELS: Record<PaletteGroup, string> = {
+  "Website Sections": "Sections",
+  "Basic Blocks": "Basic",
+  "Advanced Blocks": "Advanced",
+};
 
 export default function ComponentPalette({
   className = "w-[248px]",
@@ -113,6 +148,9 @@ export default function ComponentPalette({
             <Layers className="h-4 w-4 text-blue-400" />
           </div>
           <span className="text-[13px] font-bold tracking-wide text-white">Blocks</span>
+          <span className="ml-auto rounded-full bg-blue-500/20 px-2 py-0.5 text-[9px] font-bold text-blue-300">
+            {paletteItems.length}
+          </span>
         </div>
 
         {/* Search */}
@@ -127,17 +165,17 @@ export default function ComponentPalette({
           />
         </div>
 
-        {/* Group tabs */}
+        {/* Group tabs — 3 tabs */}
         <div className="relative flex rounded-lg bg-[#071428] p-0.5 mb-4">
           {GROUPS.map((g) => (
             <button
               key={g}
               type="button"
               onClick={() => setActiveGroup(g)}
-              className="relative z-10 flex-1 rounded-md py-1.5 text-[11px] font-bold transition-colors"
+              className="relative z-10 flex-1 rounded-md py-1.5 text-[10px] font-bold transition-colors"
             >
               <span className={activeGroup === g ? "text-white" : "text-gray-500 hover:text-gray-300"}>
-                {g === "Website Sections" ? "Sections" : "Basic"}
+                {GROUP_LABELS[g]}
               </span>
               {activeGroup === g && (
                 <motion.div
@@ -177,7 +215,7 @@ export default function ComponentPalette({
           >
             {filtered.length === 0 ? (
               <motion.p variants={staggerChild} className="col-span-2 py-8 text-center text-[12px] text-gray-500">
-                No blocks match "{searchQuery}"
+                No blocks match &quot;{searchQuery}&quot;
               </motion.p>
             ) : (
               filtered.map((item) => (
@@ -197,3 +235,4 @@ export default function ComponentPalette({
     </aside>
   );
 }
+

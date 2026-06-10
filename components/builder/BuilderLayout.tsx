@@ -9,7 +9,11 @@ import { useSearchParams } from "next/navigation";
 import Canvas from "./Canvas";
 import ComponentPalette from "./ComponentPalette";
 import PropertyEditor from "./PropertyEditor";
+import GlobalStylesPanel from "./GlobalStylesPanel";
+import SEOPanel from "./SEOPanel";
+import SectionTemplates from "./SectionTemplates";
 import { useBuilder } from "@/hooks/useBuilder";
+import { useDesignStore } from "@/store/designStore";
 import type { BuilderComponent, ComponentType } from "@/types/builder";
 
 function findByIdDeep(components: BuilderComponent[], id: string): BuilderComponent | null {
@@ -39,6 +43,11 @@ export default function BuilderLayout() {
   const [isLeftOpen, setIsLeftOpen] = useState(false);
   const [isRightOpen, setIsRightOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const showGlobalStyles = useDesignStore((s) => s.showGlobalStyles);
+  const toggleGlobalStyles = useDesignStore((s) => s.toggleGlobalStyles);
+  const showSEOPanel = useDesignStore((s) => s.showSEOPanel);
+  const toggleSEOPanel = useDesignStore((s) => s.toggleSEOPanel);
+  const [showTemplates, setShowTemplates] = useState(false);
   const searchParams = useSearchParams();
   const hasLoadedRequirements = useRef(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 3 } }));
@@ -266,6 +275,27 @@ export default function BuilderLayout() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* ── Global Styles Panel overlay ── */}
+      <AnimatePresence>
+        {showGlobalStyles && (
+          <GlobalStylesPanel onClose={toggleGlobalStyles} />
+        )}
+      </AnimatePresence>
+
+      {/* ── SEO Panel overlay ── */}
+      <AnimatePresence>
+        {showSEOPanel && (
+          <SEOPanel onClose={toggleSEOPanel} />
+        )}
+      </AnimatePresence>
+
+      {/* ── Section Templates Panel overlay ── */}
+      <AnimatePresence>
+        {showTemplates && (
+          <SectionTemplates onClose={() => setShowTemplates(false)} />
+        )}
+      </AnimatePresence>
 
       {isPreviewOpen && (
         <PreviewModal srcDoc={exportHtml()} onClose={() => setIsPreviewOpen(false)} />

@@ -16,7 +16,17 @@ export type ComponentType =
   | "gallery"
   | "contact"
   | "container"
-  | "video";
+  | "video"
+  | "map"
+  | "accordion"
+  | "tabs"
+  | "spacer"
+  | "social-links"
+  | "countdown"
+  | "pricing-table"
+  | "testimonial"
+  | "footer"
+  | "form";
 
 export interface ComponentStyles {
   color?: string;
@@ -236,12 +246,139 @@ export interface VideoProps {
   aspectRatio?: "16/9" | "4/3" | "1/1";
 }
 
+/* ─── New block props (Zoho-inspired) ───────────────────────────────── */
+
+export interface MapProps {
+  address: string;
+  zoom: number;
+  height: string;
+}
+
+export interface AccordionItem {
+  title: string;
+  content: string;
+}
+
+export interface AccordionProps {
+  items: AccordionItem[];
+  allowMultiple?: boolean;
+}
+
+export interface TabItem {
+  label: string;
+  content: string;
+}
+
+export interface TabsProps {
+  items: TabItem[];
+  variant?: "underline" | "pills" | "boxed";
+}
+
+export interface SpacerProps {
+  height: string;
+}
+
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+export interface SocialLinksProps {
+  links: SocialLink[];
+  size: "sm" | "md" | "lg";
+  style: "filled" | "outline" | "flat";
+}
+
+export interface CountdownProps {
+  targetDate: string;
+  label?: string;
+  finishedText?: string;
+}
+
+export interface PricingTier {
+  name: string;
+  price: string;
+  period: string;
+  features: string[];
+  cta: string;
+  highlighted?: boolean;
+}
+
+export interface PricingTableProps {
+  heading?: string;
+  tiers: PricingTier[];
+}
+
+export interface TestimonialItem {
+  quote: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  rating?: number;
+}
+
+export interface TestimonialProps {
+  heading?: string;
+  items: TestimonialItem[];
+  layout?: "cards" | "carousel" | "stack";
+}
+
+export interface FooterColumn {
+  title: string;
+  links: { label: string; href: string }[];
+}
+
+export interface FooterProps {
+  brand: string;
+  tagline?: string;
+  columns: FooterColumn[];
+  copyright?: string;
+  socials?: SocialLink[];
+}
+
+export interface FormField {
+  name: string;
+  type: "text" | "email" | "tel" | "textarea" | "select";
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  options?: string[];
+}
+
+export interface FormProps {
+  heading?: string;
+  description?: string;
+  fields: FormField[];
+  submitLabel: string;
+  successMessage?: string;
+}
+
+/* ─── Animation props (Phase 3) ──────────────────────────────────── */
+
+export interface AnimationConfig {
+  type: "none" | "fade-in" | "slide-up" | "slide-left" | "slide-right" | "zoom-in" | "bounce";
+  duration?: number;
+  delay?: number;
+  easing?: string;
+}
+
+/* ─── SEO metadata ──────────────────────────────────────────────── */
+
+export interface SEOMetadata {
+  title: string;
+  description: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+}
+
 /**
  * Component types that act as full-width vertical-flow "sections".
  * These stay in the sortable vertical list; inner elements may be freeform.
  */
 export const SECTION_TYPES: ReadonlySet<ComponentType> = new Set([
   "navigation", "hero", "features", "gallery", "contact", "container", "columns",
+  "pricing-table", "testimonial", "footer", "accordion", "tabs", "form",
 ]);
 
 export interface BuilderComponent {
@@ -259,6 +396,15 @@ export interface BuilderComponent {
   order: number;
   /** Whether the element is locked from editing/moving. */
   locked?: boolean;
+  /**
+   * Freeform canvas position (x, y in pixels from canvas top-left).
+   * Only used when canvasMode === "freeform".
+   */
+  position?: { x: number; y: number };
+  /** Z-index layer in freeform mode. */
+  zIndex?: number;
+  /** Explicit pixel size in freeform mode. */
+  freeformSize?: { width: number; height: number };
 }
 
 /* ─── Viewport / responsive editing ────────────────────────────────── */
@@ -318,6 +464,10 @@ export interface BuilderState {
   /** Active editing viewport. */
   viewport: Viewport;
   setViewport: (v: Viewport) => void;
+
+  /** Canvas layout mode: flow (stacked) or freeform (absolute positioning). */
+  canvasMode: "flow" | "freeform";
+  toggleCanvasMode: () => void;
 
   /* ── Wix-style freeform editing ─────────────────────────────────── */
 
