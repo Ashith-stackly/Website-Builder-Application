@@ -387,7 +387,7 @@ export default function PortfolioPreview({
 
                     {/* ROW 3 → Actions (NOW VISIBLE ON MOBILE ✅) */}
                     <div className="flex justify-center" data-builder-chrome="true">
-                      <div className="flex flex-wrap justify-center gap-2 w-full max-w-[220px]">
+                      <div className="flex flex-wrap justify-center gap-2 w-full">
 
                         {/* Save Draft */}
                         <button className="px-3 py-1 text-xs font-semibold border border-gray-300 rounded-md text-white hover:bg-white hover:text-black transition">
@@ -796,7 +796,7 @@ export default function PortfolioPreview({
                 {/* ABOUT SECTION */}
                 <div className="relative w-full overflow-hidden portfolio-hero bg-[#F2F2F2]" style={getSpecificSectionStyle('about')}>
                   <div id="about" className="relative z-10 w-full px-4 sm:px-6 md:px-12 lg:px-20 py-10 md:py-16">
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
                       <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">About</h2>
                       <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl md:text-3xl tracking-tight leading-none">Me</span>
                     </div>
@@ -937,7 +937,7 @@ export default function PortfolioPreview({
                   <div className="relative z-10 w-full px-6 md:px-12 lg:px-20 pb-16 lg:pb-24">
                     <div className="text-center mb-16">
                       {/* <h3 className="text-base font-bold flex items-center justify-center gap-1 mb-4 text-gray-800 tracking-wide"> */}
-                      <div className="flex items-center gap-2 mb-4">
+                      <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">My</h2>
                         <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl md:text-3xl tracking-tight leading-none">Services</span>
                       </div>
@@ -995,11 +995,11 @@ export default function PortfolioPreview({
                       <div className="absolute left-[-4rem] bottom-[-5rem] h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
                       <div className="relative grid grid-cols-1 xl:grid-cols-[0.6fr_2fr] gap-8 lg:gap-12 items-start">
                         <div className={`portfolio-reveal flex flex-col items-center xl:items-start text-center xl:text-left ${processInView ? "is-visible" : ""}`}>
-                          <div className="flex items-center justify-center xl:justify-start gap-2 mb-4">
+                          <div className="flex flex-wrap items-center justify-center xl:justify-start gap-2 mb-4">
                             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Design</h2>
-                            <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl md:text-3xl tracking-tight leading-none">Process</span>
+                            <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl md:text-3xl tracking-tight leading-none break-words">Process</span>
                           </div>
-                          <p className="text-sm md:text-base text-blue-100 leading-relaxed max-w-md">
+                          <p className="text-sm md:text-base text-blue-100 leading-relaxed max-w-md break-words">
                             A simple workflow keeps every project moving from rough idea to polished launch without losing the user&apos;s needs along the way.
                           </p>
                         </div>
@@ -1039,7 +1039,7 @@ export default function PortfolioPreview({
                   </div> */}
                     <div className="text-center mb-16">
                       {/* <h3 className="text-base font-bold flex items-center justify-center gap-1 mb-4 text-gray-800 tracking-wide"> */}
-                      <div className="flex items-center gap-2 mb-4">
+                      <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">My</h2>
                         <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl md:text-3xl tracking-tight leading-none">Projects</span>
                       </div>
@@ -1167,12 +1167,12 @@ export default function PortfolioPreview({
                         {testimonials.map((item, i) => (
                           <div
                             key={item.name}
-                            className={`portfolio-reveal rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${testimonialsInView ? "is-visible" : ""}`}
+                            className={`portfolio-reveal rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl break-words min-w-0 ${testimonialsInView ? "is-visible" : ""}`}
                             style={{ transitionDelay: `${i * 140}ms` }}
                           >
                             <div className="mb-5 text-5xl font-black leading-none text-[#63e5ff]">“</div>
-                            <p className="mb-6 text-sm leading-relaxed text-gray-600">{item.quote}</p>
-                            <div className="flex items-center gap-3">
+                            <p className="mb-6 text-sm leading-relaxed text-gray-600 break-words whitespace-normal">{item.quote}</p>
+                            <div className="flex flex-wrap items-center gap-3">
                               <div className="h-11 w-11 rounded-full bg-[#06224C] text-white flex items-center justify-center text-sm font-black">
                                 {item.name.charAt(0)}
                               </div>
@@ -1277,7 +1277,7 @@ export default function PortfolioPreview({
                       {/* <h2 className="text-base font-bold flex items-center gap-1 mb-4 text-gray-800 tracking-wide max-w-full w-fit">
                         Get In <span className="bg-[#c4ff0b] text-gray-900 px-2 py-0.5 rounded-full text-sm font-extrabold ml-1 leading-none shadow-sm flex items-center h-6">Touch</span>
                       </h2> */}
-                      <div className="flex items-center gap-2 mb-4">
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
                         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Get In</h2>
                         <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl md:text-3xl tracking-tight leading-none">Touch</span>
                       </div>
