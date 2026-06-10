@@ -10,7 +10,16 @@ import { navigationDefaults } from "@/components/blocks/navigation/spec";
 import { contactDefaults } from "@/components/blocks/contact/spec";
 import { featuresDefaults } from "@/components/blocks/features/spec";
 import { videoDefaults }    from "@/components/blocks/video/spec";
-import type { BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
+import { socialLinksDefaults } from "@/components/draggable/SocialLinksComponent";
+import { countdownDefaults } from "@/components/draggable/CountdownComponent";
+import { pricingTableDefaults } from "@/components/draggable/PricingTableComponent";
+import { testimonialDefaults } from "@/components/draggable/TestimonialComponent";
+import { footerDefaults } from "@/components/draggable/FooterComponent";
+import { formDefaults } from "@/components/draggable/FormComponent";
+import { accordionDefaults } from "@/components/draggable/AccordionComponent";
+import { tabsDefaults } from "@/components/draggable/TabsComponent";
+import { mapDefaults } from "@/components/draggable/MapComponent";
+import type { BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, SEOMetadata, Viewport } from "@/types/builder";
 
 type ComponentDefault = Pick<BuilderComponent, "content" | "styles" | "children"> & {
   props?: BuilderComponent["props"];
@@ -106,6 +115,66 @@ const defaults: Record<ComponentType, ComponentDefault> = {
     content: "",
     props: { ...videoDefaults },
     styles: { margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  map: {
+    content: "",
+    props: { ...mapDefaults },
+    styles: { margin: "0 0 16px", borderRadius: "8px", width: "100%", padding: "16px" },
+    children: [],
+  },
+  accordion: {
+    content: "",
+    props: { ...accordionDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  tabs: {
+    content: "",
+    props: { ...tabsDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  spacer: {
+    content: "60px",
+    props: { height: "60px" },
+    styles: { margin: "0", width: "100%" },
+    children: [],
+  },
+  "social-links": {
+    content: "",
+    props: { ...socialLinksDefaults },
+    styles: { padding: "12px", margin: "0 0 12px", width: "100%" },
+    children: [],
+  },
+  countdown: {
+    content: "",
+    props: { ...countdownDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "32px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  "pricing-table": {
+    content: "",
+    props: { ...pricingTableDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#f7f9fc", padding: "40px 24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  testimonial: {
+    content: "",
+    props: { ...testimonialDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "40px 24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  footer: {
+    content: "",
+    props: { ...footerDefaults },
+    styles: { color: "#ffffff", backgroundColor: "#0B1D40", padding: "0", margin: "0", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  form: {
+    content: "",
+    props: { ...formDefaults },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "32px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
     children: [],
   },
 };
@@ -255,7 +324,7 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
       return section as ComponentType;
     })
     .filter((section): section is ComponentType =>
-      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container"].includes(section),
+      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container", "video", "map", "accordion", "tabs", "spacer", "social-links", "countdown", "pricing-table", "testimonial", "footer", "form"].includes(section),
     );
 
   return sectionTypes.map((type, index) => {
@@ -334,11 +403,16 @@ const STORAGE_KEY = "stackly-builder-draft";
 export const useBuilderStore = create<BuilderState>((set, get) => ({
   components: [],
   selectedComponentId: null,
+  selectedComponentIds: [],
+  clipboard: null,
   isInlineEditing: false,
   history: [],
   future: [],
   viewport: "desktop",
   setViewport: (v: Viewport) => set({ viewport: v }),
+  canvasMode: "flow",
+  toggleCanvasMode: () =>
+    set((state) => ({ canvasMode: state.canvasMode === "flow" ? "freeform" : "flow" })),
   setInlineEditing: (v) => set({ isInlineEditing: v }),
   addComponent: (type, parentId, afterId) =>
     set((state) => {
@@ -362,6 +436,27 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         return { ...captureHistory(state), components, selectedComponentId: component.id };
       }
 
+      return {
+        ...captureHistory(state),
+        components: [...state.components, component],
+        selectedComponentId: component.id,
+      };
+    }),
+  insertComponentBefore: (type, beforeId) =>
+    set((state) => {
+      const idx = state.components.findIndex((c) => c.id === beforeId);
+      const component = createComponent(type, 0);
+
+      if (idx >= 0) {
+        const next = [
+          ...state.components.slice(0, idx),
+          component,
+          ...state.components.slice(idx),
+        ];
+        return { ...captureHistory(state), components: orderComponents(next), selectedComponentId: component.id };
+      }
+
+      // Fallback: append if beforeId not found at top level
       return {
         ...captureHistory(state),
         components: [...state.components, component],
@@ -398,7 +493,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       components: orderComponents(deleteNodeById(state.components, id)),
       selectedComponentId: state.selectedComponentId === id ? null : state.selectedComponentId,
     })),
-  selectComponent: (id) => set({ selectedComponentId: id }),
+  selectComponent: (id) => set({ selectedComponentId: id, selectedComponentIds: id ? [id] : [] }),
   reorderComponents: (activeId, overId) =>
     set((state) => {
       const oldIndex = state.components.findIndex((component) => component.id === activeId);
@@ -463,4 +558,111 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       return false;
     }
   },
+
+  /* ── Wix-style freeform editing actions ──────────────────────────── */
+
+  toggleSelectComponent: (id) =>
+    set((state) => {
+      const ids = state.selectedComponentIds.includes(id)
+        ? state.selectedComponentIds.filter((i) => i !== id)
+        : [...state.selectedComponentIds, id];
+      return {
+        selectedComponentIds: ids,
+        selectedComponentId: ids.length === 1 ? ids[0] : ids.length === 0 ? null : state.selectedComponentId,
+      };
+    }),
+
+  copyComponents: () => {
+    const { selectedComponentIds, components } = get();
+    if (selectedComponentIds.length === 0) return;
+    const copies = selectedComponentIds
+      .map((id) => findComponentById(components, id))
+      .filter(Boolean) as BuilderComponent[];
+    if (copies.length === 0) return;
+    set({ clipboard: copies.map(deepCloneComponent) });
+    // Also persist to localStorage for cross-tab paste
+    try {
+      localStorage.setItem("stackly-clipboard", JSON.stringify(copies.map(deepCloneComponent)));
+    } catch { /* storage unavailable */ }
+  },
+
+  pasteComponents: (parentId) =>
+    set((state) => {
+      let clipData = state.clipboard;
+      // Try localStorage fallback for cross-tab paste
+      if (!clipData) {
+        try {
+          const raw = localStorage.getItem("stackly-clipboard");
+          if (raw) clipData = JSON.parse(raw) as BuilderComponent[];
+        } catch { /* ignore */ }
+      }
+      if (!clipData || clipData.length === 0) return state;
+
+      const cloned = clipData.map(deepCloneComponent);
+
+      if (parentId) {
+        const components = updateNodeById(state.components, parentId, (p) => ({
+          ...p,
+          children: [...p.children, ...cloned],
+        }));
+        return { ...captureHistory(state), components, selectedComponentId: cloned[0]?.id ?? null, selectedComponentIds: cloned.map((c) => c.id) };
+      }
+
+      return {
+        ...captureHistory(state),
+        components: orderComponents([...state.components, ...cloned]),
+        selectedComponentId: cloned[0]?.id ?? null,
+        selectedComponentIds: cloned.map((c) => c.id),
+      };
+    }),
+
+  moveLayer: (id, direction) =>
+    set((state) => {
+      const comp = findComponentById(state.components, id);
+      if (!comp) return state;
+      const currentZ = parseInt(comp.styles.zIndex || "0", 10);
+      let newZ: number;
+      switch (direction) {
+        case "front":    newZ = 999; break;
+        case "back":     newZ = 0;   break;
+        case "forward":  newZ = currentZ + 1; break;
+        case "backward": newZ = Math.max(0, currentZ - 1); break;
+      }
+      return {
+        components: updateNodeById(state.components, id, (c) => ({
+          ...c,
+          styles: { ...c.styles, zIndex: String(newZ) },
+        })),
+      };
+    }),
+
+  moveComponent: (id, x, y) =>
+    set((state) => ({
+      components: updateNodeById(state.components, id, (c) => ({
+        ...c,
+        position: {
+          x: Math.round(x / 8) * 8,  // snap to 8px grid
+          y: Math.round(y / 8) * 8,
+        },
+      })),
+    })),
+
+  resizeComponent: (id, width, height) =>
+    set((state) => ({
+      components: updateNodeById(state.components, id, (c) => ({
+        ...c,
+        freeformSize: {
+          width: Math.max(120, Math.round(width / 8) * 8),
+          height: Math.max(40, Math.round(height / 8) * 8),
+        },
+      })),
+    })),
+
+  toggleLock: (id) =>
+    set((state) => ({
+      components: updateNodeById(state.components, id, (c) => ({
+        ...c,
+        locked: !c.locked,
+      })),
+    })),
 }));

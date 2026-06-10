@@ -3,22 +3,23 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
-import { Eye, Layers2, Paintbrush, SlidersHorizontal, SquareMousePointer, X } from "lucide-react";
+import { Layers2, Paintbrush, Sparkles, SquareMousePointer, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ICON_NAMES } from "@/components/draggable/IconComponent";
 import { blockRegistry } from "@/lib/blockRegistry";
 import type { BuilderComponent } from "@/types/builder";
 import { ContentField, contentInputClass } from "@/components/builder/PanelFields";
 import { StyleTab } from "./panel/StyleTab";
+import { EffectsTab } from "./panel/EffectsTab";
 import LayersPanel from "./LayersPanel";
 import { ImagePanel } from "@/components/blocks/image/ImagePanel";
 
-type Tab = "content" | "style" | "advanced" | "layers";
+type Tab = "content" | "style" | "effects" | "layers";
 
 const TABS: Array<{ id: Tab; label: string; Icon: LucideIcon }> = [
   { id: "content",  label: "Content",  Icon: SquareMousePointer },
   { id: "style",    label: "Style",    Icon: Paintbrush },
-  { id: "advanced", label: "Advanced", Icon: SlidersHorizontal },
+  { id: "effects",  label: "Effects",  Icon: Sparkles },
   { id: "layers",   label: "Layers",   Icon: Layers2 },
 ];
 
@@ -131,6 +132,55 @@ export default function PropertyEditor({
       );
     }
 
+    if (component.type === "spacer") {
+      const height = String(component.props?.height || component.content || "60px");
+      return (
+        <div className="space-y-3">
+          <span className="block text-[13px] font-bold text-[#0B1D40]">Spacer Height</span>
+          <input
+            type="range"
+            min="10" max="300" step="10"
+            value={parseInt(height)}
+            onChange={(e) => onUpdate(component.id, { content: `${e.target.value}px`, props: { height: `${e.target.value}px` } })}
+            className="w-full accent-[#0B1D40]"
+          />
+          <p className="text-center text-sm font-bold text-[#0B1D40]">{height}</p>
+        </div>
+      );
+    }
+
+    if (component.type === "map") {
+      const p = (component.props || {}) as Record<string, unknown>;
+      return (
+        <div className="space-y-3">
+          <ContentField label="Address" value={String(p.address || "")} onChange={(v) => onUpdate(component.id, { props: { ...p, address: v } })} />
+          <label className="block">
+            <span className="mb-1 block text-[13px] font-bold text-[#0B1D40]">Zoom ({Number(p.zoom) || 12})</span>
+            <input type="range" min="1" max="20" value={Number(p.zoom) || 12}
+              onChange={(e) => onUpdate(component.id, { props: { ...p, zoom: parseInt(e.target.value) } })}
+              className="w-full accent-[#0B1D40]" />
+          </label>
+          <ContentField label="Height" value={String(p.height || "300px")} onChange={(v) => onUpdate(component.id, { props: { ...p, height: v } })} />
+        </div>
+      );
+    }
+
+    if (component.type === "countdown") {
+      const p = (component.props || {}) as Record<string, unknown>;
+      return (
+        <div className="space-y-3">
+          <ContentField label="Label" value={String(p.label || "")} onChange={(v) => onUpdate(component.id, { props: { ...p, label: v } })} />
+          <label className="block">
+            <span className="mb-1 block text-[13px] font-bold text-[#0B1D40]">Target Date</span>
+            <input type="datetime-local" value={String(p.targetDate || "")}
+              onChange={(e) => onUpdate(component.id, { props: { ...p, targetDate: e.target.value } })}
+              className={contentInputClass} />
+          </label>
+          <ContentField label="Finished Text" value={String(p.finishedText || "")} onChange={(v) => onUpdate(component.id, { props: { ...p, finishedText: v } })} />
+        </div>
+      );
+    }
+
     return (
       <label className="block">
         <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">
@@ -145,35 +195,7 @@ export default function PropertyEditor({
     );
   };
 
-  const renderAdvanced = () => (
-    <div className="space-y-5 px-5 py-5">
-      <div>
-        <span className="mb-2 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">
-          Responsive Visibility
-        </span>
-        <p className="mb-3 text-[11px] text-[#566583]">Hide this block on specific devices.</p>
-        {(["Mobile", "Tablet", "Desktop"] as const).map((label) => (
-          <div key={label} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-[#f7f9fc]">
-            <span className="text-[13px] font-bold text-[#0B1D40]">Hide on {label}</span>
-            <button type="button" className="rounded p-1 text-[#566583] hover:text-[#0B1D40]">
-              <Eye className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <div>
-        <span className="mb-2 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">
-          Block ID
-        </span>
-        <input
-          type="text"
-          placeholder={component?.id.slice(0, 8)}
-          className="w-full rounded-lg border border-[#dbe3ef] bg-transparent px-3 py-2 font-mono text-[12px] text-[#0B1D40] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-        />
-        <p className="mt-1.5 text-[11px] text-[#566583]">Use for anchor links: #block-id</p>
-      </div>
-    </div>
-  );
+
 
   const asideClass =
     className ??
@@ -245,14 +267,14 @@ export default function PropertyEditor({
               <LayersPanel />
             ) : activeTab === "style" && component ? (
               <StyleTab component={component} onUpdate={onUpdate} />
-            ) : activeTab === "advanced" ? (
-              renderAdvanced()
+            ) : activeTab === "effects" && component ? (
+              <EffectsTab component={component} onUpdate={onUpdate} />
             ) : (
               <div className="px-5 py-5">
                 {!component ? (
                   <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0B1D40]/[0.08]">
-                      <SlidersHorizontal className="h-6 w-6 text-[#0B1D40]" />
+                      <Sparkles className="h-6 w-6 text-[#0B1D40]" />
                     </div>
                     <p className="max-w-[180px] text-[13px] font-medium leading-5 text-[#566583]">
                       Click any block on the canvas to edit it

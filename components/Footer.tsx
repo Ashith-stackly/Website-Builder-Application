@@ -226,7 +226,7 @@ export default function Footer() {
     }
 
     if (key === "contact") {
-      router.push("/backend-error");
+      router.push("/contact");
       return;
     }
 

@@ -1,14 +1,17 @@
 "use client";
 
-import { memo, useEffect, useRef, useState, useMemo } from "react";
-import { Check, ChevronDown, Eye, FolderOpen, Images, Layers, Monitor, Pencil, Redo2, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { Check, ChevronDown, Eye, FolderOpen, Globe, Images, Layers, Monitor, Palette, Pencil, Redo2, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
 import { AssetManager } from "@/components/assets/AssetManager";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
+import QuickInsertBar from "./QuickInsertBar";
 import ExportButton from "./ExportButton";
+import ZoomControls from "./ZoomControls";
 import { useBuilderStore } from "@/store/builderStore";
-import type { BuilderComponent } from "@/types/builder";
+import { useDesignStore } from "@/store/designStore";
+import type { BuilderComponent, ComponentType } from "@/types/builder";
 
 function Canvas({
   components,
@@ -39,6 +42,35 @@ function Canvas({
   const loadFromLocalStorage = useBuilderStore((s) => s.loadFromLocalStorage);
   const viewport = useBuilderStore((s) => s.viewport);
   const setViewport = useBuilderStore((s) => s.setViewport);
+  const zoom = useDesignStore((s) => s.zoom);
+  const autoSaveEnabled = useDesignStore((s) => s.autoSaveEnabled);
+  const setLastSavedAt = useDesignStore((s) => s.setLastSavedAt);
+  const toggleGlobalStyles = useDesignStore((s) => s.toggleGlobalStyles);
+  const toggleSEOPanel = useDesignStore((s) => s.toggleSEOPanel);
+  const storeAddComponent = useBuilderStore((s) => s.addComponent);
+  const insertComponentBefore = useBuilderStore((s) => s.insertComponentBefore);
+
+  /* ── Quick-insert helpers ── */
+  const handleQuickInsertBefore = useCallback(
+    (type: ComponentType, beforeId: string) => {
+      insertComponentBefore(type, beforeId);
+    },
+    [insertComponentBefore],
+  );
+
+  const handleQuickInsertAfter = useCallback(
+    (type: ComponentType, afterId: string) => {
+      storeAddComponent(type, null, afterId);
+    },
+    [storeAddComponent],
+  );
+
+  const handleQuickInsertEnd = useCallback(
+    (type: ComponentType) => {
+      storeAddComponent(type);
+    },
+    [storeAddComponent],
+  );
 
   /* ── Project name (local state, persisted via save) ── */
   const [projectName, setProjectName] = useState("My Website");
@@ -59,7 +91,18 @@ function Canvas({
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 2200);
+    setLastSavedAt(Date.now());
   };
+
+  /* ── Auto-save every 30s ── */
+  useEffect(() => {
+    if (!autoSaveEnabled || components.length === 0) return;
+    const id = setInterval(() => {
+      saveToLocalStorage();
+      setLastSavedAt(Date.now());
+    }, 30000);
+    return () => clearInterval(id);
+  }, [autoSaveEnabled, components.length, saveToLocalStorage, setLastSavedAt]);
 
   const handleLoad = () => {
     const ok = loadFromLocalStorage();
@@ -128,6 +171,28 @@ function Canvas({
 
         {/* Right: actions */}
         <div className="flex items-center gap-1.5 md:gap-2">
+          {/* Global Styles */}
+          <button
+            type="button"
+            title="Design System"
+            onClick={toggleGlobalStyles}
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-md border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[12px] font-bold text-violet-700 shadow-sm transition hover:bg-violet-100 active:scale-95 md:px-3 md:text-[13px]"
+          >
+            <Palette className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Design</span>
+          </button>
+
+          {/* SEO */}
+          <button
+            type="button"
+            title="SEO Settings"
+            onClick={toggleSEOPanel}
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[12px] font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 active:scale-95 md:px-3 md:text-[13px]"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">SEO</span>
+          </button>
+
           <button
             type="button"
             title="Asset Library"
@@ -201,32 +266,36 @@ function Canvas({
         </div>
       </div>
 
-      {/* ── Viewport / device switcher ── */}
+      {/* ── Viewport / device switcher + Zoom ── */}
       <div
-        className="flex h-10 flex-shrink-0 items-center justify-center gap-1 border-b border-[#dbe3ef] bg-[#f7f9fc]"
+        className="flex h-10 flex-shrink-0 items-center justify-between gap-1 border-b border-[#dbe3ef] bg-[#f7f9fc] px-3"
         onClick={(e) => e.stopPropagation()}
       >
-        {([
-          { id: "desktop" as const, Icon: Monitor,    label: "Desktop",  width: "1280" },
-          { id: "tablet"  as const, Icon: Tablet,     label: "Tablet",   width: "768" },
-          { id: "mobile"  as const, Icon: Smartphone, label: "Mobile",   width: "390" },
-        ] as const).map(({ id, Icon, label, width }) => (
-          <button
-            key={id}
-            type="button"
-            title={`${label} (${width}px)`}
-            onClick={() => setViewport(id)}
-            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition ${
-              viewport === id
-                ? "bg-[#0B1D40] text-white shadow-sm"
-                : "text-[#566583] hover:bg-white hover:text-[#0B1D40]"
-            }`}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{label}</span>
-            {viewport === id && <span className="hidden text-[9px] font-normal opacity-70 lg:inline">{width}px</span>}
-          </button>
-        ))}
+        <div className="flex items-center gap-1">
+          {([
+            { id: "desktop" as const, Icon: Monitor,    label: "Desktop",  width: "1280" },
+            { id: "tablet"  as const, Icon: Tablet,     label: "Tablet",   width: "768" },
+            { id: "mobile"  as const, Icon: Smartphone, label: "Mobile",   width: "390" },
+          ] as const).map(({ id, Icon, label, width }) => (
+            <button
+              key={id}
+              type="button"
+              title={`${label} (${width}px)`}
+              onClick={() => setViewport(id)}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition ${
+                viewport === id
+                  ? "bg-[#0B1D40] text-white shadow-sm"
+                  : "text-[#566583] hover:bg-white hover:text-[#0B1D40]"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{label}</span>
+              {viewport === id && <span className="hidden text-[9px] font-normal opacity-70 lg:inline">{width}px</span>}
+            </button>
+          ))}
+        </div>
+        {/* Zoom controls */}
+        <ZoomControls />
       </div>
 
       {/* ── Canvas drop zone ── */}
@@ -234,11 +303,13 @@ function Canvas({
         ref={setNodeRef}
         className={`flex flex-1 flex-col items-center overflow-y-auto px-3 py-4 transition sm:px-4 ${isOver ? "bg-blue-50/50" : "bg-[#f0f3f8]"}`}
       >
-        {/* Viewport-width frame */}
+        {/* Viewport-width frame with zoom */}
         <div
-          className="flex w-full flex-col gap-3 transition-all duration-300"
+          className="flex w-full flex-col gap-3 transition-all duration-300 origin-top"
           style={{
             maxWidth: viewport === "desktop" ? "100%" : viewport === "tablet" ? "768px" : "390px",
+            transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+            transformOrigin: "top center",
           }}
         >
           {components.length === 0 ? (
@@ -261,14 +332,25 @@ function Canvas({
             </div>
           ) : (
             <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-              {components.map((component) => (
-                <SortableItem
-                  component={component}
-                  key={component.id}
-                  onDelete={onDelete}
-                  onDuplicate={onDuplicate}
-                  onSelect={onSelect}
-                />
+              {components.map((component, index) => (
+                <div key={component.id} className="w-full">
+                  {/* Quick-insert bar BEFORE this block */}
+                  {index === 0 && (
+                    <QuickInsertBar
+                      onInsert={(type) => handleQuickInsertBefore(type, component.id)}
+                    />
+                  )}
+                  <SortableItem
+                    component={component}
+                    onDelete={onDelete}
+                    onDuplicate={onDuplicate}
+                    onSelect={onSelect}
+                  />
+                  {/* Quick-insert bar AFTER this block */}
+                  <QuickInsertBar
+                    onInsert={(type) => handleQuickInsertAfter(type, component.id)}
+                  />
+                </div>
               ))}
             </SortableContext>
           )}

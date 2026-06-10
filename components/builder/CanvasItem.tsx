@@ -1,12 +1,14 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Lock, Trash2 } from "lucide-react";
 import { componentRegistry } from "@/lib/componentRegistry";
 import { useBuilderStore } from "@/store/builderStore";
 import { canvasItem, floatUp } from "@/lib/motion";
 import type { BuilderComponent } from "@/types/builder";
+import ResizeHandles from "./ResizeHandles";
+import ContextMenu from "./ContextMenu";
 
 function CanvasItem({
   component,
@@ -23,11 +25,20 @@ function CanvasItem({
 }) {
   const Renderer = componentRegistry[component.type];
   const isSelected = useBuilderStore((s) => s.selectedComponentId === component.id);
+  const isMultiSelected = useBuilderStore((s) => s.selectedComponentIds.includes(component.id));
   const updateComponent = useBuilderStore((s) => s.updateComponent);
   const setInlineEditing = useBuilderStore((s) => s.setInlineEditing);
+  const toggleSelectComponent = useBuilderStore((s) => s.toggleSelectComponent);
   const [isEditing, setIsEditing] = useState(false);
   const isInlineEditable = component.type === "heading" || component.type === "text" || component.type === "button";
-  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery";
+  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery" || component.type === "pricing-table" || component.type === "testimonial" || component.type === "footer" || component.type === "accordion" || component.type === "tabs" || component.type === "form";
+  const isLocked = component.locked ?? false;
+
+  /* ── Resize handle ref ── */
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  /* ── Context menu state ── */
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!isSelected && isEditing) {
@@ -44,9 +55,14 @@ function CanvasItem({
     (event: React.MouseEvent) => {
       event.stopPropagation();
       if (isEditing) return;
+      // Shift+click for multi-select
+      if (event.shiftKey) {
+        toggleSelectComponent(component.id);
+        return;
+      }
       onSelect(component.id);
     },
-    [onSelect, component.id, isEditing],
+    [onSelect, component.id, isEditing, toggleSelectComponent],
   );
 
   const handleDuplicate = useCallback(
@@ -68,11 +84,22 @@ function CanvasItem({
   const handleDoubleClick = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
+      if (isLocked) return;
       onSelect(component.id);
       setIsEditing(true);
       setInlineEditing(true);
     },
-    [onSelect, component.id, setInlineEditing],
+    [onSelect, component.id, setInlineEditing, isLocked],
+  );
+
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelect(component.id);
+      setContextMenu({ x: event.clientX, y: event.clientY });
+    },
+    [component.id, onSelect],
   );
 
   const handleInlineUpdate = useCallback(
@@ -126,86 +153,114 @@ function CanvasItem({
   const [isHovered, setIsHovered] = useState(false);
   const typeLabel = component.type.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   const showOverlay = (isSelected || isHovered) && !isEditing;
+  const anySelected = isSelected || isMultiSelected;
 
   return (
-    <motion.div
-      variants={canvasItem}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className={`relative w-full cursor-pointer overflow-hidden rounded-xl border bg-white transition-[border-color,box-shadow] duration-200 ${
-        isSelected
-          ? "border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.15),0_20px_50px_rgba(15,35,75,0.12)]"
-          : isHovered
-            ? "border-blue-300 shadow-[0_8px_24px_rgba(15,35,75,0.10)]"
-            : "border-[#e6edf5] shadow-[0_2px_12px_rgba(15,35,75,0.05)]"
-      }`}
-      onClick={isEditing ? undefined : handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* ── Floating overlay toolbar (shown on hover / select) ── */}
-      <AnimatePresence>
-        {showOverlay && (
-          <motion.div
-            key="toolbar"
-            variants={floatUp}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-3 py-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Type badge */}
-            <span className="pointer-events-auto flex items-center gap-1.5 rounded-md bg-[#0B1D40]/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-              {typeLabel}
-            </span>
-
-            {/* Actions */}
-            <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-white/20 bg-[#0B1D40]/80 p-0.5 backdrop-blur-sm">
-              <button
-                type="button"
-                title="Duplicate (Ctrl+D)"
-                onClick={handleDuplicate}
-                className="flex h-6 w-6 items-center justify-center rounded text-white/80 transition hover:bg-white/15 hover:text-white"
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                title="Delete (Del)"
-                onClick={handleDelete}
-                className="flex h-6 w-6 items-center justify-center rounded text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Component content (WYSIWYG) ── */}
-      <div
-        className={`relative flex w-full flex-col items-start transition-colors duration-150 ${
-          isEditing
-            ? "bg-blue-50/20"
-            : isDropTarget && (component.type === "container" || component.type === "columns")
-              ? "bg-blue-50/50 ring-2 ring-inset ring-blue-400/40"
-              : ""
-        } ${isInlineEditable && isSelected && !isEditing ? "cursor-text" : ""}`}
-        onDoubleClick={isInlineEditable ? handleDoubleClick : undefined}
+    <>
+      <motion.div
+        ref={containerRef}
+        variants={canvasItem}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className={`relative w-full cursor-pointer overflow-visible rounded-xl border bg-white transition-[border-color,box-shadow] duration-200 ${
+          isSelected
+            ? "border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.15),0_20px_50px_rgba(15,35,75,0.12)]"
+            : isMultiSelected
+              ? "border-blue-400 shadow-[0_0_0_2px_rgba(59,130,246,0.12),0_8px_24px_rgba(15,35,75,0.08)]"
+              : isHovered
+                ? "border-blue-300 shadow-[0_8px_24px_rgba(15,35,75,0.10)]"
+                : "border-[#e6edf5] shadow-[0_2px_12px_rgba(15,35,75,0.05)]"
+        } ${isLocked ? "opacity-80" : ""}`}
+        onClick={isEditing ? undefined : handleClick}
+        onContextMenu={handleContextMenu}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <Renderer
-          component={component}
-          isEditing={isEditing}
-          onUpdate={isSectionComponent ? handleSectionUpdate : isEditing ? handleInlineUpdate : undefined}
-          onPatch={handlePatch}
+        {/* ── Floating overlay toolbar (shown on hover / select) ── */}
+        <AnimatePresence>
+          {showOverlay && (
+            <motion.div
+              key="toolbar"
+              variants={floatUp}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-3 py-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Type badge */}
+              <span className="pointer-events-auto flex items-center gap-1.5 rounded-md bg-[#0B1D40]/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+                {typeLabel}
+                {isLocked && <Lock className="ml-1 h-3 w-3 text-yellow-400" />}
+              </span>
+
+              {/* Actions */}
+              <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-white/20 bg-[#0B1D40]/80 p-0.5 backdrop-blur-sm">
+                <button
+                  type="button"
+                  title="Duplicate (Ctrl+D)"
+                  onClick={handleDuplicate}
+                  className="flex h-6 w-6 items-center justify-center rounded text-white/80 transition hover:bg-white/15 hover:text-white"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  title="Delete (Del)"
+                  onClick={handleDelete}
+                  className="flex h-6 w-6 items-center justify-center rounded text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Resize handles (shown when selected and not locked) ── */}
+        {isSelected && !isEditing && !isLocked && (
+          <ResizeHandles componentId={component.id} containerRef={containerRef} />
+        )}
+
+        {/* ── Multi-select indicator ── */}
+        {isMultiSelected && !isSelected && (
+          <div className="pointer-events-none absolute inset-0 z-10 rounded-xl border-2 border-dashed border-blue-400/50" />
+        )}
+
+        {/* ── Component content (WYSIWYG) ── */}
+        <div
+          className={`relative flex w-full flex-col items-start transition-colors duration-150 ${
+            isEditing
+              ? "bg-blue-50/20"
+              : isDropTarget && (component.type === "container" || component.type === "columns")
+                ? "bg-blue-50/50 ring-2 ring-inset ring-blue-400/40"
+                : ""
+          } ${isInlineEditable && isSelected && !isEditing ? "cursor-text" : ""}`}
+          onDoubleClick={isInlineEditable ? handleDoubleClick : undefined}
         >
-          {nestedChildren}
-        </Renderer>
-      </div>
-    </motion.div>
+          <Renderer
+            component={component}
+            isEditing={isEditing}
+            onUpdate={isSectionComponent ? handleSectionUpdate : isEditing ? handleInlineUpdate : undefined}
+            onPatch={handlePatch}
+          >
+            {nestedChildren}
+          </Renderer>
+        </div>
+      </motion.div>
+
+      {/* ── Context Menu (rendered as portal-like overlay) ── */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          componentId={component.id}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+    </>
   );
 }
 

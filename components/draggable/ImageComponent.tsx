@@ -30,3 +30,4 @@ export default function ImageComponent({ component }: { component: BuilderCompon
     />
   );
 }
+

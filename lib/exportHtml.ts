@@ -47,6 +47,65 @@ const renderComponent = (component: BuilderComponent): string => {
     }
     case "container":
       return `<section${styleAttr}>${children || content}</section>`;
+    case "columns":
+      return `<div${styleAttr} style="display:flex;gap:16px;${style}">${children}</div>`;
+    case "spacer":
+      return `<div${styleAttr} style="height:${component.props?.height || component.content || '60px'}"></div>`;
+    case "icon":
+      return `<span${styleAttr}>${content}</span>`;
+    case "map": {
+      const addr = component.props?.address || "New York";
+      const z = component.props?.zoom || 12;
+      const h = component.props?.height || "300px";
+      return `<div${styleAttr}><iframe src="https://www.google.com/maps?q=${encodeURIComponent(String(addr))}&z=${z}&output=embed" style="width:100%;height:${h};border:0" loading="lazy" allowfullscreen></iframe></div>`;
+    }
+    case "accordion": {
+      const items = (component.props as unknown as { items?: Array<{ title: string; content: string }> })?.items || [];
+      const inner = items.map((it, i) => `<details${i === 0 ? " open" : ""}><summary style="padding:12px 16px;font-weight:700;cursor:pointer">${escapeHtml(it.title)}</summary><div style="padding:12px 16px;color:#566583">${escapeHtml(it.content)}</div></details>`).join("");
+      return `<div${styleAttr}>${inner}</div>`;
+    }
+    case "tabs": {
+      const items = (component.props as unknown as { items?: Array<{ label: string; content: string }> })?.items || [];
+      const inner = items.map((it) => `<div style="margin-bottom:12px"><h4 style="font-weight:700">${escapeHtml(it.label)}</h4><p style="color:#566583">${escapeHtml(it.content)}</p></div>`).join("");
+      return `<div${styleAttr}>${inner}</div>`;
+    }
+    case "social-links": {
+      const links = (component.props as unknown as { links?: Array<{ platform: string; url: string }> })?.links || [];
+      const inner = links.map((l) => `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" style="display:inline-block;margin:0 4px;font-weight:700">${escapeHtml(l.platform)}</a>`).join("");
+      return `<div${styleAttr} style="text-align:center;${style}">${inner}</div>`;
+    }
+    case "countdown": {
+      const label = (component.props as unknown as { label?: string })?.label || "Coming Soon";
+      return `<div${styleAttr} style="text-align:center;${style}"><h3>${escapeHtml(label)}</h3><p>Countdown timer (requires JavaScript)</p></div>`;
+    }
+    case "pricing-table": {
+      const tiers = (component.props as unknown as { heading?: string; tiers?: Array<{ name: string; price: string; period: string; features: string[]; cta: string; highlighted?: boolean }> })?.tiers || [];
+      const heading = (component.props as unknown as { heading?: string })?.heading || "";
+      const inner = tiers.map((t) => `<div style="flex:1;border:1px solid #dbe3ef;border-radius:12px;padding:24px;text-align:center"><h3>${escapeHtml(t.name)}</h3><div style="font-size:2em;font-weight:800">${escapeHtml(t.price)}<small>${escapeHtml(t.period)}</small></div><ul style="list-style:none;padding:0">${t.features.map((f) => `<li style="padding:4px 0">${escapeHtml(f)}</li>`).join("")}</ul><button>${escapeHtml(t.cta)}</button></div>`).join("");
+      return `<section${styleAttr}>${heading ? `<h2 style="text-align:center">${escapeHtml(heading)}</h2>` : ""}<div style="display:flex;gap:16px">${inner}</div></section>`;
+    }
+    case "testimonial": {
+      const items = (component.props as unknown as { heading?: string; items?: Array<{ quote: string; name: string; role: string }> })?.items || [];
+      const heading = (component.props as unknown as { heading?: string })?.heading || "";
+      const inner = items.map((it) => `<article><blockquote style="font-style:italic">"${escapeHtml(it.quote)}"</blockquote><p style="font-weight:700">${escapeHtml(it.name)}</p><p style="color:#94a3b8">${escapeHtml(it.role)}</p></article>`).join("");
+      return `<section${styleAttr}>${heading ? `<h2 style="text-align:center">${escapeHtml(heading)}</h2>` : ""}<div style="display:flex;gap:16px">${inner}</div></section>`;
+    }
+    case "footer": {
+      const fp = component.props as unknown as { brand?: string; tagline?: string; copyright?: string; columns?: Array<{ title: string; links: Array<{ label: string; href: string }> }> } || {};
+      const cols = fp?.columns || [];
+      const colHtml = cols.map((c) => `<div style="flex:1"><h4>${escapeHtml(c.title)}</h4>${c.links.map((l) => `<a href="${escapeHtml(l.href)}" style="display:block;padding:4px 0;color:rgba(255,255,255,.6)">${escapeHtml(l.label)}</a>`).join("")}</div>`).join("");
+      return `<footer${styleAttr} style="background:#0B1D40;color:#fff;padding:40px;${style}"><div style="display:flex;gap:32px"><div style="flex:1"><strong>${escapeHtml(fp?.brand || "")}</strong><p style="color:rgba(255,255,255,.5)">${escapeHtml(fp?.tagline || "")}</p></div>${colHtml}</div><hr style="border-color:rgba(255,255,255,.1)"/><p style="text-align:center;color:rgba(255,255,255,.4)">${escapeHtml(fp?.copyright || "")}</p></footer>`;
+    }
+    case "form": {
+      const fields = (component.props as unknown as { heading?: string; fields?: Array<{ name: string; type: string; label: string; placeholder?: string }> })?.fields || [];
+      const heading = (component.props as unknown as { heading?: string; submitLabel?: string })?.heading || "";
+      const submitLabel = (component.props as unknown as { submitLabel?: string })?.submitLabel || "Submit";
+      const fieldHtml = fields.map((f) => {
+        if (f.type === "textarea") return `<label style="display:block;margin-bottom:12px"><span style="font-weight:700;font-size:12px">${escapeHtml(f.label)}</span><textarea placeholder="${escapeHtml(f.placeholder || "")}" rows="4" style="display:block;width:100%;padding:12px;border:1px solid #dbe3ef;border-radius:8px;margin-top:4px"></textarea></label>`;
+        return `<label style="display:block;margin-bottom:12px"><span style="font-weight:700;font-size:12px">${escapeHtml(f.label)}</span><input type="${f.type}" placeholder="${escapeHtml(f.placeholder || "")}" style="display:block;width:100%;padding:12px;border:1px solid #dbe3ef;border-radius:8px;margin-top:4px"/></label>`;
+      }).join("");
+      return `<section${styleAttr}>${heading ? `<h2 style="text-align:center">${escapeHtml(heading)}</h2>` : ""}<form>${fieldHtml}<button type="submit">${escapeHtml(submitLabel)}</button></form></section>`;
+    }
     default:
       return "";
   }

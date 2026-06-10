@@ -15,6 +15,16 @@ import IconComponent from "@/components/draggable/IconComponent";
 import FeatureItemComponent from "@/components/draggable/FeatureItemComponent";
 import ColumnsComponent from "@/components/draggable/ColumnsComponent";
 import VideoComponent from "@/components/draggable/VideoComponent";
+import MapComponent from "@/components/draggable/MapComponent";
+import AccordionComponent from "@/components/draggable/AccordionComponent";
+import TabsComponent from "@/components/draggable/TabsComponent";
+import SpacerComponent from "@/components/draggable/SpacerComponent";
+import SocialLinksComponent from "@/components/draggable/SocialLinksComponent";
+import CountdownComponent from "@/components/draggable/CountdownComponent";
+import PricingTableComponent from "@/components/draggable/PricingTableComponent";
+import TestimonialComponent from "@/components/draggable/TestimonialComponent";
+import FooterComponent from "@/components/draggable/FooterComponent";
+import FormComponent from "@/components/draggable/FormComponent";
 
 export type BuilderRenderer = (props: {
   component: BuilderComponent;
@@ -48,4 +58,15 @@ export const componentRegistry: Record<ComponentType, BuilderRenderer> = {
   contact: ContactComponent,
   container: ContainerComponent,
   video: VideoComponent,
+  map: MapComponent,
+  accordion: AccordionComponent,
+  tabs: TabsComponent,
+  spacer: SpacerComponent,
+  "social-links": SocialLinksComponent,
+  countdown: CountdownComponent,
+  "pricing-table": PricingTableComponent,
+  testimonial: TestimonialComponent,
+  footer: FooterComponent,
+  form: FormComponent,
 };
+

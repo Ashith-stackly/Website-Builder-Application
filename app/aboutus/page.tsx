@@ -144,10 +144,12 @@ export default function AboutPage() {
                   Stackly is a powerful website builder that empowers individuals, businesses, and organizations to create stunning websites without any coding. We combine simplicity with flexibility to help you build, grow, and succeed online.
                 </p>
                 <div className="flex flex-wrap items-center gap-4 pt-4">
-                  <Link href="/products" className="bg-[#0A2357] text-white px-8 py-3.5 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-900 transition">
+                  {/* ADDED FOCUS RING */}
+                  <Link href="/products" className="bg-[#0A2357] text-white px-8 py-3.5 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-900 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EAF1FA]">
                     Explore Our Products
                   </Link>
-                  <Link href="/contact" className="bg-white text-[#0A2357] border border-gray-200 px-8 py-3.5 rounded-lg text-sm font-bold shadow-sm hover:border-gray-300 transition">
+                  {/* ADDED FOCUS RING */}
+                  <Link href="/contact" className="bg-white text-[#0A2357] border border-gray-200 px-8 py-3.5 rounded-lg text-sm font-bold shadow-sm hover:border-gray-300 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EAF1FA]">
                     Contact Us
                   </Link>
                 </div>
@@ -199,7 +201,8 @@ export default function AboutPage() {
                 <p className="text-sm text-gray-600 leading-relaxed">
                   Today, we continue to innovate and expand our features to deliver the best website building experience possible.
                 </p>
-                <button className="text-blue-600 hover:text-blue-800 transition">
+                {/* ADDED FOCUS RING */}
+                <button aria-label="Read more about our story" className="text-blue-600 hover:text-blue-800 transition rounded-md p-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-700 focus-visible:ring-offset-2">
                   <FaArrowRight />
                 </button>
               </motion.div>

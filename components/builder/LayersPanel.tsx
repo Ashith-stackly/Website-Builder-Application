@@ -2,21 +2,29 @@
 
 import { memo, useState } from "react";
 import {
+  AlignLeft,
   ChevronRight,
+  Clock,
   Contact,
+  FileText,
   Heading1,
+  Heart,
   Home,
   LayoutGrid,
   Image,
   Images,
   Layers,
   LayoutTemplate,
+  List,
+  MapPin,
   Menu,
   Minus,
   MousePointerSquareDashed,
   PanelsTopLeft,
   Play,
+  Share2,
   Star,
+  Table,
   TextCursorInput,
   Type,
 } from "lucide-react";
@@ -40,6 +48,16 @@ const TYPE_ICONS: Record<ComponentType, React.ComponentType<{ className?: string
   divider: Minus,
   container: LayoutTemplate,
   video: Play,
+  map: MapPin,
+  accordion: List,
+  tabs: LayoutTemplate,
+  spacer: Minus,
+  "social-links": Share2,
+  countdown: Clock,
+  "pricing-table": Table,
+  testimonial: Heart,
+  footer: AlignLeft,
+  form: FileText,
 };
 
 const LayerRow = memo(function LayerRow({

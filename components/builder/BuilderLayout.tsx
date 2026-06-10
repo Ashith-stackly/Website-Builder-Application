@@ -9,7 +9,11 @@ import { useSearchParams } from "next/navigation";
 import Canvas from "./Canvas";
 import ComponentPalette from "./ComponentPalette";
 import PropertyEditor from "./PropertyEditor";
+import GlobalStylesPanel from "./GlobalStylesPanel";
+import SEOPanel from "./SEOPanel";
+import SectionTemplates from "./SectionTemplates";
 import { useBuilder } from "@/hooks/useBuilder";
+import { useDesignStore } from "@/store/designStore";
 import type { BuilderComponent, ComponentType } from "@/types/builder";
 
 function findByIdDeep(components: BuilderComponent[], id: string): BuilderComponent | null {
@@ -33,12 +37,17 @@ const collisionDetectionStrategy: CollisionDetection = (args) => {
 };
 
 export default function BuilderLayout() {
-  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveToLocalStorage } = useBuilder();
+  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveToLocalStorage, copyComponents, pasteComponents } = useBuilder();
   const [activePaletteType, setActivePaletteType] = useState<ComponentType | null>(null);
   const [activeCanvasType, setActiveCanvasType] = useState<ComponentType | null>(null);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
   const [isRightOpen, setIsRightOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const showGlobalStyles = useDesignStore((s) => s.showGlobalStyles);
+  const toggleGlobalStyles = useDesignStore((s) => s.toggleGlobalStyles);
+  const showSEOPanel = useDesignStore((s) => s.showSEOPanel);
+  const toggleSEOPanel = useDesignStore((s) => s.toggleSEOPanel);
+  const [showTemplates, setShowTemplates] = useState(false);
   const searchParams = useSearchParams();
   const hasLoadedRequirements = useRef(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 3 } }));
@@ -57,6 +66,11 @@ export default function BuilderLayout() {
         if ((e.key === "z" && e.shiftKey) || e.key === "y") { e.preventDefault(); redo(); return; }
         if (e.key === "s")                         { e.preventDefault(); saveToLocalStorage(); return; }
         if (e.key === "d" && selectedComponentId) { e.preventDefault(); duplicateComponent(selectedComponentId); return; }
+        if (e.key === "c" && !inInput)             { e.preventDefault(); copyComponents(); return; }
+        if (e.key === "v" && !inInput)             { e.preventDefault(); pasteComponents(); return; }
+        if (e.key === "x" && !inInput && selectedComponentId) {
+          e.preventDefault(); copyComponents(); deleteComponent(selectedComponentId); return;
+        }
       }
 
       if (!inInput) {
@@ -70,7 +84,7 @@ export default function BuilderLayout() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isInlineEditing, selectedComponentId, undo, redo, saveToLocalStorage, duplicateComponent, deleteComponent, selectComponent]);
+  }, [isInlineEditing, selectedComponentId, undo, redo, saveToLocalStorage, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents]);
   const selectedComponent = selectedComponentId ? findByIdDeep(components, selectedComponentId) : null;
 
   useEffect(() => {
@@ -261,6 +275,27 @@ export default function BuilderLayout() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* ── Global Styles Panel overlay ── */}
+      <AnimatePresence>
+        {showGlobalStyles && (
+          <GlobalStylesPanel onClose={toggleGlobalStyles} />
+        )}
+      </AnimatePresence>
+
+      {/* ── SEO Panel overlay ── */}
+      <AnimatePresence>
+        {showSEOPanel && (
+          <SEOPanel onClose={toggleSEOPanel} />
+        )}
+      </AnimatePresence>
+
+      {/* ── Section Templates Panel overlay ── */}
+      <AnimatePresence>
+        {showTemplates && (
+          <SectionTemplates onClose={() => setShowTemplates(false)} />
+        )}
+      </AnimatePresence>
 
       {isPreviewOpen && (
         <PreviewModal srcDoc={exportHtml()} onClose={() => setIsPreviewOpen(false)} />
