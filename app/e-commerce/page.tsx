@@ -7,6 +7,10 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Footer from "@/components/Footer";
 import { assetPath, routePath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
+import { Heart } from "lucide-react";
+
+const buyCategoryNavClass =
+  "buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
 
 const buyCategories = [
   { label: "All Categories" },
@@ -164,20 +168,20 @@ function BuyProductActionButtons({
   onShareClick: () => void;
   compact?: boolean;
 }) {
-  const size = compact ? "h-6 w-6 sm:h-6 sm:w-6" : "h-7 w-7 sm:h-8 sm:w-8";
+  const size = "w-[28px] h-[28px] min-[400px]:w-[30px] min-[400px]:h-[30px] sm:w-[32px] sm:h-[32px] md:w-[32px] md:h-[32px] lg:w-[36px] lg:h-[36px]";
   const shadow = compact ? "shadow-sm" : "shadow-md";
-  const base = `flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow}`;
+  const base = `flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow} flex-shrink-0 overflow-hidden flex-nowrap items-center justify-center`;
   const inactive = `${base} bg-white text-[#ff664f] hover:bg-[#ff664f] hover:text-white`;
   const favoriteActive = `${base} bg-[#ff664f] text-white hover:bg-[#ff664f] hover:text-white`;
-  const favoriteBtn = isFavorite ? favoriteActive : inactive;
-  const icon = compact ? 11 : 14;
+  const favoriteBtn = `${isFavorite ? favoriteActive : inactive} buyscreen-favorite-btn`;
+  const iconClass = "w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] shrink-0";
   return (
     <>
       <button type="button" className={inactive} aria-label="Add to cart" onClick={(e) => {
         e.stopPropagation();
         onCartClick();
       }}>
-        <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={iconClass} aria-hidden>
           <path d="M3 4h2l1.6 9.2a1 1 0 0 0 1 .8H18a1 1 0 0 0 1-.8L20.6 7H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="10" cy="19" r="1.5" fill="currentColor" />
           <circle cx="17" cy="19" r="1.5" fill="currentColor" />
@@ -193,9 +197,12 @@ function BuyProductActionButtons({
           onFavoriteClick();
         }}
       >
-        <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-          <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733C11.285 5.876 9.623 4.75 7.688 4.75 5.099 4.75 3 6.765 3 9.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill={isFavorite ? "currentColor" : "none"} />
-        </svg>
+        <Heart
+          size={18}
+          strokeWidth={2}
+          fill={isFavorite ? "currentColor" : "none"}
+          className="buyscreen-heart-icon shrink-0"
+        />
       </button>
       <button
         type="button"
@@ -206,7 +213,7 @@ function BuyProductActionButtons({
           onShareClick();
         }}
       >
-        <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={iconClass} aria-hidden>
           <circle cx="18" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.6" />
           <circle cx="6" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.6" />
           <circle cx="18" cy="19" r="2.5" stroke="currentColor" strokeWidth="1.6" />
@@ -830,6 +837,15 @@ export default function ECommercePage() {
       )}
       <style dangerouslySetInnerHTML={{
         __html: `
+          html, body {
+            overflow-x: hidden;
+            width: 100%;
+          }
+          .buyscreen-page img {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+
           @media (max-width: 1024px) {
             /* 1. Fluid Layouts & Remove Fixed Constraints */
             .buyscreen-page .w-96, .buyscreen-page .w-80, .buyscreen-page .w-72, .buyscreen-page .w-64, .buyscreen-page .w-56, .buyscreen-page .w-48, .buyscreen-page .max-w-md, .buyscreen-page .max-w-sm, .buyscreen-page .max-w-lg, .buyscreen-page .w-[350px] {
@@ -935,6 +951,160 @@ export default function ECommercePage() {
              .buyscreen-page .gap-6 { gap: 0.75rem !important; }
              .buyscreen-page .p-8 { padding: 1rem !important; }
              .buyscreen-page .p-6 { padding: 0.75rem !important; }
+          }
+
+          /* Header favorites heart — fixed size, not affected by responsive svg rules */
+          .buyscreen-page .buyscreen-header-favorites-icon {
+            width: 22px !important;
+            height: 22px !important;
+            max-width: 22px !important;
+            flex-shrink: 0 !important;
+          }
+
+          .buyscreen-page button.buyscreen-all-categories-toggle:hover,
+          .buyscreen-page button.buyscreen-all-categories-toggle:focus-visible {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            outline: none;
+          }
+
+          /* Override buttons and container inside product cards to meet specific alignment, sizing, and wrap requirements */
+          .buyscreen-page .buyscreen-product-actions-mobile,
+          .buyscreen-page .buyscreen-product-hover-actions > div {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 12px !important;
+            white-space: nowrap !important;
+            flex-wrap: nowrap !important;
+            overflow: hidden !important;
+          }
+
+          .buyscreen-page .buyscreen-product-actions-mobile > button,
+          .buyscreen-page .buyscreen-product-hover-actions button {
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+          }
+
+          @media (min-width: 400px) {
+            .buyscreen-page .buyscreen-product-actions-mobile > button,
+            .buyscreen-page .buyscreen-product-hover-actions button {
+              width: 30px !important;
+              height: 30px !important;
+            }
+          }
+
+          @media (min-width: 640px) {
+            .buyscreen-page .buyscreen-product-actions-mobile > button,
+            .buyscreen-page .buyscreen-product-hover-actions button {
+              width: 32px !important;
+              height: 32px !important;
+            }
+          }
+
+          @media (min-width: 1024px) {
+            .buyscreen-page .buyscreen-product-actions-mobile > button,
+            .buyscreen-page .buyscreen-product-hover-actions button {
+              width: 36px !important;
+              height: 36px !important;
+            }
+          }
+
+          .buyscreen-page .buyscreen-product-actions-mobile > button svg,
+          .buyscreen-page .buyscreen-product-hover-actions button svg {
+            width: 12px !important;
+            height: 12px !important;
+          }
+
+          @media (min-width: 640px) {
+            .buyscreen-page .buyscreen-product-actions-mobile > button svg,
+            .buyscreen-page .buyscreen-product-hover-actions button svg {
+              width: 14px !important;
+              height: 14px !important;
+            }
+          }
+
+          /* Override favorite button specifically (Mobile: w-7 h-7 = 28px, Tablet/Desktop: w-9 h-9 = 36px) */
+          .buyscreen-page .buyscreen-favorite-btn {
+            width: 28px !important;
+            height: 28px !important;
+          }
+
+          @media (min-width: 640px) {
+            .buyscreen-page .buyscreen-favorite-btn {
+              width: 36px !important;
+              height: 36px !important;
+            }
+          }
+
+          /* Heart icon sizing overrides (Mobile: 15px, Tablet/Desktop: 18px) */
+          .buyscreen-page .buyscreen-heart-icon {
+            width: 15px !important;
+            height: 15px !important;
+          }
+
+          @media (min-width: 640px) {
+            .buyscreen-page .buyscreen-heart-icon {
+              width: 18px !important;
+              height: 18px !important;
+            }
+          }
+
+          /* Tablet View Styles (768px - 1024px) */
+          @media (min-width: 768px) and (max-width: 1024px) {
+            /* Change all card grids from 3 columns (or 5) to 2 columns on tablet */
+            .buyscreen-page .buyscreen-products--grid,
+            .buyscreen-page .grid.md\:grid-cols-3,
+            .buyscreen-page .grid.sm\:grid-cols-3,
+            .buyscreen-page .grid.sm\:grid-cols-5,
+            .buyscreen-page .buyscreen-update-art.grid-cols-3 {
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            /* Tablet layout containers */
+            .buyscreen-page,
+            .buyscreen-shell,
+            .buyscreen-header,
+            .buyscreen-categories,
+            .buyscreen-hero,
+            .buyscreen-features,
+            .buyscreen-page section,
+            .buyscreen-page footer,
+            .buyscreen-page .section-container,
+            .buyscreen-page .preview-container {
+              width: 100% !important;
+              max-width: 100% !important;
+              overflow-x: hidden !important;
+              box-sizing: border-box !important;
+            }
+
+            /* Flex wrapping behavior */
+            .buyscreen-page .flex-row,
+            .buyscreen-page .flex {
+              flex-wrap: wrap;
+            }
+            .buyscreen-page .buyscreen-products--carousel,
+            .buyscreen-page .buyscreen-product-actions-mobile,
+            .buyscreen-page .buyscreen-product-hover-actions > div {
+              flex-wrap: nowrap !important;
+            }
+
+            /* Image styling */
+            .buyscreen-page img {
+              width: 100% !important;
+              max-width: 100% !important;
+              height: auto !important;
+              object-fit: cover !important;
+            }
+            .buyscreen-page .buyscreen-category-card img,
+            .buyscreen-page .buyscreen-update-product img {
+              object-fit: contain !important;
+            }
           }
         `
       }} />
@@ -1121,7 +1291,7 @@ export default function ECommercePage() {
                   className="mx-auto transition-all duration-300"
                   style={{
                     width: activePreviewFrame.width,
-                    maxWidth: activePreviewFrame.maxWidth,
+                    maxWidth: "100%",
                   }}
                 >
                   <div className="overflow-hidden rounded-[1.75rem] border border-[#cbd5e1] bg-white shadow-[0_30px_90px_rgba(15,23,42,0.18)]">
@@ -1193,10 +1363,13 @@ export default function ECommercePage() {
                       </span>
                     </button>
                     <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsFavoritesOpen(true)}>
-                      <span className="relative shrink-0">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                          <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733C11.285 5.876 9.623 4.75 7.688 4.75 5.099 4.75 3 6.765 3 9.25c0 7.22 9 12 9 12s9-4.78 9-12z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                      <span className="relative flex items-center justify-center w-10 h-10 shrink-0">
+                        <Heart
+                          size={22}
+                          strokeWidth={2}
+                          className="buyscreen-header-favorites-icon text-slate-700"
+                          aria-hidden
+                        />
                         {favoriteProducts.length > 0 ? (
                           <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff664f] px-1 text-[10px] font-bold leading-none text-white">
                             {favoriteProducts.length}
@@ -1287,7 +1460,7 @@ export default function ECommercePage() {
                           aria-expanded={isAllCategoriesDropdownOpen}
                           aria-controls="buyscreen-all-categories-menu"
                           aria-haspopup="menu"
-                          className="buyscreen-all-categories-toggle inline-flex items-center gap-1 rounded-md px-2 py-1 text-left text-[10px] font-semibold transition-colors duration-150 bg-transparent text-white hover:bg-transparent hover:!text-white focus:bg-transparent focus:!text-white active:bg-transparent active:!text-white focus-visible:outline-none focus-visible:bg-transparent focus-visible:!text-white focus-visible:ring-2 focus-visible:ring-white/50 sm:text-xs"
+                          className={`${buyCategoryNavClass} buyscreen-all-categories-toggle inline-flex items-center gap-1 text-[10px] font-semibold sm:text-xs`}
                           onClick={() => setIsAllCategoriesDropdownOpen((prev) => !prev)}
                         >
                           All Categories
@@ -1318,7 +1491,7 @@ export default function ECommercePage() {
                       <button
                         key={item.label}
                         type="button"
-                        className={`buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white hover:bg-transparent hover:!text-white focus:bg-transparent focus:!text-white active:bg-transparent active:!text-white focus-visible:outline-none focus-visible:bg-transparent focus-visible:!text-white focus-visible:ring-2 focus-visible:ring-white/50 ${item.label === "Limited Sale" ? "lg:ml-auto" : ""} ${item.label === "Best Seller" ? "!bg-transparent !border-0 !shadow-none !ring-0" : ""}`}
+                        className={`${buyCategoryNavClass} ${item.label === "Limited Sale" ? "lg:ml-auto" : ""}`}
                         onClick={() => handleCategoryClick(item.label)}
                       >
                         {item.label}
@@ -1536,8 +1709,8 @@ export default function ECommercePage() {
                                   backgroundImage: `url('${product.image}')`,
                                 }}
                               />
-                              <div className="buyscreen-product-hover-actions pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden justify-center px-1 pb-2 pt-6 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 lg:flex">
-                                <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+                              <div className="buyscreen-product-hover-actions pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-1 pb-2 pt-6 transition-all duration-300 opacity-0 invisible translate-y-[10px] group-hover:pointer-events-auto group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
+                                <div className="pointer-events-auto flex flex-nowrap items-center justify-center gap-[12px] overflow-hidden whitespace-nowrap">
                                   <BuyProductActionButtons
                                     compact={false}
                                     isFavorite={favoriteProductIds.includes(product.id)}
@@ -1549,17 +1722,6 @@ export default function ECommercePage() {
                                   />
                                 </div>
                               </div>
-                            </div>
-                            <div className="buyscreen-product-actions-mobile grid grid-cols-3 place-items-center gap-1 border-t border-[#f3f4f6] px-1 py-1 lg:hidden">
-                              <BuyProductActionButtons
-                                compact
-                                isFavorite={favoriteProductIds.includes(product.id)}
-                                onCartClick={() => openLicenseModal(product)}
-                                onFavoriteClick={() => toggleFavorite(product)}
-                                onShareClick={() => {
-                                  void shareProduct(product);
-                                }}
-                              />
                             </div>
                             <div className="buyscreen-product-meta mt-3 flex min-w-0 flex-1 flex-col px-1 pb-1 sm:mt-4">
                               <p className="text-center text-[10px] font-semibold uppercase leading-snug tracking-tight text-[#6b7280] [overflow-wrap:anywhere] sm:text-xs sm:leading-normal sm:tracking-[0.06em] md:tracking-[0.08em]">
@@ -1739,22 +1901,22 @@ export default function ECommercePage() {
           )}
         </section>
       </div>
-      <Footer />
+      {(!isPreviewOpen || isEmbeddedPreview) && <Footer />}
       {!isEmbeddedPreview && (
-        <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2">
-          <div className="flex items-center gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
-             <Link href="/landing#templates" className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition" title="Preview">
-                <FaEye size={14} />
+        <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-5 left-1/2 -translate-x-1/2 max-w-[calc(100vw-2rem)] overflow-x-hidden flex-nowrap whitespace-nowrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-2.5 py-1 sm:px-3 sm:py-1.5 flex-nowrap whitespace-nowrap shrink-0 overflow-x-hidden">
+             <Link href="/landing#templates" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition shrink-0" title="Preview">
+                <FaEye size={14} className="shrink-0" />
              </Link>
-             <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
-             <button onClick={() => { setPreviewDevice("desktop"); setIsPreviewOpen(true); }} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${isPreviewOpen && previewDevice === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
-                <FaLaptop size={14} />
+             <div className="w-px h-6 bg-gray-200 mx-0.5 shrink-0"></div>
+             <button onClick={() => { setPreviewDevice("desktop"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
+                <FaLaptop size={14} className="shrink-0" />
              </button>
-             <button onClick={() => { setPreviewDevice("tablet"); setIsPreviewOpen(true); }} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${isPreviewOpen && previewDevice === "tablet" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Tablet View">
-                <FaTabletAlt size={14} />
+             <button onClick={() => { setPreviewDevice("tablet"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "tablet" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Tablet View">
+                <FaTabletAlt size={14} className="shrink-0" />
              </button>
-             <button onClick={() => { setPreviewDevice("mobile"); setIsPreviewOpen(true); }} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${isPreviewOpen && previewDevice === "mobile" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Mobile View">
-                <FaMobileAlt size={14} />
+             <button onClick={() => { setPreviewDevice("mobile"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "mobile" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Mobile View">
+                <FaMobileAlt size={14} className="shrink-0" />
              </button>
           </div>
         </div>
