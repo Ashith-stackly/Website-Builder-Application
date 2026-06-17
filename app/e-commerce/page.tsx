@@ -1356,8 +1356,8 @@ export default function ECommercePage() {
             max-width: 42rem;
             height: min(92dvh, 820px);
             max-height: min(92dvh, 820px);
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
             overflow: hidden;
             background: #ffffff !important;
             isolation: isolate;
@@ -1375,12 +1375,21 @@ export default function ECommercePage() {
             background: #ffffff !important;
           }
           .buyscreen-blog-article-content {
+            grid-row: 2;
+            width: 100%;
+            max-width: 100%;
             flex: 1 1 0%;
             min-height: 0;
             overflow-x: hidden;
             overflow-y: auto;
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+          }
+          .buyscreen-blog-article-body {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
           }
           .buyscreen-blog-article-dialog .buyscreen-blog-article-title {
             font-size: 1.35rem !important;
@@ -1448,10 +1457,12 @@ export default function ECommercePage() {
               align-items: stretch !important;
             }
             .buyscreen-blog-article-dialog {
-              width: 100% !important;
+              width: 100vw !important;
+              max-width: 100vw !important;
               height: 100dvh !important;
               max-height: 100dvh !important;
               min-height: 100dvh !important;
+              grid-template-rows: auto minmax(0, 1fr) auto !important;
               overflow: hidden !important;
               border-radius: 0 !important;
               border-left: 0 !important;
@@ -1459,58 +1470,84 @@ export default function ECommercePage() {
               margin: 0 !important;
             }
             .buyscreen-blog-article-header {
-              padding: 0.85rem !important;
+              padding: 0.6rem 0.7rem !important;
               background: #ffffff !important;
             }
             .buyscreen-blog-article-content {
-              flex: 1 1 0% !important;
+              width: 100% !important;
+              max-width: 100% !important;
               overflow-x: hidden !important;
               overflow-y: auto !important;
               min-height: 0 !important;
-              padding: 0.85rem !important;
+              padding: 0.7rem !important;
               background: #ffffff !important;
             }
             .buyscreen-blog-article-footer {
-              padding: 0.85rem !important;
-              padding-bottom: max(0.85rem, env(safe-area-inset-bottom, 0.85rem)) !important;
+              padding: 0.55rem 0.7rem !important;
+              padding-bottom: max(0.55rem, env(safe-area-inset-bottom, 0.55rem)) !important;
               background: #f8fafc !important;
             }
+            .buyscreen-blog-article-dialog .buyscreen-blog-article-close-btn {
+              min-height: 2.5rem !important;
+              font-size: 0.8rem !important;
+            }
             .buyscreen-blog-article-image-wrap {
-              min-height: 6rem !important;
-              padding: 0.65rem !important;
+              min-height: 5.5rem !important;
+              padding: 0.5rem !important;
             }
             .buyscreen-blog-article-image {
-              max-height: 6.5rem !important;
+              max-height: 5rem !important;
             }
             .buyscreen-blog-article-dialog .buyscreen-blog-article-title {
-              font-size: 1.2rem !important;
+              font-size: 1.1rem !important;
               line-height: 1.4 !important;
+              margin-top: 0 !important;
+              margin-bottom: 0.75rem !important;
             }
             .buyscreen-blog-article-dialog .buyscreen-blog-article-excerpt {
-              font-size: 1.0625rem !important;
+              font-size: 1rem !important;
             }
             .buyscreen-blog-article-dialog .buyscreen-blog-article-paragraph {
               font-size: 1rem !important;
             }
           }
           @media (max-width: 768px) and (min-resolution: 1.5dppx) {
+            .buyscreen-blog-article-dialog {
+              width: 100vw !important;
+              max-width: 100vw !important;
+              grid-template-rows: auto minmax(0, 1fr) auto !important;
+            }
+            .buyscreen-blog-article-header {
+              padding: 0.5rem 0.65rem !important;
+            }
+            .buyscreen-blog-article-content {
+              padding: 0.65rem !important;
+              width: 100% !important;
+              max-width: 100% !important;
+            }
+            .buyscreen-blog-article-footer {
+              padding: 0.55rem 0.7rem !important;
+              padding-bottom: max(0.55rem, env(safe-area-inset-bottom, 0.55rem)) !important;
+              background: #f8fafc !important;
+            }
+            .buyscreen-blog-article-dialog .buyscreen-blog-article-close-btn {
+              min-height: 2.5rem !important;
+              font-size: 0.8rem !important;
+            }
+            .buyscreen-blog-article-image-wrap {
+              display: none !important;
+            }
             .buyscreen-blog-article-dialog .buyscreen-blog-article-title {
-              font-size: 1.15rem !important;
+              font-size: 1.05rem !important;
               line-height: 1.4 !important;
             }
             .buyscreen-blog-article-dialog .buyscreen-blog-article-excerpt {
-              font-size: 1.0625rem !important;
+              font-size: 1rem !important;
               line-height: 1.75 !important;
             }
             .buyscreen-blog-article-dialog .buyscreen-blog-article-paragraph {
               font-size: 1rem !important;
               line-height: 1.8 !important;
-            }
-            .buyscreen-blog-article-image-wrap {
-              min-height: 5rem !important;
-            }
-            .buyscreen-blog-article-image {
-              max-height: 5rem !important;
             }
           }
 
@@ -2743,21 +2780,13 @@ export default function ECommercePage() {
             aria-labelledby="buyscreen-blog-article-title"
             className="buyscreen-blog-article-dialog relative z-10 flex w-full min-w-0 max-w-2xl flex-col rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl"
           >
-            <div className="buyscreen-blog-article-header shrink-0 border-b border-[#eef2f7] p-4 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="buyscreen-blog-article-category inline-flex rounded-full bg-[#eff6ff] px-2.5 py-1 font-black uppercase text-[#2563eb]">
-                      {activeBlogPost.category}
-                    </span>
-                    <span className="buyscreen-blog-article-meta font-semibold text-[#94a3b8]">{activeBlogPost.readTime}</span>
-                  </div>
-                  <h2
-                    id="buyscreen-blog-article-title"
-                    className="buyscreen-blog-article-title mt-3 font-black text-[#111827]"
-                  >
-                    {activeBlogPost.title}
-                  </h2>
+            <div className="buyscreen-blog-article-header shrink-0 border-b border-[#eef2f7] p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="buyscreen-blog-article-category inline-flex rounded-full bg-[#eff6ff] px-2.5 py-1 font-black uppercase text-[#2563eb]">
+                    {activeBlogPost.category}
+                  </span>
+                  <span className="buyscreen-blog-article-meta font-semibold text-[#94a3b8]">{activeBlogPost.readTime}</span>
                 </div>
                 <button
                   type="button"
@@ -2769,29 +2798,37 @@ export default function ECommercePage() {
                 </button>
               </div>
             </div>
-            <div className="buyscreen-blog-article-content px-4 pb-5 pt-4 sm:px-6 sm:pb-6">
-              <div className="buyscreen-blog-article-image-wrap flex min-h-[9rem] items-center justify-center rounded-xl border border-[#e7edf5] bg-[#f8fafc] p-3 sm:min-h-[11rem] sm:p-4">
-                <Image
-                  src={activeBlogPost.image}
-                  alt=""
-                  width={320}
-                  height={220}
-                  className="buyscreen-blog-article-image"
-                  unoptimized
-                />
-              </div>
-              <p className="buyscreen-blog-article-excerpt mt-4 font-semibold text-[#475569]">
-                {activeBlogPost.excerpt}
-              </p>
-              <div className="mt-4 space-y-4">
-                {activeBlogPost.body.map((paragraph) => (
-                  <p key={paragraph} className="buyscreen-blog-article-paragraph text-[#374151]">
-                    {paragraph}
-                  </p>
-                ))}
+            <div className="buyscreen-blog-article-content px-3 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4">
+              <div className="buyscreen-blog-article-body min-w-0 max-w-full">
+                <h2
+                  id="buyscreen-blog-article-title"
+                  className="buyscreen-blog-article-title font-black text-[#111827]"
+                >
+                  {activeBlogPost.title}
+                </h2>
+                <div className="buyscreen-blog-article-image-wrap mt-3 flex min-h-[7rem] items-center justify-center rounded-xl border border-[#e7edf5] bg-[#f8fafc] p-3 sm:min-h-[11rem] sm:mt-4 sm:p-4">
+                  <Image
+                    src={activeBlogPost.image}
+                    alt=""
+                    width={320}
+                    height={220}
+                    className="buyscreen-blog-article-image"
+                    unoptimized
+                  />
+                </div>
+                <p className="buyscreen-blog-article-excerpt mt-3 font-semibold text-[#475569] sm:mt-4">
+                  {activeBlogPost.excerpt}
+                </p>
+                <div className="mt-3 space-y-3 sm:mt-4 sm:space-y-4">
+                  {activeBlogPost.body.map((paragraph) => (
+                    <p key={paragraph} className="buyscreen-blog-article-paragraph text-[#374151]">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="buyscreen-blog-article-footer shrink-0 border-t border-[#eef2f7] bg-[#f8fafc] p-4 sm:p-5">
+            <div className="buyscreen-blog-article-footer shrink-0 border-t border-[#eef2f7] bg-[#f8fafc] p-3 sm:p-5">
               <button
                 type="button"
                 className="buyscreen-blog-article-close-btn inline-flex items-center justify-center rounded-full bg-[#06224C] px-5 font-black uppercase text-white transition hover:bg-[#0f3b89]"
