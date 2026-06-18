@@ -3,57 +3,44 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, LayoutDashboard, LogOut, Settings, Sparkles, User } from "lucide-react";
+import { motion } from "framer-motion";
+import { FaBell, FaChartColumn, FaGear } from "react-icons/fa6";
+import { BarChart3, LayoutDashboard, LogOut, Settings, User } from "lucide-react";
 import { assetPath } from "@/lib/paths";
 
 const DASHBOARD_DISPLAY_USER_NAME = "Stackly User";
 const DASHBOARD_DISPLAY_USER_EMAIL = "user@stackly.com";
 const NAV_ITEMS = [
-  { id: "workspace" as const, label: "Workspace" },
-  { id: "myWebsites" as const, label: "My Websites" },
-  { id: "templates" as const, label: "Templates" },
-  { id: "domains" as const, label: "Domains" },
-  { id: "billing" as const, label: "Billing" },
+  { id: "workspace" as const, label: "WORKSPACE" },
+  { id: "myWebsites" as const, label: "MY WEBSITES" },
+  { id: "templates" as const, label: "TEMPLATES" },
+  { id: "domains" as const, label: "DOMAINS" },
+  { id: "billing" as const, label: "BILLING" },
 ];
 type NavId = (typeof NAV_ITEMS)[number]["id"];
 
-const dashboardHeaderQuickIconBtn =
-  "flex items-center justify-center rounded-full border border-transparent bg-white p-0 m-0 cursor-pointer shadow-sm transition-all duration-150 ease-out hover:border-white/50 hover:bg-slate-100 hover:shadow-md hover:shadow-black/20 hover:ring-2 hover:ring-white/60 active:scale-[0.96] active:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]";
+const stacklyIconButtonClass =
+  "stackly-icon-button relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-sm text-[#06224C] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]";
 
-function DashboardHeaderBellIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-      shapeRendering="geometricPrecision"
-    >
-      <path
-        d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+const dashboardNavLinkClass =
+  "stackly-nav-link whitespace-nowrap text-[13px] font-bold uppercase tracking-wide text-white transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm";
 
-function DashboardHeaderSettingsIcon({ className }: { className?: string }) {
+function MotionNavItem({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden shapeRendering="geometricPrecision">
-      <path d="M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" stroke="currentColor" strokeWidth="2" />
-      <path d="M19 12a7.1 7.1 0 0 0-.07-.95l2.02-1.57-2-3.46-2.48.81a7.5 7.5 0 0 0-1.65-.96L14.4 3h-4.8l-.42 2.87c-.59.23-1.14.55-1.65.96l-2.48-.81-2 3.46 2.02 1.57a7.9 7.9 0 0 0 0 1.9L3.05 14.52l2 3.46 2.48-.81c.5.41 1.06.73 1.65.96L9.6 21h4.8l.42-2.87c.59-.23 1.14-.55 1.65-.96l2.48.81 2-3.46-2.02-1.57c.05-.31.07-.63.07-.95Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity=".9" />
-    </svg>
+    <motion.span initial="rest" whileHover="hover" animate="rest" className={`relative inline-flex ${className}`}>
+      <motion.span
+        variants={{ rest: { y: 0 }, hover: { y: -1 } }}
+        transition={{ type: "spring", stiffness: 500, damping: 22 }}
+        className="inline-flex"
+      >
+        {children}
+      </motion.span>
+      <motion.span
+        variants={{ rest: { scaleX: 0, opacity: 0 }, hover: { scaleX: 1, opacity: 1 } }}
+        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+        className="pointer-events-none absolute -bottom-1.5 left-0 right-0 h-[2px] origin-left rounded-full bg-blue-300"
+      />
+    </motion.span>
   );
 }
 
@@ -91,13 +78,13 @@ export default function DashboardHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#06224C]">
-      <div className="flex w-full flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6 xl:flex-nowrap">
-        <div className="flex min-w-0 flex-shrink-0 items-center gap-2">
+    <header className="stackly-navbar sticky top-0 z-40 w-full border-b border-white/10 bg-[#06224C] px-2 py-3 shadow-sm md:px-12">
+      <nav className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 md:gap-4" aria-label="Main">
+        <div className="flex min-w-0 items-center gap-1 md:gap-8">
           <button
             type="button"
             onClick={() => setMobileMenuOpen((v) => !v)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 text-white lg:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md p-1 text-white transition hover:bg-white/10 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] lg:hidden"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -105,77 +92,56 @@ export default function DashboardHeader() {
               <path d="M3 5.5H17M3 10H17M3 14.5H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
-          <Link href="/dashboard" className="flex h-8 min-w-[92px] items-center justify-center overflow-hidden rounded-[50%] bg-white px-3 sm:h-9 sm:min-w-[104px]">
-            <img src={assetPath("/stackly-logo.webp")} alt="Stackly logo" className="h-[18px] w-auto sm:h-[20px]" />
-          </Link>
-        </div>
 
-        <div className="hidden min-w-0 flex-1 lg:flex lg:items-center">
-          <nav className="flex w-full min-w-0 flex-wrap items-center justify-evenly gap-x-2 gap-y-2 text-[13px] text-white sm:text-sm sm:gap-x-3" aria-label="Main">
+          <Link
+            href="/dashboard"
+            className="inline-flex aspect-[2/1] min-w-[75px] items-center justify-center rounded-[60%] bg-white px-2 py-2 shadow-md transition hover:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] md:min-w-[90px] md:px-4 md:py-3"
+            aria-label="Stackly dashboard home"
+          >
+            <img src={assetPath("/stackly-logo.webp")} alt="Stackly logo" className="h-3 w-auto object-contain md:h-5" />
+          </Link>
+
+          <div className="hidden items-center justify-center gap-12 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => handleNavClick(item.id)}
-                className={`shrink-0 rounded-md border-b-2 px-2 py-1 transition-colors ${
-                  activeNav === item.id
-                    ? "border-[#f0e6d4] bg-white/10 font-medium text-white"
-                    : "border-transparent hover:bg-white/10 hover:text-white"
+                className={`${dashboardNavLinkClass} m-0 cursor-pointer border-0 bg-transparent p-0 ${
+                  activeNav === item.id ? "text-blue-300" : ""
                 }`}
                 aria-current={activeNav === item.id ? "page" : undefined}
               >
-                {item.label}
+                <MotionNavItem>{item.label}</MotionNavItem>
               </button>
             ))}
-          </nav>
+          </div>
         </div>
 
-        <div className="ml-auto flex min-w-0 flex-nowrap items-center gap-4 sm:gap-5 lg:gap-6">
-          <div className="flex shrink-0 items-center gap-3 lg:hidden">
-            <button type="button" className={`${dashboardHeaderQuickIconBtn} h-8 w-8 touch-manipulation`} aria-label="Analytics" onClick={() => router.push("/dashboard/analytics")}>
-              <BarChart3 className="pointer-events-none h-[17px] w-[17px] shrink-0 text-[#06224C]" />
-            </button>
-            <button type="button" className={`${dashboardHeaderQuickIconBtn} h-8 w-8 touch-manipulation`} aria-label="Settings">
-              <DashboardHeaderSettingsIcon className="pointer-events-none h-[17px] w-[17px] shrink-0 text-[#06224C]" />
-            </button>
-            <button type="button" className={`${dashboardHeaderQuickIconBtn} h-8 w-8 touch-manipulation`} aria-label="Notifications">
-              <DashboardHeaderBellIcon className="pointer-events-none h-[18px] w-[18px] shrink-0 text-[#06224C]" />
-            </button>
-          </div>
+        <div className="ml-auto flex flex-shrink-0 items-center gap-2 md:gap-3">
+          <button type="button" className={stacklyIconButtonClass} aria-label="Analytics" onClick={() => router.push("/dashboard/analytics")}>
+            <FaChartColumn className="text-sm" aria-hidden />
+          </button>
+          <button type="button" className={stacklyIconButtonClass} aria-label="Settings">
+            <FaGear className="text-sm" aria-hidden />
+          </button>
+          <button type="button" className={stacklyIconButtonClass} aria-label="Notifications">
+            <FaBell className="text-sm" aria-hidden />
+          </button>
 
-          <div className="hidden items-center gap-5 lg:flex lg:gap-6">
-            <button type="button" className={`${dashboardHeaderQuickIconBtn} h-6 w-6`} aria-label="Analytics" onClick={() => router.push("/dashboard/analytics")}>
-              <BarChart3 className="pointer-events-none h-4 w-4 shrink-0 text-[#06224C]" />
-            </button>
-            <button type="button" className={`${dashboardHeaderQuickIconBtn} h-6 w-6`} aria-label="Settings">
-              <DashboardHeaderSettingsIcon className="pointer-events-none h-4 w-4 shrink-0 text-[#06224C]" />
-            </button>
-            <button type="button" className={`${dashboardHeaderQuickIconBtn} h-6 w-6`} aria-label="Notifications">
-              <DashboardHeaderBellIcon className="pointer-events-none h-4 w-4 shrink-0 text-[#06224C]" />
-            </button>
-          </div>
-
-          <div className="relative shrink-0" ref={profileWrapRef}>
+          <div className="relative flex shrink-0 items-center" ref={profileWrapRef}>
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setProfileOpen((o) => !o);
               }}
-              className="flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-1 transition-colors duration-150 ease-out hover:bg-white/15 active:bg-white/25 md:rounded-lg md:px-2 md:py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-95 md:h-9 md:w-9"
               aria-expanded={profileOpen}
               aria-haspopup="true"
               aria-label={`Profile menu, ${DASHBOARD_DISPLAY_USER_NAME}`}
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white md:h-7 md:w-7">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <span className="hidden max-w-[140px] truncate text-left text-[11px] text-white md:inline md:max-w-[180px]">
-                {DASHBOARD_DISPLAY_USER_NAME}
-              </span>
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden className={`hidden shrink-0 text-white/90 transition-transform md:block ${profileOpen ? "rotate-180" : ""}`}>
-                <path d="M3.5 5L6 7.5L8.5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
-              </svg>
+              <img src={assetPath("/profile.webp")} alt="User Profile Picture" className="h-full w-full object-cover" />
             </button>
 
             {profileOpen && (
@@ -202,10 +168,6 @@ export default function DashboardHeader() {
                     <Settings className="h-4 w-4" />
                     Settings
                   </button>
-                  <button type="button" className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[#3e5373] transition-colors hover:bg-[#f8fafc]" role="menuitem">
-                    <BarChart3 className="h-4 w-4" />
-                    Analytics
-                  </button>
                 </div>
 
                 <div className="border-t border-[#e6ebf2] py-1.5">
@@ -218,27 +180,25 @@ export default function DashboardHeader() {
             )}
           </div>
         </div>
-      </div>
+      </nav>
 
       {mobileMenuOpen && (
-        <div className="border-t border-white/20 px-3 pb-3 pt-2 lg:hidden">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="stackly-mobile-menu mt-3 border-t border-white/20 pb-5 pt-3 text-[11px] font-bold uppercase tracking-widest text-white shadow-[inset_0_10px_24px_-12px_rgba(0,0,0,0.55)] lg:hidden">
+          <div className="flex flex-col">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => handleNavClick(item.id)}
-                className={`rounded-md border px-2 py-2 text-left text-xs ${
-                  activeNav === item.id
-                    ? "border-[#f0e6d4] bg-white/10 text-white"
-                    : "border-white/25 text-white"
+                className={`block border-b border-white/5 px-6 py-4 text-left transition focus-visible:outline-none focus-visible:bg-white/10 ${
+                  activeNav === item.id ? "bg-white/10 text-blue-300" : ""
                 }`}
               >
                 {item.label}
               </button>
             ))}
-          </div>
         </div>
+      </div>
       )}
     </header>
   );

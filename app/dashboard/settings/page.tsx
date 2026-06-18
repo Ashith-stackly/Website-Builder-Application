@@ -53,7 +53,7 @@ function SettingsContent() {
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur-xl sm:px-6 md:px-8"
+        className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur-xl md:px-8"
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ function SettingsContent() {
         </div>
       </motion.header>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
         <ProjectSettingsForm projectId={projectId} />
       </div>
     </main>

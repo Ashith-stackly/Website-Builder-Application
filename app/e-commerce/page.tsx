@@ -1899,13 +1899,13 @@ export default function ECommercePage() {
                         >
                           Add to Cart
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => removeFavoriteProduct(product.id)}
-                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
-                        >
-                          Remove
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFavoriteProduct(product.id)}
+                        className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                      >
+                        Remove
+                      </button>
                       </div>
                     </div>
                   ))}

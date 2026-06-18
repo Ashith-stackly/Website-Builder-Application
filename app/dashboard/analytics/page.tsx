@@ -67,7 +67,7 @@ function AnalyticsContent() {
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur-xl sm:px-6 md:px-8"
+        className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 px-4 py-3 backdrop-blur-xl md:px-8"
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ function AnalyticsContent() {
         </div>
       </motion.header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 md:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
         <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6 sm:space-y-8">
           {/* Title + Filters */}
           <motion.div variants={staggerChild} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
