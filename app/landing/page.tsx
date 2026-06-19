@@ -67,8 +67,14 @@ const categories = [
     previewHref: "/blog",
     editHref: "/blockpages?template=blog",
   },
-  { title: "Construction Themes", image: "/landing-optimized/construction02.webp", alt: "Construction website preview" },
- {
+{
+    title: "Construction Themes",
+    image: "/landing-optimized/construction02.webp",
+    alt: "Construction website preview",
+    previewHref: "/construction",
+    editHref: "/blockpages?template=construction"
+  },
+   {
   title: "Restaurant",
     image: "/landing-optimized/foodd03.webp",
     alt: "Restaurant website preview",

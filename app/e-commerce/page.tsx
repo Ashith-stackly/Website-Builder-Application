@@ -1034,6 +1034,48 @@ export default function ECommercePage() {
             height: auto !important;
           }
 
+          /* Ensure parent containers do not clip absolutely positioned user dropdown and stack correctly */
+          .buyscreen-page .buyscreen-shell {
+            overflow: visible !important;
+          }
+          .buyscreen-page .buyscreen-header {
+            position: relative !important;
+            z-index: 55 !important;
+            overflow: visible !important;
+          }
+
+          /* Tablet View overrides for Cart and Favorites popups to render in bottom-right corner */
+          @media (min-width: 768px) and (max-width: 1024px) {
+            .buyscreen-page .buyscreen-cart-popup-wrapper,
+            .buyscreen-page .buyscreen-favorites-popup-wrapper,
+            .buyscreen-page .buyscreen-license-popup-wrapper {
+              position: fixed !important;
+              inset: 0 !important;
+              display: flex !important;
+              align-items: flex-end !important;
+              justify-content: flex-end !important;
+              padding: 24px !important;
+              z-index: 110 !important;
+              pointer-events: none !important;
+            }
+            .buyscreen-page .buyscreen-cart-popup-wrapper > button,
+            .buyscreen-page .buyscreen-favorites-popup-wrapper > button,
+            .buyscreen-page .buyscreen-license-popup-wrapper > button {
+              pointer-events: auto !important;
+              background: rgba(0, 0, 0, 0.2) !important;
+              backdrop-filter: none !important;
+            }
+            .buyscreen-page .buyscreen-cart-popup-wrapper > div,
+            .buyscreen-page .buyscreen-favorites-popup-wrapper > div,
+            .buyscreen-page .buyscreen-license-popup-wrapper > div {
+              pointer-events: auto !important;
+              margin: 0 !important;
+              width: 100% !important;
+              max-width: 400px !important;
+              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+            }
+          }
+
           @media (max-width: 1024px) {
             /* 1. Fluid Layouts & Remove Fixed Constraints */
             .buyscreen-page .w-96, .buyscreen-page .w-80, .buyscreen-page .w-72, .buyscreen-page .w-64, .buyscreen-page .w-56, .buyscreen-page .w-48, .buyscreen-page .max-w-md, .buyscreen-page .max-w-sm, .buyscreen-page .max-w-lg, .buyscreen-page .w-[350px] {
@@ -1082,10 +1124,20 @@ export default function ECommercePage() {
             }
 
             /* 5. Flexbox Wrapping for general sections, protect header icons */
-            .buyscreen-page header, .buyscreen-page section {
+            .buyscreen-page header {
+              min-width: 0 !important;
+              max-width: 100% !important;
+              overflow: visible !important;
+            }
+            .buyscreen-page section:not(.buyscreen-shell) {
               min-width: 0 !important;
               max-width: 100% !important;
               overflow: hidden !important;
+            }
+            .buyscreen-page section.buyscreen-shell {
+              min-width: 0 !important;
+              max-width: 100% !important;
+              overflow: visible !important;
             }
             .buyscreen-page .flex {
               min-width: 0 !important;
@@ -1715,7 +1767,7 @@ export default function ECommercePage() {
         `
       }} />
       {licenseProduct ? (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain p-4 sm:items-center sm:p-6">
+        <div className="buyscreen-license-popup-wrapper fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain p-4 sm:items-center sm:p-6">
           <button
             type="button"
             className="fixed inset-0 bg-black/45 backdrop-blur-[1px]"
@@ -1738,9 +1790,19 @@ export default function ECommercePage() {
                     {licenseProduct.name} · {licenseProduct.price} each
                   </p>
                 </div>
-                <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
-                  {formatUsd(lineTotalCents)}
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
+                    {formatUsd(lineTotalCents)}
+                  </p>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                    aria-label="Close license modal"
+                    onClick={closeLicenseModal}
+                  >
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-5 sm:px-8 sm:pb-8">
@@ -1791,7 +1853,7 @@ export default function ECommercePage() {
         </div>
       ) : null}
       {isCartOpen ? (
-        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto overscroll-contain p-4 sm:items-center sm:p-6">
+        <div className="buyscreen-cart-popup-wrapper fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto overscroll-contain p-4 sm:items-center sm:p-6">
           <button type="button" className="fixed inset-0 bg-black/45 backdrop-blur-[1px]" aria-label="Close cart" onClick={() => setIsCartOpen(false)} />
           <div
             role="dialog"
@@ -1804,7 +1866,17 @@ export default function ECommercePage() {
                 <h2 id="buyscreen-cart-title" className="text-lg font-semibold text-[#06224C]">
                   Your cart
                 </h2>
-                <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                    aria-label="Close cart"
+                    onClick={() => setIsCartOpen(false)}
+                  >
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4 sm:px-8 sm:pb-8">
@@ -1856,7 +1928,7 @@ export default function ECommercePage() {
         </div>
       ) : null}
       {isFavoritesOpen ? (
-        <div className="fixed inset-0 z-[109] flex items-start justify-center overflow-y-auto overscroll-contain p-4 sm:items-center sm:p-6">
+        <div className="buyscreen-favorites-popup-wrapper fixed inset-0 z-[109] flex items-start justify-center overflow-y-auto overscroll-contain p-4 sm:items-center sm:p-6">
           <button type="button" className="fixed inset-0 bg-black/45 backdrop-blur-[1px]" aria-label="Close favorites" onClick={() => setIsFavoritesOpen(false)} />
           <div
             role="dialog"
@@ -1869,7 +1941,17 @@ export default function ECommercePage() {
                 <h2 id="buyscreen-favorites-title" className="text-lg font-semibold text-[#06224C]">
                   Your favorites
                 </h2>
-                <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
+                    aria-label="Close favorites"
+                    onClick={() => setIsFavoritesOpen(false)}
+                  >
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4 sm:px-8 sm:pb-8">
@@ -1899,13 +1981,13 @@ export default function ECommercePage() {
                         >
                           Add to Cart
                         </button>
-                      <button
-                        type="button"
-                        onClick={() => removeFavoriteProduct(product.id)}
-                        className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
-                      >
-                        Remove
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => removeFavoriteProduct(product.id)}
+                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -2037,7 +2119,7 @@ export default function ECommercePage() {
                         </span>
                       </button>
                       <div
-                        className={`buyscreen-user-menu-dropdown ${isUserMenuOpen ? "buyscreen-user-menu-dropdown--open" : ""}`}
+                        className={`buyscreen-user-menu-dropdown z-50 ${isUserMenuOpen ? "buyscreen-user-menu-dropdown--open" : ""}`}
                         role="menu"
                         aria-hidden={!isUserMenuOpen}
                       >
