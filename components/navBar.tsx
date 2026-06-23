@@ -239,6 +239,55 @@ function clearLogoutStorage(storage: Storage) {
     }
   }
 }
+
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+function getFocusableElements(container: HTMLElement | null) {
+  if (!container) {
+    return [];
+  }
+
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((element) => (
+    !element.hasAttribute("disabled") &&
+    element.getAttribute("aria-hidden") !== "true" &&
+    element.offsetParent !== null
+  ));
+}
+
+function trapTabFocus(event: React.KeyboardEvent, container: HTMLElement | null) {
+  if (event.key !== "Tab") {
+    return;
+  }
+
+  const focusableElements = getFocusableElements(container);
+  if (!focusableElements.length) {
+    event.preventDefault();
+    container?.focus();
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  const activeElement = document.activeElement;
+
+  if (event.shiftKey && (activeElement === firstElement || !container?.contains(activeElement))) {
+    event.preventDefault();
+    lastElement.focus();
+    return;
+  }
+
+  if (!event.shiftKey && activeElement === lastElement) {
+    event.preventDefault();
+    firstElement.focus();
+  }
+}
  
 function readRawJsonArray(key: string): unknown[] {
   if (typeof window === "undefined") {
@@ -281,6 +330,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [cartItems, setCartItems] = useState<StoredCommerceItem[]>([]);
   const [activePanel, setActivePanel] = useState<"wishlist" | "cart" | null>(null);
   const [searchSelected, setSearchSelected] = useState(false);
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const [navbarSearchQuery, setNavbarSearchQuery] = useState("");
   const [focusedAction, setFocusedAction] = useState<"cart" | "wishlist" | "search" | "profile" | null>(null);
   const [activeMenu, setActiveMenu] = useState<"products" | "categories" | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -291,6 +342,10 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [scrollProgress, setScrollProgress] = useState(0);
   const prefersReducedMotion = useReducedMotion();
   const navRef = useRef<HTMLElement>(null);
+  const activePanelRef = useRef<HTMLElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const searchPanelRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const prevScrollY = useRef(0);
   const keepVisibleRef = useRef(keepVisible);
 
@@ -353,6 +408,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setActiveMenu(null);
         setIsProfileMenuOpen(false);
+        setIsSearchPanelOpen(false);
       }
     };
  
@@ -362,13 +418,51 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   }, []);
 
   useEffect(() => {
-    if (!searchSelected) {
+    if (!searchSelected || isSearchPanelOpen) {
       return;
     }
 
     const timer = window.setTimeout(() => setSearchSelected(false), 1600);
     return () => window.clearTimeout(timer);
-  }, [searchSelected]);
+  }, [isSearchPanelOpen, searchSelected]);
+
+  useEffect(() => {
+    if (!activePanel) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const firstFocusable = getFocusableElements(activePanelRef.current)[0];
+      firstFocusable?.focus();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [activePanel]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const firstFocusable = getFocusableElements(profileMenuRef.current)[0];
+      firstFocusable?.focus();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (!isSearchPanelOpen) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [isSearchPanelOpen]);
 
   useEffect(() => {
     const handleScroll = (e: Event) => {
@@ -399,7 +493,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       setIsScrolled(current > 8);
       setScrollProgress(scrollHeight > 0 ? Math.min(current / scrollHeight, 1) : 0);
 
-      const locked = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || Boolean(activePanel);
+      const locked = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || isSearchPanelOpen || Boolean(activePanel);
       if (locked || keepVisibleRef.current) {
         setHidden(false);
         return;
@@ -414,7 +508,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
     document.addEventListener("scroll", handleScroll, { passive: true, capture: true });
     return () => document.removeEventListener("scroll", handleScroll, { capture: true });
-  }, [mobileOpen, activeMenu, isProfileMenuOpen, activePanel]);
+  }, [mobileOpen, activeMenu, isProfileMenuOpen, isSearchPanelOpen, activePanel]);
 
   const wishlistCount = wishlistCountProp ?? wishlistItems.reduce((total, item) => total + (item.quantity || item.qty || 1), 0);
   const cartCount = cartItems.reduce((total, item) => total + (item.quantity || item.qty || 1), 0);
@@ -479,11 +573,31 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const toggleMenu = (menuName: "products" | "categories") => {
     setActiveMenu((currentMenu) => (currentMenu === menuName ? null : menuName));
     setIsProfileMenuOpen(false);
+    setIsSearchPanelOpen(false);
+    setSearchSelected(false);
   };
  
   const closeMenus = () => {
     setActiveMenu(null);
     setIsProfileMenuOpen(false);
+  };
+
+  const closeSearchPanel = () => {
+    setIsSearchPanelOpen(false);
+    setSearchSelected(false);
+    setNavbarSearchQuery("");
+  };
+
+  const submitNavbarSearch = () => {
+    const query = navbarSearchQuery.trim();
+    setIsSearchPanelOpen(false);
+    setSearchSelected(false);
+
+    if (!query) {
+      return;
+    }
+
+    router.push(`/landing?search=${encodeURIComponent(query)}`);
   };
 
   const handleLogout = useCallback(async () => {
@@ -505,7 +619,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     router.push("/login");
   }, [router]);
 
-  const navLockedVisible = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || Boolean(activePanel);
+  const navLockedVisible = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || isSearchPanelOpen || Boolean(activePanel);
   const navHidden = hidden && !navLockedVisible && !keepVisible;
  
   return (
@@ -519,7 +633,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       }}
       transition={prefersReducedMotion ? { duration: 0 } : HEADER_SPRING}
     >
-      <nav ref={navRef} className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 overflow-visible md:gap-4">
+      <nav ref={navRef} className="relative mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 overflow-visible md:gap-4">
         <div className="flex min-w-0 items-center gap-1 md:gap-8">
           <button
             type="button"
@@ -620,6 +734,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             type="button"
             onClick={() => {
               setSearchSelected(false);
+              setIsSearchPanelOpen(false);
               setActivePanel("cart");
             }}
             aria-label="Open cart"
@@ -647,6 +762,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             type="button"
             onClick={() => {
               setSearchSelected(false);
+              setIsSearchPanelOpen(false);
               if (onWishlistClick) {
                 onWishlistClick();
                 return;
@@ -678,32 +794,24 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             type="button"
             onClick={() => {
               setSearchSelected(true);
+              setIsSearchPanelOpen(true);
               setActivePanel(null);
+              setIsProfileMenuOpen(false);
               closeMenus();
               setMobileOpen(false);
- 
-              const currentPath = window.location.pathname.replace(/\/+$/, "");
-              const landingPath = assetPath("/landing").replace(/\/+$/, "");
- 
-              if (currentPath === landingPath || currentPath === "/landing") {
-                window.dispatchEvent(new Event("stackly-open-search"));
-                return;
-              }
- 
-              window.sessionStorage.setItem("stackly-open-search-on-landing", "true");
-              window.location.href = assetPath("/landing/");
             }}
             aria-label="Search"
-            aria-pressed={searchSelected}
+            aria-expanded={isSearchPanelOpen}
+            aria-pressed={isSearchPanelOpen || searchSelected}
             onFocus={() => setFocusedAction("search")}
             onBlur={() => setFocusedAction(null)}
             className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
-              searchSelected || focusedAction === "search"
+              isSearchPanelOpen || searchSelected || focusedAction === "search"
                 ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
                 : "text-[#06224C]"
             }`}
           >
-            <AnimatePresence>{(searchSelected || focusedAction === "search") && <ActiveIconHighlight />}</AnimatePresence>
+            <AnimatePresence>{(isSearchPanelOpen || searchSelected || focusedAction === "search") && <ActiveIconHighlight />}</AnimatePresence>
             <FaMagnifyingGlass className="relative z-10 text-sm" />
           </motion.button>
 
@@ -724,6 +832,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               onBlur={() => setFocusedAction(null)}
               onClick={() => {
                 setSearchSelected(false);
+                setIsSearchPanelOpen(false);
                 setIsProfileMenuOpen((value) => !value);
                 setActiveMenu(null);
               }}
@@ -742,12 +851,21 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             <AnimatePresence>
               {isProfileMenuOpen && (
                 <motion.div
+                  ref={profileMenuRef}
                   key="profile-dd"
                   variants={dropdownVariants}
                   initial="hidden"
                   animate="visible"
                   exit="hidden"
                   style={{ transformOrigin: "top right" }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setIsProfileMenuOpen(false);
+                      return;
+                    }
+
+                    trapTabFocus(event, profileMenuRef.current);
+                  }}
                   className="absolute right-0 top-full z-[100] mt-3 w-48 rounded-xl border border-gray-100 bg-white py-2 text-left shadow-2xl"
                 >
                   <div className="mb-1 border-b border-gray-50 px-4 py-2">
@@ -782,6 +900,63 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             </AnimatePresence>
           </div>
         </div>
+
+        <AnimatePresence>
+          {isSearchPanelOpen && (
+            <motion.div
+              ref={searchPanelRef}
+              key="navbar-search-panel"
+              tabIndex={-1}
+              initial={{ opacity: 0, y: -8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 360, damping: 28 }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  closeSearchPanel();
+                  return;
+                }
+
+                trapTabFocus(event, searchPanelRef.current);
+              }}
+              className="absolute right-0 top-[calc(100%+0.85rem)] z-[120] w-[min(92vw,440px)] rounded-2xl border border-white/70 bg-white p-2 text-left shadow-[0_24px_70px_rgba(2,15,38,0.28)] ring-1 ring-sky-200/70"
+            >
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitNavbarSearch();
+                }}
+                className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner transition focus-within:border-sky-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-sky-500/10"
+              >
+                <FaMagnifyingGlass className="ml-4 flex-shrink-0 text-sm text-slate-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={navbarSearchQuery}
+                  onChange={(event) => setNavbarSearchQuery(event.target.value)}
+                  placeholder="Search websites..."
+                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                  aria-label="Search websites"
+                />
+                <button
+                  type="button"
+                  onClick={closeSearchPanel}
+                  className="mx-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-95"
+                  aria-label="Close search"
+                >
+                  <FaXmark />
+                </button>
+                <button
+                  type="submit"
+                  className="m-1 flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#06224C] text-white shadow-lg transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-1 active:scale-95"
+                  aria-label="Submit search"
+                >
+                  <FaMagnifyingGlass />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
  
       <AnimatePresence>
@@ -895,10 +1070,20 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
           transition={{ duration: 0.22 }}
         />
         <motion.aside
+          ref={activePanelRef}
           initial={{ x: "100%" }}
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", stiffness: 340, damping: 32 }}
+          tabIndex={-1}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setActivePanel(null);
+              return;
+            }
+
+            trapTabFocus(event, activePanelRef.current);
+          }}
           className="fixed right-0 top-0 z-[9999] flex h-full w-full flex-col bg-white shadow-2xl sm:w-[400px]"
         >
           <div className="flex items-center justify-between border-b bg-white p-6 text-[#06224C]">
