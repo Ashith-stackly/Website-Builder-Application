@@ -59,8 +59,9 @@ const popularSearches = [
 const categories = [
   { title: "Portfolio", image: "/landing-optimized/port.webp", alt: "Portfolio website preview", previewHref: "/portfolio", editHref: "/blockpages?template=portfolio" },
   { title: "E-Commerce Templates", image: "/landing-optimized/ecommerce.webp", alt: "E-commerce website preview", previewHref: "/e-commerce", editHref: "/blockpages?template=ecommerce" },
-  { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview" },
-  {
+  { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview", previewHref: "/digital-marketing", editHref: "/blockpages?template=digital-marketing" },
+ 
+   {
     title: "Blogging",
     image: "/landing-optimized/bloggg.webp",
     alt: "Blogging website preview",
