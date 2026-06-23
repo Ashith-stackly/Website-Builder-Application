@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
@@ -11,10 +12,27 @@ import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "reac
 
 const START_BLOGGING_HREF = "/page-not-found";
 
+function scrollBlogPreviewToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  document.getElementById("blog-home")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function scrollToBlogSection(sectionId: string) {
-  document.getElementById(sectionId)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
+  const target = document.getElementById(sectionId);
+  if (!target) return;
+
+  const scrollMarginTop = Number.parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+  const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - scrollMarginTop);
+
+  window.scrollTo({ top, behavior: "smooth" });
+}
+
+function scrollToBlogCategory(categoryId: string) {
+  const anchorId = categoryId === "All" ? "blog-categories" : categoryId;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scrollToBlogSection(anchorId);
+    });
   });
 }
 
@@ -39,7 +57,13 @@ function BlogHeroTrendArrow() {
   );
 }
 
-function BlogHeader() {
+function BlogHeader({
+  selectedCategory,
+  onCategoryChange,
+}: {
+  selectedCategory: string;
+  onCategoryChange: (categoryId: string) => void;
+}) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -81,11 +105,11 @@ function BlogHeader() {
   }, []);
 
   const scrollToSection = useCallback((hash: string) => {
-    const target = document.querySelector(hash);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else if (hash === "#blog-home") {
+    if (hash === "#blog-home") {
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      const cleanId = hash.replace("#", "");
+      scrollToBlogSection(cleanId);
     }
     setMobileOpen(false);
     setCategoriesOpen(false);
@@ -131,8 +155,18 @@ function BlogHeader() {
       }
     };
 
+    const handleScroll = () => {
+      setCategoriesOpen(false);
+      setProfileOpen(false);
+    };
+
     document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
+    document.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
+    };
   }, [categoriesOpen, profileOpen, mobileOpen]);
 
   useEffect(() => {
@@ -197,12 +231,9 @@ function BlogHeader() {
                   ref={categoriesTriggerRef}
                   type="button"
                   className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none aria-expanded:bg-[rgba(43,127,255,0.35)] aria-expanded:text-white aria-expanded:shadow-[0_0_0_1px_rgba(43,127,255,0.55)] @@max-[850px]:py-[0.4rem] @@max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setCategoriesOpen((open) => !open);
-                    setProfileOpen(false);
-                  }}
-                  onFocus={() => {
-                    setCategoriesOpen(true);
                     setProfileOpen(false);
                   }}
                   onKeyDown={(event) => {
@@ -240,8 +271,15 @@ function BlogHeader() {
                         key={item.id}
                         type="button"
                         role="menuitem"
-                        className="block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold text-[var(--blog-navy)] bg-none border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)]"
-                        onClick={() => scrollToSection(`#${item.id}`)}
+                        className={`block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] ${
+                          selectedCategory === item.id
+                            ? "bg-[var(--blog-blue-bg)] text-[var(--blog-accent)]"
+                            : "bg-none text-[var(--blog-navy)]"
+                        }`}
+                        onClick={() => {
+                          onCategoryChange(item.id);
+                          setCategoriesOpen(false);
+                        }}
                       >
                         {item.label}
                       </button>
@@ -249,8 +287,15 @@ function BlogHeader() {
                     <button
                       type="button"
                       role="menuitem"
-                      className="block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold text-[var(--blog-navy)] bg-none border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] border-t border-[#e5e7eb] mt-[0.25rem] pt-[0.65rem] text-[var(--blog-accent)]"
-                      onClick={() => scrollToSection("#blog-categories")}
+                      className={`block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] border-t border-[#e5e7eb] mt-[0.25rem] pt-[0.65rem] ${
+                        selectedCategory === "All"
+                          ? "bg-[var(--blog-blue-bg)] text-[var(--blog-accent)]"
+                          : "bg-none text-[var(--blog-accent)]"
+                      }`}
+                      onClick={() => {
+                        onCategoryChange("All");
+                        setCategoriesOpen(false);
+                      }}
                     >
                       View all categories
                     </button>
@@ -271,7 +316,15 @@ function BlogHeader() {
         </nav>
 
         <div className="flex items-center gap-[0.75rem] shrink-0 @@max-[759px]:gap-[0.5rem] @max-[340px]:gap-[0.4rem]">
-          <div ref={profileRef} className="relative">
+          <div
+            ref={profileRef}
+            className="relative"
+            onBlurCapture={(e) => {
+              const next = e.relatedTarget as Node | null;
+              if (e.currentTarget.contains(next)) return;
+              setProfileOpen(false);
+            }}
+          >
             <button
               type="button"
               className="inline-flex items-center justify-center w-[2.25rem] h-[2.25rem] rounded-full border border-[rgba(255,255,255,0.85)] text-[var(--blog-white)] text-[0.95rem] bg-none p-0 cursor-pointer transition-[background,border-color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:border-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:border-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none aria-expanded:bg-[rgba(255,255,255,0.18)] aria-expanded:border-white aria-expanded:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] @max-[340px]:w-[2rem] @max-[340px]:h-[2rem]"
@@ -294,7 +347,7 @@ function BlogHeader() {
                   className="flex items-center gap-[0.5rem] w-full py-[0.6rem] px-[1rem] text-left text-[0.875rem] font-semibold text-[var(--blog-navy)] bg-none border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] focus-visible:bg-[var(--blog-blue-bg)] focus-visible:outline-none text-[#dc2626] hover:bg-[#fef2f2] hover:text-[#b91c1c] focus-visible:bg-[#fef2f2] focus-visible:text-[#b91c1c]"
                   onClick={handleLogout}
                 >
-                  <FaRightFromBracket aria-hidden />
+                  <FaRightFromBracket className="shrink-0" aria-hidden />
                   Logout
                 </button>
               </div>
@@ -338,8 +391,10 @@ function BlogHeader() {
                   ref={mobileCategoriesTriggerRef}
                   type="button"
                   className="py-[0.65rem] px-0 rounded-[0.4rem] text-[var(--blog-white)] text-[0.9rem] font-medium bg-none border-none cursor-pointer text-left w-full max-w-full font-inherit transition-[background,color] duration-150 ease hover:bg-[rgba(255,255,255,0.15)] hover:text-white focus-visible:bg-[rgba(255,255,255,0.15)] focus-visible:text-white focus-visible:outline-none flex items-center justify-between"
-                  onClick={() => setMobileCategoriesOpen((open) => !open)}
-                  onFocus={() => setMobileCategoriesOpen(true)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMobileCategoriesOpen((open) => !open);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
@@ -373,8 +428,16 @@ function BlogHeader() {
                         key={item.id}
                         type="button"
                         role="menuitem"
-                        className="block w-full max-w-full py-[0.45rem] px-0 rounded-[0.35rem] text-left text-[0.85rem] font-medium text-[var(--blog-white)] bg-none border-none cursor-pointer font-inherit transition-colors duration-150 ease hover:bg-[rgba(255,255,255,0.12)] focus-visible:bg-[rgba(255,255,255,0.12)] focus-visible:outline-none"
-                        onClick={() => scrollToSection(`#${item.id}`)}
+                        className={`block w-full max-w-full py-[0.45rem] px-2 rounded-[0.35rem] text-left text-[0.85rem] font-medium border-none cursor-pointer font-inherit transition-colors duration-150 ease focus-visible:bg-[rgba(255,255,255,0.12)] focus-visible:outline-none ${
+                          selectedCategory === item.id
+                            ? "bg-[rgba(255,255,255,0.2)] text-[var(--blog-white)] font-bold"
+                            : "text-[var(--blog-white)] bg-none hover:bg-[rgba(255,255,255,0.12)]"
+                        }`}
+                        onClick={() => {
+                          onCategoryChange(item.id);
+                          setMobileCategoriesOpen(false);
+                          setMobileOpen(false);
+                        }}
                       >
                         {item.label}
                       </button>
@@ -382,8 +445,16 @@ function BlogHeader() {
                     <button
                       type="button"
                       role="menuitem"
-                      className="block w-full max-w-full py-[0.45rem] px-0 rounded-[0.35rem] text-left text-[0.85rem] font-medium text-[var(--blog-white)] bg-none border-none cursor-pointer font-inherit transition-colors duration-150 ease hover:bg-[rgba(255,255,255,0.12)] focus-visible:bg-[rgba(255,255,255,0.12)] focus-visible:outline-none font-bold text-[var(--blog-accent)]"
-                      onClick={() => scrollToSection("#blog-categories")}
+                      className={`block w-full max-w-full py-[0.45rem] px-2 rounded-[0.35rem] text-left text-[0.85rem] font-medium border-none cursor-pointer font-inherit transition-colors duration-150 ease focus-visible:bg-[rgba(255,255,255,0.12)] focus-visible:outline-none font-bold ${
+                        selectedCategory === "All"
+                          ? "bg-[rgba(255,255,255,0.2)] text-[var(--blog-white)]"
+                          : "text-[var(--blog-accent)] bg-none hover:bg-[rgba(255,255,255,0.12)]"
+                      }`}
+                      onClick={() => {
+                        onCategoryChange("All");
+                        setMobileCategoriesOpen(false);
+                        setMobileOpen(false);
+                      }}
                     >
                       View all categories
                     </button>
@@ -419,7 +490,7 @@ function BlogHeader() {
               className="flex items-center gap-[0.5rem] mt-[0.35rem] py-[0.65rem] px-0 w-full max-w-full rounded-[0.4rem] border-none bg-none text-[#fca5a5] text-[0.9rem] font-semibold cursor-pointer font-inherit text-left hover:bg-[rgba(255,255,255,0.1)] hover:text-[#fecaca] focus-visible:bg-[rgba(255,255,255,0.1)] focus-visible:text-[#fecaca] focus-visible:outline-none"
               onClick={handleLogout}
             >
-              <FaRightFromBracket aria-hidden />
+              <FaRightFromBracket className="shrink-0" aria-hidden />
               Logout
             </button>
           </div>
@@ -461,7 +532,7 @@ const templates = [
 const buildFeatures = [
   {
     title: "Design a unique blog",
-    text: "Capture your brand's personality with a complete suite of Advanced Design feature in our blog maker.",
+    text: "Capture your brand's personality with a complete suite of Advanced Design features in our blog maker.",
   },
   {
     title: "Establish your site's domain name",
@@ -469,7 +540,7 @@ const buildFeatures = [
   },
   {
     title: "Create with content in mind",
-    text: "Get a custom domain to build your credibility. For inspiration, check out the Blog Name Generator.",
+    text: "Create a unique blog experience with customizable layouts, designs, and features that match your vision.",
   },
 ];
 
@@ -480,7 +551,7 @@ const infraItems = [
   },
   {
     title: "Reliable hosting",
-    text: "With free Website hosite on a worldwide CDN, your site is automatically backed up and will be able to handle any situation - from traffic spikes to outages - so you'll always be up and running.",
+    text: "With free Website hosting on a worldwide CDN, your site is automatically backed up and will be able to handle any situation - from traffic spikes to outages - so you'll always be up and running.",
   },
   {
     title: "Faster loading",
@@ -570,10 +641,41 @@ const hireProfessionalDetails = {
 };
 
 export default function BlogPage() {
+  const router = useRouter();
   const [openFaq, setOpenFaq] = useState(0);
   const [hireMoreOpen, setHireMoreOpen] = useState(false);
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const categoriesRef = useRef<HTMLElement | null>(null);
+
+  const openCategoryPage = useCallback(() => {
+    router.push(START_BLOGGING_HREF);
+  }, [router]);
+
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    flushSync(() => {
+      setSelectedCategory(categoryId);
+    });
+    scrollToBlogCategory(categoryId);
+  }, []);
+
+  useEffect(() => {
+    // Dynamically set aria-labels on global navbar buttons to match exact requirements
+    const cartBtn = document.querySelector('button[aria-label="Open cart"]');
+    if (cartBtn) cartBtn.setAttribute('aria-label', 'Cart');
+
+    const wishlistBtn = document.querySelector('button[aria-label="Open wishlist"]');
+    if (wishlistBtn) wishlistBtn.setAttribute('aria-label', 'Wishlist');
+
+    const searchBtn = document.querySelector('button[aria-label="Search"]');
+    if (searchBtn) searchBtn.setAttribute('aria-label', 'Search');
+  }, []);
+
+  const filteredBlogs =
+    selectedCategory === "All"
+      ? blogCategories
+      : blogCategories.filter((blog) => blog.id === selectedCategory);
 
   return (
     <main className="site-page blog-page flex flex-col min-h-screen bg-white overflow-visible w-full max-w-full min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%]">
@@ -585,9 +687,15 @@ export default function BlogPage() {
             {/* FLOATING DEVICE TOOLBAR */}
             <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
               <div className="blog-device-toolbar-inner flex items-center gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5 @max-[340px]:p-1 @max-[340px]:px-2 @max-[340px]:gap-1">
-                 <Link href="/landing#templates" className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition" title="Preview">
+                 <button
+                   type="button"
+                   onClick={scrollBlogPreviewToTop}
+                   className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition"
+                   title="Preview"
+                   aria-label="Scroll preview to top"
+                 >
                     <FaEye size={14} />
-                 </Link>
+                 </button>
                  <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
                  <button onClick={() => setDeviceMode("desktop")} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
                     <FaLaptop size={14} />
@@ -611,7 +719,7 @@ export default function BlogPage() {
                     : "max-w-full"
               }`}>
                 <div className="blog-page w-full max-w-full overflow-x-hidden overflow-visible min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%]">
-                  <BlogHeader />
+                  <BlogHeader selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
 
       {/* Top — continuous hero + image + templates (matches screenshot flow) */}
       <div
@@ -637,7 +745,7 @@ export default function BlogPage() {
                 Get a full suite of intuitive design features and powerful marketing
                 tools to create a unique blog that leaves a lasting impression.
               </p>
-              <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(1rem,2.5cqw,1.5rem)] min-h-[2.75rem] py-[0.55rem] px-[1.75rem] rounded-full border border-[var(--blog-navy)] bg-[var(--blog-white)] text-[var(--blog-navy)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-navy)] hover:text-[var(--blog-white)] hover:border-[var(--blog-navy)] hover:shadow-[0_6px_18px_rgba(0,31,63,0.2)] hover:-translate-y-[2px] active:translate-y-0">
+              <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(1rem,2.5cqw,1.5rem)] min-h-[2.75rem] py-[0.55rem] px-[1.75rem] rounded-full border border-[var(--blog-navy)] bg-[var(--blog-white)] text-[var(--blog-navy)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-navy)] hover:text-[var(--blog-white)] hover:border-[var(--blog-navy)] hover:shadow-[0_6px_18px_rgba(0,31,63,0.2)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                 Start Blogging
               </Link>
             </div>
@@ -669,7 +777,7 @@ export default function BlogPage() {
               <br className="hidden @min-[640px]:block" />
               with everything you need.
             </p>
-            <Link href="/landing#templates" className="inline-flex items-center justify-center gap-[0.35rem] mt-[clamp(1rem,2.5cqw,1.5rem)] min-h-[2.75rem] py-[0.6rem] px-[1.5rem] rounded-full border border-[#d1d5db] bg-[var(--blog-white)] text-[var(--blog-navy)] text-[clamp(0.875rem,1.8cqw,1rem)] font-semibold no-underline max-w-full text-center">
+            <Link href="/landing#templates" className="inline-flex items-center justify-center gap-[0.35rem] mt-[clamp(1rem,2.5cqw,1.5rem)] min-h-[2.75rem] py-[0.6rem] px-[1.5rem] rounded-full border border-[#d1d5db] bg-[var(--blog-white)] text-[var(--blog-navy)] text-[clamp(0.875rem,1.8cqw,1rem)] font-semibold no-underline max-w-full text-center hover:bg-blue-900 hover:text-white hover:shadow-lg hover:scale-105 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none">
               Explore Template <span aria-hidden>→</span>
             </Link>
             <div className="grid grid-cols-1 gap-[clamp(1.5rem,3cqw,2rem)] @max-[639px]:gap-[1.25rem] @min-[640px]:@max-[1023px]:gap-[1.5rem] @min-[1024px]:gap-[2rem] @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3 mt-[clamp(2rem,5cqw,3rem)] w-full min-w-0">
@@ -706,7 +814,7 @@ export default function BlogPage() {
                 </li>
               ))}
             </ul>
-            <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[1.35rem] min-h-[2.65rem] py-[0.55rem] px-[1.5rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0">
+            <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[1.35rem] min-h-[2.65rem] py-[0.55rem] px-[1.5rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
               Start Blogging
             </Link>
           </div>
@@ -767,7 +875,7 @@ export default function BlogPage() {
                 </li>
               ))}
             </ul>
-            <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(2rem,4cqw,2.5rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0">
+            <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(2rem,4cqw,2.5rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
               Start Blogging
             </Link>
           </div>
@@ -788,7 +896,7 @@ export default function BlogPage() {
                   engages your audience, so you can strategically plan for the
                   future.
                 </p>
-                <Link href={START_BLOGGING_HREF} className="inline-flex items-center gap-[0.35rem] mt-[clamp(1.5rem,3cqw,2rem)] text-[clamp(0.9rem,2cqw,1rem)] font-bold text-[var(--blog-navy)] underline [text-underline-offset:4px] cursor-pointer transition-[color,opacity] duration-200 ease max-w-full text-center hover:text-[var(--blog-accent)]">
+                <Link href={START_BLOGGING_HREF} className="inline-flex items-center gap-[0.35rem] mt-[clamp(1.5rem,3cqw,2rem)] text-[clamp(0.9rem,2cqw,1rem)] font-bold text-[var(--blog-navy)] underline [text-underline-offset:4px] cursor-pointer transition-[color,opacity] duration-200 ease max-w-full text-center hover:text-[var(--blog-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                   Start Blogging
                   <span className="inline-flex items-center justify-center w-[1.15rem] h-[1.15rem] text-[var(--blog-accent)] text-[0.9rem]" aria-hidden>
                     ↗
@@ -885,6 +993,7 @@ export default function BlogPage() {
       {/* Categories */}
       <section
         id="blog-categories"
+        ref={categoriesRef}
         className="bg-[var(--blog-pink-bg)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border py-[var(--blog-section-y)] @min-[1280px]:py-[5.5rem] [scroll-margin-top:var(--blog-scroll-offset)]"
       >
         <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
@@ -896,13 +1005,15 @@ export default function BlogPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 mt-8 @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3 @min-[640px]:@max-[1023px]:gap-6">
-            {blogCategories.map((category) => (
-              <article
+            {filteredBlogs.map((category) => (
+              <button
                 key={category.id}
                 id={category.id}
-                className="group/card bg-[var(--blog-white)] rounded-[var(--blog-radius-md)] overflow-hidden shadow-[0_4px_20px_rgba(0,31,63,0.08)] text-left [scroll-margin-top:var(--blog-scroll-offset)] border-2 border-transparent cursor-pointer transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[4px] @max-[899px]:hover:translate-y-0 target:border-[var(--blog-accent)] target:outline-2 target:outline-[var(--blog-accent)] target:outline-offset-4 @max-[899px]:target:outline-offset-2 target:shadow-[0_14px_40px_rgba(45,140,240,0.2)]"
+                type="button"
+                onClick={openCategoryPage}
+                className="group/card w-full flex flex-col h-full p-0 bg-[var(--blog-white)] rounded-[var(--blog-radius-md)] overflow-hidden shadow-[0_4px_20px_rgba(0,31,63,0.08)] text-left [scroll-margin-top:var(--blog-scroll-offset)] border-2 border-transparent cursor-pointer transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[4px] @max-[899px]:hover:translate-y-0 target:border-[var(--blog-accent)] target:outline-2 target:outline-[var(--blog-accent)] target:outline-offset-4 @max-[899px]:target:outline-offset-2 target:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
-                <div className="aspect-[16/10] overflow-hidden">
+                <div className="blog-category-card-image aspect-[16/10] w-full overflow-hidden shrink-0">
                   <img
                     className="block w-full h-full object-cover transition-transform duration-250 ease group-hover/card:scale-[1.04]"
                     src={assetPath(category.image)}
@@ -910,13 +1021,18 @@ export default function BlogPage() {
                     loading="lazy"
                     decoding="async"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+                    style={{ height: "100%", width: "100%", objectFit: "cover" }}
                   />
                 </div>
-                <div className="py-[1.15rem] px-[1.25rem] pb-[1.35rem] @max-[340px]:py-[0.85rem] @max-[340px]:px-[0.75rem] break-words [overflow-wrap:anywhere]">
-                  <h3 className="text-[1.05rem] font-bold text-[var(--blog-navy)] transition-colors duration-200 group-hover/card:text-[var(--blog-accent)] break-words [overflow-wrap:anywhere]">{category.label}</h3>
-                  <p className="mt-[0.45rem] text-[0.9rem] leading-[1.6] text-[var(--blog-navy-muted)] break-words [overflow-wrap:anywhere]">{category.description}</p>
+                <div className="flex-grow flex flex-col py-[1.15rem] px-[1.25rem] pb-[1.35rem] @max-[340px]:py-[0.85rem] @max-[340px]:px-[0.75rem] break-words [overflow-wrap:anywhere]">
+                  <h3 className="text-[1.05rem] font-bold text-[var(--blog-navy)] transition-colors duration-200 group-hover/card:text-[var(--blog-accent)] break-words [overflow-wrap:anywhere] min-h-[3rem] flex items-start">
+                    {category.label}
+                  </h3>
+                  <p className="mt-[0.45rem] text-[0.9rem] leading-[1.6] text-[var(--blog-navy-muted)] break-words [overflow-wrap:anywhere] flex-grow">
+                    {category.description}
+                  </p>
                 </div>
-              </article>
+              </button>
             ))}
           </div>
         </div>
@@ -1044,7 +1160,7 @@ export default function BlogPage() {
                         {isOpen ? "×" : "+"}
                       </span>
                     </button>
-                    {isOpen && <p className="m-0 pb-[1.1rem] text-[clamp(0.82rem,1.7cqw,0.9rem)] leading-[1.65] text-[#3d4f63] [overflow-wrap:break-word] break-words [overflow-wrap:anywhere]">{item.a}</p>}
+                    {isOpen && <p className="m-0 pb-[1.1rem] text-[clamp(0.82rem,1.7cqw,0.9rem)] leading-[1.65] text-[#1e293b] [overflow-wrap:break-word] break-words [overflow-wrap:anywhere]">{item.a}</p>}
                   </div>
                 );
               })}
@@ -1058,7 +1174,7 @@ export default function BlogPage() {
         <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
           <div className="bg-[linear-gradient(180deg,#b0b8e8_0%,#e8eaf4_55%,#f5f6fa_100%)] border border-[#9ca3af] rounded-[var(--blog-radius-lg)] shadow-[0_8px_28px_rgba(0,31,63,0.14)] p-[clamp(4rem,10cqw,6.5rem)] px-[clamp(2rem,5cqw,3rem)] text-center min-w-0 min-h-[clamp(14rem,30cqw,18rem)] flex flex-col items-center justify-center @max-[899px]:p-[clamp(2.5rem,8cqw,4rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[899px]:min-h-auto @max-[480px]:p-10 @max-[480px]:px-5 @max-[340px]:p-8 @max-[340px]:px-3">
             <h2 className="text-[clamp(1.75rem,4.5cqw,2.5rem)] font-semibold leading-[1.2] text-[var(--blog-navy)] [text-wrap:balance]">Create a blog that inspires.</h2>
-            <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(1.5rem,3cqw,2rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0">
+            <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(1.5rem,3cqw,2rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
               Start Blogging
             </Link>
           </div>
@@ -1095,14 +1211,22 @@ export default function BlogPage() {
           --blog-header-content-gap: 0;
           --blog-scroll-offset: calc(
             var(--stackly-nav-height-measured, var(--stackly-nav-height)) +
+              var(--blog-nav-gap) +
               var(--blog-header-height) +
               0.5rem
           );
           --blog-top-split: 38%;
         }
 
-        html:has(body > main.blog-page) {
+        html:has(.blog-page) {
           scroll-padding-top: var(--blog-scroll-offset);
+        }
+
+        #blog-categories,
+        #blog-trending,
+        #blog-about,
+        #blog-contact {
+          scroll-margin-top: var(--blog-scroll-offset) !important;
         }
 
         @container (min-width: 768px) {
@@ -1161,6 +1285,25 @@ export default function BlogPage() {
           .blog-device-toolbar-inner svg {
             font-size: 11px !important;
           }
+        }
+
+        /* Keyboard focus styles for navbar & header interactive elements */
+        .stackly-navbar a:focus-visible,
+        .stackly-navbar button:focus-visible,
+        header a:focus-visible,
+        header button:focus-visible {
+          outline: 2px solid #3b82f6 !important;
+          outline-offset: 2px !important;
+          box-shadow: 0 0 0 2px #3b82f6 !important;
+          transition: outline 0.15s ease, box-shadow 0.15s ease !important;
+        }
+        .stackly-navbar .stackly-icon-button:focus-visible,
+        header button:focus-visible {
+          border-radius: 9999px !important;
+        }
+        .stackly-navbar .stackly-nav-link:focus-visible,
+        header a:focus-visible {
+          border-radius: 0.375rem !important;
         }
       `}</style>
     </main>

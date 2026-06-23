@@ -16,6 +16,10 @@ import {
   FaYoutube,
 } from "react-icons/fa6";
 import { assetPath } from "@/lib/paths";
+import {
+  EMAIL_REQUIRED_ERROR,
+  getSignupEmailValidationError,
+} from "@/lib/emailValidation";
 
 type ModalKey =
   | "features"
@@ -194,29 +198,25 @@ export default function Footer() {
   const router = useRouter();
   const [activeModal, setActiveModal] = useState<ModalKey | null>(null);
   const [email, setEmail] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
-
-  const showToast = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 2500);
-  };
+  const [fieldMessage, setFieldMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
   const handleSubscribe = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    const trimmed = email.trim().replace(/\s+/g, "");
 
-    if (!email.trim()) {
-      showToast("Please enter an email address.");
+    if (!trimmed) {
+      setFieldMessage({ type: "error", text: EMAIL_REQUIRED_ERROR });
       return;
     }
 
-    if (!valid) {
-      showToast("Please enter a valid email.");
+    const emailError = getSignupEmailValidationError(trimmed.toLowerCase());
+    if (emailError) {
+      setFieldMessage({ type: "error", text: emailError });
       return;
     }
 
     setEmail("");
-    showToast("Subscribed successfully!");
+    setFieldMessage({ type: "success", text: "Subscribed successfully!" });
   };
 
   const openFooterItem = (key: string) => {
@@ -254,21 +254,39 @@ export default function Footer() {
             <div className="w-full md:w-1/2">
               <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-white">Subscribe to our Updates</h3>
               <p className="mb-4 max-w-md text-sm leading-relaxed text-white/60">Get template drops, builder updates, and product notes in your inbox.</p>
-              <form onSubmit={handleSubscribe} className="flex w-full max-w-md items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300" aria-label="Subscribe to updates form" noValidate>
-                <label className="relative flex flex-grow items-center">
-                  <span className="sr-only">Email address</span>
-                  <FaEnvelope className="absolute left-4 text-gray-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Your email"
-                    className="w-full min-w-0 bg-transparent py-2.5 pl-11 pr-2 text-sm text-gray-800 focus:outline-none"
-                  />
-                </label>
-                <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95">
-                  <FaPaperPlane className="text-sm" />
-                </button>
+              <form onSubmit={handleSubscribe} className="w-full max-w-md" aria-label="Subscribe to updates form" noValidate>
+                <div className="flex w-full items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300">
+                  <label className="relative flex flex-grow items-center">
+                    <span className="sr-only">Email address</span>
+                    <FaEnvelope className="absolute left-4 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(event) => {
+                        setEmail(event.target.value);
+                        if (fieldMessage) setFieldMessage(null);
+                      }}
+                      placeholder="Your email"
+                      className="w-full min-w-0 bg-transparent py-2.5 pl-11 pr-2 text-sm text-gray-800 focus:outline-none"
+                      aria-invalid={fieldMessage?.type === "error"}
+                      aria-describedby={fieldMessage ? "footer-email-message" : undefined}
+                    />
+                  </label>
+                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95">
+                    <FaPaperPlane className="text-sm" />
+                  </button>
+                </div>
+                {fieldMessage && (
+                  <p
+                    id="footer-email-message"
+                    role={fieldMessage.type === "error" ? "alert" : "status"}
+                    className={`mt-2 text-xs font-semibold ${
+                      fieldMessage.type === "error" ? "text-red-300" : "text-emerald-300"
+                    }`}
+                  >
+                    {fieldMessage.text}
+                  </p>
+                )}
               </form>
             </div>
 
@@ -330,9 +348,20 @@ export default function Footer() {
               </motion.div>
 
               <div className="flex w-full flex-col items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50 lg:w-auto lg:flex-row lg:gap-6">
-                <button type="button" onClick={() => setActiveModal("terms")} className="stackly-footer-link whitespace-nowrap">Terms of Use</button>
+                <button type="button" onClick={() => setActiveModal("terms")} className="stackly-footer-link whitespace-nowrap">Terms of Service</button>
                 <button type="button" onClick={() => setActiveModal("privacy")} className="stackly-footer-link whitespace-nowrap">Privacy Policy</button>
-                <span className="whitespace-nowrap text-center">Copyright 2018-2026 TheStackly.com INC</span>
+                <span
+                  className="w-full max-w-full whitespace-normal break-words text-center px-4 text-[9px] md:text-[10px] lg:w-auto lg:px-0"
+                  style={{
+                    width: "100%",
+                    maxWidth: "100%",
+                    whiteSpace: "normal",
+                    overflowWrap: "break-word",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  Copyright 2018-2026 TheStackly.com INC
+                </span>
               </div>
             </div>
           </div>
@@ -355,12 +384,6 @@ export default function Footer() {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="stackly-toast fixed bottom-5 right-5 z-[20001] rounded-xl bg-[#06224C] px-5 py-3 text-sm font-bold text-white shadow-2xl">
-          {toast}
         </div>
       )}
     </>

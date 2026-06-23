@@ -3,6 +3,60 @@ import { useRouter } from 'next/navigation';
 import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Edit, Copy, Trash2, Play } from 'lucide-react';
 import { VideoBlockData } from './types';
  
+const UploadedVideoPlayer = ({ block, uploadUrl, posterImage, autoplay, loop, muted, showControls }: any) => {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+ 
+  React.useEffect(() => {
+    if (videoRef.current) {
+      if (block.props.startTime !== undefined && videoRef.current.currentTime < block.props.startTime) {
+        videoRef.current.currentTime = block.props.startTime;
+      } else if (block.props.endTime !== undefined && videoRef.current.currentTime > block.props.endTime) {
+        videoRef.current.currentTime = block.props.startTime || 0;
+      }
+    }
+  }, [block.props.startTime, block.props.endTime]);
+ 
+  return (
+    <video
+      ref={videoRef}
+      src={uploadUrl}
+      poster={posterImage}
+      autoPlay={autoplay}
+      loop={loop}
+      muted={muted}
+      controls={showControls}
+      disablePictureInPicture
+      disableRemotePlayback
+      controlsList="nodownload noremoteplayback noplaybackrate"
+      className="w-full h-full object-cover"
+      onTimeUpdate={(e) => {
+        const video = e.currentTarget;
+        const endTime = block.props.endTime;
+        const startTime = block.props.startTime;
+        const hasValidEndTime = endTime !== undefined && (startTime === undefined || endTime > startTime);
+       
+        if (hasValidEndTime && video.currentTime >= endTime) {
+          if (loop) {
+            video.currentTime = startTime || 0;
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+            video.currentTime = endTime;
+          }
+        } else if (startTime !== undefined && video.currentTime < startTime) {
+          video.currentTime = startTime;
+        }
+      }}
+      onLoadedMetadata={(e) => {
+        const video = e.currentTarget;
+        if (block.props.startTime !== undefined && video.currentTime < block.props.startTime) {
+          video.currentTime = block.props.startTime;
+        }
+      }}
+    />
+  );
+};
+ 
 interface CanvasProps {
   blocks: VideoBlockData[];
   selectedBlockId: string | null;
@@ -13,7 +67,10 @@ interface CanvasProps {
   onUndo?: () => void;
   onRedo?: () => void;
   onOpenMobileSidebar?: () => void;
-  onApplyVideo?: () => void;
+  onApplyVideo?: (blockId: string) => void;
+  onDuplicateBlock?: (id: string) => void;
+  onCloseBlock?: () => void;
+  onUpdateBlock?: (id: string, props: Partial<VideoBlockData['props']>) => void;
 }
  
 export default function Canvas({
@@ -26,7 +83,10 @@ export default function Canvas({
   onUndo,
   onRedo,
   onOpenMobileSidebar,
-  onApplyVideo
+  onApplyVideo,
+  onDuplicateBlock,
+  onCloseBlock,
+  onUpdateBlock
 }: CanvasProps) {
   const router = useRouter();
  
@@ -34,7 +94,7 @@ export default function Canvas({
     e.stopPropagation();
     localStorage.setItem('portfolioVideoData', JSON.stringify(block.props));
     if (onApplyVideo) {
-      onApplyVideo();
+      onApplyVideo(block.id);
     } else {
       router.push('/blockpages?template=portfolio');
     }
@@ -47,14 +107,14 @@ export default function Canvas({
       <div className="w-full relative bg-gray-100 rounded-[20px] overflow-hidden aspect-video group">
         {sourceType === 'upload' ? (
           uploadUrl ? (
-            <video
-              src={uploadUrl}
-              poster={posterImage}
-              autoPlay={autoplay}
+            <UploadedVideoPlayer
+              block={block}
+              uploadUrl={uploadUrl}
+              posterImage={posterImage}
+              autoplay={autoplay}
               loop={loop}
               muted={muted}
-              controls={showControls}
-              className="w-full h-full object-cover"
+              showControls={showControls}
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50 border-2 border-dashed border-gray-200">
@@ -65,11 +125,50 @@ export default function Canvas({
           )
         ) : (
           embedCode ? (
-            <div className="w-full h-full flex items-center justify-center bg-black" dangerouslySetInnerHTML={{ __html: embedCode }} />
+            (() => {
+              const trimmed = embedCode.trim();
+              const isUrl = /^https?:\/\//.test(trimmed) && !trimmed.includes('<iframe');
+              if (isUrl) {
+                let embedUrl = trimmed;
+                try {
+                  if (embedUrl.includes('youtube.com/watch?v=')) {
+                    const videoId = new URL(embedUrl).searchParams.get('v');
+                    if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                  } else if (embedUrl.includes('youtu.be/')) {
+                    const videoId = embedUrl.split('youtu.be/')[1].split('?')[0];
+                    if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                  } else if (embedUrl.includes('vimeo.com/')) {
+                    const videoId = embedUrl.split('vimeo.com/')[1].split('?')[0];
+                    if (videoId) embedUrl = `https://player.vimeo.com/video/${videoId}`;
+                  }
+ 
+                  const urlObj = new URL(embedUrl);
+                  if (embedUrl.includes('youtube.com')) {
+                    if (block.props.startTime !== undefined) urlObj.searchParams.set('start', Math.floor(block.props.startTime).toString());
+                    if (block.props.endTime !== undefined) urlObj.searchParams.set('end', Math.floor(block.props.endTime).toString());
+                    embedUrl = urlObj.toString();
+                  } else if (embedUrl.includes('vimeo.com')) {
+                    if (block.props.startTime !== undefined) urlObj.hash = `#t=${Math.floor(block.props.startTime)}s`;
+                    embedUrl = urlObj.toString();
+                  }
+                } catch (e) {
+                  // Ignore URL parsing errors
+                }
+                return (
+                  <iframe
+                    src={embedUrl}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                );
+              }
+              return <div className="w-full h-full flex items-center justify-center bg-black [&>iframe]:w-full [&>iframe]:h-full" dangerouslySetInnerHTML={{ __html: embedCode }} />;
+            })()
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50 border-2 border-dashed border-gray-200">
               <Play className="w-12 h-12 mb-3 opacity-30" />
-              <p className="font-medium text-sm">No embed code provided</p>
+              <p className="font-medium text-sm">No embed code or link provided</p>
               <p className="text-xs opacity-70 mt-1">Paste iframe code in the sidebar</p>
             </div>
           )
@@ -176,26 +275,58 @@ export default function Canvas({
                 </div>
  
                 <div className="flex items-center gap-2">
-                  <button className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors" title="Edit">
-                    <Edit className="w-4 h-4" strokeWidth={2} />
-                  </button>
-                  <button className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors" title="Duplicate">
-                    <Copy className="w-4 h-4" strokeWidth={2} />
-                  </button>
-                  <button className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors" title="Delete">
-                    <Trash2 className="w-4 h-4" strokeWidth={2} />
-                  </button>
-                  <div className="w-[1px] h-4 bg-gray-200 mx-1"></div>
                   <button
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
+                    className={`p-1.5 rounded transition-colors cursor-pointer ${isSelected ? 'bg-blue-100 text-blue-700 shadow-inner' : 'text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100'}`}
+                    title="Edit"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onRemoveBlock(block.id);
+                      if (isSelected) {
+                        onSelectBlock(null);
+                      } else {
+                        onSelectBlock(block.id);
+                        onOpenMobileSidebar?.();
+                      }
                     }}
-                    title="Close"
                   >
-                    <X className="w-4 h-4" strokeWidth={2.5} />
+                    <Edit className="w-4 h-4" strokeWidth={isSelected ? 2.5 : 2} />
                   </button>
+                  <button
+                    className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors cursor-pointer"
+                    title="Duplicate"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onDuplicateBlock) onDuplicateBlock(block.id);
+                    }}
+                  >
+                    <Copy className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                  <button
+                    className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors cursor-pointer"
+                    title="Delete Video Content"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onUpdateBlock) {
+                        onUpdateBlock(block.id, { uploadUrl: '', embedCode: '', posterImage: '' });
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                  {blocks.length > 1 && (
+                    <>
+                      <div className="w-[1px] h-4 bg-gray-200 mx-1"></div>
+                      <button
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveBlock(block.id);
+                        }}
+                        title="Remove Block Container"
+                      >
+                        <X className="w-4 h-4" strokeWidth={2.5} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
  
@@ -210,3 +341,5 @@ export default function Canvas({
     </main>
   );
 }
+
+ 

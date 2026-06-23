@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -11,72 +11,72 @@ import {
 import { useDraggable } from "@dnd-kit/core";
 import type { ComponentType } from "@/types/builder";
 import { staggerContainer, staggerChild } from "@/lib/motion";
-
+ 
 type PaletteGroup = "Website Sections" | "Basic Blocks" | "Advanced Blocks";
-
+ 
 const BLOCK_COLORS: Record<ComponentType, string> = {
-  navigation:       "bg-blue-500/20 text-blue-300",
-  hero:             "bg-violet-500/20 text-violet-300",
-  features:         "bg-emerald-500/20 text-emerald-300",
-  gallery:          "bg-pink-500/20 text-pink-300",
-  contact:          "bg-orange-500/20 text-orange-300",
-  heading:          "bg-yellow-500/20 text-yellow-300",
-  text:             "bg-sky-500/20 text-sky-300",
-  button:           "bg-indigo-500/20 text-indigo-300",
-  icon:             "bg-amber-500/20 text-amber-300",
-  "feature-item":   "bg-teal-500/20 text-teal-300",
-  columns:          "bg-cyan-500/20 text-cyan-300",
-  image:            "bg-rose-500/20 text-rose-300",
-  input:            "bg-lime-500/20 text-lime-300",
-  divider:          "bg-gray-500/20 text-gray-300",
-  container:        "bg-purple-500/20 text-purple-300",
-  video:            "bg-red-500/20 text-red-300",
-  map:              "bg-green-500/20 text-green-300",
-  accordion:        "bg-fuchsia-500/20 text-fuchsia-300",
-  tabs:             "bg-blue-400/20 text-blue-200",
-  spacer:           "bg-slate-500/20 text-slate-300",
-  "social-links":   "bg-cyan-400/20 text-cyan-200",
-  countdown:        "bg-orange-400/20 text-orange-200",
-  "pricing-table":  "bg-emerald-400/20 text-emerald-200",
-  testimonial:      "bg-yellow-400/20 text-yellow-200",
-  footer:           "bg-indigo-400/20 text-indigo-200",
-  form:             "bg-violet-400/20 text-violet-200",
+  navigation: "bg-blue-500/20 text-blue-300",
+  hero: "bg-violet-500/20 text-violet-300",
+  features: "bg-emerald-500/20 text-emerald-300",
+  gallery: "bg-pink-500/20 text-pink-300",
+  contact: "bg-orange-500/20 text-orange-300",
+  heading: "bg-yellow-500/20 text-yellow-300",
+  text: "bg-sky-500/20 text-sky-300",
+  button: "bg-indigo-500/20 text-indigo-300",
+  icon: "bg-amber-500/20 text-amber-300",
+  "feature-item": "bg-teal-500/20 text-teal-300",
+  columns: "bg-cyan-500/20 text-cyan-300",
+  image: "bg-rose-500/20 text-rose-300",
+  input: "bg-lime-500/20 text-lime-300",
+  divider: "bg-gray-500/20 text-gray-300",
+  container: "bg-purple-500/20 text-purple-300",
+  video: "bg-red-500/20 text-red-300",
+  map: "bg-green-500/20 text-green-300",
+  accordion: "bg-fuchsia-500/20 text-fuchsia-300",
+  tabs: "bg-blue-400/20 text-blue-200",
+  spacer: "bg-slate-500/20 text-slate-300",
+  "social-links": "bg-cyan-400/20 text-cyan-200",
+  countdown: "bg-orange-400/20 text-orange-200",
+  "pricing-table": "bg-emerald-400/20 text-emerald-200",
+  testimonial: "bg-yellow-400/20 text-yellow-200",
+  footer: "bg-indigo-400/20 text-indigo-200",
+  form: "bg-violet-400/20 text-violet-200",
 };
-
+ 
 const paletteItems: Array<{ type: ComponentType; label: string; group: PaletteGroup; icon: React.ComponentType<{ className?: string }> }> = [
   /* ── Website Sections ── */
-  { type: "navigation",     label: "Navigation",     group: "Website Sections", icon: Menu },
-  { type: "hero",           label: "Hero",           group: "Website Sections", icon: Home },
-  { type: "features",       label: "Features",       group: "Website Sections", icon: PanelsTopLeft },
-  { type: "gallery",        label: "Gallery",        group: "Website Sections", icon: Images },
-  { type: "contact",        label: "Contact",        group: "Website Sections", icon: Contact },
-  { type: "pricing-table",  label: "Pricing",        group: "Website Sections", icon: Table },
-  { type: "testimonial",    label: "Testimonials",   group: "Website Sections", icon: Heart },
-  { type: "footer",         label: "Footer",         group: "Website Sections", icon: AlignLeft },
-
+  { type: "navigation", label: "Navigation", group: "Website Sections", icon: Menu },
+  { type: "hero", label: "Hero", group: "Website Sections", icon: Home },
+  { type: "features", label: "Features", group: "Website Sections", icon: PanelsTopLeft },
+  { type: "gallery", label: "Gallery", group: "Website Sections", icon: Images },
+  { type: "contact", label: "Contact", group: "Website Sections", icon: Contact },
+  { type: "pricing-table", label: "Pricing", group: "Website Sections", icon: Table },
+  { type: "testimonial", label: "Testimonials", group: "Website Sections", icon: Heart },
+  { type: "footer", label: "Footer", group: "Website Sections", icon: AlignLeft },
+ 
   /* ── Basic Blocks ── */
-  { type: "heading",        label: "Heading",        group: "Basic Blocks",     icon: Heading1 },
-  { type: "text",           label: "Text",           group: "Basic Blocks",     icon: Type },
-  { type: "button",         label: "Button",         group: "Basic Blocks",     icon: MousePointerSquareDashed },
-  { type: "icon",           label: "Icon",           group: "Basic Blocks",     icon: Star },
-  { type: "feature-item",   label: "Feature Item",   group: "Basic Blocks",     icon: Layers },
-  { type: "columns",        label: "Columns",        group: "Basic Blocks",     icon: LayoutGrid },
-  { type: "image",          label: "Image",          group: "Basic Blocks",     icon: Image },
-  { type: "input",          label: "Input",          group: "Basic Blocks",     icon: TextCursorInput },
-  { type: "divider",        label: "Divider",        group: "Basic Blocks",     icon: Minus },
-  { type: "container",      label: "Container",      group: "Basic Blocks",     icon: LayoutTemplate },
-  { type: "video",          label: "Video",          group: "Basic Blocks",     icon: Play },
-  { type: "spacer",         label: "Spacer",         group: "Basic Blocks",     icon: Minus },
-
+  { type: "heading", label: "Heading", group: "Basic Blocks", icon: Heading1 },
+  { type: "text", label: "Text", group: "Basic Blocks", icon: Type },
+  { type: "button", label: "Button", group: "Basic Blocks", icon: MousePointerSquareDashed },
+  { type: "icon", label: "Icon", group: "Basic Blocks", icon: Star },
+  { type: "feature-item", label: "Feature Item", group: "Basic Blocks", icon: Layers },
+  { type: "columns", label: "Columns", group: "Basic Blocks", icon: LayoutGrid },
+  { type: "image", label: "Image", group: "Basic Blocks", icon: Image },
+  { type: "input", label: "Input", group: "Basic Blocks", icon: TextCursorInput },
+  { type: "divider", label: "Divider", group: "Basic Blocks", icon: Minus },
+  { type: "container", label: "Container", group: "Basic Blocks", icon: LayoutTemplate },
+  { type: "video", label: "Video", group: "Basic Blocks", icon: Play },
+  { type: "spacer", label: "Spacer", group: "Basic Blocks", icon: Minus },
+ 
   /* ── Advanced Blocks ── */
-  { type: "accordion",      label: "Accordion",      group: "Advanced Blocks",  icon: List },
-  { type: "tabs",           label: "Tabs",           group: "Advanced Blocks",  icon: LayoutTemplate },
-  { type: "map",            label: "Map",            group: "Advanced Blocks",  icon: MapPin },
-  { type: "social-links",   label: "Social Links",   group: "Advanced Blocks",  icon: Share2 },
-  { type: "countdown",      label: "Countdown",      group: "Advanced Blocks",  icon: Clock },
-  { type: "form",           label: "Form Builder",   group: "Advanced Blocks",  icon: FileText },
+  { type: "accordion", label: "Accordion", group: "Advanced Blocks", icon: List },
+  { type: "tabs", label: "Tabs", group: "Advanced Blocks", icon: LayoutTemplate },
+  { type: "map", label: "Map", group: "Advanced Blocks", icon: MapPin },
+  { type: "social-links", label: "Social Links", group: "Advanced Blocks", icon: Share2 },
+  { type: "countdown", label: "Countdown", group: "Advanced Blocks", icon: Clock },
+  { type: "form", label: "Form Builder", group: "Advanced Blocks", icon: FileText },
 ];
-
+ 
 function PaletteItem({ item, onAdd }: { item: (typeof paletteItems)[number]; onAdd: (type: ComponentType) => void }) {
   const suppressClickAfterDrag = useRef(false);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -85,11 +85,11 @@ function PaletteItem({ item, onAdd }: { item: (typeof paletteItems)[number]; onA
   });
   const Icon = item.icon;
   const colorClass = BLOCK_COLORS[item.type] ?? "bg-blue-500/20 text-blue-300";
-
+ 
   useEffect(() => {
     if (isDragging) suppressClickAfterDrag.current = true;
   }, [isDragging]);
-
+ 
   return (
     <motion.button
       ref={setNodeRef}
@@ -113,14 +113,14 @@ function PaletteItem({ item, onAdd }: { item: (typeof paletteItems)[number]; onA
     </motion.button>
   );
 }
-
+ 
 const GROUPS: PaletteGroup[] = ["Website Sections", "Basic Blocks", "Advanced Blocks"];
 const GROUP_LABELS: Record<PaletteGroup, string> = {
   "Website Sections": "Sections",
   "Basic Blocks": "Basic",
   "Advanced Blocks": "Advanced",
 };
-
+ 
 export default function ComponentPalette({
   className = "w-[248px]",
   onAdd,
@@ -132,13 +132,13 @@ export default function ComponentPalette({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<PaletteGroup>("Website Sections");
-
+ 
   const filtered = paletteItems.filter(
     (item) =>
       item.group === activeGroup &&
       item.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
+ 
   return (
     <aside className={`flex h-full flex-shrink-0 flex-col overflow-hidden rounded-xl border border-[#183765] bg-[#0B1D40] text-white shadow-[0_18px_45px_rgba(11,29,64,0.22)] ${className}`}>
       {/* ── Header ── */}
@@ -152,7 +152,7 @@ export default function ComponentPalette({
             {paletteItems.length}
           </span>
         </div>
-
+ 
         {/* Search */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
@@ -164,7 +164,7 @@ export default function ComponentPalette({
             value={searchQuery}
           />
         </div>
-
+ 
         {/* Group tabs — 3 tabs */}
         <div className="relative flex rounded-lg bg-[#071428] p-0.5 mb-4">
           {GROUPS.map((g) => (
@@ -189,7 +189,7 @@ export default function ComponentPalette({
           ))}
         </div>
       </div>
-
+ 
       {/* ── Block grid ── */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-3 [scrollbar-width:thin] [scrollbar-color:#1A315E_transparent]">
         {/* Starter CTA */}
@@ -203,7 +203,7 @@ export default function ComponentPalette({
           <Sparkles className="h-3.5 w-3.5 text-blue-400" />
           Generate Starter Website
         </motion.button>
-
+ 
         <AnimatePresence mode="wait">
           <motion.div
             key={activeGroup + searchQuery}
@@ -225,7 +225,7 @@ export default function ComponentPalette({
           </motion.div>
         </AnimatePresence>
       </div>
-
+ 
       {/* ── Footer hint ── */}
       <div className="flex-shrink-0 border-t border-[#1A315E] px-4 py-3">
         <p className="text-center text-[10px] font-medium text-gray-600">
@@ -235,4 +235,6 @@ export default function ComponentPalette({
     </aside>
   );
 }
-
+ 
+ 
+ 

@@ -43,9 +43,17 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
   const width = (props.width as string) || '600px';
   const height = (props.height as string) || 'auto';
   const borderRadius = (props.borderRadius as string) || '18px';
-  const cornerRadiusValues = (props.cornerRadiusValues as Record<string, number>) || { tl: 0, tr: 0, br: 0, bl: 0 };
+ 
+  let defaultCornerValues = { tl: 0, tr: 0, br: 0, bl: 0 };
+  if (borderRadius && !props.cornerRadiusValues) {
+    const val = parseInt(borderRadius) || 0;
+    defaultCornerValues = { tl: val, tr: val, br: val, bl: val };
+  }
+  const cornerRadiusValues = (props.cornerRadiusValues as Record<string, number>) || defaultCornerValues;
+ 
   const opacity = typeof props.opacity === 'number' ? props.opacity : 100;
   const paddingVal = typeof props.padding === 'number' ? props.padding : 16;
+  const borderThicknessVal = typeof props.borderThickness === 'number' ? props.borderThickness : 0;
  
   const [activeTab, setActiveTab] = useState<'button' | 'styles'>('button');
   const [showVideoSettings, setShowVideoSettings] = useState(true);
@@ -54,6 +62,7 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
   // Local state for better usability (prevents snapping to 0 while typing)
   const [localOpacity, setLocalOpacity] = useState(opacity.toString());
   const [localPadding, setLocalPadding] = useState(paddingVal.toString());
+  const [localBorderThickness, setLocalBorderThickness] = useState(borderThicknessVal.toString());
   const [localRadii, setLocalRadii] = useState({
     tl: cornerRadiusValues.tl.toString(),
     tr: cornerRadiusValues.tr.toString(),
@@ -64,13 +73,14 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
   useEffect(() => {
     setLocalOpacity(opacity.toString());
     setLocalPadding(paddingVal.toString());
+    setLocalBorderThickness(borderThicknessVal.toString());
     setLocalRadii({
       tl: cornerRadiusValues.tl.toString(),
       tr: cornerRadiusValues.tr.toString(),
       br: cornerRadiusValues.br.toString(),
       bl: cornerRadiusValues.bl.toString()
     });
-  }, [id, opacity, paddingVal, cornerRadiusValues.tl, cornerRadiusValues.tr, cornerRadiusValues.br, cornerRadiusValues.bl]);
+  }, [id, opacity, paddingVal, borderThicknessVal, cornerRadiusValues.tl, cornerRadiusValues.tr, cornerRadiusValues.br, cornerRadiusValues.bl]);
  
   const [localButtonHeight, setLocalButtonHeight] = useState(height);
   const [localButtonWidth, setLocalButtonWidth] = useState(width);
@@ -309,19 +319,37 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
           <div className="flex-1 space-y-7 overflow-y-auto px-5 py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {/* Colors */}
             <div className="flex items-center justify-between flex-wrap gap-y-2">
-              {colorOptions.map((c, i) => (
-                <button
-                  key={i}
-                  className={`w-[18px] h-[18px] rounded-[4px] flex items-center justify-center transition-transform hover:scale-110 ${c.id === 'none' || c.id === 'picker' ? 'border border-white/20 bg-white/5 hover:bg-white/10' : ''}`}
-                  style={c.bg ? { background: c.bg } : {}}
-                  onClick={() => {
-                    if (c.bg) onUpdateBlock(id, { ...props, backgroundColor: c.bg });
-                    if (c.id === 'none') onUpdateBlock(id, { ...props, backgroundColor: 'transparent' });
-                  }}
-                >
-                  {c.icon}
-                </button>
-              ))}
+              {colorOptions.map((c, i) => {
+                if (c.id === 'picker') {
+                  return (
+                    <label
+                      key={i}
+                      className="relative w-[18px] h-[18px] rounded-[4px] flex items-center justify-center transition-transform hover:scale-110 border border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer overflow-hidden"
+                    >
+                      <Pipette className="w-[14px] h-[14px] text-white absolute pointer-events-none" />
+                      <input
+                        type="color"
+                        className="absolute inset-0 w-[200%] h-[200%] -top-[50%] -left-[50%] opacity-0 cursor-pointer"
+                        value={(props.backgroundColor as string) || '#0f3b89'}
+                        onChange={(e) => onUpdateBlock(id, { ...props, backgroundColor: e.target.value })}
+                      />
+                    </label>
+                  );
+                }
+                return (
+                  <button
+                    key={i}
+                    className={`w-[18px] h-[18px] rounded-[4px] flex items-center justify-center transition-transform hover:scale-110 ${c.id === 'none' ? 'border border-white/20 bg-white/5 hover:bg-white/10' : ''}`}
+                    style={c.bg ? { background: c.bg } : {}}
+                    onClick={() => {
+                      if (c.bg) onUpdateBlock(id, { ...props, backgroundColor: c.bg });
+                      if (c.id === 'none') onUpdateBlock(id, { ...props, backgroundColor: 'transparent' });
+                    }}
+                  >
+                    {c.icon}
+                  </button>
+                );
+              })}
             </div>
  
             {/* Position */}
@@ -405,14 +433,38 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
                 <button className="text-gray-400 hover:text-white transition-colors"><Plus className="w-4 h-4" /></button>
               </div>
               <div className="space-y-2">
-                <div
-                  className="border border-white/10 bg-[#0B1D40] hover:bg-white/5 rounded-lg flex items-center justify-between px-3 py-2.5 transition-colors cursor-pointer"
-                  onClick={() => onUpdateBlock(id, { ...props, effect: props.effect === 'blur' ? 'none' : 'blur' })}
-                >
-                  <span className="text-[13px] text-gray-200">
-                    Background blur {props.effect === 'blur' && '(On)'}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center gap-4">
+                  <span className="text-[13px] text-gray-200 flex-1">Border thickness</span>
+                  <div className="w-16 border border-white/10 bg-white/5 rounded-lg py-1 flex items-center justify-center focus-within:border-white/30 transition-colors">
+                    <input
+                      type="text"
+                      className="w-full bg-transparent text-white text-[13px] text-center focus:outline-none"
+                      value={localBorderThickness}
+                      onChange={(e) => setLocalBorderThickness(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onBlur={() => {
+                        let val = parseInt(localBorderThickness);
+                        if (isNaN(val)) val = 0;
+                        if (val < 0) val = 0;
+                        setLocalBorderThickness(val.toString());
+                        onUpdateBlock(id, { ...props, borderThickness: val });
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-[13px] text-gray-200 flex-1">Border color</span>
+                  <div className="w-16 flex items-center justify-center">
+                    <label className="relative w-[18px] h-[18px] rounded-[4px] flex items-center justify-center transition-transform hover:scale-110 border border-white/20 bg-white/5 cursor-pointer overflow-hidden">
+                      <input
+                        type="color"
+                        className="absolute inset-0 w-[200%] h-[200%] -top-[50%] -left-[50%] opacity-0 cursor-pointer"
+                        value={(props.borderColor as string) || '#000000'}
+                        onChange={(e) => onUpdateBlock(id, { ...props, borderColor: e.target.value })}
+                      />
+                      <div className="w-full h-full pointer-events-none" style={{ backgroundColor: (props.borderColor as string) || 'transparent' }} />
+                    </label>
+                  </div>
                 </div>
                 {/* Additional Effect: Drop Shadow */}
                 <div
@@ -462,7 +514,7 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
               <h4 className="text-[13px] font-medium text-gray-300">Corner Radius</h4>
               <div className="flex items-center gap-2">
                 {(['tl', 'tr', 'br', 'bl'] as const).map((corner) => (
-                  <div key={corner} className="flex-1 border border-white/10 bg-white/5 rounded-lg flex items-center px-2 py-1.5 focus-within:border-white/30 transition-colors">
+                  <div key={corner} className="flex-1 border border-white/10 bg-white/5 rounded-lg flex items-center px-2 py-1.5 focus-within:border-white/30 transition-colors" title={`Corner ${corner.toUpperCase()}`}>
                     <CornerIcon />
                     <input
                       type="text"
@@ -494,5 +546,6 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
     </aside>
   );
 }
+ 
  
  

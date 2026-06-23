@@ -65,11 +65,15 @@ export default function Canvas({
  
         const containerAlignClass = align === 'left' ? 'mr-auto ml-0' : align === 'right' ? 'ml-auto mr-0' : 'mx-auto';
  
+        const customBorderColor = block.props.borderColor as string;
+ 
         const buttonStyle = {
           borderRadius: variant === 'pill' ? '9999px' : parsedBr,
           height: parsedH !== 'auto' ? parsedH : undefined,
           opacity: op / 100,
-          backdropFilter: effect === 'blur' ? 'blur(8px)' : undefined,
+          borderWidth: typeof block.props.borderThickness === 'number' ? `${block.props.borderThickness}px` : undefined,
+          borderStyle: typeof block.props.borderThickness === 'number' && block.props.borderThickness > 0 ? 'solid' : undefined,
+          borderColor: customBorderColor,
           boxShadow: block.props.dropShadow ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' : undefined,
           transform: `rotate(${block.props.rotation || 0}deg) scaleX(${block.props.flipH ? -1 : 1}) scaleY(${block.props.flipV ? -1 : 1})`,
           padding: `${block.props.padding !== undefined ? block.props.padding : 16}px`,
@@ -113,7 +117,7 @@ export default function Canvas({
                 style={{
                   ...buttonStyle,
                   background: 'transparent',
-                  borderColor: bg || '#d1d5db',
+                  borderColor: customBorderColor || bg || '#d1d5db',
                   color: (block.props.color as string) || (bg && !bg.includes('gradient') ? bg : '#0f3b89')
                 }}
               >
@@ -146,7 +150,7 @@ export default function Canvas({
                 style={{
                   ...buttonStyle,
                   background: 'transparent',
-                  borderColor: bg || '#d1d5db',
+                  borderColor: customBorderColor || bg || '#d1d5db',
                   color: (block.props.color as string) || (bg && !bg.includes('gradient') ? bg : '#0f3b89')
                 }}
               >
@@ -203,7 +207,7 @@ export default function Canvas({
                 </div>
                 <div className="p-4 pt-5 flex-1 transition-colors duration-300 group-hover:bg-blue-50/50">
                   <h4 className="font-bold text-[#0B1D40] text-[17px] mb-2 transition-colors duration-300 group-hover:text-blue-700">Embed Video</h4>
-                  <p className="text-[13px] text-gray-500 font-medium">Paste YouTube , Vimeo or custom embed Code</p>
+                  <p className="text-[13px] text-gray-500 font-medium">Paste YouTube , Vimeo or custom embed Code or link</p>
                 </div>
               </div>
             </div>
@@ -273,29 +277,21 @@ export default function Canvas({
             </button>
           </div>
  
-          <button
-            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50"
-            onClick={() => alert("Draft saved locally!")}
-            title="Save Draft"
-          >
-            <Save className="h-4 w-4 text-gray-600 xl:hidden" />
-            <span className="hidden xl:inline">Save Draft</span>
+          <button className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50" title="Save Draft" onClick={() => alert("Draft saved locally!")}>
+            <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
+            <span className="hidden xl:inline group-hover:inline">Save Draft</span>
           </button>
           <button
-            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50"
+            className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50"
             onClick={() => alert("Preview mode not yet implemented.")}
             title="Preview"
           >
-            <Eye className="h-4 w-4" />
-            <span className="hidden xl:inline">Preview</span>
+            <Eye className="h-4 w-4 xl:hidden group-hover:hidden" />
+            <span className="hidden xl:inline group-hover:inline">Preview</span>
           </button>
-          <button
-            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] hover:bg-[#152B52]"
-            onClick={() => alert("Publish sequence initiated!")}
-            title="Publish"
-          >
-            <span className="hidden xl:inline">Publish</span>
-            <Send className="h-[14px] w-[14px]" />
+          <button className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition-all hover:bg-[#152B52]" title="Publish" onClick={() => alert("Publish sequence initiated!")}>
+            <span className="hidden xl:inline group-hover:inline">Publish</span>
+            <Send className="h-[14px] w-[14px] xl:hidden group-hover:hidden" />
           </button>
         </div>
       </div>
@@ -359,3 +355,4 @@ export default function Canvas({
     </main>
   );
 }
+ 

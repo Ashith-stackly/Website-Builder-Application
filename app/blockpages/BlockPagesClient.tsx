@@ -204,6 +204,18 @@ export default function BlockPagesClient() {
     } catch (e) {
       console.error("Failed to load custom static icons", e);
     }
+ 
+    try {
+      const storedVideo = localStorage.getItem("portfolioVideoData");
+      if (storedVideo) {
+        window.setTimeout(() => {
+          const parsed = JSON.parse(storedVideo);
+          setVideoBlocks([{ id: 'video-default', type: 'video', props: parsed }]);
+        }, 0);
+      }
+    } catch (e) {
+      console.error("Failed to load video data", e);
+    }
   }, []);
  
   useEffect(() => {
@@ -558,6 +570,11 @@ export default function BlockPagesClient() {
                 setIsButtonEditingMode(false);
                 setIsVideoEditingMode(false);
                 pushTextState({ ...textBlockState, isTextEditable: false });
+                if (typeof window !== "undefined") {
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent("scrollToSectionEvent", { detail: "about" }));
+                  }, 50);
+                }
                 return;
               }
  
@@ -763,7 +780,29 @@ export default function BlockPagesClient() {
                 onUndo={undoVideo}
                 onRedo={redoVideo}
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
-                onApplyVideo={() => {
+                onApplyVideo={(blockId) => {
+                  setActiveBlockPage("text");
+                  setIsVideoEditingMode(false);
+                  setEditingVideoId(null);
+                 
+                  const appliedBlock = videoBlocks.find(b => b.id === blockId);
+                  if (appliedBlock) {
+                    const otherBlocks = videoBlocks.filter(b => b.id !== blockId);
+                    pushVideoState([appliedBlock, ...otherBlocks]);
+                    setSelectedVideoBlockId(blockId);
+                  }
+                }}
+                onDuplicateBlock={(id) => {
+                  const blockToDuplicate = videoBlocks.find(b => b.id === id);
+                  if (blockToDuplicate) {
+                    const newBlock = { ...blockToDuplicate, id: `video-${Date.now()}` };
+                    pushVideoState([...videoBlocks, newBlock]);
+                    setSelectedVideoBlockId(newBlock.id);
+                  }
+                }}
+                onUpdateBlock={updateVideoBlock}
+                onCloseBlock={() => {
+                  // Simply close the editor and go back to text/preview page
                   setActiveBlockPage("text");
                   setIsVideoEditingMode(false);
                   setEditingVideoId(null);
@@ -897,4 +936,5 @@ export default function BlockPagesClient() {
     </BuilderProvider>
   );
 }
+ 
  

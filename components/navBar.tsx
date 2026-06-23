@@ -511,7 +511,14 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             <Link href="/landing" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>HOME</MotionNavItem></Link>
             <Link href="/aboutus" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>ABOUT US</MotionNavItem></Link>
  
-            <div className="relative">
+            <div
+              className="relative"
+              onBlurCapture={(e) => {
+                const next = e.relatedTarget as Node | null;
+                if (e.currentTarget.contains(next)) return;
+                setActiveMenu(null);
+              }}
+            >
               <button
                 type="button"
                 onClick={() => toggleMenu("products")}
@@ -530,7 +537,14 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               </motion.div>)}</AnimatePresence>
             </div>
  
-            <div className="relative">
+            <div
+              className="relative"
+              onBlurCapture={(e) => {
+                const next = e.relatedTarget as Node | null;
+                if (e.currentTarget.contains(next)) return;
+                setActiveMenu(null);
+              }}
+            >
               <button
                 type="button"
                 onClick={() => toggleMenu("categories")}
@@ -626,7 +640,14 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             <FaMagnifyingGlass className="text-sm" />
           </motion.button>
 
-          <div className="relative flex items-center">
+          <div
+            className="relative flex items-center"
+            onBlurCapture={(e) => {
+              const next = e.relatedTarget as Node | null;
+              if (e.currentTarget.contains(next)) return;
+              setIsProfileMenuOpen(false);
+            }}
+          >
             <motion.button
               {...iconButtonMotion}
               type="button"

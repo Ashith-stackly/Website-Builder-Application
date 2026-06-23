@@ -32,6 +32,60 @@ import DividerPreview from "../dividerblock/DividerPreview";
 import type { IconBlockProps } from "../iconsblock/types";
 import IconPreview from "../iconsblock/IconPreview";
 
+const UploadedVideoPlayer = ({ blockProps, customImages, assetPath }: any) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (blockProps.startTime !== undefined && videoRef.current.currentTime < blockProps.startTime) {
+        videoRef.current.currentTime = blockProps.startTime;
+      } else if (blockProps.endTime !== undefined && videoRef.current.currentTime > blockProps.endTime) {
+        videoRef.current.currentTime = blockProps.startTime || 0;
+      }
+    }
+  }, [blockProps.startTime, blockProps.endTime]);
+
+  return (
+    <video
+      ref={videoRef}
+      src={blockProps.uploadUrl}
+      poster={blockProps.posterImage || customImages?.["video_block_bg"] || assetPath("/video_block_bg.png")}
+      autoPlay={blockProps.autoplay}
+      loop={blockProps.loop}
+      muted={blockProps.muted}
+      controls={blockProps.showControls}
+      disablePictureInPicture
+      disableRemotePlayback
+      controlsList="nodownload noremoteplayback noplaybackrate"
+      className="w-full h-full object-cover"
+      onTimeUpdate={(e) => {
+        const video = e.currentTarget;
+        const endTime = blockProps.endTime;
+        const startTime = blockProps.startTime;
+        const hasValidEndTime = endTime !== undefined && (startTime === undefined || endTime > startTime);
+        
+        if (hasValidEndTime && video.currentTime >= endTime) {
+          if (blockProps.loop) {
+            video.currentTime = startTime || 0;
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+            video.currentTime = endTime;
+          }
+        } else if (startTime !== undefined && video.currentTime < startTime) {
+          video.currentTime = startTime;
+        }
+      }}
+      onLoadedMetadata={(e) => {
+        const video = e.currentTarget;
+        if (blockProps.startTime !== undefined && video.currentTime < blockProps.startTime) {
+          video.currentTime = blockProps.startTime;
+        }
+      }}
+    />
+  );
+};
+
 type PortfolioPreviewProps = {
   isImageEditingMode?: boolean;
   customImages?: Record<string, string>;
@@ -234,6 +288,16 @@ export default function PortfolioPreview({
     if (bg) style.background = bg;
     if (props.padding !== undefined) style.padding = `${props.padding}px`;
 
+    const borderThickness = typeof props.borderThickness === 'number' ? props.borderThickness : undefined;
+    const borderColor = props.borderColor as string;
+    if (borderThickness !== undefined) {
+      style.borderWidth = `${borderThickness}px`;
+      style.borderStyle = borderThickness > 0 ? 'solid' : undefined;
+    }
+    if (borderColor) {
+      style.borderColor = borderColor;
+    }
+
     let className = defaultClassName;
     if (bg) {
       className = className.replace(/bg-gradient-to-r\s+from-\[[^\]]+\]\s+to-\[[^\]]+\]/, '');
@@ -409,8 +473,8 @@ export default function PortfolioPreview({
                   <div className="flex flex-col w-full lg:hidden gap-2">
 
                     {/* ROW 1 → Logo + Menu */}
-                    {/* TOP ROW → Logo + Title + Menu */}
-                    <div className="flex flex-wrap items-center justify-between w-full gap-1">
+                    {/* TOP ROW → Logo + Menu */}
+                    <div className="flex items-center justify-between w-full gap-1">
 
                       {/* LEFT → Logo */}
                       <Link
@@ -427,20 +491,21 @@ export default function PortfolioPreview({
                         />
                       </Link>
 
-                      {/* CENTER → Title */}
-                      <span className="text-sm sm:text-lg font-semibold text-white text-center flex-1 min-w-0 break-words">
-                        Portfolio
-                      </span>
-
                       {/* RIGHT → Menu */}
                       <button
-                        data-builder-chrome="true"
                         onClick={() => setInnerMobileMenuOpen((v) => !v)}
-                        className="h-7 w-7 sm:h-8 sm:w-8 border border-white/25 text-white rounded-md hover:bg-white/10 transition flex items-center justify-center shrink-0"
+                        className="portfolio-mobile-menu-btn h-7 w-7 sm:h-8 sm:w-8 border border-white/25 text-white rounded-md hover:bg-white/10 transition flex items-center justify-center shrink-0"
                       >
                         <FaBars className="text-sm" />
                       </button>
 
+                    </div>
+
+                    {/* ROW 2 → Title */}
+                    <div className="flex w-full justify-center px-2 py-0.5">
+                      <span className="text-sm sm:text-lg font-semibold text-white text-center break-words">
+                        Portfolio
+                      </span>
                     </div>
 
                     {/* ROW 3 → Actions (NOW VISIBLE ON MOBILE ✅) */}
@@ -448,13 +513,17 @@ export default function PortfolioPreview({
                       <div className="flex flex-wrap justify-center gap-1 sm:gap-2 w-full">
 
                         {/* Save Draft */}
-                        <button className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold border border-gray-300 rounded-md text-white hover:bg-white hover:text-black transition">
-                          Save Draft
+                        <button onClick={() => alert("Working on it - In progress!")} className="relative group px-2 sm:px-3 py-1 border border-gray-300/40 rounded-md overflow-hidden shadow-sm">
+                          <span className="absolute inset-0 bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
+                          <span className="relative z-10 text-[10px] sm:text-xs font-semibold text-white inline-block transition-transform duration-300 group-hover:scale-105">Save Draft</span>
                         </button>
 
                         {/* Preview */}
-                        <button type="button" onClick={onPreview} className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold flex items-center gap-1 border border-gray-300 rounded-md text-white hover:bg-white hover:text-black transition">
-                          Preview <FaEye className="text-[10px]" />
+                        <button type="button" onClick={onPreview} className="relative group px-2 sm:px-3 py-1 border border-gray-300/40 rounded-md overflow-hidden shadow-sm">
+                          <span className="absolute inset-0 bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
+                          <span className="relative z-10 flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-white transition-transform duration-300 group-hover:scale-105">
+                            Preview <FaEye className="text-[10px]" />
+                          </span>
                         </button>
 
                       </div>
@@ -503,16 +572,20 @@ export default function PortfolioPreview({
                       </div>
 
                       {/* ACTION BUTTONS ✅ */}
-                      <div className="flex border-2 border-gray-300 rounded-md overflow-hidden text-xs text-white font-bold whitespace-nowrap" data-builder-chrome="true">
+                      <div className="flex border border-gray-300/40 rounded-md overflow-hidden text-xs font-bold whitespace-nowrap bg-white/5 shadow-sm" data-builder-chrome="true">
 
-                        <button className="px-2 py-1 hover:bg-white hover:text-black transition">
-                          Save Draft
+                        <button onClick={() => alert("Working on it - In progress!")} className="relative group px-3 py-1.5 overflow-hidden">
+                          <span className="absolute inset-0 bg-white/20 scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300 ease-out"></span>
+                          <span className="relative z-10 text-white transition-transform duration-300 group-hover:-translate-y-0.5 inline-block">Save Draft</span>
                         </button>
 
-                        <div className="w-px border-1 border-gray-300"></div>
+                        <div className="w-px bg-gray-300/40"></div>
 
-                        <button type="button" onClick={onPreview} className="px-2 py-1 flex items-center gap-1 hover:bg-white hover:text-black transition">
-                          Preview <FaEye className="text-[10px]" />
+                        <button type="button" onClick={onPreview} className="relative group px-3 py-1.5 overflow-hidden flex items-center gap-1.5">
+                          <span className="absolute inset-0 bg-white/20 scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300 ease-out"></span>
+                          <span className="relative z-10 text-white flex items-center gap-1 transition-transform duration-300 group-hover:-translate-y-0.5">
+                            Preview <FaEye className="text-[11px]" />
+                          </span>
                         </button>
 
                       </div>
@@ -575,7 +648,7 @@ export default function PortfolioPreview({
                         </p>
 
                         {/* MOBILE BLOBS + IMAGE */}
-                        <div className="lg:hidden mt-8 mb-4 flex justify-center px-4 sm:px-6 w-full">
+                        <div className="lg:hidden mt-8 mb-4 flex flex-col items-center justify-center px-4 sm:px-6 w-full gap-6">
                           <div className="relative w-full max-w-[220px]">
 
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -625,7 +698,12 @@ export default function PortfolioPreview({
                                 </button>
                               )}
                             </div>
+                          </div>
 
+                          {/* Mobile Floating Badge (Moved below the image) */}
+                          <div className="relative z-30 rounded-xl border border-white/80 bg-white/90 px-4 py-3 text-center shadow-md portfolio-floating-badge whitespace-nowrap">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Focus</p>
+                            <p className="text-sm font-extrabold text-gray-900">Human centered UI</p>
                           </div>
                         </div>
 
@@ -1093,7 +1171,7 @@ export default function PortfolioPreview({
                               </div>
 
                               {/* TEXT */}
-                              <div className="flex-1">
+                              <div className="flex-1 min-w-0">
                                 <p className="text-gray-500 text-xs sm:text-sm mb-1 font-medium break-words">
                                   {item.date}
                                 </p>
@@ -1129,7 +1207,7 @@ export default function PortfolioPreview({
                               </div>
 
                               {/* TEXT */}
-                              <div className="flex-1">
+                              <div className="flex-1 min-w-0">
                                 <p className="text-gray-500 text-xs sm:text-sm mb-1 font-medium break-words">
                                   {item.date}
                                 </p>
@@ -1173,9 +1251,8 @@ export default function PortfolioPreview({
                       ].map((service) => (
                         <div key={service.id} className="portfolio-service-card border border-gray-200 rounded-[20px] p-5 sm:p-6 lg:p-8 flex flex-col items-start transition-all duration-300 hover:-translate-y-2 hover:shadow-xl bg-white group hover:border-gray-300 cursor-pointer h-full min-w-0 max-w-full break-words overflow-hidden" style={{ animationDelay: `${Number(service.id) * 45}ms` }}>
                           <div
-                            className={`w-12 h-12 mb-4 sm:mb-6 flex items-center justify-center shrink-0 ${
-                              isIconEditingMode ? "cursor-pointer rounded-lg border-2 border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : ""
-                            } ${editingIconId === `service-${service.id}` ? "ring-2 ring-blue-500 bg-blue-50" : "text-gray-800"}`}
+                            className={`w-12 h-12 mb-4 sm:mb-6 flex items-center justify-center shrink-0 ${isIconEditingMode ? "cursor-pointer rounded-lg border-2 border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : ""
+                              } ${editingIconId === `service-${service.id}` ? "ring-2 ring-blue-500 bg-blue-50" : "text-gray-800"}`}
                             onClick={(e) => {
                               if (isIconEditingMode && onEditIcon) {
                                 e.preventDefault();
@@ -1207,10 +1284,10 @@ export default function PortfolioPreview({
                             <div className="w-[30px] h-[30px] rounded-full bg-[#1a3636] text-white flex items-center justify-center text-[11px] font-semibold shrink-0 group-hover:bg-[#63e5ff] group-hover:text-gray-900 transition-colors">
                               {service.id}
                             </div>
-                            <div className="flex items-center text-gray-300 group-hover:text-gray-900 transition-colors">
+                            {/* <div className="flex items-center text-gray-300 group-hover:text-gray-900 transition-colors">
                               <span className="w-8 h-[1px] bg-current"></span>
                               <FaArrowRight size={10} className="-ml-[2px]" />
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       ))}
@@ -1284,12 +1361,11 @@ export default function PortfolioPreview({
                       id={PORTFOLIO_PROJECTS_SLIDER_ID}
                       ref={projectsSliderRef}
                       data-portfolio-projects-slider="true"
-                      className="w-full overflow-x-auto flex gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8 pb-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden scroll-smooth"
+                      className="relative w-full overflow-x-auto flex gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8 pb-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
                       style={{
                         scrollbarWidth: "none",
                         msOverflowStyle: "none",
                         WebkitOverflowScrolling: "touch",
-                        touchAction: "pan-x",
                       }}
                     >
                       {[
@@ -1348,10 +1424,12 @@ export default function PortfolioPreview({
                           <h4 className="font-bold text-[15px] text-gray-900 leading-snug group-hover:text-[#1a3636] transition-colors mt-1">{proj.title}</h4>
                         </div>
                       ))}
+                      {/* Spacer to ensure right padding is respected on mobile scroll */}
+                      <div className="w-1 sm:w-2 shrink-0 flex-none snap-end"></div>
                     </div>
 
 
-                    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-4 sm:mt-6 w-full relative px-4 sm:px-8">
+                    <div className="hidden sm:flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-4 sm:mt-6 w-full relative px-4 sm:px-8">
                       <button
                         type="button"
                         data-slider-nav="prev"
@@ -1359,6 +1437,7 @@ export default function PortfolioPreview({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          // Force hot reload again
                           const slider = projectsSliderRef.current;
                           if (slider) scrollPortfolioProjectsSlider(slider, -1);
                         }}
@@ -1418,7 +1497,7 @@ export default function PortfolioPreview({
                           >
                             <div className="mb-5 text-5xl font-black leading-none text-[#63e5ff]">“</div>
                             <p className="mb-6 text-[clamp(0.875rem,2.5cqi,1rem)] leading-relaxed text-gray-600 break-words whitespace-normal min-w-0">{item.quote}</p>
-                            <div className="flex flex-wrap items-center gap-3 min-w-0">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 min-w-0">
                               <div className="h-11 w-11 shrink-0 rounded-full bg-[#06224C] text-white flex items-center justify-center text-sm font-black">
                                 {item.name.charAt(0)}
                               </div>
@@ -1456,11 +1535,14 @@ export default function PortfolioPreview({
                       <div>
                         <button
                           type="button"
-                          className="group flex items-center gap-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-8 py-4 rounded-full font-bold uppercase text-sm tracking-wider hover:from-blue-500 hover:to-blue-400 transition-all shadow-lg shadow-blue-500/30 max-w-full w-fit"
+                          className="group flex items-center justify-center gap-3 sm:gap-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-5 sm:px-8 py-3 sm:py-4 rounded-[30px] sm:rounded-full font-bold uppercase text-xs sm:text-sm tracking-wider hover:from-blue-500 hover:to-blue-400 transition-all shadow-lg shadow-blue-500/30 max-w-full w-fit"
                         >
-                          Watch Now
-                          <div className="bg-white text-blue-600 rounded-full w-8 h-8 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
-                            <FaPlay className="text-xs ml-0.5" aria-hidden="true" />
+                          <span className="text-left sm:text-center leading-[1.1] sm:leading-normal">
+                            Watch<br className="sm:hidden" />
+                            <span className="hidden sm:inline"> </span>Now
+                          </span>
+                          <div className="bg-white text-blue-600 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                            <FaPlay className="text-[10px] sm:text-xs ml-0.5" aria-hidden="true" />
                           </div>
                         </button>
                       </div>
@@ -1470,16 +1552,51 @@ export default function PortfolioPreview({
                     <div className="relative w-full lg:w-7/12 flex justify-center lg:justify-end">
                       <div className="relative w-full max-w-[640px] aspect-video rounded-[2rem] overflow-hidden shadow-2xl" data-crop-wrapper-id="video_block_bg">
                         {videoBlockProps?.sourceType === 'embed' && videoBlockProps.embedCode ? (
-                          <div className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full" dangerouslySetInnerHTML={{ __html: videoBlockProps.embedCode }} />
+                          (() => {
+                            const trimmed = videoBlockProps.embedCode.trim();
+                            const isUrl = /^https?:\/\//.test(trimmed) && !trimmed.includes('<iframe');
+                            if (isUrl) {
+                              let embedUrl = trimmed;
+                              try {
+                                if (embedUrl.includes('youtube.com/watch?v=')) {
+                                  const videoId = new URL(embedUrl).searchParams.get('v');
+                                  if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                                } else if (embedUrl.includes('youtu.be/')) {
+                                  const videoId = embedUrl.split('youtu.be/')[1].split('?')[0];
+                                  if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                                } else if (embedUrl.includes('vimeo.com/')) {
+                                  const videoId = embedUrl.split('vimeo.com/')[1].split('?')[0];
+                                  if (videoId) embedUrl = `https://player.vimeo.com/video/${videoId}`;
+                                }
+
+                                const urlObj = new URL(embedUrl);
+                                if (embedUrl.includes('youtube.com')) {
+                                  if (videoBlockProps.startTime !== undefined) urlObj.searchParams.set('start', Math.floor(videoBlockProps.startTime).toString());
+                                  if (videoBlockProps.endTime !== undefined) urlObj.searchParams.set('end', Math.floor(videoBlockProps.endTime).toString());
+                                  embedUrl = urlObj.toString();
+                                } else if (embedUrl.includes('vimeo.com')) {
+                                  if (videoBlockProps.startTime !== undefined) urlObj.hash = `#t=${Math.floor(videoBlockProps.startTime)}s`;
+                                  embedUrl = urlObj.toString();
+                                }
+                              } catch (e) {
+                                // Ignore URL parsing errors
+                              }
+                              return (
+                                <iframe
+                                  src={embedUrl}
+                                  className="w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                              );
+                            }
+                            return <div className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full" dangerouslySetInnerHTML={{ __html: videoBlockProps.embedCode }} />;
+                          })()
                         ) : videoBlockProps?.sourceType === 'upload' && videoBlockProps.uploadUrl ? (
-                          <video
-                            src={videoBlockProps.uploadUrl}
-                            poster={videoBlockProps.posterImage || customImages?.["video_block_bg"] || assetPath("/video_block_bg.png")}
-                            className="w-full h-full object-cover"
-                            autoPlay={videoBlockProps.autoplay}
-                            loop={videoBlockProps.loop}
-                            muted={videoBlockProps.muted}
-                            controls={videoBlockProps.showControls}
+                          <UploadedVideoPlayer 
+                            blockProps={videoBlockProps} 
+                            customImages={customImages} 
+                            assetPath={assetPath} 
                           />
                         ) : (
                           <img
@@ -1537,9 +1654,8 @@ export default function PortfolioPreview({
                       <div className="space-y-6">
                         <div className="flex items-center gap-4">
                           <div
-                            className={`w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 shrink-0 ${
-                              isIconEditingMode ? "cursor-pointer border-2 border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-[#1a3636]"
-                            } ${editingIconId === "contact-email" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+                            className={`w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 shrink-0 ${isIconEditingMode ? "cursor-pointer border-2 border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-[#1a3636]"
+                              } ${editingIconId === "contact-email" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
                             onClick={(e) => {
                               if (isIconEditingMode && onEditIcon) {
                                 e.preventDefault();
@@ -1554,16 +1670,15 @@ export default function PortfolioPreview({
                               <FaEnvelope size={18} />
                             )}
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Email</p>
-                            <p className="text-gray-900 font-bold">hello@example.com</p>
+                            <p className="text-gray-900 font-bold break-all">hello@example.com</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div
-                            className={`w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 shrink-0 ${
-                              isIconEditingMode ? "cursor-pointer border-2 border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-[#1a3636]"
-                            } ${editingIconId === "contact-phone" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+                            className={`w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 shrink-0 ${isIconEditingMode ? "cursor-pointer border-2 border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-[#1a3636]"
+                              } ${editingIconId === "contact-phone" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
                             onClick={(e) => {
                               if (isIconEditingMode && onEditIcon) {
                                 e.preventDefault();
@@ -1578,9 +1693,9 @@ export default function PortfolioPreview({
                               <FaMobileAlt size={18} />
                             )}
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Phone</p>
-                            <p className="text-gray-900 font-bold">+1 (555) 000-0000</p>
+                            <p className="text-gray-900 font-bold break-words">+1 (555) 000-0000</p>
                           </div>
                         </div>
                       </div>
@@ -1687,9 +1802,8 @@ export default function PortfolioPreview({
                           <li>
                             <a href="mailto:@thestackly.com" className="flex items-center gap-3 text-[#8B9DB1] hover:text-white text-[15px] font-medium transition-colors">
                               <span
-                                className={`flex items-center justify-center w-5 shrink-0 ${
-                                  isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-red-500"
-                                } ${editingIconId === "footer-email" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+                                className={`flex items-center justify-center w-5 shrink-0 ${isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-red-500"
+                                  } ${editingIconId === "footer-email" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
                                 onClick={(e) => {
                                   if (isIconEditingMode && onEditIcon) {
                                     e.preventDefault();
@@ -1704,15 +1818,14 @@ export default function PortfolioPreview({
                                   <FaEnvelope size={18} />
                                 )}
                               </span>
-                              @thestackly.com
+                              <span className="flex-1 min-w-0 break-all">@thestackly.com</span>
                             </a>
                           </li>
                           <li>
                             <a href="tel:+9956796541" className="flex items-center gap-3 text-[#8B9DB1] hover:text-white text-[15px] font-medium transition-colors">
                               <span
-                                className={`flex items-center justify-center w-5 shrink-0 ${
-                                  isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-[#517AA5]"
-                                } ${editingIconId === "footer-phone" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+                                className={`flex items-center justify-center w-5 shrink-0 ${isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-[#517AA5]"
+                                  } ${editingIconId === "footer-phone" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
                                 onClick={(e) => {
                                   if (isIconEditingMode && onEditIcon) {
                                     e.preventDefault();
@@ -1727,15 +1840,14 @@ export default function PortfolioPreview({
                                   <FaMobileAlt size={18} />
                                 )}
                               </span>
-                              +9956796541
+                              <span className="flex-1 min-w-0 break-words">+9956796541</span>
                             </a>
                           </li>
                           <li>
                             <span className="flex items-center gap-3 text-[#8B9DB1] text-[15px] font-medium">
                               <span
-                                className={`flex items-center justify-center w-5 shrink-0 ${
-                                  isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-green-500"
-                                } ${editingIconId === "footer-map" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+                                className={`flex items-center justify-center w-5 shrink-0 ${isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-green-500"
+                                  } ${editingIconId === "footer-map" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
                                 onClick={(e) => {
                                   if (isIconEditingMode && onEditIcon) {
                                     e.preventDefault();
@@ -1750,15 +1862,14 @@ export default function PortfolioPreview({
                                   <FaMapMarkerAlt size={18} />
                                 )}
                               </span>
-                              Bengaluru, India
+                              <span className="flex-1 min-w-0 break-words">Bengaluru, India</span>
                             </span>
                           </li>
                           <li>
                             <a href="https://linkedin.com/in/stackly" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[#8B9DB1] hover:text-white text-[15px] font-medium transition-colors">
                               <span
-                                className={`flex items-center justify-center w-5 shrink-0 ${
-                                  isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-blue-500"
-                                } ${editingIconId === "footer-linkedin" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+                                className={`flex items-center justify-center w-5 shrink-0 ${isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-blue-500"
+                                  } ${editingIconId === "footer-linkedin" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
                                 onClick={(e) => {
                                   if (isIconEditingMode && onEditIcon) {
                                     e.preventDefault();
@@ -1773,15 +1884,14 @@ export default function PortfolioPreview({
                                   <FaLinkedin size={18} />
                                 )}
                               </span>
-                              linkedin.com/in/stackly
+                              <span className="flex-1 min-w-0 break-all">linkedin.com/in/stackly</span>
                             </a>
                           </li>
                           <li>
                             <a href="https://github.com/stackly" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[#8B9DB1] hover:text-white text-[15px] font-medium transition-colors">
                               <span
-                                className={`flex items-center justify-center w-5 shrink-0 ${
-                                  isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-white"
-                                } ${editingIconId === "footer-github" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
+                                className={`flex items-center justify-center w-5 shrink-0 ${isIconEditingMode ? "cursor-pointer rounded border border-dashed border-blue-400 hover:bg-blue-50 transition-colors" : "text-white"
+                                  } ${editingIconId === "footer-github" ? "ring-2 ring-blue-500 bg-blue-50" : ""}`}
                                 onClick={(e) => {
                                   if (isIconEditingMode && onEditIcon) {
                                     e.preventDefault();
@@ -1796,7 +1906,7 @@ export default function PortfolioPreview({
                                   <FaGithub size={18} />
                                 )}
                               </span>
-                              github.com/stackly
+                              <span className="flex-1 min-w-0 break-all">github.com/stackly</span>
                             </a>
                           </li>
                         </ul>
@@ -1804,8 +1914,8 @@ export default function PortfolioPreview({
                     </div>
 
                     <div className="border-t border-white/10 mt-16 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                      <p className="text-[#8B9DB1] text-[15px] font-medium">© 2026 Stackly. All rights reserved.</p>
-                      <p className="text-[#8B9DB1] text-[15px] font-medium flex items-center gap-1.5">Designed & Built with <span className="text-red-500 text-lg leading-none">❤️</span> and lots of coffee ☕</p>
+                      <p className="text-[#8B9DB1] text-[15px] font-medium text-center md:text-left">© 2026 Stackly. All rights reserved.</p>
+                      <p className="text-[#8B9DB1] text-[15px] font-medium text-center md:text-right">Designed & Built with <span className="text-red-500 text-lg leading-none inline-block align-middle mx-1">❤️</span> and lots of coffee ☕</p>
                     </div>
                   </div>
                 </footer>

@@ -6,7 +6,7 @@ import {
   Video, Minus, AppWindow, Columns, Heading,
   ChevronDown, Circle, ChevronLeft, ChevronRight, Plus, AlignLeft, AlignCenter, AlignRight, Ban, Pipette,
   Play, Download, ShoppingBag, FlipHorizontal, FlipVertical, RotateCcw, ArrowUpDown, SlidersHorizontal, Filter, Crop,
-  Section
+  Section, X, Star
 } from 'lucide-react';
 import { useBuilder } from './BuilderContext';
 import {
@@ -60,7 +60,7 @@ const blockCategories = [
     ]
   },
   {
-    title: 'Basic Blocks',
+    title: 'Advanced Blocks',
     blocks: [
       { name: 'Video', icon: <Video className="w-[18px] h-[18px] mb-1.5 text-[#517AA5]" strokeWidth={1.5} /> },
       { name: 'Icon', icon: <ImageIcon className="w-[18px] h-[18px] mb-1.5 text-[#517AA5]" strokeWidth={1.5} /> },
@@ -68,7 +68,7 @@ const blockCategories = [
     ]
   },
   {
-    title: 'Basic Blocks',
+    title: 'Layout Blocks',
     blocks: [
       { name: 'Section', icon: <AppWindow className="w-[18px] h-[18px] mb-1.5 text-[#517AA5]" strokeWidth={1.5} /> },
       { name: 'Footer', icon: <FaWindowMinimize className="w-[18px] h-[18px] mb-1.5 text-[#517AA5]" strokeWidth={1.5} /> },
@@ -114,6 +114,7 @@ export default function LeftSidebar({
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [activeTypographyAlign, setActiveTypographyAlign] = useState<'left' | 'center' | 'right'>('left');
   const [activeTypographyAlign2, setActiveTypographyAlign2] = useState<'left' | 'center' | 'right'>('left');
+  const [showHelpPopup, setShowHelpPopup] = useState(false);
 
   // Typography local states
   const [activeLanguage, setActiveLanguage] = useState('English');
@@ -1122,22 +1123,22 @@ export default function LeftSidebar({
                 <div className="flex flex-col gap-3">
                   <div
                     onClick={() => handlePageClick('Home Page', 'home')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'Home Page' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Home Page' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                     <span className={`text-sm font-medium ${activeMobilePage === 'Home Page' ? 'text-white' : 'text-[#8495A5]'}`}>Home Page</span>
                   </div>
                   <div
                     onClick={() => handlePageClick('About Us', 'about')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'About Us' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'About Us' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                     <span className={`text-sm font-medium ${activeMobilePage === 'About Us' ? 'text-white' : 'text-[#8495A5]'}`}>About Us</span>
                   </div>
                   <div
                     onClick={() => handlePageClick('Projects', 'projects')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'Projects' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Projects' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                     <span className={`text-sm font-medium ${activeMobilePage === 'Projects' ? 'text-white' : 'text-[#8495A5]'}`}>Projects</span>
                   </div>
                   <div
                     onClick={() => handlePageClick('Contact', 'contact')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'Contact' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Contact' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                     <span className={`text-sm font-medium ${activeMobilePage === 'Contact' ? 'text-white' : 'text-[#8495A5]'}`}>Contact</span>
                   </div>
 
@@ -1284,10 +1285,12 @@ export default function LeftSidebar({
               <Search className="w-4 h-4 text-[#517AA5] mr-2 shrink-0" strokeWidth={2} />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search Blocks..."
                 className="bg-transparent border-none outline-none w-full text-xs font-medium text-[#517AA5] placeholder:text-[#517AA5]/70"
               />
-              <Mic className="w-4 h-4 text-[#517AA5] ml-1 shrink-0" strokeWidth={2} />
+              {/* <Mic className="w-4 h-4 text-[#517AA5] ml-1 shrink-0" strokeWidth={2} /> */}
             </div>
           </div>
 
@@ -1297,12 +1300,18 @@ export default function LeftSidebar({
               /* Blocks Content */
               <>
                 {blockCategories.map((cat, idx) => {
-                  const isOpen = openCategories.includes(idx);
+                  const filteredBlocks = cat.blocks.filter(block =>
+                    block.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  );
+
+                  if (searchQuery && filteredBlocks.length === 0) return null;
+
+                  const isOpen = searchQuery ? true : openCategories.includes(idx);
                   return (
                     <div key={idx} className="mb-6">
                       <div
                         className="flex items-center justify-between cursor-pointer mb-3.5"
-                        onClick={() => toggleCategory(idx)}
+                        onClick={() => !searchQuery && toggleCategory(idx)}
                       >
                         <span className="font-semibold text-[15px]">{cat.title}</span>
                         <ChevronDown
@@ -1314,13 +1323,13 @@ export default function LeftSidebar({
                       {isOpen && (
                         <>
                           <div className="grid grid-cols-3 gap-2">
-                            {cat.blocks.map((block, bIdx) => {
+                            {filteredBlocks.map((block, bIdx) => {
                               const isActive =
                                 (block.name === 'Image' && (activeBlockPage === 'image' || isImageEditingMode)) ||
                                 (block.name === 'Button' && (activeBlockPage === 'button' || isButtonEditingMode)) ||
                                 (block.name === 'Video' && (activeBlockPage === 'video' || isVideoEditingMode)) ||
                                 (block.name === 'Divider' && activeBlockPage === 'divider') ||
-                                (block.name === 'Icon' && activeBlockPage === 'icons') ||
+                                (block.name === 'Icon' && (activeBlockPage === 'icons' || isIconEditingMode)) ||
                                 (block.name === 'Text' && activeTextTarget === 'text') ||
                                 (block.name === 'Header' && activeTextTarget === 'header') ||
                                 (block.name === 'Footer' && activeTextTarget === 'footer') ||
@@ -1339,16 +1348,18 @@ export default function LeftSidebar({
                             })}
                           </div>
 
-                          {idx === 0 && (
-                            <div className="mt-4 bg-[#F6F4EB] rounded-[8px] p-[3px] flex items-center">
+                          {idx === 0 && !searchQuery && (
+                            <div className="mt-4 bg-[#F6F4EB] rounded-[8px] p-[3px] flex items-center" title="Work in progress">
                               <button
-                                onClick={() => setSubTab('all')}
+                                onClick={() => { setSubTab('all'); alert('Work in progress'); }}
+                                title="Work in progress"
                                 className={`flex-[1.5] text-[11px] font-semibold py-[6px] rounded-[6px] transition-colors cursor-pointer ${subTab === 'all' ? 'bg-white text-[#517AA5] shadow-sm' : 'text-[#8495A5] hover:text-[#517AA5] bg-transparent'}`}
                               >
                                 All Bosie
                               </button>
                               <button
-                                onClick={() => setSubTab('next')}
+                                onClick={() => { setSubTab('next'); alert('Work in progress'); }}
+                                title="Work in progress"
                                 className={`flex-1 text-[11px] font-semibold py-[6px] rounded-[6px] transition-colors cursor-pointer ${subTab === 'next' ? 'bg-white text-[#517AA5] shadow-sm' : 'text-[#8495A5] hover:text-[#517AA5] bg-transparent'}`}
                               >
                                 Next
@@ -1366,22 +1377,22 @@ export default function LeftSidebar({
               <div className="flex flex-col gap-3">
                 <div
                   onClick={() => handlePageClick('Home Page', 'home')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'Home Page' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Home Page' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                   <span className={`text-sm font-medium ${activeMobilePage === 'Home Page' ? 'text-white' : 'text-[#8495A5]'}`}>Home Page</span>
                 </div>
                 <div
                   onClick={() => handlePageClick('About Us', 'about')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'About Us' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'About Us' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                   <span className={`text-sm font-medium ${activeMobilePage === 'About Us' ? 'text-white' : 'text-[#8495A5]'}`}>About Us</span>
                 </div>
                 <div
                   onClick={() => handlePageClick('Projects', 'projects')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'Projects' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Projects' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                   <span className={`text-sm font-medium ${activeMobilePage === 'Projects' ? 'text-white' : 'text-[#8495A5]'}`}>Projects</span>
                 </div>
                 <div
                   onClick={() => handlePageClick('Contact', 'contact')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ${activeMobilePage === 'Contact' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
+                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Contact' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
                   <span className={`text-sm font-medium ${activeMobilePage === 'Contact' ? 'text-white' : 'text-[#8495A5]'}`}>Contact</span>
                 </div>
                 {/* <button className="text-sm font-semibold text-[#517AA5] border border-dashed border-[#517AA5] rounded-lg py-2 mt-4 hover:bg-[#517AA5]/10 hover:shadow-sm active:scale-95 transition-all duration-300">
@@ -1394,7 +1405,7 @@ export default function LeftSidebar({
           {/* Help Button */}
           <div className="pb-6 bg-[#1A2B4C]">
             <button
-              onClick={() => alert('Help Center opened!')}
+              onClick={() => setShowHelpPopup(true)}
               className="cursor-pointer flex items-center justify-between w-full rounded-xl bg-[#F5F2DF] px-4 py-2 text-[#517AA5] shadow-sm hover:bg-[#EBE7Ce] hover:scale-105 hover:shadow-md active:scale-95 transition-all duration-300"
             >
               <div className="flex items-center gap-2">
@@ -1417,6 +1428,94 @@ export default function LeftSidebar({
 
         </div>
       </aside>
+
+      {/* Help Modal */}
+      {showHelpPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B182B]/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-[#F6F4EB]">
+              <h2 className="text-2xl font-bold text-[#0B1D40] flex items-center gap-3">
+                <span className="bg-[#517AA5] text-white w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-sm">?</span>
+                Blocks Usage Documentation
+              </h2>
+              <button
+                onClick={() => setShowHelpPopup(false)}
+                className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors cursor-pointer"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-8 flex-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-50 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full">
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-[#0B1D40] flex items-center gap-2">
+                  <Type className="text-[#517AA5]" size={20} /> Text Block
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The Text Block allows you to add rich typography to your canvas. Click the <strong>Text</strong> button to drop a new text element. You can then use the <strong>Typography</strong> tab to adjust the font family, font size, line height, letter spacing, and alignment. Toggle <strong>Enable text editing</strong> to start typing directly onto the canvas.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-[#0B1D40] flex items-center gap-2">
+                  <ImageIcon className="text-[#517AA5]" size={20} /> Image Block
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The <strong>Image Block</strong> allows you to manage and customize images across the canvas. Selecting the <strong>Image</strong> option highlights all image elements and displays an <strong>Edit</strong> icon for each one. Click the Edit icon to open the Image Editor, where you can replace the image and modify its available properties.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-[#0B1D40] flex items-center gap-2">
+                  <MousePointer2 className="text-[#517AA5]" size={20} /> Button Block
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The <strong>Button Block</strong> enables you to edit and customize all button elements on the canvas. Selecting the <strong>Button</strong> option highlights every button and displays an <strong>Edit</strong> icon. Click the Edit icon to open the Button Editor, where you can update the button text, destination link, styling, and other available settings.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-[#0B1D40] flex items-center gap-2">
+                  <Video className="text-[#517AA5]" size={20} /> Video Block
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The <strong>Video Block</strong> provides an easy way to manage video elements within your design. Selecting the <strong>Video</strong> option highlights all videos on the canvas and displays an <strong>Edit</strong> icon for each one. Click the Edit icon to open the Video Editor, where you can replace the video and configure its available properties.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-[#0B1D40] flex items-center gap-2">
+                  <Star className="text-[#517AA5]" size={20} /> Icon Block
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  The <strong>Icon Block</strong> allows you to customize icon elements throughout your design. Selecting the <strong>Icon</strong> option highlights all icons on the canvas and displays an <strong>Edit</strong> icon. Click the Edit icon to open the Icon Editor, where you can change the icon and adjust its available properties.
+                </p>
+              </div>
+
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-[#0B1D40] flex items-center gap-2">
+                  <Minus className="text-[#517AA5]" size={20} /> Divider Block
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Add visual separation between sections of your design. You can customize the divider's line style (solid, dashed, or dotted), adjust the thickness, and choose a custom color. Drag and drop the divider to move it around your canvas and use the scale controls to resize it perfectly to fit your layout.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-[#0B1D40] flex items-center gap-2">
+                  <AppWindow className="text-[#517AA5]" size={20} /> Layout Blocks (Section, Header, Footer)
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Use these blocks to structure your page. The <strong>Section</strong> block creates a new content container where you can set global background colors and apply dynamic <strong>Card Shadows</strong>. The <strong>Header</strong> and <strong>Footer</strong> blocks let you quickly configure navigation and bottom links.
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
-};
+}

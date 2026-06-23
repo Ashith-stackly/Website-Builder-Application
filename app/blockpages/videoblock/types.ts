@@ -11,6 +11,8 @@ export interface VideoBlockProps {
   loop: boolean;
   muted: boolean;
   showControls: boolean;
+  startTime?: number;
+  endTime?: number;
 }
  
 export interface VideoBlockData {
@@ -18,5 +20,6 @@ export interface VideoBlockData {
   type: 'video';
   props: VideoBlockProps;
 }
+ 
  
  

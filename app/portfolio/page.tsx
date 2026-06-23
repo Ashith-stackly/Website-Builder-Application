@@ -275,6 +275,7 @@ function Footer() {
   const [activeModal, setActiveModal] = useState<ModalKey | null>(null);
   const [email, setEmail] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -293,13 +294,8 @@ function Footer() {
   const handleSubscribe = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!email.trim()) {
-      showToast("Please enter your email address");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      showToast("Please enter a valid email address");
+    if (!email.trim() || !validateEmail(email)) {
+      showToast("Please enter a valid email.");
       return;
     }
 
@@ -342,21 +338,32 @@ function Footer() {
             <div className="w-full md:w-1/2">
               <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-white">Subscribe to our Updates</h3>
               <p className="mb-4 max-w-md text-sm leading-relaxed text-white/60">Get template drops, builder updates, and product notes in your inbox.</p>
-              <form onSubmit={handleSubscribe} className="flex w-full max-w-md items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300" aria-label="Subscribe to updates form" noValidate>
-                <label className="relative flex flex-grow items-center">
-                  <span className="sr-only">Email address</span>
-                  <FaEnvelope6 className="absolute left-4 text-gray-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Your email"
-                    className="w-full min-w-0 bg-transparent py-2.5 pl-11 pr-2 text-sm text-gray-800 focus:outline-none"
-                  />
-                </label>
-                <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95">
-                  <FaPaperPlane6 className="text-sm" />
-                </button>
+              <form onSubmit={handleSubscribe} className="flex flex-wrap items-center gap-3 w-full max-w-md" aria-label="Subscribe to updates form" noValidate>
+                <div className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300 min-w-[240px]">
+                  <label className="relative flex flex-grow items-center min-w-0">
+                    <span className="sr-only">Email address</span>
+                    <FaEnvelope6 className="absolute left-4 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="Your email"
+                      className="w-full min-w-0 bg-transparent py-2.5 pl-11 pr-2 text-sm text-gray-800 focus:outline-none"
+                    />
+                  </label>
+                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95">
+                    <FaPaperPlane6 className="text-sm" />
+                  </button>
+                </div>
+                {toast && (
+                  <span className={`text-xs font-bold px-3 py-1.5 rounded-full whitespace-normal break-words animate-fade-in ${
+                    toast.toLowerCase().includes("success")
+                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                  }`}>
+                    {toast}
+                  </span>
+                )}
               </form>
             </div>
 
@@ -402,7 +409,7 @@ function Footer() {
           </motion.div>
 
           <div className="border-t border-white/10 pt-5">
-            <div className="flex flex-col items-center gap-6 lg:flex-row lg:justify-between">
+            <div className="flex flex-col items-center gap-6 lg:flex-row lg:justify-between lg:flex-wrap">
               <motion.div
                 className="flex w-full flex-wrap items-center justify-center gap-2 lg:w-auto lg:justify-start"
                 variants={socialReveal}
@@ -417,19 +424,10 @@ function Footer() {
                 ))}
               </motion.div>
 
-              <div className="flex w-full flex-col items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50 lg:w-auto lg:flex-row lg:gap-6">
+              <div className="flex w-full flex-col items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50 lg:w-auto lg:flex-row lg:flex-wrap lg:gap-6 lg:justify-center">
                 <button type="button" onClick={() => setActiveModal("terms")} className="stackly-footer-link whitespace-nowrap">Terms of Use</button>
                 <button type="button" onClick={() => setActiveModal("privacy")} className="stackly-footer-link whitespace-nowrap">Privacy Policy</button>
-                <span
-                  className="w-full max-w-full whitespace-normal break-words text-center px-4 text-[9px] md:text-[10px] lg:w-auto lg:px-0"
-                  style={{
-                    width: "100%",
-                    maxWidth: "100%",
-                    whiteSpace: "normal",
-                    overflowWrap: "break-word",
-                    wordBreak: "break-word",
-                  }}
-                >
+                <span className="text-center px-4 text-[9px] md:text-[10px] lg:px-0 whitespace-normal break-words max-w-full">
                   Copyright 2018-2026 TheStackly.com INC
                 </span>
               </div>
@@ -457,11 +455,7 @@ function Footer() {
         </div>
       )}
 
-      {toast && (
-        <div className="stackly-toast fixed bottom-5 right-5 z-[20001] rounded-xl bg-[#06224C] px-5 py-3 text-sm font-bold text-white shadow-2xl">
-          {toast}
-        </div>
-      )}
+
     </>
   );
 }
@@ -723,13 +717,8 @@ export default function Portfolioedit() {
                 </motion.div>
 
                 {/* MOBILE MENU */}
-                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${innerMobileMenuOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-                  <div className="px-3 pb-3 pt-2 bg-[#06224C] grid grid-cols-2 gap-2">
-                    {/* {["Home", "About Us", "Projects", "Contact"].map((item, i) => (
-                      <button key={i} onClick={() => setInnerMobileMenuOpen(false)} className="border border-white/25 px-3 py-2 text-xs text-white rounded-md hover:bg-white/10 transition hover:scale-105">
-                        {item}
-                      </button>
-                    ))} */}
+                {innerMobileMenuOpen && (
+                  <div className="px-3 pb-3 pt-2 bg-[#06224C] grid grid-cols-2 gap-2 border-b border-gray-300">
                     {[
                       { name: "Home", id: "home" },
                       { name: "About Us", id: "about" },
@@ -742,13 +731,13 @@ export default function Portfolioedit() {
                           scrollToSection(item.id);
                           setInnerMobileMenuOpen(false);
                         }}
-                        className="border border-white/25 px-3 py-2 text-xs text-white rounded-md hover:bg-white/10 transition hover:scale-105"
+                        className="border border-white/25 px-3 py-2.5 text-xs text-white rounded-md hover:bg-white/10 transition min-h-[2.75rem]"
                       >
                         {item.name}
                       </button>
                     ))}
                   </div>
-                </div>
+                )}
 
 
                 {/* HERO SECTION WRAPPER */}
@@ -774,48 +763,41 @@ export default function Portfolioedit() {
                           I design sleek digital products, landing pages, and brand experiences that feel clear, fast, and memorable.
                         </p>
 
-                        {/* MOBILE BLOBS + IMAGE */}
-                        <div className="mt-8 mb-4 flex justify-center px-4 @sm:px-6 w-full @lg:hidden">
-                          <div className="relative w-full max-w-[240px] portfolio-portrait-wrap flex items-center justify-center">
+                        {/* MOBILE PORTRAIT */}
+                        <div className="mt-8 mb-4 flex justify-center px-2 @sm:px-4 w-full @lg:hidden">
+                          <div className="portfolio-mobile-portrait w-full max-w-[17.5rem]">
+                            <div className="portfolio-mobile-portrait-stage portfolio-portrait-wrap">
+                              <div className="portfolio-mobile-portrait-blobs pointer-events-none" aria-hidden>
+                                <div className="portfolio-mobile-portrait-blob portfolio-mobile-portrait-blob--main" />
+                                <div className="portfolio-mobile-portrait-blob portfolio-mobile-portrait-blob--accent" />
+                              </div>
 
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-
-                              <div className="w-[90%] h-[90%] bg-gradient-to-r from-purple-500 via-blue-400 to-cyan-300 opacity-20 blur-2xl rounded-full animate-[float_6s_ease-in-out_infinite]"></div>
-
-                              <div className="absolute w-[70%] h-[50%] bg-cyan-300 opacity-20 blur-2xl rounded-full animate-[float_7s_ease-in-out_infinite]"></div>
-
-                              <div className="absolute w-[40%] h-[40%] bg-pink-400 opacity-20 rounded-full bottom-2 right-2 animate-[float_5s_ease-in-out_infinite]"></div>
-
-                              <div className="absolute w-[60%] h-[80%] bg-cyan-300 opacity-20 blur-2xl rounded-[60%_40%_55%_45%] -top-4 -left-4 animate-[float_6s_ease-in-out_infinite]"></div>
-
-                              <div className="absolute w-[65%] h-[95%] bg-white/70 rounded-[80px] rotate-[-30deg] shadow-md animate-[float_6s_ease-in-out_infinite]"></div>
+                              <div
+                                className="portfolio-mobile-portrait-image relative z-20 overflow-hidden border-4 border-white mx-auto"
+                                style={{
+                                  width: `min(${heroImageProps.width}px, 72vw)`,
+                                  aspectRatio: `${heroImageProps.width} / ${heroImageProps.height}`,
+                                  maxWidth: "100%",
+                                  borderRadius: `${heroImageProps.borderRadius}%`,
+                                  boxShadow: heroImageProps.shadow ? "0 10px 25px rgba(0,0,0,0.3)" : "0 0.625rem 1.25rem rgba(0,0,0,0.18)",
+                                  opacity: heroImageProps.opacity / 100,
+                                }}
+                              >
+                                <Image
+                                  src={assetPath("/portfoliologo.webp")}
+                                  alt="Srinivas Pentakota - UI/UX Designer Portfolio"
+                                  fill
+                                  sizes="(max-width: 480px) 72vw, 165px"
+                                  className="object-cover object-[center_18%]"
+                                  unoptimized
+                                />
+                              </div>
                             </div>
 
-                            <div className="absolute -right-2 bottom-6 z-30 rounded-xl border border-white/80 bg-white/90 px-3.5 py-2 text-left shadow-lg portfolio-floating-badge">
-                              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">Focus</p>
-                              <p className="text-xs font-extrabold text-gray-900 whitespace-nowrap">Human centered UI</p>
+                            <div className="portfolio-mobile-focus-badge portfolio-floating-badge rounded-xl border border-white/80 bg-white/95 px-3.5 py-2.5 text-center shadow-lg">
+                              <p className="text-[0.625rem] font-bold uppercase tracking-[0.16em] text-gray-500">Focus</p>
+                              <p className="text-[0.8125rem] font-extrabold text-gray-900 leading-snug">Human centered UI</p>
                             </div>
-
-                            <div className="relative overflow-hidden border-4 border-white z-20 animate-[float_6s_ease-in-out_infinite] transition-all duration-300 mx-auto"
-                              style={{
-                                width: `${heroImageProps.width}px`,
-                                height: 'auto',
-                                aspectRatio: `${heroImageProps.width} / ${heroImageProps.height}`,
-                                maxWidth: '100%',
-                                borderRadius: `${heroImageProps.borderRadius}%`,
-                                boxShadow: heroImageProps.shadow ? '0 10px 25px rgba(0,0,0,0.3)' : 'none',
-                                opacity: heroImageProps.opacity / 100
-                              }}>
-                              <Image
-                                src={assetPath("/portfoliologo.webp")}
-                                alt="Srinivas Pentakota - UI/UX Designer Portfolio"
-                                fill
-                                sizes="220px"
-                                className="object-cover"
-                                unoptimized
-                              />
-                            </div>
-
                           </div>
                         </div>
 
@@ -934,6 +916,21 @@ export default function Portfolioedit() {
                     50% { transform: scale(1.08); opacity: 0.95; }
                   }
 
+                  @keyframes portfolio-mobile-blob-pulse {
+                    0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.96); }
+                    50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.05); }
+                  }
+
+                  @keyframes portfolio-mobile-accent-float {
+                    0%, 100% { transform: translateY(0); opacity: 0.65; }
+                    50% { transform: translateY(-6px); opacity: 0.95; }
+                  }
+
+                  @keyframes portfolio-float-soft {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                  }
+
                   .portfolio-shell {
                     background:
                       radial-gradient(circle at 12% 12%, rgba(99, 229, 255, 0.28), transparent 18rem),
@@ -976,6 +973,93 @@ export default function Portfolioedit() {
                     animation: float 5.5s ease-in-out infinite;
                   }
 
+                  .portfolio-mobile-portrait {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.875rem;
+                    margin: 0 auto;
+                    width: 100%;
+                    max-width: 17.5rem;
+                  }
+
+                  .portfolio-mobile-portrait-stage {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    min-height: 13.5rem;
+                    padding: 0.75rem 0;
+                    overflow: hidden;
+                    isolation: isolate;
+                  }
+
+                  .portfolio-mobile-portrait-stage.portfolio-portrait-wrap::before {
+                    width: 11rem;
+                    height: 11rem;
+                    animation: portfolio-glow 4.5s ease-in-out infinite;
+                    opacity: 0.55;
+                  }
+
+                  .portfolio-mobile-portrait-blobs {
+                    position: absolute;
+                    inset: 0.35rem 0;
+                    overflow: hidden;
+                    z-index: 0;
+                  }
+
+                  .portfolio-mobile-portrait-blob {
+                    position: absolute;
+                    border-radius: 999px;
+                    pointer-events: none;
+                  }
+
+                  .portfolio-mobile-portrait-blob--main {
+                    top: 50%;
+                    left: 50%;
+                    width: 88%;
+                    height: 88%;
+                    transform: translate(-50%, -50%);
+                    background: radial-gradient(circle, rgba(99, 229, 255, 0.28), rgba(147, 51, 234, 0.12) 58%, transparent 72%);
+                    animation: portfolio-mobile-blob-pulse 5.5s ease-in-out infinite;
+                  }
+
+                  .portfolio-mobile-portrait-blob--accent {
+                    right: 4%;
+                    bottom: 8%;
+                    width: 42%;
+                    height: 42%;
+                    background: radial-gradient(circle, rgba(244, 114, 182, 0.18), transparent 70%);
+                    animation: portfolio-mobile-accent-float 6.5s ease-in-out infinite;
+                  }
+
+                  .portfolio-mobile-portrait-image {
+                    animation: portfolio-float-soft 6s ease-in-out infinite;
+                  }
+
+                  .portfolio-mobile-focus-badge {
+                    position: static;
+                    width: 100%;
+                    max-width: 14rem;
+                    margin: 0 auto;
+                    z-index: 3;
+                  }
+
+                  @container (max-width: 63.9375rem) {
+                    .portfolio-mobile-portrait-stage {
+                      min-height: 12rem;
+                    }
+
+                    .portfolio-mobile-focus-badge p {
+                      font-size: max(0.625rem, 0.7rem);
+                    }
+
+                    .portfolio-mobile-focus-badge p:last-child {
+                      font-size: max(0.75rem, 0.8125rem);
+                    }
+                  }
+
                   .portfolio-reveal {
                     opacity: 0;
                     transform: translateY(22px);
@@ -995,6 +1079,9 @@ export default function Portfolioedit() {
                     .portfolio-project-card,
                     .portfolio-floating-badge,
                     .portfolio-portrait-wrap::before,
+                    .portfolio-mobile-portrait-image,
+                    .portfolio-mobile-focus-badge,
+                    .portfolio-mobile-portrait-blob,
                     .portfolio-reveal {
                       animation: none !important;
                       transition: none !important;

@@ -99,7 +99,7 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer group">
                       <div className={`w-4 h-4 rounded-full border-[5px] flex items-center justify-center transition-colors ${props.sourceType === 'embed' ? 'border-[#0B1D40]' : 'border-gray-300 group-hover:border-gray-400'}`}></div>
-                      <span className={`text-[14px] ${props.sourceType === 'embed' ? 'text-[#0B1D40] font-medium' : 'text-gray-600'}`}>Embed Code</span>
+                      <span className={`text-[14px] ${props.sourceType === 'embed' ? 'text-[#0B1D40] font-medium' : 'text-gray-600'}`}>Embed Code or Link</span>
                       <input
                         type="radio"
                         name="videoSource"
@@ -143,7 +143,7 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
                   </div>
                 ) : (
                   <div>
-                    <h4 className="text-[#0B1D40] text-sm font-bold mb-3">Embed Code</h4>
+                    <h4 className="text-[#0B1D40] text-sm font-bold mb-3">Embed Code or Link</h4>
                     <textarea
                       className="w-full border border-gray-300 rounded-xl p-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[#0B1D40] focus:border-transparent transition-all min-h-[100px] resize-none"
                       placeholder="Paste YouTube, Vimeo, or custom iframe code here..."
@@ -195,6 +195,45 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
                   </div>
                 </div>
  
+                {/* Trim Options */}
+                <div>
+                  <h4 className="text-[#0B1D40] text-sm font-bold mb-4">Trim Video (Seconds)</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <label className="text-[12px] text-gray-500 font-medium mb-1 block">Start Time</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={props.endTime !== undefined ? props.endTime - 1 : undefined}
+                        step="1"
+                        className="w-full border border-gray-300 rounded-lg p-2 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[#0B1D40] transition-all"
+                        placeholder="0"
+                        value={props.startTime !== undefined ? props.startTime : ''}
+                        onChange={(e) => {
+                          const val = e.target.value ? parseFloat(e.target.value) : undefined;
+                          onUpdateBlock(id, { startTime: val });
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[12px] text-gray-500 font-medium mb-1 block">End Time</label>
+                      <input
+                        type="number"
+                        min={props.startTime !== undefined ? props.startTime + 1 : 0}
+                        step="1"
+                        className="w-full border border-gray-300 rounded-lg p-2 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[#0B1D40] transition-all"
+                        placeholder="End"
+                        value={props.endTime !== undefined ? props.endTime : ''}
+                        onChange={(e) => {
+                          const val = e.target.value ? parseFloat(e.target.value) : undefined;
+                          onUpdateBlock(id, { endTime: val });
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-2">Leave blank to play full video.</p>
+                </div>
+ 
               </div>
             )}
           </>
@@ -208,5 +247,6 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
     </aside>
   );
 }
+ 
  
  

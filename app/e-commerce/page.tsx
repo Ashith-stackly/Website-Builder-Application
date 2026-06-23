@@ -707,6 +707,12 @@ export default function ECommercePage() {
     };
   }, [isUserMenuOpen]);
 
+  const handleUserMenuBlurCapture = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
+    const next = event.relatedTarget as Node | null;
+    if (event.currentTarget.contains(next)) return;
+    setIsUserMenuOpen(false);
+  }, []);
+
   useEffect(() => {
     const el = heroContentRef.current;
     if (!el) return;
@@ -933,6 +939,10 @@ export default function ECommercePage() {
     let win: Window | null = null;
 
     const updateHeight = () => {
+      if (previewDevice === "tablet" || previewDevice === "mobile") {
+        setIframeHeight(activePreviewFrame.height);
+        return;
+      }
       try {
         const doc = iframe.contentDocument || iframe.contentWindow?.document;
         if (doc && doc.body && doc.documentElement) {
@@ -990,7 +1000,7 @@ export default function ECommercePage() {
         win.removeEventListener("resize", updateHeight);
       }
     };
-  }, [previewSrc]);
+  }, [previewSrc, previewDevice, activePreviewFrame.height]);
 
   return (
     <main className="buyscreen-page flex min-h-[100dvh] w-full max-w-full min-w-0 flex-col overflow-visible bg-[#f5f7fb] text-[#111827]">
@@ -1044,9 +1054,8 @@ export default function ECommercePage() {
             overflow: visible !important;
           }
 
-          /* Tablet View overrides for Cart and Favorites popups to render in bottom-right corner */
+          /* Tablet View overrides for Favorites and License popups to render in bottom-right corner */
           @media (min-width: 768px) and (max-width: 1024px) {
-            .buyscreen-page .buyscreen-cart-popup-wrapper,
             .buyscreen-page .buyscreen-favorites-popup-wrapper,
             .buyscreen-page .buyscreen-license-popup-wrapper {
               position: fixed !important;
@@ -1055,17 +1064,15 @@ export default function ECommercePage() {
               align-items: flex-end !important;
               justify-content: flex-end !important;
               padding: 24px !important;
-              z-index: 110 !important;
+              z-index: 99999 !important;
               pointer-events: none !important;
             }
-            .buyscreen-page .buyscreen-cart-popup-wrapper > button,
             .buyscreen-page .buyscreen-favorites-popup-wrapper > button,
             .buyscreen-page .buyscreen-license-popup-wrapper > button {
               pointer-events: auto !important;
               background: rgba(0, 0, 0, 0.2) !important;
               backdrop-filter: none !important;
             }
-            .buyscreen-page .buyscreen-cart-popup-wrapper > div,
             .buyscreen-page .buyscreen-favorites-popup-wrapper > div,
             .buyscreen-page .buyscreen-license-popup-wrapper > div {
               pointer-events: auto !important;
@@ -2021,8 +2028,12 @@ export default function ECommercePage() {
                       ref={iframeRef}
                       title={`${activePreviewFrame.label} storefront preview`}
                       src={previewSrc}
-                      className="block w-full border-0 bg-white"
-                      style={{ height: typeof iframeHeight === "number" ? `${iframeHeight}px` : iframeHeight }}
+                      className={`block w-full border-0 bg-white ${(previewDevice === "tablet" || previewDevice === "mobile") ? "overflow-y-auto" : ""}`}
+                      style={{
+                        height: (previewDevice === "tablet" || previewDevice === "mobile")
+                          ? `${activePreviewFrame.height}px`
+                          : (typeof iframeHeight === "number" ? `${iframeHeight}px` : iframeHeight),
+                      }}
                     />
                   </div>
                 </div>
@@ -2101,7 +2112,11 @@ export default function ECommercePage() {
                       </span>
                     </button>
                     <span className="h-6 w-px shrink-0 bg-[#d1d5db]" aria-hidden />
-                    <div ref={userMenuWrapRef} className="buyscreen-user-menu-wrap relative shrink-0">
+                    <div
+                      ref={userMenuWrapRef}
+                      className="buyscreen-user-menu-wrap relative shrink-0"
+                      onBlurCapture={handleUserMenuBlurCapture}
+                    >
                       <button
                         type="button"
                         aria-expanded={isUserMenuOpen}
@@ -2127,6 +2142,7 @@ export default function ECommercePage() {
                           type="button"
                           role="menuitem"
                           className="buyscreen-user-menu-item"
+                          tabIndex={isUserMenuOpen ? 0 : -1}
                           onClick={() => {
                             setIsUserMenuOpen(false);
                             router.push("/login");

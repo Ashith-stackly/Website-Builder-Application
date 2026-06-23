@@ -13,6 +13,8 @@ export default function MainCanvas({
 } = {}) {
   const { elements, activeElementId, setActiveElementId, undo, redo, historyStack, futureStack, imageAdjustments, activeFilter, activeCrop } = useBuilder();
  
+  const [uploadedImage, setUploadedImage] = React.useState<string | null>(null);
+ 
   const getFilterStyle = () => {
     return {};
   };
@@ -40,12 +42,8 @@ export default function MainCanvas({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (onImageSelected) {
-        const url = URL.createObjectURL(file);
-        onImageSelected(url);
-      } else {
-        alert(`Successfully selected file: ${file.name}`);
-      }
+      const url = URL.createObjectURL(file);
+      setUploadedImage(url);
     }
     // Reset input so the same file can be selected again if needed
     if (fileInputRef.current) {
@@ -80,6 +78,84 @@ export default function MainCanvas({
     }
   };
  
+  const generateEditedImage = async (imageUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(imageUrl);
+          return;
+        }
+ 
+        let targetWidth = img.width;
+        let targetHeight = img.height;
+        let sx = 0;
+        let sy = 0;
+        let sw = img.width;
+        let sh = img.height;
+ 
+        if (activeCrop && activeCrop !== 'Original' && activeCrop !== 'Custom') {
+          let ratio = 1;
+          if (activeCrop === 'Square') ratio = 1;
+          else if (activeCrop === '16:9') ratio = 16/9;
+          else if (activeCrop === '5:4') ratio = 5/4;
+          else if (activeCrop === '4:3') ratio = 4/3;
+          else if (activeCrop === '9:16') ratio = 9/16;
+          else if (activeCrop === '7:5') ratio = 7/5;
+ 
+          const imgRatio = img.width / img.height;
+          if (imgRatio > ratio) {
+            sh = img.height;
+            sw = sh * ratio;
+            sx = (img.width - sw) / 2;
+          } else {
+            sw = img.width;
+            sh = sw / ratio;
+            sy = (img.height - sh) / 2;
+          }
+          targetWidth = sw;
+          targetHeight = sh;
+        }
+ 
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+ 
+        if (imageAdjustments) {
+          const brightness = (imageAdjustments.brightness / 60) * 100;
+          const contrast = (imageAdjustments.contrast / 45) * 100;
+          const saturate = (imageAdjustments.saturation / 55) * 100;
+          const hueRotate = (imageAdjustments.tint - 30) * 2;
+          const sepia = imageAdjustments.temperature > 65 ? (imageAdjustments.temperature - 65) : 0;
+         
+          let preset = '';
+          if (activeFilter === 'Vintage') preset = 'sepia(50%) hue-rotate(-30deg) contrast(120%)';
+          else if (activeFilter === 'Cinematic') preset = 'contrast(120%) saturate(120%) brightness(90%)';
+          else if (activeFilter === 'Black & White') preset = 'grayscale(100%)';
+          else if (activeFilter === 'Nature') preset = 'saturate(150%) contrast(110%)';
+          else if (activeFilter === 'Creative') preset = 'hue-rotate(90deg) saturate(150%)';
+ 
+          ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%) hue-rotate(${hueRotate}deg) sepia(${sepia}%) ${preset}`;
+        }
+ 
+        ctx.globalAlpha = (elements["btn-2"]?.opacity ?? 100) / 100;
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+ 
+        try {
+          const dataUrl = canvas.toDataURL("image/png");
+          resolve(dataUrl);
+        } catch(e) {
+          console.error("Canvas export failed", e);
+          resolve(imageUrl);
+        }
+      };
+      img.onerror = () => resolve(imageUrl);
+      img.src = imageUrl;
+    });
+  };
+ 
   return (
     <main className="relative flex h-full min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#dbe3ef] bg-[#f7f9fc] shadow-[0_18px_45px_rgba(15,35,75,0.08)]">
       {/* Hidden File Input */}
@@ -93,29 +169,27 @@ export default function MainCanvas({
  
       {imageAdjustments && (
         <style>{`
-          @media (max-width: 1023px) {
-            .mobile-image-adjust {
-              filter: brightness(${(imageAdjustments.brightness / 60) * 100}%)
-                      contrast(${(imageAdjustments.contrast / 45) * 100}%)
-                      saturate(${(imageAdjustments.saturation / 55) * 100}%)
-                      drop-shadow(0 4px ${imageAdjustments.shadows / 2}px rgba(0,0,0,0.3))
-                      hue-rotate(${(imageAdjustments.tint - 30) * 2}deg)
-                      sepia(${imageAdjustments.temperature > 65 ? (imageAdjustments.temperature - 65) : 0}%)
-                      ${getPresetFilter()};
-            }
-            .mobile-vignette::after {
-              content: '';
-              position: absolute;
-              inset: 0;
-              pointer-events: none;
-              box-shadow: inset 0 0 ${imageAdjustments.vignette * 3}px rgba(0,0,0,0.7);
-            }
-            ${activeCrop !== 'Custom' && activeCrop !== 'Original' ? `
-            .mobile-crop-adjust {
-              aspect-ratio: ${getCropAspect()} !important;
-            }
-            ` : ''}
+          .mobile-image-adjust {
+            filter: brightness(${(imageAdjustments.brightness / 60) * 100}%)
+                    contrast(${(imageAdjustments.contrast / 45) * 100}%)
+                    saturate(${(imageAdjustments.saturation / 55) * 100}%)
+                    drop-shadow(0 4px ${imageAdjustments.shadows / 2}px rgba(0,0,0,0.3))
+                    hue-rotate(${(imageAdjustments.tint - 30) * 2}deg)
+                    sepia(${imageAdjustments.temperature > 65 ? (imageAdjustments.temperature - 65) : 0}%)
+                    ${getPresetFilter()};
           }
+          .mobile-vignette::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            box-shadow: inset 0 0 ${imageAdjustments.vignette * 3}px rgba(0,0,0,0.7);
+          }
+          ${activeCrop !== 'Custom' && activeCrop !== 'Original' ? `
+          .mobile-crop-adjust {
+            aspect-ratio: ${getCropAspect()} !important;
+          }
+          ` : ''}
         `}</style>
       )}
  
@@ -149,17 +223,17 @@ export default function MainCanvas({
             </button>
           </div>
  
-          <button onClick={() => handleAction("Save Draft")} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-colors hover:bg-gray-50" title="Save Draft">
-            <Save className="h-4 w-4 text-gray-600 xl:hidden" />
-            <span className="hidden xl:inline">Save Draft</span>
+          <button onClick={() => handleAction("Save Draft")} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50" title="Save Draft">
+            <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
+            <span className="hidden xl:inline group-hover:inline">Save Draft</span>
           </button>
-          <button onClick={() => handleAction("Preview")} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-colors hover:bg-gray-50" title="Preview">
-            <Eye className="h-4 w-4" />
-            <span className="hidden xl:inline">Preview</span>
+          <button onClick={() => handleAction("Preview")} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50" title="Preview">
+            <Eye className="h-4 w-4 xl:hidden group-hover:hidden" />
+            <span className="hidden xl:inline group-hover:inline">Preview</span>
           </button>
-          <button onClick={() => handleAction("Publish")} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition-colors hover:bg-[#152B52]" title="Publish">
-            <span className="hidden xl:inline">Publish</span>
-            <Send className="h-[14px] w-[14px]" />
+          <button onClick={() => handleAction("Publish")} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition-all hover:bg-[#152B52]" title="Publish">
+            <span className="hidden xl:inline group-hover:inline">Publish</span>
+            <Send className="h-[14px] w-[14px] xl:hidden group-hover:hidden" />
           </button>
         </div>
       </div>
@@ -179,7 +253,7 @@ export default function MainCanvas({
  
             {/* Image Panel */}
             <h3 className="text-[#0c1b33] font-bold text-[14px] mb-4">Image Panel</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
  
               {/* Card 1 - Upload Generic */}
               <div className="bg-white rounded-lg shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-100 p-4 pb-5 flex flex-col items-center">
@@ -195,69 +269,72 @@ export default function MainCanvas({
                   <button
                     onClick={(e) => { e.stopPropagation(); setActiveElementId("btn-1"); triggerFileUpload(); }}
                     className={`w-full py-2.5 bg-[#0c1b33] text-white text-[13px] font-medium transition-all duration-300 cursor-pointer ${getStyleClass(elements["btn-1"].buttonStyle)}`}
-                    style={{ opacity: elements["btn-1"].opacity / 100 }}
                   >
                     {elements["btn-1"].label}
                   </button>
                 </div>
               </div>
  
-              {/* Card 2 - Mountain Image 1 */}
-              <div className="bg-white rounded-lg shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-100 p-4 pb-5 flex flex-col items-center">
-                <div
-                  className="w-full aspect-video rounded-lg overflow-hidden mb-4 cursor-pointer hover:opacity-80 transition relative mobile-vignette mobile-crop-adjust"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onImageSelected) {
-                      onImageSelected(mountainSrc1);
-                    } else {
-                      triggerFileUpload();
-                    }
-                  }}
-                >
-                  <img src={mountainSrc1} alt="Mountain view" className="w-full h-full object-cover mobile-image-adjust" />
-                </div>
-                <p className="text-slate-600 text-[13px] mb-4 font-medium">Upload izze. Timraes</p>
-                <div className="w-full relative">
-                  {activeElementId === "btn-2" && <div className="absolute -inset-1.5 border-2 border-blue-500 rounded pointer-events-none" />}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveElementId("btn-2"); triggerFileUpload(); }}
-                    className={`w-full py-2.5 bg-white text-slate-700 border border-slate-300 text-[13px] font-medium transition-all duration-300 hover:bg-slate-50 cursor-pointer ${getStyleClass(elements["btn-2"].buttonStyle)}`}
-                    style={{ opacity: elements["btn-2"].opacity / 100 }}
+              {uploadedImage ? (
+                <div className="bg-white rounded-lg shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-100 p-4 pb-5 flex flex-col items-center">
+                  {/* Uploaded Image Card */}
+                  <div
+                    className="w-full aspect-video rounded-lg overflow-hidden mb-4 cursor-pointer hover:opacity-80 transition relative mobile-vignette mobile-crop-adjust"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveElementId("btn-2");
+                    }}
                   >
-                    {elements["btn-2"].label}
-                  </button>
+                    <img src={uploadedImage} alt="Uploaded view" className="w-full h-full object-cover mobile-image-adjust" style={{ opacity: elements["btn-2"].opacity / 100 }} />
+                  </div>
+                  <p className="text-slate-600 text-[13px] mb-4 font-medium">Edit Image</p>
+                  <div className="w-full relative">
+                    {activeElementId === "btn-2" && <div className="absolute -inset-1.5 border-2 border-blue-500 rounded pointer-events-none" />}
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (onImageSelected) {
+                          const finalUrl = await generateEditedImage(uploadedImage);
+                          onImageSelected(finalUrl);
+                        }
+                      }}
+                      className={`w-full py-2.5 bg-white text-slate-700 border border-slate-300 text-[13px] font-medium transition-all duration-300 hover:bg-slate-50 cursor-pointer ${getStyleClass(elements["btn-2"].buttonStyle)}`}
+                    >
+                      {elements["btn-2"]?.label || "Choose Image"}
+                    </button>
+                  </div>
                 </div>
-              </div>
- 
-              {/* Card 3 - Mountain Image 2 */}
-              <div className="bg-white rounded-lg shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-100 p-4 pb-5 flex flex-col items-center">
-                <div
-                  className="w-full aspect-video rounded-lg overflow-hidden mb-4 cursor-pointer hover:opacity-80 transition relative mobile-vignette mobile-crop-adjust"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onImageSelected) {
-                      onImageSelected(mountainSrc2);
-                    } else {
-                      triggerFileUpload();
-                    }
-                  }}
-                >
-                  <img src={mountainSrc2} alt="Mountain scenery" className="w-full h-full object-cover mobile-image-adjust" />
-                </div>
-                <p className="text-slate-600 text-[13px] mb-4 font-medium">Upload izze. Timraes</p>
-                <div className="w-full relative">
-                  {activeElementId === "btn-3" && <div className="absolute -inset-1.5 border-2 border-blue-500 rounded pointer-events-none" />}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveElementId("btn-3"); triggerFileUpload(); }}
-                    className={`w-full py-2.5 bg-white text-slate-700 border border-slate-300 text-[13px] font-medium transition-all duration-300 hover:bg-slate-50 cursor-pointer ${getStyleClass(elements["btn-3"].buttonStyle)}`}
-                    style={{ opacity: elements["btn-3"].opacity / 100 }}
-                  >
-                    {elements["btn-3"].label}
-                  </button>
-                </div>
-              </div>
- 
+              ) : (
+                <>
+                  {/* Card 2 - Mountain Image 1 */}
+                  <div className="bg-white rounded-lg shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-slate-100 p-4 pb-5 flex flex-col items-center">
+                    <div
+                      className="w-full aspect-video rounded-lg overflow-hidden mb-4 cursor-pointer hover:opacity-80 transition relative mobile-vignette mobile-crop-adjust"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (onImageSelected) {
+                          const finalUrl = await generateEditedImage(mountainSrc1);
+                          onImageSelected(finalUrl);
+                        } else {
+                          triggerFileUpload();
+                        }
+                      }}
+                    >
+                      <img src={mountainSrc1} alt="Mountain view" className="w-full h-full object-cover mobile-image-adjust" style={{ opacity: elements["btn-2"].opacity / 100 }} />
+                    </div>
+                    <p className="text-slate-600 text-[13px] mb-4 font-medium">Upload izze. Timraes</p>
+                    <div className="w-full relative">
+                      {activeElementId === "btn-2" && <div className="absolute -inset-1.5 border-2 border-blue-500 rounded pointer-events-none" />}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActiveElementId("btn-2"); triggerFileUpload(); }}
+                        className={`w-full py-2.5 bg-white text-slate-700 border border-slate-300 text-[13px] font-medium transition-all duration-300 hover:bg-slate-50 cursor-pointer ${getStyleClass(elements["btn-2"].buttonStyle)}`}
+                      >
+                        {elements["btn-2"].label}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
  
             {/* Image Gallery */}
@@ -308,4 +385,5 @@ export default function MainCanvas({
     </main>
   );
 }
+ 
  

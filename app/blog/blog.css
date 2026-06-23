@@ -1482,7 +1482,7 @@ html:has(main.blog-page) {
   padding: 0 0 1.1rem;
   font-size: clamp(0.82rem, 1.7vw, 0.9rem);
   line-height: 1.65;
-  color: #3d4f63;
+  color: #1e293b;
   overflow-wrap: break-word;
 }
 

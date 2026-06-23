@@ -597,10 +597,10 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
 @media (min-width: 1024px) {
   .buyscreen-product-actions-mobile {
     display: none !important;
-  }
-  .buyscreen-product-card:focus-within .buyscreen-product-hover-actions {
-    pointer-events: auto;
-    opacity: 1;
+}
+.buyscreen-product-card:focus-within .buyscreen-product-hover-actions {
+  pointer-events: auto;
+  opacity: 1;
     visibility: visible;
   }
 }

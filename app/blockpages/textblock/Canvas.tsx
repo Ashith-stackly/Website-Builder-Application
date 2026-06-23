@@ -239,21 +239,21 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               <Redo2 className="h-[18px] w-[18px]" strokeWidth={1.5} />
             </button>
           </div>
-          <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50" title="Save Draft">
-            <Save className="h-4 w-4 text-gray-600 xl:hidden" />
-            <span className="hidden xl:inline">Save Draft</span>
+          <button onClick={() => alert("Working on it - In progress!")} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50 transition-all" title="Save Draft">
+            <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
+            <span className="hidden xl:inline group-hover:inline">Save Draft</span>
           </button>
           <button
-            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50"
+            className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50 transition-all"
             onClick={openPreviewPage}
             title="Preview"
           >
-            <Eye className="h-4 w-4" />
-            <span className="hidden xl:inline">Preview</span>
+            <Eye className="h-4 w-4 xl:hidden group-hover:hidden" />
+            <span className="hidden xl:inline group-hover:inline">Preview</span>
           </button>
-          <button className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] hover:bg-[#152B52]" title="Publish">
-            <span className="hidden xl:inline">Publish</span>
-            <Send className="h-[14px] w-[14px]" />
+          <button onClick={() => alert("Working on it - In progress!")} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] hover:bg-[#152B52] transition-all" title="Publish">
+            <span className="hidden xl:inline group-hover:inline">Publish</span>
+            <Send className="h-[14px] w-[14px] xl:hidden group-hover:hidden" />
           </button>
         </div>
       </div>
@@ -279,7 +279,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
  
           <div
             ref={canvasRef}
-            className={`relative min-h-[640px] ${section.shadow ? "shadow-inner" : ""}`}
+            className={`relative min-h-[640px]`}
             style={{ backgroundColor: section.backgroundColor, textAlign: section.alignment }}
           >
             {isTextEditable && !isPreviewMode ? (
@@ -326,48 +326,41 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               [data-textblock-canvas] .stackly-footer * {
                 ${section.footerText ? `color: inherit !important; border-color: ${section.footerText}33 !important;` : ''}
               }
+ 
+              ${section.shadow ? `
+                [data-textblock-canvas] .portfolio-stat-card,
+                [data-textblock-canvas] .portfolio-mini-card,
+                [data-textblock-canvas] .portfolio-process-card,
+                [data-textblock-canvas] .portfolio-service-card,
+                [data-textblock-canvas] .portfolio-reveal.bg-white.p-6,
+                [data-textblock-canvas] .buyscreen-product-card,
+                [data-textblock-canvas] .buyscreen-category-card {
+                  box-shadow: 0 15px 35px -5px color-mix(in srgb, currentColor 15%, transparent), 0 5px 15px -5px color-mix(in srgb, currentColor 10%, transparent) !important;
+                }
+                [data-textblock-canvas] .portfolio-stat-card:hover,
+                [data-textblock-canvas] .portfolio-mini-card:hover,
+                [data-textblock-canvas] .portfolio-process-card:hover,
+                [data-textblock-canvas] .portfolio-service-card:hover,
+                [data-textblock-canvas] .portfolio-reveal.bg-white.p-6:hover,
+                [data-textblock-canvas] .buyscreen-product-card:hover,
+                [data-textblock-canvas] .buyscreen-category-card:hover {
+                  box-shadow: 0 25px 50px -12px color-mix(in srgb, currentColor 25%, transparent) !important;
+                }
+              ` : `
+                [data-textblock-canvas] .portfolio-stat-card,
+                [data-textblock-canvas] .portfolio-mini-card,
+                [data-textblock-canvas] .portfolio-process-card,
+                [data-textblock-canvas] .portfolio-service-card,
+                [data-textblock-canvas] .portfolio-reveal.bg-white.p-6,
+                [data-textblock-canvas] .buyscreen-product-card,
+                [data-textblock-canvas] .buyscreen-category-card {
+                  box-shadow: none !important;
+                }
+              `}
             `}</style>
             <div className="relative">
               <div
-                data-builder-chrome="true"
-                className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2"
-              >
-                <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDevice("desktop")}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "desktop" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
-                    title="Desktop View"
-                  >
-                    <FaLaptop size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDevice("tablet")}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "tablet" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
-                    title="Tablet View"
-                  >
-                    <FaTabletAlt size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDevice("mobile")}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "mobile" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
-                    title="Mobile View"
-                  >
-                    <FaMobileAlt size={14} />
-                  </button>
-                </div>
-              </div>
- 
-              <div
-                className={`mx-auto w-full min-w-0 transition-all duration-500 ease-in-out ${
-                  previewDevice === "mobile"
-                    ? "max-w-[375px] shadow-2xl"
-                    : previewDevice === "tablet"
-                      ? "max-w-[768px] shadow-2xl"
-                      : "max-w-full"
-                } ${previewDevice !== "desktop" ? "rounded-xl border-2 border-gray-300 bg-gray-200/50 p-2 sm:p-4" : ""}`}
+                className="mx-auto w-full min-w-0 transition-all duration-500 ease-in-out max-w-full"
               >
                 <div
                   data-textblock-canvas
@@ -437,3 +430,4 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     </main>
   );
 }
+ 
