@@ -135,9 +135,29 @@ const mobileItemVariants = {
 
 const iconButtonMotion = {
   whileHover: { y: -2, scale: 1.06 },
+  whileFocus: { y: -2, scale: 1.06 },
   whileTap: { scale: 0.92 },
   transition: { type: "spring" as const, stiffness: 420, damping: 22 },
 };
+
+function ActiveIconHighlight() {
+  return (
+    <>
+      <motion.span
+        layoutId="stackly-active-nav-icon"
+        className="pointer-events-none absolute -inset-0.5 rounded-full border-2 border-sky-300/80 bg-sky-50/70 shadow-[0_0_18px_rgba(56,189,248,0.42)]"
+        transition={{ type: "spring", stiffness: 430, damping: 28 }}
+      />
+      <motion.span
+        className="pointer-events-none absolute -bottom-2 left-1/2 h-1 w-5 -translate-x-1/2 rounded-full bg-blue-700"
+        initial={{ opacity: 0, scaleX: 0.45, y: -2 }}
+        animate={{ opacity: 1, scaleX: 1, y: 0 }}
+        exit={{ opacity: 0, scaleX: 0.45, y: -2 }}
+        transition={{ type: "spring", stiffness: 520, damping: 30 }}
+      />
+    </>
+  );
+}
 
 function MotionNavItem({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -260,6 +280,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [wishlistItems, setWishlistItems] = useState<StoredCommerceItem[]>([]);
   const [cartItems, setCartItems] = useState<StoredCommerceItem[]>([]);
   const [activePanel, setActivePanel] = useState<"wishlist" | "cart" | null>(null);
+  const [searchSelected, setSearchSelected] = useState(false);
+  const [focusedAction, setFocusedAction] = useState<"cart" | "wishlist" | "search" | "profile" | null>(null);
   const [activeMenu, setActiveMenu] = useState<"products" | "categories" | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState<"products" | "categories" | null>(null);
@@ -338,6 +360,15 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!searchSelected) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setSearchSelected(false), 1600);
+    return () => window.clearTimeout(timer);
+  }, [searchSelected]);
 
   useEffect(() => {
     const handleScroll = (e: Event) => {
@@ -587,13 +618,24 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
           <motion.button
             {...iconButtonMotion}
             type="button"
-            onClick={() => setActivePanel("cart")}
+            onClick={() => {
+              setSearchSelected(false);
+              setActivePanel("cart");
+            }}
             aria-label="Open cart"
-            className="stackly-icon-button relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#06224C] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]"
+            aria-pressed={activePanel === "cart"}
+            onFocus={() => setFocusedAction("cart")}
+            onBlur={() => setFocusedAction(null)}
+            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
+              activePanel === "cart" || focusedAction === "cart"
+                ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                : "text-[#06224C]"
+            }`}
           >
-            <FaCartShopping className="text-sm" />
+            <AnimatePresence>{(activePanel === "cart" || focusedAction === "cart") && <ActiveIconHighlight />}</AnimatePresence>
+            <FaCartShopping className="relative z-10 text-sm" />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-black text-white">
+              <span className="absolute -right-1 -top-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-black text-white">
                 {cartCount}
               </span>
             )}
@@ -603,13 +645,28 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
           <motion.button
             {...iconButtonMotion}
             type="button"
-            onClick={onWishlistClick ?? (() => setActivePanel("wishlist"))}
+            onClick={() => {
+              setSearchSelected(false);
+              if (onWishlistClick) {
+                onWishlistClick();
+                return;
+              }
+              setActivePanel("wishlist");
+            }}
             aria-label="Open wishlist"
-            className="stackly-icon-button relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-red-500 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]"
+            aria-pressed={activePanel === "wishlist"}
+            onFocus={() => setFocusedAction("wishlist")}
+            onBlur={() => setFocusedAction(null)}
+            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
+              activePanel === "wishlist" || focusedAction === "wishlist"
+                ? "scale-105 text-red-600 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                : "text-red-500"
+            }`}
           >
-            {wishlistCount > 0 ? <FaHeart className="text-sm" /> : <FaRegHeart className="text-sm" />}
+            <AnimatePresence>{(activePanel === "wishlist" || focusedAction === "wishlist") && <ActiveIconHighlight />}</AnimatePresence>
+            {wishlistCount > 0 ? <FaHeart className="relative z-10 text-sm" /> : <FaRegHeart className="relative z-10 text-sm" />}
             {wishlistCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white">
+              <span className="absolute -right-1 -top-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white">
                 {wishlistCount}
               </span>
             )}
@@ -620,6 +677,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             {...iconButtonMotion}
             type="button"
             onClick={() => {
+              setSearchSelected(true);
+              setActivePanel(null);
               closeMenus();
               setMobileOpen(false);
  
@@ -635,9 +694,17 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               window.location.href = assetPath("/landing/");
             }}
             aria-label="Search"
-            className="stackly-icon-button inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#06224C] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C]"
+            aria-pressed={searchSelected}
+            onFocus={() => setFocusedAction("search")}
+            onBlur={() => setFocusedAction(null)}
+            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
+              searchSelected || focusedAction === "search"
+                ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                : "text-[#06224C]"
+            }`}
           >
-            <FaMagnifyingGlass className="text-sm" />
+            <AnimatePresence>{(searchSelected || focusedAction === "search") && <ActiveIconHighlight />}</AnimatePresence>
+            <FaMagnifyingGlass className="relative z-10 text-sm" />
           </motion.button>
 
           <div
@@ -653,13 +720,23 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               type="button"
               aria-label="User Profile"
               aria-expanded={isProfileMenuOpen}
+              onFocus={() => setFocusedAction("profile")}
+              onBlur={() => setFocusedAction(null)}
               onClick={() => {
+                setSearchSelected(false);
                 setIsProfileMenuOpen((value) => !value);
                 setActiveMenu(null);
               }}
-              className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-white/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-95 md:h-9 md:w-9"
+              className={`relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white p-[3px] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] active:scale-95 ${
+                isProfileMenuOpen || focusedAction === "profile"
+                  ? "scale-105 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                  : ""
+              }`}
             >
-              <img src={assetPath("/profile.webp")} alt="User Profile Picture" className="h-full w-full object-cover" />
+              <AnimatePresence>{(isProfileMenuOpen || focusedAction === "profile") && <ActiveIconHighlight />}</AnimatePresence>
+              <span className="relative z-10 h-full w-full overflow-hidden rounded-full">
+                <img src={assetPath("/profile.webp")} alt="User Profile Picture" className="h-full w-full object-cover" />
+              </span>
             </motion.button>
  
             <AnimatePresence>
