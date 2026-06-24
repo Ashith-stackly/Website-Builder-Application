@@ -1172,7 +1172,8 @@ export default function LeftSidebar({
                 </div>
 
                 {buttonTab === 'Label' ? (
-                  <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
+                  // <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
                     {/* Row 1 */}
                     <button onClick={() => mobileAddBlock('Create Account Button')} className="bg-[#10B981] hover:bg-[#059669] text-white text-[11px] sm:text-[12px] font-medium py-3.5 px-2 rounded-xl transition-colors">
                       Create Account
@@ -1211,16 +1212,16 @@ export default function LeftSidebar({
                       <button onClick={() => mobileAddBlock('Free trail Label')} className="bg-[#262626] text-white text-[11px] sm:text-[12px] font-medium px-4 rounded-[10px] whitespace-nowrap h-full flex items-center justify-center">
                         Free trail
                       </button>
-                      <button onClick={() => mobileAddBlock('Get Started Label')} className="flex-1 text-[#0B182B] text-[11px] sm:text-[12px] font-medium px-2 flex items-center justify-center gap-1 whitespace-nowrap h-full">
+                      {/* <button onClick={() => mobileAddBlock('Get Started Label')} className="flex-1 text-[#0B182B] text-[11px] sm:text-[12px] font-medium px-2 flex items-center justify-center gap-1 whitespace-nowrap h-full">
                         Get Started <span className="font-light">→</span>
-                      </button>
+                      </button> */}
                     </div>
                     <button onClick={() => mobileAddBlock('Sign up for free Button')} className="bg-[#22D3EE] hover:bg-[#06B6D4] text-[#0B182B] text-[11px] sm:text-[12px] font-medium py-3.5 px-2 rounded-full transition-colors">
                       Sign up for free
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
                     <button onClick={() => mobileAddBlock('Read More Link')} className="bg-gradient-to-r from-[#D946EF] to-[#7C3AED] flex items-center justify-between px-2 py-3.5 rounded-[10px] text-white text-[9px] sm:text-[10px] font-medium transition-transform hover:scale-105 shadow-sm">
                       <span>READ MORE</span>
                       <div className="bg-white rounded-full p-[2px] text-[#7C3AED]"><ChevronRight size={10} strokeWidth={3} /></div>
@@ -1431,7 +1432,7 @@ export default function LeftSidebar({
 
       {/* Help Modal */}
       {showHelpPopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B182B]/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B182B]/80 backdrop-blur-sm p-4 pt-[80px] animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-[#F6F4EB]">
               <h2 className="text-2xl font-bold text-[#0B1D40] flex items-center gap-3">

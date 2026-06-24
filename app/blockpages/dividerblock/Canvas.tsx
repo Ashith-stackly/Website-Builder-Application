@@ -150,7 +150,7 @@ export default function Canvas({
                   </button>
                 </div>
  
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <button className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors" title="Duplicate">
                     <Copy className="w-4 h-4" strokeWidth={2} />
                   </button>
@@ -175,7 +175,7 @@ export default function Canvas({
                   >
                     <X className="w-4 h-4" strokeWidth={2.5} />
                   </button>
-                </div>
+                </div> */}
               </div>
  
               <div className="relative flex w-full flex-1 flex-col overflow-y-auto p-5 sm:p-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -221,3 +221,4 @@ export default function Canvas({
     </main>
   );
 }
+ 

@@ -910,6 +910,15 @@ export default function BlockPagesClient() {
                   setEditingIconId(null);
                   setIsIconEditingMode(false);
                 }}
+                onDuplicateBlock={(id) => {
+                  const blockToDuplicate = iconBlocks.find(b => b.id === id);
+                  if (blockToDuplicate) {
+                    const newBlock = { ...blockToDuplicate, id: `icons-${Date.now()}` };
+                    pushIconState([...iconBlocks, newBlock]);
+                    setSelectedIconBlockId(newBlock.id);
+                  }
+                }}
+                onUpdateBlock={updateIconBlock}
               />
             </div>
             {showMobileSidebar && (

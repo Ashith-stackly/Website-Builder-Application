@@ -14,6 +14,8 @@ interface CanvasProps {
   onRedo?: () => void;
   onOpenMobileSidebar?: () => void;
   onApplyIcon?: () => void;
+  onDuplicateBlock?: (id: string) => void;
+  onUpdateBlock?: (id: string, props: Partial<IconBlockData['props']>) => void;
 }
  
 export default function Canvas({
@@ -27,6 +29,8 @@ export default function Canvas({
   onRedo,
   onOpenMobileSidebar,
   onApplyIcon,
+  onDuplicateBlock,
+  onUpdateBlock,
 }: CanvasProps) {
   const handleApply = (e: React.MouseEvent, block: IconBlockData) => {
     e.stopPropagation();
@@ -128,30 +132,46 @@ export default function Canvas({
                 </div>
  
                 <div className="flex items-center gap-2">
-                  <button className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors" title="Duplicate">
+                  <button
+                    className="text-gray-500 hover:text-[#0B1D40] hover:bg-gray-100 p-1.5 rounded transition-colors cursor-pointer"
+                    title="Duplicate"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onDuplicateBlock) onDuplicateBlock(block.id);
+                    }}
+                  >
                     <Copy className="w-4 h-4" strokeWidth={2} />
                   </button>
                   <button
-                    className="text-gray-500 hover:text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"
+                    className="text-gray-500 hover:text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onRemoveBlock(block.id);
+                      if (onUpdateBlock) {
+                        onUpdateBlock(block.id, {
+                          iconType: "none" as any,
+                          customIconUrl: undefined
+                        });
+                      }
                     }}
-                    title="Delete"
+                    title="Reset Icon"
                   >
                     <Trash2 className="w-4 h-4" strokeWidth={2} />
                   </button>
-                  <div className="w-[1px] h-4 bg-gray-200 mx-1" />
-                  <button
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveBlock(block.id);
-                    }}
-                    title="Close"
-                  >
-                    <X className="w-4 h-4" strokeWidth={2.5} />
-                  </button>
+                  {blocks.length > 1 && (
+                    <>
+                      <div className="w-[1px] h-4 bg-gray-200 mx-1" />
+                      <button
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveBlock(block.id);
+                        }}
+                        title="Close"
+                      >
+                        <X className="w-4 h-4" strokeWidth={2.5} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
  
@@ -168,3 +188,4 @@ export default function Canvas({
     </main>
   );
 }
+ 

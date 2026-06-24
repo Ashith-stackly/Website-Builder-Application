@@ -137,23 +137,23 @@ export default function MobileLeftSidebar({ onAddBlock, onClose, selectedBlock, 
  
           {/* Button Label and Link Headers */}
           <div className="px-6 py-6">
-            <div className="flex items-center gap-8 mb-6">
+            <div className="flex items-center gap-4 sm:gap-8 mb-6">
               <button
                 onClick={() => setButtonTab('Label')}
-                className={`font-bold text-[15px] transition-colors ${buttonTab === 'Label' ? 'text-white' : 'text-[#8495A5]'}`}
+                className={`font-bold text-[14px] sm:text-[15px] whitespace-nowrap transition-colors ${buttonTab === 'Label' ? 'text-white' : 'text-[#8495A5]'}`}
               >
                 Button Label
               </button>
               <button
                 onClick={() => setButtonTab('Link')}
-                className={`font-bold text-[15px] transition-colors ${buttonTab === 'Link' ? 'text-white' : 'text-[#8495A5]'}`}
+                className={`font-bold text-[14px] sm:text-[15px] whitespace-nowrap transition-colors ${buttonTab === 'Link' ? 'text-white' : 'text-[#8495A5]'}`}
               >
                 Button Link
               </button>
             </div>
  
             {buttonTab === 'Label' ? (
-              <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
                 {/* Row 1 */}
                 <button onClick={() => applyPreset({ label: 'Create Account', backgroundColor: '#10B981', borderRadius: '12px', color: '#fff', iconType: 'none', iconPosition: 'none', buttonVariant: 'custom', dropShadow: false })} className="bg-[#10B981] hover:bg-[#059669] text-white text-[11px] sm:text-[12px] font-medium py-3.5 px-2 rounded-xl transition-colors">
                   Create Account
@@ -188,20 +188,18 @@ export default function MobileLeftSidebar({ onAddBlock, onClose, selectedBlock, 
                 </button>
  
                 {/* Row 4 */}
-                <div className="bg-white rounded-xl p-1.5 flex items-center col-span-2 h-[46px]">
-                  <button onClick={() => applyPreset({ label: 'Free trail', backgroundColor: '#262626', color: '#fff', borderRadius: '10px', buttonVariant: 'custom', dropShadow: false, iconType: 'none', iconPosition: 'none' })} className="bg-[#262626] text-white text-[11px] sm:text-[12px] font-medium px-4 rounded-[10px] whitespace-nowrap h-full flex items-center justify-center">
+                <div className="bg-white rounded-xl p-1.5 flex flex-col sm:flex-row items-center col-span-2 h-auto sm:h-[46px] gap-1 sm:gap-0">
+                  <button onClick={() => applyPreset({ label: 'Free trail', backgroundColor: '#262626', color: '#fff', borderRadius: '10px', buttonVariant: 'custom', dropShadow: false, iconType: 'none', iconPosition: 'none' })} className="bg-[#262626] text-white text-[11px] sm:text-[12px] font-medium px-4 py-2 sm:py-0 rounded-[10px] whitespace-nowrap w-full sm:w-auto h-full flex items-center justify-center">
                     Free trail
                   </button>
-                  <button onClick={() => applyPreset({ label: 'Get Started', iconPosition: 'right', iconType: 'arrow', backgroundColor: 'transparent', color: '#0B182B', buttonVariant: 'custom', dropShadow: false })} className="flex-1 text-[#0B182B] text-[11px] sm:text-[12px] font-medium px-2 flex items-center justify-center gap-1 whitespace-nowrap h-full">
-                    Get Started <span className="font-light">→</span>
-                  </button>
+ 
                 </div>
                 <button onClick={() => applyPreset({ label: 'Sign up for free', backgroundColor: '#22D3EE', color: '#0B182B', buttonVariant: 'pill', dropShadow: false, iconType: 'none', iconPosition: 'none' })} className="bg-[#22D3EE] hover:bg-[#06B6D4] text-[#0B182B] text-[11px] sm:text-[12px] font-medium py-3.5 px-2 rounded-full transition-colors">
                   Sign up for free
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
                 <button onClick={() => applyPreset({ label: 'READ MORE', backgroundColor: 'linear-gradient(to right, #D946EF, #7C3AED)', color: '#fff', borderRadius: '10px', iconPosition: 'right', iconType: 'chevron-circle', buttonVariant: 'custom' })} className="bg-gradient-to-r from-[#D946EF] to-[#7C3AED] flex items-center justify-between px-2 py-3.5 rounded-[10px] text-white text-[9px] sm:text-[10px] font-medium transition-transform hover:scale-105 shadow-sm">
                   <span>READ MORE</span>
                   <div className="bg-white rounded-full p-[2px] text-[#7C3AED]"><ChevronRight size={10} strokeWidth={3} /></div>
@@ -337,3 +335,4 @@ export default function MobileLeftSidebar({ onAddBlock, onClose, selectedBlock, 
     </div>
   );
 }
+ 

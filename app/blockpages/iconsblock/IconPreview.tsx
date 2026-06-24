@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { IconBlockProps, IconType } from "./types";
+import { Image as ImageIcon } from "lucide-react";
  
 const ICON_MAP: Record<IconType, LucideIcon> = {
   user: User,
@@ -50,6 +51,15 @@ export default function IconPreview({
     );
   }
  
+  if (!props.iconType || props.iconType === "none" as any) {
+    return (
+      <div className="w-full h-full min-h-[120px] flex flex-col items-center justify-center text-gray-400 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-4">
+        <ImageIcon className="w-8 h-8 mb-2 opacity-30" />
+        <p className="font-medium text-[11px] text-center">No Icon</p>
+      </div>
+    );
+  }
+ 
   const Icon = getIconComponent(props.iconType);
  
   return (
@@ -61,3 +71,4 @@ export default function IconPreview({
     />
   );
 }
+ 

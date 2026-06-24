@@ -97,23 +97,35 @@ export default function BlockPreviewPage() {
         observer.observe(el);
       });
  
-      // Hook up mobile menu button in preview mode
-      const mobileMenuBtn = document.querySelector(".portfolio-mobile-menu-btn");
-      const mobileMenu = document.querySelector(".portfolio-mobile-menu");
-      if (mobileMenuBtn && mobileMenu) {
-        mobileMenuBtn.addEventListener("click", () => {
-          if (mobileMenu.classList.contains("max-h-0")) {
-            mobileMenu.classList.remove("max-h-0", "opacity-0");
-            mobileMenu.classList.add("max-h-40", "opacity-100");
-          } else {
-            mobileMenu.classList.remove("max-h-40", "opacity-100");
-            mobileMenu.classList.add("max-h-0", "opacity-0");
+      // Hook up mobile menu button in preview mode using event delegation
+      // This ensures it works even if React recreates the DOM elements
+      const handleMenuClick = (e: MouseEvent) => {
+        const btn = (e.target as HTMLElement).closest(".portfolio-mobile-menu-btn");
+        if (btn) {
+          const menu = document.querySelector(".portfolio-mobile-menu");
+          if (menu) {
+            if (menu.classList.contains("max-h-0")) {
+              menu.classList.remove("max-h-0", "opacity-0");
+              menu.classList.add("max-h-40", "opacity-100");
+            } else {
+              menu.classList.remove("max-h-40", "opacity-100");
+              menu.classList.add("max-h-0", "opacity-0");
+            }
           }
-        });
-      }
+        }
+      };
+ 
+      document.addEventListener("click", handleMenuClick);
+      (window as any)._currentPortfolioMenuListener = handleMenuClick;
+ 
     }, 50);
  
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      if ((window as any)._currentPortfolioMenuListener) {
+        document.removeEventListener("click", (window as any)._currentPortfolioMenuListener);
+      }
+    };
   }, [previewHtml]);
  
   if (previewHtml === null) {
@@ -177,13 +189,12 @@ export default function BlockPreviewPage() {
       </div>
       <div className={`min-h-screen transition-colors duration-500 ${previewDevice !== "desktop" ? "bg-slate-200 py-8 flex justify-center items-start overflow-y-auto" : "bg-[#f5f7fb]"}`}>
         <div
-          className={`mx-auto w-full min-w-0 transition-all duration-500 ease-in-out ${
-            previewDevice === "mobile"
+          className={`mx-auto w-full min-w-0 transition-all duration-500 ease-in-out ${previewDevice === "mobile"
               ? "max-w-[375px] shadow-2xl h-[812px] flex flex-col shrink-0"
               : previewDevice === "tablet"
                 ? "max-w-[768px] shadow-2xl h-[1024px] flex flex-col shrink-0"
                 : "max-w-full"
-          } ${previewDevice !== "desktop" ? "rounded-[2.5rem] border-[12px] border-slate-800 bg-white overflow-hidden relative" : ""}`}
+            } ${previewDevice !== "desktop" ? "rounded-[2.5rem] border-[12px] border-slate-800 bg-white overflow-hidden relative" : ""}`}
         >
           {previewDevice === "desktop" ? (
             <>
@@ -202,5 +213,6 @@ export default function BlockPreviewPage() {
     </>
   );
 }
+ 
  
  
