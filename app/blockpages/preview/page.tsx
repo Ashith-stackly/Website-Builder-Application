@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import Footer from "@/components/Footer";
 import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProjectsSlider";
- 
+import { routePath } from "@/lib/paths";
+
 const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
+const PREVIEW_IFRAME_SRC = routePath("/blockpages/preview?mode=iframe");
  
 export default function BlockPreviewPage() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
@@ -203,7 +205,7 @@ export default function BlockPreviewPage() {
             </>
           ) : (
             <iframe
-              src="/blockpages/preview?mode=iframe"
+              src={PREVIEW_IFRAME_SRC}
               className="w-full h-full border-none bg-[#f5f7fb]"
               title="Responsive Preview"
             />

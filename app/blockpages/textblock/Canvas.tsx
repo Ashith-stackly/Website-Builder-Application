@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Eye, Redo2, Save, Send, Undo2 } from "lucide-react";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
-import { assetPath } from "@/lib/paths";
+import { routePath } from "@/lib/paths";
 import PortfolioPreview from "./PortfolioPreview";
 import StorefrontPreview from "./StorefrontPreview";
 import type { BlockData } from "../buttonblock/types";
@@ -216,7 +216,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     if (previewClone) injectPortfolioProjectsSliderNavAttributes(previewClone);
  
     window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewClone?.innerHTML ?? "");
-    window.open(assetPath("/blockpages/preview/"), "_blank", "noopener,noreferrer");
+    window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
   };
  
   return (
