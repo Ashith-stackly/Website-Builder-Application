@@ -16,17 +16,15 @@ import {
   FaPenRuler,
   FaArrowRight,
   FaChevronDown,
-  FaRegHeart,
-  FaHeart,
-  FaClipboardList,
-  FaUserGroup,
-  FaHelmetSafety,
-  FaCertificate,
   FaStar,
   FaLocationDot,
   FaEnvelope,
   FaPhone,
   FaArrowLeft,
+  FaClipboardList,
+  FaUserGroup,
+  FaHelmetSafety,
+  FaCertificate,
 } from "react-icons/fa6";
 
 const START_BUILDING_HREF = "/signup";
@@ -48,15 +46,15 @@ const navLinks = [
 
 // =========================================================================
 // HEADER
-// Mobile-first: the unprefixed classes ARE the phone layout. md:/lg: only
-// ever ADD things back (the desktop nav, the search/profile icons) — they
-// never need to "undo" cramped mobile spacing, because mobile spacing
-// was written to be correct on its own.
 // =========================================================================
 function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "mobile" }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  
+  // State to manage the mobile Projects dropdown
+  const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false);
+  
   const profileRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
@@ -72,7 +70,10 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
       if (profileOpen && profileRef.current && !profileRef.current.contains(target)) setProfileOpen(false);
-      if (mobileOpen && headerRef.current && !headerRef.current.contains(target)) setMobileOpen(false);
+      if (mobileOpen && headerRef.current && !headerRef.current.contains(target)) {
+        setMobileOpen(false);
+        setMobileProjectsOpen(false); // Close submenu when closing main menu
+      }
     };
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
@@ -81,7 +82,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
   const showDesktopNav = deviceMode === "desktop";
 
   return (
-    <header ref={headerRef} className="bg-[#FDF8F5] text-[#0A1E3D] w-full relative z-50">
+    <header ref={headerRef} className="bg-[#06224C] text-white w-full relative z-50">
       <div className="w-full mx-auto flex items-center justify-between gap-3 py-4 px-4 sm:px-6 lg:px-8 max-w-7xl">
         <button
           type="button"
@@ -93,24 +94,56 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
         {showDesktopNav && (
           <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-            {navLinks.map((link) => (
-              <button
-                key={link.label}
-                type="button"
-                className="text-sm font-bold text-gray-800 hover:text-blue-600 transition-colors flex items-center gap-1 whitespace-nowrap"
-                onClick={() => scrollToSection(link.hash.replace("#", ""))}
-              >
-                {link.label}
-                {["Projects", "Resources"].includes(link.label) && <FaChevronDown size={10} className="mt-0.5" />}
-              </button>
-            ))}
+            {navLinks.map((link) => {
+              if (link.label === "Projects") {
+                return (
+                  <div key={link.label} className="relative group">
+                    <button
+                      type="button"
+                      className="text-sm font-bold text-white/90 group-hover:text-white transition-colors flex items-center gap-1 whitespace-nowrap p-2"
+                      onClick={() => scrollToSection(link.hash.replace("#", ""))}
+                    >
+                      {link.label}
+                      <FaChevronDown size={10} className="mt-0.5 shrink-0 transition-transform duration-300 group-hover:rotate-180" />
+                    </button>
+                    {/* Invisible hover bridge & dropdown box */}
+                    <div className="absolute top-full left-0 pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="bg-white rounded-xl shadow-xl border border-gray-100 flex flex-col py-2">
+                        {["All Projects", "Construction", "Architecture", "Renovation"].map(item => (
+                          <button 
+                            key={item} 
+                            onClick={() => scrollToSection("const-projects")} 
+                            className="px-4 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Standard Desktop Links
+              return (
+                <button
+                  key={link.label}
+                  type="button"
+                  className="text-sm font-bold text-white/90 hover:text-white transition-colors flex items-center gap-1 whitespace-nowrap p-2"
+                  onClick={() => scrollToSection(link.hash.replace("#", ""))}
+                >
+                  {link.label}
+                  {link.label === "Resources" && <FaChevronDown size={10} className="mt-0.5 shrink-0" />}
+                </button>
+              );
+            })}
           </nav>
         )}
 
         <div className="flex items-center gap-2 shrink-0">
           {showDesktopNav && (
             <div className="hidden sm:flex items-center gap-4">
-              <button className="text-gray-600 hover:text-[#0A1E3D]" aria-label="Search">
+              <button className="text-white/80 hover:text-white" aria-label="Search">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.3-4.3" />
@@ -120,7 +153,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                 <button
                   type="button"
                   aria-label="Profile"
-                  className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-white transition-colors"
+                  className="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
                   onClick={() => {
                     setProfileOpen(!profileOpen);
                     setMobileOpen(false);
@@ -145,7 +178,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
           <Link
             href={START_BUILDING_HREF}
-            className="hidden sm:inline-flex bg-[#0A1E3D] text-white px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold hover:bg-blue-900 transition-colors shadow-lg whitespace-nowrap"
+            className="hidden sm:inline-flex bg-white text-[#0A1E3D] px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold hover:bg-gray-100 transition-colors shadow-lg whitespace-nowrap"
           >
             Get Started
           </Link>
@@ -153,33 +186,68 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
           <button
             type="button"
             aria-label="Menu"
-            className={`${showDesktopNav ? "md:hidden" : "flex"} w-9 h-9 items-center justify-center rounded-md border border-gray-200 text-[#0A1E3D] hover:bg-gray-50 shrink-0`}
+            className={`${showDesktopNav ? "md:hidden" : "flex"} w-11 h-11 sm:w-12 sm:h-12 items-center justify-center rounded-[12px] border border-white/30 text-white hover:bg-white/10 active:scale-95 transition-all shrink-0`}
             onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {mobileOpen ? <FaXmark size={16} /> : <FaBars size={16} />}
+            {mobileOpen ? <FaXmark size={22} /> : <FaBars size={22} />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <nav className="absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-2xl flex flex-col py-2 px-4 z-50 max-h-[75vh] overflow-y-auto">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              type="button"
-              className="py-3.5 px-1 text-[#0A1E3D] font-bold text-left w-full border-b border-gray-50 flex justify-between items-center gap-2 text-[15px]"
-              onClick={() => {
-                scrollToSection(link.hash.replace("#", ""));
-                setMobileOpen(false);
-              }}
-            >
-              <span>{link.label}</span>
-              {["Projects", "Resources"].includes(link.label) && <FaChevronDown size={12} className="shrink-0" />}
-            </button>
-          ))}
+        <nav className="absolute top-full left-0 w-full bg-[#06224C] border-b border-white/10 shadow-2xl flex flex-col py-6 px-4 z-50 max-h-[75vh] overflow-y-auto items-center text-center">
+          {navLinks.map((link) => {
+            if (link.label === "Projects") {
+              return (
+                <div key={link.label} className="w-full flex flex-col border-b border-white/10 items-center">
+                  <button
+                    type="button"
+                    className="py-4 text-white font-bold w-full flex justify-center items-center gap-2 text-[15px]"
+                    onClick={() => setMobileProjectsOpen(!mobileProjectsOpen)}
+                  >
+                    <span>{link.label}</span>
+                    <FaChevronDown size={12} className={`transition-transform duration-300 ${mobileProjectsOpen ? "rotate-180 text-blue-400" : ""}`} />
+                  </button>
+                  
+                  {mobileProjectsOpen && (
+                    <div className="flex flex-col bg-[#041633] w-full pb-2 mb-2 rounded-lg overflow-hidden border border-white/5 items-center">
+                      {["All Projects", "Construction", "Architecture", "Renovation"].map(item => (
+                        <button 
+                          key={item} 
+                          onClick={() => { 
+                            scrollToSection("const-projects"); 
+                            setMobileOpen(false); 
+                            setMobileProjectsOpen(false); 
+                          }} 
+                          className="py-3 px-6 text-sm font-semibold text-white/80 hover:text-white transition-colors"
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <button
+                key={link.label}
+                type="button"
+                className="py-4 text-white font-bold w-full border-b border-white/10 flex justify-center items-center gap-2 text-[15px]"
+                onClick={() => {
+                  scrollToSection(link.hash.replace("#", ""));
+                  setMobileOpen(false);
+                }}
+              >
+                <span>{link.label}</span>
+              </button>
+            );
+          })}
           <Link
             href={START_BUILDING_HREF}
-            className="sm:hidden mt-4 mb-1 bg-[#0A1E3D] text-white px-6 py-3 rounded-full text-sm font-bold text-center hover:bg-blue-900 transition-colors shadow-lg"
+            className="mt-6 bg-white text-[#0A1E3D] px-8 py-3 rounded-full text-sm font-bold text-center hover:bg-gray-100 transition-colors shadow-lg"
+            onClick={() => setMobileOpen(false)}
           >
             Get Started
           </Link>
@@ -189,9 +257,9 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
   );
 }
 
-// --- DATA ARRAYS (unchanged) ---
+// --- DATA ARRAYS ---
 const allProjectsData = [
-  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "https://images.unsplash.com/photo-1541888086925-920a061d4b68?q=80&w=800&auto=format&fit=crop" },
+  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "https://images.unsplash.com/photo-1623990670247-b2258ecf2b2a?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
   { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800&auto=format&fit=crop" },
   { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop" },
   { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop" },
@@ -216,6 +284,9 @@ const recentProjects = [
   "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=800&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop", 
+  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1531834685032-c34bf0d84c77?q=80&w=800&auto=format&fit=crop",
 ];
 
 const faqs = [
@@ -231,9 +302,12 @@ const faqs = [
 ];
 
 const testimonialsData = [
-  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop", isDark: false },
-  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop", isDark: true },
-  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop", isDark: false },
+  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop" },
+  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop" },
+  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop" },
+  { name: "Elena Rodriguez", role: "Commercial Investor", text: "From the initial consultation to the final handover, the process was seamless. They managed our commercial build flawlessly, keeping us strictly within our budget without compromising on materials.", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop" },
+  { name: "Marcus Chen", role: "Restaurant Owner", text: "Renovating our flagship restaurant while keeping operations running was a massive challenge. BuildNest coordinated everything perfectly. The new interior design is absolutely breathtaking.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop" },
+  { name: "Sophia Patel", role: "Residential Client", text: "We trusted them with our dream home, and they delivered beyond measure. Their landscape development team specifically did an incredible job tying the outdoor living space to our architecture.", img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop" },
 ];
 
 // =========================================================================
@@ -242,19 +316,122 @@ const testimonialsData = [
 export default function ConstructionTemplatePage() {
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [activeTab, setActiveTab] = useState("All Projects");
-  const [wishlist, setWishlist] = useState<number[]>([]);
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const recentWorkScrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollRecentWork = (direction: "left" | "right") => {
+    if (recentWorkScrollRef.current) {
+      const scrollAmount = direction === "left" ? -350 : 350;
+      recentWorkScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  const testimonialsScrollRef = useRef<HTMLDivElement | null>(null);
+  const [activeTestimonial, setActiveTestimonial] = useState(1);
+
+  // Calculates which testimonial is visually in the center of the scroll container
+  const handleTestimonialScroll = useCallback(() => {
+    if (!testimonialsScrollRef.current) return;
+    const container = testimonialsScrollRef.current;
+    const scrollCenter = container.scrollLeft + container.clientWidth / 2;
+    
+    let closestIndex = 0;
+    let minDistance = Infinity;
+
+    const children = Array.from(container.children) as HTMLElement[];
+    children.forEach((child, index) => {
+      const childCenter = child.offsetLeft + child.clientWidth / 2;
+      const distance = Math.abs(childCenter - scrollCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    if (activeTestimonial !== closestIndex) {
+      setActiveTestimonial(closestIndex);
+    }
+  }, [activeTestimonial]);
+
+  // ==========================================
+  // ADDED: Contact Form Validation State
+  // ==========================================
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", message: "" });
+  const [formErrors, setFormErrors] = useState({ firstName: "", lastName: "", email: "", message: "" });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let errors = { firstName: "", lastName: "", email: "", message: "" };
+    let isValid = true;
+
+    // Regex to allow ONLY letters (upper and lowercase) and spaces
+    const nameRegex = /^[A-Za-z\s]+$/;
+
+    // First Name Validation
+    if (!formData.firstName.trim()) { 
+      errors.firstName = "First name is required"; 
+      isValid = false; 
+    } else if (!nameRegex.test(formData.firstName)) {
+      errors.firstName = "Only letters are allowed"; 
+      isValid = false;
+    }
+
+    // Last Name Validation
+    if (!formData.lastName.trim()) { 
+      errors.lastName = "Last name is required"; 
+      isValid = false; 
+    } else if (!nameRegex.test(formData.lastName)) {
+      errors.lastName = "Only letters are allowed"; 
+      isValid = false;
+    }
+    
+    // Email Validation
+    if (!formData.email.trim()) {
+      errors.email = "Email is required"; 
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = "Please enter a valid email"; 
+      isValid = false;
+    }
+    
+    // Message Validation
+    if (!formData.message.trim()) { 
+      errors.message = "Message is required"; 
+      isValid = false; 
+    }
+
+    setFormErrors(errors);
+
+    if (isValid) {
+      setIsSubmitted(true);
+      // Simulate an API call
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setFormData({ firstName: "", lastName: "", email: "", message: "" });
+        alert("Message sent successfully!");
+      }, 1500);
+    }
+  };
+  // Ensure active state runs once on mount so initial center card highlights
+  useEffect(() => {
+    const timeout = setTimeout(handleTestimonialScroll, 100);
+    return () => clearTimeout(timeout);
+  }, [handleTestimonialScroll]);
+
+  const scrollTestimonials = (direction: "left" | "right") => {
+    if (testimonialsScrollRef.current) {
+      const scrollAmount = direction === "left" ? -350 : 350;
+      testimonialsScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   const filteredProjects =
     activeTab === "All Projects" ? allProjectsData.slice(0, 3) : allProjectsData.filter((p) => p.category === activeTab);
 
-  const toggleWishlist = (id: number) => {
-    setWishlist((prev) => (prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]));
-  };
-
   return (
-    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900">
+    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
       {/* FLOATING DEVICE TOOLBAR */}
       <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
@@ -330,46 +507,46 @@ export default function ConstructionTemplatePage() {
                       Innovative and functional architectural solutions tailored to your vision and needs.
                     </p>
 
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-4 mb-7 sm:gap-x-4 sm:gap-y-5 sm:mb-10">
-                      <div className="flex items-start gap-2.5 text-[11px] sm:text-xs font-bold text-[#0A1E3D] leading-snug">
-                        <div className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white mt-0.5">
-                          <FaHammer size={11} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-4 mb-7 sm:gap-x-4 sm:gap-y-5 sm:mb-10 w-full">
+                      <div className="flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5">
+                          <FaHammer size={12} />          
                         </div>
                         <span>
                           Interior Design
-                          <br />& Fit-Out
+                          <br className="hidden sm:block" />& Fit-Out
                         </span>
                       </div>
-                      <div className="flex items-start gap-2.5 text-[11px] sm:text-xs font-bold text-[#0A1E3D] leading-snug">
-                        <div className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white mt-0.5">
-                          <FaLeaf size={11} />
+                      <div className="flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5">
+                          <FaLeaf size={12} />
                         </div>
                         <span>
                           Landscape Design
-                          <br />& Development
+                          <br className="hidden sm:block" />& Development
                         </span>
                       </div>
-                      <div className="flex items-start gap-2.5 text-[11px] sm:text-xs font-bold text-[#0A1E3D] leading-snug">
-                        <div className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white mt-0.5">
-                          <FaBuilding size={11} />
+                      <div className="flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5">
+                          <FaBuilding size={12} />
                         </div>
                         <span>
                           Office Construction
-                          <br />& Renovation
+                          <br className="hidden sm:block" />& Renovation
                         </span>
                       </div>
-                      <div className="flex items-start gap-2.5 text-[11px] sm:text-xs font-bold text-[#0A1E3D] leading-snug">
-                        <div className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white mt-0.5">
-                          <FaPenRuler size={11} />
+                      <div className="flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5">
+                          <FaPenRuler size={12} />
                         </div>
                         <span>Architectural Design</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 xs:flex-row xs:flex-wrap xs:items-center sm:gap-4">
+                    <div className="flex flex-col items-start gap-3 xs:flex-row xs:flex-wrap xs:items-center sm:gap-4">
                       <button
                         onClick={() => scrollToSection("const-contact")}
-                        className="bg-[#0A1E3D] text-white px-7 py-3 rounded-md font-bold hover:bg-blue-900 transition-colors shadow-md text-sm text-center w-full xs:w-auto"
+                        className="bg-[#0A1E3D] text-white px-5 py-3 rounded-md font-bold hover:bg-blue-900 transition-colors shadow-md text-sm text-center w-fit"
                       >
                         Free Consultation
                       </button>
@@ -422,7 +599,6 @@ export default function ConstructionTemplatePage() {
                 {filteredProjects.length > 0 ? (
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
                     {filteredProjects.map((p) => {
-                      const isWishlisted = wishlist.includes(p.id);
                       return (
                         <div
                           key={p.id}
@@ -435,13 +611,6 @@ export default function ConstructionTemplatePage() {
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               loading="lazy"
                             />
-                            <button
-                              onClick={() => toggleWishlist(p.id)}
-                              aria-label="Toggle Wishlist"
-                              className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 hover:scale-110 transition-transform"
-                            >
-                              {isWishlisted ? <FaHeart className="text-red-500" size={15} /> : <FaRegHeart className="text-gray-400" size={15} />}
-                            </button>
                           </div>
 
                           <div className="p-5 flex flex-col flex-1 sm:p-6">
@@ -485,18 +654,18 @@ export default function ConstructionTemplatePage() {
             ================================================================= */}
             <section id="const-features" className="w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-20 sm:px-6 lg:px-8">
               <div className="max-w-7xl mx-auto">
-                <div className="bg-[#0A1E3D] text-white py-7 px-5 grid grid-cols-2 gap-5 rounded-t-2xl sm:py-8 sm:px-12 sm:gap-8 lg:grid-cols-4 sm:rounded-t-3xl">
+                <div className="bg-[#0A1E3D] text-white py-7 px-5 grid grid-cols-2 gap-4 rounded-t-2xl sm:py-8 sm:px-12 sm:gap-8 lg:grid-cols-4 sm:rounded-t-3xl">
                   {[
                     { icon: FaClipboardList, num: "27+", label: "Years Industry Experience" },
                     { icon: FaUserGroup, num: "2000+", label: "Happy Customer" },
                     { icon: FaHelmetSafety, num: "150+", label: "Certified Construction" },
                     { icon: FaCertificate, num: "100%", label: "Client Satisfaction Rating" },
                   ].map((s, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <s.icon className="text-3xl text-[#FBBF24] shrink-0 sm:text-4xl" />
-                      <div className="flex flex-col min-w-0">
+                    <div key={i} className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
+                      <s.icon className="text-3xl text-[#FBBF24] shrink-0 sm:text-4xl sm:mt-1" />
+                      <div className="flex flex-col">
                         <span className="text-xl font-black leading-tight sm:text-2xl">{s.num}</span>
-                        <span className="text-[11px] font-bold text-gray-300 leading-snug sm:text-xs">{s.label}</span>
+                        <span className="text-xs font-bold text-gray-300 leading-snug sm:text-xs mt-1 sm:mt-0">{s.label}</span>
                       </div>
                     </div>
                   ))}
@@ -539,7 +708,7 @@ export default function ConstructionTemplatePage() {
                         <p className={`text-sm mb-7 leading-relaxed flex-1 sm:mb-10 ${s.isDark ? "text-gray-300" : "text-gray-600"}`}>{s.desc}</p>
                         <button
                           onClick={() => scrollToSection("const-contact")}
-                          className={`px-5 py-2.5 rounded-full font-bold text-xs transition-colors border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm ${
+                          className={`px-3 py-2 rounded-full font-bold text-xs transition-colors border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm ${
                             s.isDark
                               ? "bg-transparent text-white border-white/30 hover:bg-white hover:text-[#0A1E3D]"
                               : "bg-transparent text-[#0A1E3D] border-[#0A1E3D]/30 hover:bg-[#0A1E3D] hover:text-white"
@@ -615,45 +784,53 @@ export default function ConstructionTemplatePage() {
 
                 <h2 className="font-black text-[#0A1E3D] text-center mb-8 text-2xl sm:text-4xl sm:mb-12">Explore Our Latest Projects</h2>
 
-                <div className="flex flex-col gap-6 mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:mb-12">
-                  <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
+                <div className="flex flex-col gap-6 mb-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-8 sm:mb-12 w-full">
+                  <p className="text-gray-500 text-sm leading-relaxed max-w-sm w-full sm:flex-1 sm:min-w-[250px]">
                     Stay ahead of potential issues with regular maintenance that reduces downtime and avoids costly repairs.
                   </p>
 
-                  <div className="hidden md:flex flex-1 items-center justify-center px-8">
+                  <div className="hidden md:flex flex-1 items-center justify-center px-8 min-w-[100px]">
                     <div className="w-full flex items-center">
                       <div className="h-[1px] bg-gray-400 flex-1" />
                       <FaArrowRight className="text-gray-400 -ml-1 shrink-0" size={12} />
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 sm:justify-end sm:shrink-0">
+                  <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end sm:shrink-0 w-full sm:w-auto">
                     <div className="flex items-center gap-3">
                       <button
                         aria-label="Previous"
-                        className="w-10 h-10 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 transition shadow-md shrink-0"
+                        onClick={() => scrollRecentWork("left")}
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0"
                       >
-                        <FaArrowLeft size={14} />
+                        <FaArrowLeft size={16} />
                       </button>
                       <button
                         aria-label="Next"
-                        className="w-10 h-10 rounded-full bg-white text-[#0A1E3D] border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition shadow-sm shrink-0"
+                        onClick={() => scrollRecentWork("right")}
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0"
                       >
-                        <FaArrowRight size={14} />
+                        <FaArrowRight size={16} />
                       </button>
                     </div>
                     <button
                       onClick={() => scrollToSection("const-projects")}
-                      className="bg-[#0A1E3D] text-white px-5 py-2.5 rounded-full font-bold text-xs shadow-md hover:bg-blue-900 transition-colors whitespace-nowrap sm:px-8 sm:py-3 sm:text-sm"
+                      className="bg-[#0A1E3D] text-white px-5 py-2.5 rounded-full font-bold text-xs shadow-md hover:bg-blue-900 active:scale-95 transition-all whitespace-nowrap sm:px-8 sm:py-3 sm:text-sm"
                     >
                       Explore Now...
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+                <div 
+                  ref={recentWorkScrollRef}
+                  className="flex overflow-x-auto gap-4 sm:gap-6 pb-8 snap-x snap-mandatory relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                >
                   {recentProjects.map((img, i) => (
-                    <div key={i} className="rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-[450px] sm:rounded-[2rem]">
+                    <div 
+                      key={i} 
+                      className="shrink-0 snap-center w-[85%] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-[450px] sm:rounded-[2rem]"
+                    >
                       <img src={img} alt="Recent Project" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
                     </div>
                   ))}
@@ -749,12 +926,20 @@ export default function ConstructionTemplatePage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-3 lg:items-stretch mb-10 pt-6 sm:mb-12 sm:pt-8">
-                  {testimonialsData.map((t, i) => (
+                <div 
+                  ref={testimonialsScrollRef}
+                  onScroll={handleTestimonialScroll}
+                  className="flex overflow-x-auto gap-6 sm:gap-8 pb-12 pt-12 mb-4 snap-x snap-mandatory relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                >
+                  {testimonialsData.map((t, i) => {
+                    const isHighlighted = i === activeTestimonial;
+                    return (
                     <div
                       key={i}
-                      className={`p-6 rounded-2xl shadow-xl border relative flex flex-col justify-between sm:p-8 ${
-                        t.isDark ? "bg-[#0A1E3D] text-white border-[#0A1E3D] lg:scale-105 lg:z-10" : "bg-[#F4FAFF] border-white/50 text-[#0A1E3D]"
+                      className={`shrink-0 snap-center w-[85%] sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-21px)] p-6 rounded-2xl shadow-xl border relative flex flex-col justify-between sm:p-8 transition-all duration-500 ${
+                        isHighlighted 
+                          ? "bg-[#0A1E3D] text-white border-[#0A1E3D] scale-110 z-10" 
+                          : "bg-[#F4FAFF] border-white/50 text-[#0A1E3D] scale-95 opacity-70"
                       }`}
                     >
                       <div className="flex flex-col flex-1">
@@ -765,24 +950,32 @@ export default function ConstructionTemplatePage() {
                           <FaStar />
                           <FaStar />
                         </div>
-                        <p className={`text-sm leading-relaxed mb-10 flex-1 ${t.isDark ? "text-gray-300" : "text-gray-600"}`}>&quot;{t.text}&quot;</p>
+                        <p className={`text-sm leading-relaxed mb-10 flex-1 ${isHighlighted ? "text-gray-300" : "text-gray-600"}`}>&quot;{t.text}&quot;</p>
                       </div>
 
-                      <div className={`border-t flex flex-col items-center text-center relative pt-8 ${t.isDark ? "border-gray-600" : "border-gray-300"}`}>
+                      <div className={`border-t flex flex-col items-center text-center relative pt-8 ${isHighlighted ? "border-gray-600" : "border-gray-300"}`}>
                         <img src={t.img} alt={t.name} className="w-16 h-16 rounded-full object-cover shadow-md absolute -top-8 bg-white" />
                         <p className="font-black text-base mb-1">{t.name}</p>
                         <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">{t.role}</p>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
 
                 <div className="flex justify-center gap-3">
-                  <button aria-label="Previous Testimonial" className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 transition shadow-md">
-                    <FaArrowLeft />
+                  <button 
+                    aria-label="Previous Testimonial" 
+                    onClick={() => scrollTestimonials("left")}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0"
+                  >
+                    <FaArrowLeft size={16} />
                   </button>
-                  <button aria-label="Next Testimonial" className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white text-[#0A1E3D] border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition shadow-sm">
-                    <FaArrowRight />
+                  <button 
+                    aria-label="Next Testimonial" 
+                    onClick={() => scrollTestimonials("right")}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0"
+                  >
+                    <FaArrowRight size={16} />
                   </button>
                 </div>
               </div>
@@ -872,51 +1065,69 @@ export default function ConstructionTemplatePage() {
                 </div>
 
                 <div className="w-full md:w-1/2 bg-[#EAF2FA] p-5 rounded-2xl border border-white shadow-sm h-fit sm:p-8 md:p-12 sm:rounded-3xl">
-                  <form className="flex flex-col gap-4 sm:gap-6" onSubmit={(e) => e.preventDefault()}>
+                  <form className="flex flex-col gap-4 sm:gap-6" onSubmit={handleContactSubmit}>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                       <label className="flex flex-col">
                         <span className="text-sm font-bold text-[#0A1E3D] mb-2">First Name</span>
                         <input
                           type="text"
-                          className="w-full p-3.5 sm:p-4 rounded-xl border border-transparent bg-[#C6D4E1] focus:bg-white focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          className={`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.firstName ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500`}
                           placeholder="Enter your first name"
                         />
+                        {formErrors.firstName && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.firstName}</span>}
                       </label>
                       <label className="flex flex-col">
                         <span className="text-sm font-bold text-[#0A1E3D] mb-2">Last Name</span>
                         <input
                           type="text"
-                          className="w-full p-3.5 sm:p-4 rounded-xl border border-transparent bg-[#C6D4E1] focus:bg-white focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          className={`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.lastName ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500`}
                           placeholder="Enter your last name"
                         />
+                        {formErrors.lastName && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.lastName}</span>}
                       </label>
                     </div>
                     <label className="flex flex-col">
                       <span className="text-sm font-bold text-[#0A1E3D] mb-2">Email</span>
                       <input
                         type="email"
-                        className="w-full p-3.5 sm:p-4 rounded-xl border border-transparent bg-[#C6D4E1] focus:bg-white focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className={`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500`}
                         placeholder="Enter your email address"
                       />
+                      {formErrors.email && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.email}</span>}
                     </label>
                     <label className="flex flex-col">
                       <span className="text-sm font-bold text-[#0A1E3D] mb-2">How can we help you?</span>
                       <textarea
                         rows={5}
-                        className="w-full p-3.5 sm:p-4 rounded-xl border border-transparent bg-[#C6D4E1] focus:bg-white focus:border-blue-400 focus:ring-0 text-sm resize-none shadow-sm transition-colors placeholder:text-gray-500"
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        className={`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.message ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm resize-none shadow-sm transition-colors placeholder:text-gray-500`}
                         placeholder="Enter your message"
                       ></textarea>
+                      {formErrors.message && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.message}</span>}
                     </label>
                     <div className="flex justify-end pt-1 sm:pt-2">
-                      <button className="bg-[#0A1E3D] text-white px-6 py-3 rounded-full font-bold flex items-center justify-center gap-3 hover:bg-blue-900 transition-colors shadow-lg text-sm w-full sm:w-auto sm:px-8 sm:py-3.5 whitespace-nowrap">
-                        Send Message{" "}
-                        <div className="bg-white/20 p-1 rounded-full">
-                          <FaArrowRight size={10} />
-                        </div>
+                      <button 
+                        type="submit"
+                        disabled={isSubmitted}
+                        className={`text-white px-6 py-3 rounded-full font-bold flex items-center justify-center gap-3 transition-colors shadow-lg text-sm w-full sm:w-auto sm:px-8 sm:py-3.5 whitespace-nowrap ${isSubmitted ? 'bg-green-600' : 'bg-[#0A1E3D] hover:bg-blue-900'}`}
+                      >
+                        {isSubmitted ? "Sending..." : "Send Message"} 
+                        {!isSubmitted && (
+                          <div className="bg-white/20 p-1 rounded-full">
+                            <FaArrowRight size={10} />
+                          </div>
+                        )}
                       </button>
                     </div>
-                  </form>
-                </div>
+                  </form>               
+                  </div>
               </div>
             </section>
 
