@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import CreateProjectFlow from "@/components/CreateProjectFlow";
 import { useEffect, useMemo, useState } from "react";
-import { motion, type TargetAndTransition, type Variants, AnimatePresence } from "framer-motion";
+import { motion, type TargetAndTransition, AnimatePresence } from "framer-motion";
 import {
   FaArrowRight,
   FaCartShopping,
@@ -31,6 +31,7 @@ import {
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6";
+import { fadeUp, scaleIn, staggerContainer } from "@/lib/motion";
 import { assetPath } from "@/lib/paths";
 type TemplateCategory = "portfolio" | "blog" | "ecommerce" | "business";
 
@@ -221,21 +222,6 @@ const steps = [
   ["Drag & drop thousands of design features.", "Add text, galleries, videos, vector art, and more."],
 ];
 
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
-};
-
-const revealContainer: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } },
-};
-
-const cardReveal: Variants = {
-  hidden: { opacity: 0, y: 22 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: "easeOut" } },
-};
-
 const softHover: TargetAndTransition = {
   y: -5,
   scale: 1.015,
@@ -294,7 +280,7 @@ function LandingContactSection() {
   return (
     <motion.section id="contact" className="mx-auto my-12 max-w-7xl px-4 md:my-24 md:px-8" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
       <SectionHeading>Contact</SectionHeading>
-      <motion.div className="flex flex-col items-start gap-10 rounded-[2rem] bg-[#E6EFF1] p-6 shadow-sm lg:flex-row lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={revealContainer}>
+      <motion.div className="flex flex-col items-start gap-10 rounded-[2rem] bg-[#E6EFF1] p-6 shadow-sm lg:flex-row lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={staggerContainer}>
         <motion.div className="flex w-full flex-col justify-center gap-8 lg:w-5/12" variants={fadeUp}>
           <div className="space-y-4">
             <div className="flex items-center gap-2 font-black text-[#06224C]">
@@ -682,7 +668,7 @@ export default function Home() {
         {/* 1. MOBILE VIEW: Static Image Only (Hidden on Desktop) */}
 <motion.div
           className="relative min-h-[480px] overflow-hidden rounded-[2rem] bg-[#fde2e4] md:hidden"
-          variants={revealContainer}
+          variants={staggerContainer}
           initial="hidden"
           animate="visible"
 >
@@ -713,7 +699,7 @@ export default function Home() {
         {/* 2. DESKTOP VIEW: Carousel Effect (Hidden on Mobile) */}
 <motion.div
           className="relative hidden md:flex min-h-[540px] lg:min-h-[600px] w-full overflow-hidden rounded-[3rem] shadow-2xl"
-          variants={revealContainer}
+          variants={staggerContainer}
           initial="hidden"
           animate="visible"
 >
@@ -803,7 +789,7 @@ export default function Home() {
       <motion.div
         id="about"
         className="mt-16 md:mt-24 flex flex-col lg:flex-row gap-8 md:gap-12 items-center max-w-7xl mx-auto px-4 md:px-8"
-        variants={revealContainer}
+        variants={staggerContainer}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.25 }}
@@ -817,7 +803,7 @@ export default function Home() {
           />
         </motion.div>
 
-        <motion.div className="w-full lg:w-1/2 space-y-4 md:space-y-6 text-left" variants={revealContainer}>
+        <motion.div className="w-full lg:w-1/2 space-y-4 md:space-y-6 text-left" variants={staggerContainer}>
           {/* Added About Us box and Blue Line */}
           <motion.div className="" variants={fadeUp}>
              <span className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
@@ -888,9 +874,9 @@ export default function Home() {
       <section id="categories" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Categories</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
-        <motion.div key={`categories-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+        <motion.div key={`categories-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
           {visibleCategories.map((category) => (
-            <motion.article key={category.title} className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl" variants={cardReveal} whileHover={softHover}>
+            <motion.article key={category.title} className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl" variants={scaleIn} whileHover={softHover}>
               <div className="h-44 overflow-hidden md:h-52">
                 <img src={assetPath(category.image)} alt={category.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
               </div>
@@ -914,12 +900,12 @@ export default function Home() {
       <section className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Top Selling This Week</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
-        <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+        <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
           {visibleTopProducts.map((product) => {
             const isWishlisted = wishlistItems.some((item) => item.title === product.title);
 
             return (
-            <motion.article key={product.title} className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={cardReveal} whileHover={softHover}>
+            <motion.article key={product.title} className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={scaleIn} whileHover={softHover}>
               <div className="mb-5 h-52 overflow-hidden rounded-[1.5rem] bg-gray-50">
                 <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
               </div>
@@ -994,9 +980,9 @@ export default function Home() {
           </div>
 
           {/* Added key to force re-render/re-animation when state changes */}
-          <motion.div key={`templates-${activeFilter}-${submittedSearch}`} className="grid grid-cols-1 gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.12 }}>
+          <motion.div key={`templates-${activeFilter}-${submittedSearch}`} className="grid grid-cols-1 gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.12 }}>
             {visibleTemplates.map((template) => (
-              <motion.article key={template.title} className="group" variants={cardReveal} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
+              <motion.article key={template.title} className="group" variants={scaleIn} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
                 <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-md">
                   <img src={assetPath(template.image)} alt={template.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                   <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase ${template.badge === "Free" ? "bg-green-500 text-white" : "bg-yellow-400 text-[#06224C]"}`}>
@@ -1051,7 +1037,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
-        <motion.div className="flex flex-col items-center rounded-[1.5rem] bg-gradient-to-b bg-[#082A5A] to-[#002B5C] p-8 text-center text-white shadow-2xl md:rounded-[2.5rem] md:p-16" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+        <motion.div className="flex flex-col items-center rounded-[1.5rem] bg-gradient-to-b bg-[#082A5A] to-[#002B5C] p-8 text-center text-white shadow-2xl md:rounded-[2.5rem] md:p-16" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
           <motion.div className="mb-10 max-w-4xl" variants={fadeUp}>
             <motion.h2 className="mb-4 text-3xl font-black leading-tight text-white md:text-6xl" variants={fadeUp}>
               Step into the digital world with confidence
@@ -1060,13 +1046,13 @@ export default function Home() {
               Join millions turning ideas into reality and start building your own success story today
             </motion.p>
           </motion.div>
-          <motion.div className="mb-10 grid w-full max-w-5xl grid-cols-1 gap-6 sm:grid-cols-3" variants={revealContainer}>
+          <motion.div className="mb-10 grid w-full max-w-5xl grid-cols-1 gap-6 sm:grid-cols-3" variants={staggerContainer}>
             {[
               ["500K +", "users"],
               ["12 +", "countries"],
               ["10 +", "sites created daily"],
             ].map(([value, label]) => (
-              <motion.div key={label} className="rounded-2xl bg-white p-6 shadow-lg transition hover:scale-105 md:p-8" variants={cardReveal} whileHover={{ y: -5, scale: 1.04, transition: { duration: 0.22 } }}>
+              <motion.div key={label} className="rounded-2xl bg-white p-6 shadow-lg transition hover:scale-105 md:p-8" variants={scaleIn} whileHover={{ y: -5, scale: 1.04, transition: { duration: 0.22 } }}>
                 <p className="text-2xl font-black text-gray-800 md:text-4xl">{value}</p>
                 <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-gray-500 md:text-xs">{label}</p>
               </motion.div>
@@ -1076,7 +1062,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
-        <motion.div className="relative flex flex-col gap-10 overflow-hidden rounded-[2rem] border-l-4 border-blue-600 bg-[#E6EFF1] p-8 md:flex-row md:gap-16 md:rounded-[3rem] md:p-16" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.22 }}>
+        <motion.div className="relative flex flex-col gap-10 overflow-hidden rounded-[2rem] border-l-4 border-blue-600 bg-[#E6EFF1] p-8 md:flex-row md:gap-16 md:rounded-[3rem] md:p-16" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.22 }}>
           <motion.div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-blue-300/30 blur-3xl" animate={{ opacity: [0.35, 0.65, 0.35], scale: [1, 1.08, 1] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }} />
           <motion.div
             className="flex w-full flex-col items-center gap-6 text-center md:w-1/2"
@@ -1098,9 +1084,9 @@ export default function Home() {
               Get Started
             </Link>
           </motion.div>
-          <motion.div className="flex w-full flex-col gap-8 text-left md:w-1/2" variants={revealContainer}>
+          <motion.div className="flex w-full flex-col gap-8 text-left md:w-1/2" variants={staggerContainer}>
             {steps.map(([title, body], index) => (
-              <motion.div key={title} className="flex flex-col gap-2" variants={cardReveal}>
+              <motion.div key={title} className="flex flex-col gap-2" variants={scaleIn}>
                 <p className="text-lg font-black leading-snug text-gray-900 md:text-xl">
                   <span className="text-blue-600">{index + 1}.</span> {title}
                 </p>
@@ -1112,7 +1098,7 @@ export default function Home() {
       </section>
 
       <section id="features" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
-        <motion.div className="relative flex flex-col gap-8 overflow-hidden rounded-[2rem] border-l-4 border-blue-500 bg-[#E6EFF1] p-4 shadow-sm sm:p-6 lg:flex-row lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.18 }}>
+        <motion.div className="relative flex flex-col gap-8 overflow-hidden rounded-[2rem] border-l-4 border-blue-500 bg-[#E6EFF1] p-4 shadow-sm sm:p-6 lg:flex-row lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.18 }}>
           <motion.div className="pointer-events-none absolute -bottom-20 left-1/4 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" animate={{ opacity: [0.25, 0.55, 0.25], scale: [1, 1.1, 1] }} transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }} />
           <motion.div
             className="w-full lg:w-1/2"
@@ -1133,11 +1119,11 @@ export default function Home() {
             </motion.div>
           </motion.div>
 
-          <motion.div className="flex w-full flex-col justify-center gap-4 lg:w-1/2" variants={revealContainer}>
+          <motion.div className="flex w-full flex-col justify-center gap-4 lg:w-1/2" variants={staggerContainer}>
             {features.map((item, index) => {
               const isActive = activeFeature === index;
               return (
-                <motion.div key={item.title} className="rounded-xl border border-transparent transition hover:bg-white/40 hover:border-blue-300/40 hover:shadow-lg" variants={cardReveal} whileHover={{ y: -3, transition: { duration: 0.2 } }}>
+                <motion.div key={item.title} className="rounded-xl border border-transparent transition hover:bg-white/40 hover:border-blue-300/40 hover:shadow-lg" variants={scaleIn} whileHover={{ y: -3, transition: { duration: 0.2 } }}>
                   <button type="button" onClick={() => setActiveFeature(index)} className="flex w-full items-start justify-between gap-3 rounded-xl p-4 text-left">
                     <h3 className="flex items-start gap-3 text-lg font-black text-[#06224C] md:text-2xl">
                       <span className="text-blue-600">{index + 1}.</span>
@@ -1159,15 +1145,15 @@ export default function Home() {
 
       <section className="mx-auto my-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Drag & drop website builder FAQ</SectionHeading>
-        <motion.div className="flex flex-col items-center gap-10 rounded-[2rem] border-l-4 border-blue-500 bg-[#E6EFF1] p-6 shadow-sm lg:flex-row lg:items-start lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+        <motion.div className="flex flex-col items-center gap-10 rounded-[2rem] border-l-4 border-blue-500 bg-[#E6EFF1] p-6 shadow-sm lg:flex-row lg:items-start lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
           <motion.div className="flex w-full justify-center lg:w-2/5" variants={fadeUp}>
             <img src={assetPath("/landing-optimized/faqq.webp")} alt="FAQ illustration" className="w-full max-w-[280px] object-contain lg:max-w-md" loading="lazy" />
           </motion.div>
-          <motion.div className="flex w-full flex-col gap-4 lg:w-3/5" variants={revealContainer}>
+          <motion.div className="flex w-full flex-col gap-4 lg:w-3/5" variants={staggerContainer}>
             {faqs.map((faq, index) => {
               const isOpen = openFaq === index;
               return (
-                <motion.div key={faq.question} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm" variants={cardReveal} whileHover={{ y: -3, boxShadow: "0 18px 40px rgba(6,34,76,0.10)", transition: { duration: 0.2 } }}>
+                <motion.div key={faq.question} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm" variants={scaleIn} whileHover={{ y: -3, boxShadow: "0 18px 40px rgba(6,34,76,0.10)", transition: { duration: 0.2 } }}>
                   <button type="button" onClick={() => setOpenFaq(isOpen ? -1 : index)} className="flex w-full items-start justify-between gap-4 p-5 text-left transition hover:bg-gray-50 md:p-6">
                     <h3 className="text-sm font-bold leading-snug text-[#06224C] md:text-base">{faq.question}</h3>
                     {isOpen ? <FaMinus className="mt-1 flex-shrink-0 text-[#06224C]" /> : <FaPlus className="mt-1 flex-shrink-0 text-[#06224C]" />}
@@ -1181,7 +1167,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto my-12 max-w-7xl bg-[#FFF1F1] px-4 py-12 md:px-8 md:py-20">
-        <motion.div className="overflow-hidden rounded-[2.5rem] bg-[#082A5A] p-8 text-center shadow-[0_24px_70px_rgba(8,42,90,0.20)] md:rounded-[3rem] md:p-16" variants={revealContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }}>
+        <motion.div className="overflow-hidden rounded-[2.5rem] bg-[#082A5A] p-8 text-center shadow-[0_24px_70px_rgba(8,42,90,0.20)] md:rounded-[3rem] md:p-16" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }}>
           <h2 className="mb-3 font-serif text-2xl font-black leading-tight text-white md:text-5xl">
             Drag & drop your vision to life
           </h2>

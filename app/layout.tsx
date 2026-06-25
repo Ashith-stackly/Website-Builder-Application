@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Lora } from "next/font/google";
 import NavBarShell from "@/components/NavBarShell";
 import RouteLoadingOverlay from "@/components/RouteLoadingOverlay";
+import ScrollToTop from "@/components/ScrollToTop";
 import "./globals.css";
 
 const lora = Lora({
@@ -48,6 +49,7 @@ export default function RootLayout({
         <div className="stackly-site-layout">
           <RouteLoadingOverlay />
           <NavBarShell />
+          <ScrollToTop />
           {children}
         </div>
       </body>
