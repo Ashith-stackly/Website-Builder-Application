@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from 'react';
 import Footer from '@/components/Footer';
-import { motion, type Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { fadeUp, slideIn, staggerContainer } from '@/lib/motion';
 import {
   FaFacebookF,
   FaEnvelope,
@@ -16,21 +17,6 @@ import {
   FaYoutube,
 } from 'react-icons/fa6';
 
-const revealContainer: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
-};
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" } },
-};
-
-const slideIn: Variants = {
-  hidden: { opacity: 0, x: 36 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.65, ease: "easeOut" } },
-};
- 
 const ContactSection = () => {
   // Form State
   const [formData, setFormData] = useState({
@@ -93,7 +79,7 @@ const ContactSection = () => {
     <motion.section
       id="contact"
       className="relative w-full overflow-hidden px-2 py-8 sm:px-8 md:py-14 lg:px-14"
-      variants={revealContainer}
+      variants={staggerContainer}
       initial="hidden"
       animate="visible"
     >
@@ -105,7 +91,7 @@ const ContactSection = () => {
       <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-10 lg:flex-row lg:gap-16">
  
         {/* LEFT COLUMN: Contact Information */}
-        <motion.div className="flex w-full flex-col justify-center space-y-8 lg:w-5/12" variants={revealContainer}>
+        <motion.div className="flex w-full flex-col justify-center space-y-8 lg:w-5/12" variants={staggerContainer}>
           <motion.div className="space-y-4" variants={fadeUp}>
             <div className="flex items-center gap-2 text-[#06224C] font-black">
               <FaPhoneVolume className="text-xl" aria-hidden="true" />
@@ -119,7 +105,7 @@ const ContactSection = () => {
             </p>
           </motion.div>
  
-          <motion.div className="space-y-6" variants={revealContainer}>
+          <motion.div className="space-y-6" variants={staggerContainer}>
             {/* Email Detail */}
             <motion.div className="flex items-center gap-4" variants={fadeUp} whileHover={{ x: 6 }}>
               <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0">
