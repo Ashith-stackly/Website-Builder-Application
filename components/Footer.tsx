@@ -239,79 +239,42 @@ export default function Footer() {
     <>
       <motion.footer
         id="contact"
-        className="stackly-footer relative mt-auto w-full overflow-hidden bg-[#071936] py-10 md:py-12"
+        className="@container stackly-footer relative mt-auto w-full overflow-hidden bg-[#0A1E3D] text-white"
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.12 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent" />
-        <div className="pointer-events-none absolute -right-24 top-8 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
-        <div className="pointer-events-none absolute -left-20 bottom-8 h-56 w-56 rounded-full bg-emerald-300/10 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-8 flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.20)] backdrop-blur md:flex-row md:items-center md:justify-between md:p-7">
-            <div className="w-full md:w-1/2">
-              <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-white">Subscribe to our Updates</h3>
-              <p className="mb-4 max-w-md text-sm leading-relaxed text-white/60">Get template drops, builder updates, and product notes in your inbox.</p>
-              <form onSubmit={handleSubscribe} className="w-full max-w-md" aria-label="Subscribe to updates form" noValidate>
-                <div className="flex w-full items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300">
-                  <label className="relative flex flex-grow items-center">
-                    <span className="sr-only">Email address</span>
-                    <FaEnvelope className="absolute left-4 text-gray-400" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(event) => {
-                        setEmail(event.target.value);
-                        if (fieldMessage) setFieldMessage(null);
-                      }}
-                      placeholder="Your email"
-                      className="w-full min-w-0 bg-transparent py-2.5 pl-11 pr-2 text-sm text-gray-800 focus:outline-none"
-                      aria-invalid={fieldMessage?.type === "error"}
-                      aria-describedby={fieldMessage ? "footer-email-message" : undefined}
-                    />
-                  </label>
-                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95">
-                    <FaPaperPlane className="text-sm" />
-                  </button>
-                </div>
-                {fieldMessage && (
-                  <p
-                    id="footer-email-message"
-                    role={fieldMessage.type === "error" ? "alert" : "status"}
-                    className={`mt-2 text-xs font-semibold ${
-                      fieldMessage.type === "error" ? "text-red-300" : "text-emerald-300"
-                    }`}
-                  >
-                    {fieldMessage.text}
-                  </p>
-                )}
-              </form>
-            </div>
-
-            <div className="flex w-full flex-col justify-center md:w-auto md:self-stretch md:text-right">
-              <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-white">Headquarters</h3>
-              <p className="text-sm leading-relaxed text-white/70">
-                MMR Complex, Salem,<br />Tamil Nadu 636008
-              </p>
-            </div>
-          </div>
-
+        <div className="mx-auto max-w-7xl px-4 py-12 @md:px-8 @md:py-16">
           <motion.div
-            className="mb-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4"
+            className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-5"
             variants={footerReveal}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.18 }}
           >
+            {/* Column 1: Brand */}
+            <motion.div className="flex flex-col items-start" variants={footerItem}>
+              <Link href="../landing" className="mb-4 inline-flex items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105">
+                <img src={assetPath("/stackly-logo.webp")} alt="Stackly Logo" className="stackly-footer-logo h-5 w-auto object-contain" />
+              </Link>
+              <p className="mb-4 max-w-[215px] text-[11px] font-bold uppercase leading-relaxed tracking-tight text-white/70">
+                The <span className="text-blue-400">NO-CODE</span> website builder for everyone. Powered by AWS.
+              </p>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-wider">Headquarters</h3>
+              <p className="text-xs leading-relaxed text-white/60">
+                MMR Complex, Salem,<br />Tamil Nadu 636008
+              </p>
+            </motion.div>
+
+            {/* Columns 2-4: Links */}
             {footerGroups.map(([title, links]) => (
               <motion.div key={title} variants={footerItem}>
-                <h4 className="mb-4 text-sm font-black uppercase tracking-wider text-white">{title}</h4>
-                <ul className="space-y-3 text-sm font-medium text-white/70">
+                <h4 className="mb-4 text-xs font-black uppercase tracking-wider">{title}</h4>
+                <ul className="space-y-2.5 text-sm text-white/60">
                   {links.map(([label, key]) => (
                     <li key={key}>
-                      <button type="button" onClick={() => openFooterItem(key)} className="stackly-footer-link text-left focus:text-blue-300 focus:outline-none">
+                      <button type="button" onClick={() => openFooterItem(key)} className="stackly-footer-link transition hover:text-white focus:text-white focus:outline-none text-left">
                         {label}
                       </button>
                     </li>
@@ -320,49 +283,70 @@ export default function Footer() {
               </motion.div>
             ))}
 
-            <motion.div className="col-span-2 mt-2 flex flex-col items-start md:col-span-1 md:mt-0" variants={footerItem}>
-              <Link href="../landing" className="mb-4 inline-flex aspect-[2/1] min-w-[90px] items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105">
-                <img src={assetPath("/stackly-logo.webp")} alt="Stackly Logo" className="stackly-footer-logo h-5 w-auto object-contain" />
-              </Link>
-              <p className="mb-2 max-w-[215px] text-[11px] font-bold uppercase leading-relaxed tracking-tight text-white/70">
-                The <span className="text-blue-400">NO-CODE</span> website builder for everyone. Powered by AWS.
-              </p>
-              <p className="text-[10px] font-medium uppercase text-white/40">Infrastructure built by the Stackly team.</p>
+            {/* Column 5: Newsletter */}
+            <motion.div variants={footerItem}>
+              <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Newsletter</h4>
+              <p className="mb-4 text-sm text-white/60">Get template drops, builder updates, and product notes in your inbox.</p>
+              <form onSubmit={handleSubscribe} className="flex flex-col gap-2" noValidate>
+                <div className="relative flex w-full min-w-0 items-center rounded-full bg-white ring-1 ring-gray-200 transition-all duration-300 hover:ring-2 hover:ring-[#1E56E5]/50 focus-within:ring-2 focus-within:ring-[#1E56E5] focus-within:hover:ring-[#1E56E5]">
+                  <div className="pointer-events-none absolute left-4 text-gray-400 transition-colors duration-300 group-focus-within:text-gray-300">
+                    <FaEnvelope size={16} />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (fieldMessage) setFieldMessage(null);
+                    }}
+                    placeholder="Your email"
+                    className="min-w-0 w-full rounded-full bg-transparent py-3.5 pl-11 pr-14 text-sm text-[#0A1E3D] placeholder-[#0A1E3D] outline-none transition-colors duration-300 hover:text-gray-500 hover:placeholder-gray-400 focus:text-gray-500 focus:placeholder-gray-400"
+                    aria-invalid={fieldMessage?.type === "error"}
+                    aria-describedby={fieldMessage ? "footer-email-message" : undefined}
+                  />
+                  <button
+                    type="submit"
+                    aria-label="Subscribe"
+                    className="absolute right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1E56E5] hover:shadow-lg active:scale-95"
+                  >
+                    <FaPaperPlane size={14} />
+                  </button>
+                </div>
+                {fieldMessage && (
+                  <p
+                    id="footer-email-message"
+                    role={fieldMessage.type === "error" ? "alert" : "status"}
+                    className={`mt-1 rounded-lg p-2 text-xs font-medium ${
+                      fieldMessage.type === "error" ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"
+                    }`}
+                  >
+                    {fieldMessage.text}
+                  </p>
+                )}
+              </form>
             </motion.div>
           </motion.div>
 
-          <div className="border-t border-white/10 pt-5">
-            <div className="flex flex-col items-center gap-6 lg:flex-row lg:justify-between">
-              <motion.div
-                className="flex w-full flex-wrap items-center justify-center gap-2 lg:w-auto lg:justify-start"
-                variants={socialReveal}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-              >
-                {socials.map(([label, Icon, href, hoverClass]) => (
-                  <motion.a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} variants={socialItem} whileHover={{ y: -4, scale: 1.15, transition: { duration: 0.18 } }} className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#0A1E3D] shadow-sm transition-colors duration-300 hover:text-white hover:shadow-xl md:h-8 md:w-8 ${hoverClass}`}>
-                    <Icon className="text-xs md:text-sm" />
-                  </motion.a>
-                ))}
-              </motion.div>
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 @sm:flex-row">
+            <p className="text-xs text-white/50">Copyright 2018-2026 TheStackly.com INC. All rights reserved.</p>
+            
+            <motion.div
+              className="flex items-center gap-4"
+              variants={socialReveal}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {socials.map(([label, Icon, href, hoverClass]) => (
+                <motion.a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} variants={socialItem} whileHover={{ y: -2, scale: 1.1 }} className={`text-white/60 transition hover:text-white`}>
+                  <Icon className="text-sm" />
+                </motion.a>
+              ))}
+            </motion.div>
 
-              <div className="flex w-full flex-col items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50 lg:w-auto lg:flex-row lg:gap-6">
-                <button type="button" onClick={() => setActiveModal("terms")} className="stackly-footer-link whitespace-nowrap">Terms of Service</button>
-                <button type="button" onClick={() => setActiveModal("privacy")} className="stackly-footer-link whitespace-nowrap">Privacy Policy</button>
-                <span
-                  className="w-full max-w-full whitespace-normal break-words text-center px-4 text-[9px] md:text-[10px] lg:w-auto lg:px-0"
-                  style={{
-                    width: "100%",
-                    maxWidth: "100%",
-                    whiteSpace: "normal",
-                    overflowWrap: "break-word",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  Copyright 2018-2026 TheStackly.com INC
-                </span>
-              </div>
+            <div className="flex gap-6 text-xs text-white/50">
+              <button type="button" onClick={() => setActiveModal("terms")} className="transition hover:text-white">Terms of Use</button>
+              <button type="button" onClick={() => setActiveModal("privacy")} className="transition hover:text-white">Privacy Policy</button>
             </div>
           </div>
         </div>

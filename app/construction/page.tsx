@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
-import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
+import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaPaperPlane } from "react-icons/fa";
 import {
   FaBars,
   FaRightFromBracket,
@@ -26,6 +26,7 @@ import {
   FaHelmetSafety,
   FaCertificate,
 } from "react-icons/fa6";
+import { motion, AnimatePresence } from "framer-motion";
 
 const START_BUILDING_HREF = "/signup";
 
@@ -388,6 +389,22 @@ const testimonialsData = [
 // =========================================================================
 export default function ConstructionTemplatePage() {
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [email, setEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const handleNewsletter = (e: FormEvent) => {
+    e.preventDefault();
+    if (!isEmailValid) return;
+    setNewsletterStatus("loading");
+    setTimeout(() => {
+      setNewsletterStatus("success");
+      setEmail("");
+      setTimeout(() => setNewsletterStatus("idle"), 5000);
+    }, 1500);
+  };
   const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
   const [activeTab, setActiveTab] = useState("All Projects");
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
@@ -545,10 +562,10 @@ export default function ConstructionTemplatePage() {
         <div
           ref={canvasScrollRef}
           className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto ${deviceMode === "mobile"
-              ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
-              : deviceMode === "tablet"
-                ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
-                : "w-full min-h-screen"
+            ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "tablet"
+              ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+              : "w-full min-h-screen"
             }`}
         >
           <div className="w-full overflow-x-hidden bg-[#FDF8F5]">
@@ -780,8 +797,8 @@ export default function ConstructionTemplatePage() {
                         <button
                           onClick={() => scrollToSection("const-contact")}
                           className={r(`px-3 py-2 rounded-full font-bold text-xs transition-colors border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm ${s.isDark
-                              ? "bg-transparent text-white border-white/30 hover:bg-white hover:text-[#0A1E3D]"
-                              : "bg-transparent text-[#0A1E3D] border-[#0A1E3D]/30 hover:bg-[#0A1E3D] hover:text-white"
+                            ? "bg-transparent text-white border-white/30 hover:bg-white hover:text-[#0A1E3D]"
+                            : "bg-transparent text-[#0A1E3D] border-[#0A1E3D]/30 hover:bg-[#0A1E3D] hover:text-white"
                             }`)}
                         >
                           Explore Service
@@ -1005,8 +1022,8 @@ export default function ConstructionTemplatePage() {
                       <div
                         key={i}
                         className={r(`shrink-0 snap-center w-[85%] sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-21px)] p-6 rounded-2xl shadow-xl border relative flex flex-col justify-between sm:p-8 transition-all duration-500 ${isHighlighted
-                            ? "bg-[#0A1E3D] text-white border-[#0A1E3D] scale-110 z-10"
-                            : "bg-[#F4FAFF] border-white/50 text-[#0A1E3D] scale-95 opacity-70"
+                          ? "bg-[#0A1E3D] text-white border-[#0A1E3D] scale-110 z-10"
+                          : "bg-[#F4FAFF] border-white/50 text-[#0A1E3D] scale-95 opacity-70"
                           }`)}
                       >
                         <div className="flex flex-col flex-1">
@@ -1199,63 +1216,203 @@ export default function ConstructionTemplatePage() {
               </div>
             </section>
 
-            {/* Construction Template Footer */}
-            <footer id="const-footer" className={r("w-full bg-[#0A1E3D] text-white py-12 px-4 sm:py-16 sm:px-6 lg:px-8 border-b border-white/10 relative z-20 mt-12 sm:mt-16 md:mt-20")}>
-              <div className="max-w-7xl mx-auto">
-                <div className={r("grid grid-cols-1 md:grid-cols-4 gap-8 mb-12")}>
+            {/* Construction Template Footer (Matched to Digital Marketing Layout) */}
+            <footer id="const-footer" className="@container bg-[#0A1E3D] text-white relative z-20">
+              <div className="mx-auto max-w-7xl px-4 py-12 @md:px-8 @md:py-16">
+                <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   {/* Column 1: Brand */}
-                  <div className="flex flex-col gap-4">
-                    <h3 className="text-xl font-black tracking-tight text-white">BuildNest</h3>
-                    <p className="text-sm text-gray-300 leading-relaxed">
+                  <div>
+                    <h3 className="mb-4 text-lg font-black">BuildNest</h3>
+                    <p className="text-sm leading-relaxed text-white/60">
                       Delivering reliable construction and innovative architectural solutions tailored to your vision and needs.
                     </p>
                   </div>
                   {/* Column 2: Services */}
-                  <div className="flex flex-col gap-4">
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-gray-200">Services</h4>
-                    <ul className="flex flex-col gap-2.5 text-sm text-gray-300">
-                      <li><button onClick={() => scrollToSection("const-features")} className="hover:text-white transition-colors text-left focus:outline-none">General Construction</button></li>
-                      <li><button onClick={() => scrollToSection("const-features")} className="hover:text-white transition-colors text-left focus:outline-none">Property Maintenance</button></li>
-                      <li><button onClick={() => scrollToSection("const-features")} className="hover:text-white transition-colors text-left focus:outline-none">Virtual Design & Build</button></li>
-                      <li><button onClick={() => scrollToSection("const-features")} className="hover:text-white transition-colors text-left focus:outline-none">Architectural Design</button></li>
+                  <div>
+                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Services</h4>
+                    <ul className="space-y-2.5 text-sm text-white/60">
+                      <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">General Construction</button></li>
+                      <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">Property Maintenance</button></li>
+                      <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">Virtual Design & Build</button></li>
+                      <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">Architectural Design</button></li>
                     </ul>
                   </div>
                   {/* Column 3: Links */}
-                  <div className="flex flex-col gap-4">
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-gray-200">Quick Links</h4>
-                    <ul className="flex flex-col gap-2.5 text-sm text-gray-300">
-                      <li><button onClick={() => scrollToSection("const-home")} className="hover:text-white transition-colors text-left focus:outline-none">Home</button></li>
-                      <li><button onClick={() => scrollToSection("const-projects")} className="hover:text-white transition-colors text-left focus:outline-none">Projects</button></li>
-                      <li><button onClick={() => scrollToSection("const-process")} className="hover:text-white transition-colors text-left focus:outline-none">Process</button></li>
-                      <li><button onClick={() => scrollToSection("const-contact")} className="hover:text-white transition-colors text-left focus:outline-none">Contact Us</button></li>
+                  <div>
+                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Quick Links</h4>
+                    <ul className="space-y-2.5 text-sm text-white/60">
+                      <li><button onClick={() => scrollToSection("const-home")} className="transition hover:text-white focus:outline-none text-left">Home</button></li>
+                      <li><button onClick={() => scrollToSection("const-projects")} className="transition hover:text-white focus:outline-none text-left">Projects</button></li>
+                      <li><button onClick={() => scrollToSection("const-process")} className="transition hover:text-white focus:outline-none text-left">Process</button></li>
+                      <li><button onClick={() => scrollToSection("const-contact")} className="transition hover:text-white focus:outline-none text-left">Contact Us</button></li>
                     </ul>
                   </div>
-                  {/* Column 4: Opening Hours */}
-                  <div className="flex flex-col gap-4">
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-gray-200">Working Hours</h4>
-                    <ul className="flex flex-col gap-2 text-sm text-gray-300">
-                      <li>Monday - Friday: <span className="text-white font-semibold">9:00 AM - 6:00 PM</span></li>
-                      <li>Saturday: <span className="text-white font-semibold">10:00 AM - 4:00 PM</span></li>
-                      <li>Sunday: <span className="text-white font-semibold">Closed</span></li>
-                    </ul>
+                  {/* Column 4: Newsletter */}
+                  <div>
+                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Newsletter</h4>
+                    <p className="mb-4 text-sm text-white/60">Get updates and exclusive offers delivered to your inbox.</p>
+                    <form onSubmit={handleNewsletter} className="flex flex-col gap-2">
+                      <div className="relative flex w-full min-w-0 items-center rounded-full bg-white ring-1 ring-gray-200 transition-all duration-300 hover:ring-2 hover:ring-[#1E56E5]/50 focus-within:ring-2 focus-within:ring-[#1E56E5] focus-within:hover:ring-[#1E56E5]">
+                        <div className="pointer-events-none absolute left-4 text-gray-400 transition-colors duration-300 group-focus-within:text-gray-300">
+                          <FaEnvelope size={16} />
+                        </div>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="Your email"
+                          className="min-w-0 w-full rounded-full bg-transparent py-3.5 pl-11 pr-14 text-sm text-[#0A1E3D] placeholder-[#0A1E3D] outline-none transition-colors duration-300 hover:text-gray-500 hover:placeholder-gray-400 focus:text-gray-500 focus:placeholder-gray-400"
+                        />
+                        <button
+                          type="submit"
+                          aria-label="Subscribe"
+                          disabled={!isEmailValid || newsletterStatus === "loading" || email.length === 0}
+                          className="absolute right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1E56E5] hover:shadow-lg active:scale-95 disabled:pointer-events-none"
+                        >
+                          {newsletterStatus === "loading" ? (
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          ) : (
+                            <FaPaperPlane size={14} />
+                          )}
+                        </button>
+                      </div>
+                      {!isEmailValid && email.length > 0 && <span className="text-xs text-red-400">Please enter a valid email address.</span>}
+                      {newsletterStatus === "success" && (
+                        <div className="rounded-lg bg-green-500/10 p-2 text-xs font-medium text-green-400">
+                          Thank you for subscribing!
+                        </div>
+                      )}
+                    </form>
                   </div>
                 </div>
-                <div className={r("border-t border-white/10 pt-6 flex flex-col sm:flex-row sm:justify-between items-center gap-4 text-xs text-gray-400")}>
-                  <p>© 2026 BuildNest Construction. All rights reserved.</p>
-                  <div className="flex gap-4">
-                    <button onClick={() => scrollToSection("const-home")} className="hover:text-white transition-colors focus:outline-none">Privacy Policy</button>
-                    <button onClick={() => scrollToSection("const-home")} className="hover:text-white transition-colors focus:outline-none">Terms of Service</button>
+
+                <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 @sm:flex-row">
+                  <p className="text-xs text-white/50">© 2026 BuildNest Construction. All rights reserved.</p>
+
+                  <div className="flex gap-6 text-xs text-white/50">
+                    <button onClick={() => setIsTermsModalOpen(true)} className="transition hover:text-white focus:outline-none">Terms of Service</button>
+                    <button onClick={() => setIsPrivacyModalOpen(true)} className="transition hover:text-white focus:outline-none">Privacy Policy</button>
                   </div>
                 </div>
               </div>
+
+              <AnimatePresence>
+                {isPrivacyModalOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-[#F8F9FA] shadow-2xl text-left"
+                    >
+                      <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
+                        <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Privacy Policy</h2>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
+                        <p className="mb-8 text-sm leading-relaxed @md:text-base">
+                          Your privacy is important to us. This policy explains how Stackly collects, uses, and protects your information.
+                        </p>
+                        
+                        <div className="space-y-6 text-sm @md:text-base">
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Information We Collect</h3>
+                            <p className="leading-relaxed">We collect account details, contact information, usage data, and project preferences needed to operate the platform.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. How We Use Data</h3>
+                            <p className="leading-relaxed">We use data to provide services, improve templates, process payments, prevent abuse, and send important updates.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Security</h3>
+                            <p className="leading-relaxed">We use reasonable safeguards to protect user data, though no internet transmission is completely risk free.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Your Rights</h3>
+                            <p className="leading-relaxed">You can request access, correction, or deletion of personal data by contacting <a href="mailto:privacy@thestackly.com" className="font-bold text-[#1E56E5] hover:underline">privacy@thestackly.com</a>.</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
+                        <button
+                          onClick={() => setIsPrivacyModalOpen(false)}
+                          className="rounded-full bg-[#0A1E3D] px-10 py-3 text-sm font-bold tracking-widest text-white transition hover:bg-[#06152b] uppercase"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+
+                {isTermsModalOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-[#F8F9FA] shadow-2xl text-left"
+                    >
+                      <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
+                        <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Terms of Use</h2>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
+                        <p className="mb-8 text-sm leading-relaxed @md:text-base">
+                          Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.
+                        </p>
+                        
+                        <div className="space-y-6 text-sm @md:text-base">
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Account Responsibilities</h3>
+                            <p className="leading-relaxed">You are responsible for maintaining your login credentials and all activity under your account.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. Template Usage</h3>
+                            <p className="leading-relaxed">Templates may be customized for your own projects. Redistribution or resale without permission is not allowed.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Payments</h3>
+                            <p className="leading-relaxed">Paid assets and subscriptions are billed according to the plan selected at purchase.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Platform Changes</h3>
+                            <p className="leading-relaxed">We may improve, update, or discontinue features to keep Stackly reliable and secure.</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
+                        <button
+                          onClick={() => setIsTermsModalOpen(false)}
+                          className="rounded-full bg-[#0A1E3D] px-10 py-3 text-sm font-bold tracking-widest text-white transition hover:bg-[#06152b] uppercase"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </footer>
 
-            {/* Wrapped Global Footer */}
-            <div className={r("w-full overflow-hidden bg-[#071936] relative z-20 mt-12 sm:mt-16 md:mt-20")}>
-              <Footer />
-            </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-4 md:mt-8 w-full">
+        <Footer />
       </div>
     </main>
   );

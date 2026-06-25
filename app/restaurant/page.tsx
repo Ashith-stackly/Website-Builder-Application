@@ -1,14 +1,15 @@
 "use client";
- 
-import { useState, useRef, useCallback, useEffect } from "react";
+
+import { useState, useRef, useCallback, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "../../components/Footer";
-import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
+import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane } from "react-icons/fa";
 import { FaBars, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
- 
+import { motion, AnimatePresence } from "framer-motion";
+
 const START_BUILDING_HREF = "/signup";
- 
+
 function scrollToSection(sectionId: string) {
   const target = document.getElementById(sectionId);
   if (target) {
@@ -18,21 +19,21 @@ function scrollToSection(sectionId: string) {
     });
   }
 }
- 
+
 function getModeClasses(classesStr: string, deviceMode: "desktop" | "tablet" | "mobile") {
   if (deviceMode === "desktop") return classesStr;
- 
+
   const classes = classesStr.split(/\s+/).filter(Boolean);
- 
+
   if (deviceMode === "mobile") {
     return classes
       .filter(cls => !/^(sm|md|lg|xl|2xl):/.test(cls))
       .join(" ");
   }
- 
+
   if (deviceMode === "tablet") {
     const baseMap = new Map<string, string>();
- 
+
     const getBaseKey = (cls: string) => {
       if (cls.startsWith("p-") || cls.startsWith("pt-") || cls.startsWith("pb-") || cls.startsWith("pl-") || cls.startsWith("pr-") || cls.startsWith("px-") || cls.startsWith("py-")) {
         return cls.split("-")[0];
@@ -65,33 +66,33 @@ function getModeClasses(classesStr: string, deviceMode: "desktop" | "tablet" | "
       if (cls === "hidden" || cls === "block" || cls === "flex" || cls === "grid" || cls === "inline-flex" || cls === "inline-block") return "display";
       return cls;
     };
- 
+
     for (const cls of classes) {
       if (!/^(sm|md|lg|xl|2xl):/.test(cls)) {
         baseMap.set(getBaseKey(cls), cls);
       }
     }
- 
+
     for (const cls of classes) {
       if (cls.startsWith("sm:")) {
         const stripped = cls.slice(3);
         baseMap.set(getBaseKey(stripped), stripped);
       }
     }
- 
+
     for (const cls of classes) {
       if (cls.startsWith("md:")) {
         const stripped = cls.slice(3);
         baseMap.set(getBaseKey(stripped), stripped);
       }
     }
- 
+
     return Array.from(baseMap.values()).join(" ");
   }
- 
+
   return classesStr;
 }
- 
+
 // Updated navigation links to include Menu, About Us, and Contact
 const navLinks = [
   { label: "Home", hash: "#restaurant-home" },
@@ -101,7 +102,7 @@ const navLinks = [
   { label: "FAQ", hash: "#restaurant-faq" },
   { label: "Contact", hash: "#restaurant-contact" },
 ] as const;
- 
+
 function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "mobile" }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -109,17 +110,17 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
   const profileRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
- 
+
   const handleLogout = useCallback(() => {
     window.localStorage.removeItem("stackly-auth-token");
     setProfileOpen(false);
     setMobileOpen(false);
     router.push("/login");
   }, [router]);
- 
+
   useEffect(() => {
     if (!profileOpen && !mobileOpen) return;
- 
+
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
       if (profileOpen && profileRef.current && !profileRef.current.contains(target)) {
@@ -129,13 +130,13 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
         setMobileOpen(false);
       }
     };
- 
+
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [profileOpen, mobileOpen]);
- 
+
   const showDesktopNav = deviceMode === "desktop";
- 
+
   return (
     <header ref={headerRef} className={r("bg-[#0A1E3D] text-white w-full max-w-full relative z-50")}>
       <div className={r(`w-full mx-auto py-4 flex items-center justify-between px-4 sm:px-6 lg:px-8 ${deviceMode === "desktop" ? "max-w-7xl" : ""
@@ -147,7 +148,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
         >
           Stackly Restaurant.
         </button>
- 
+
         {/* DESKTOP NAV WITH HIGHLIGHTS AND GAPS */}
         <nav className={r(`${deviceMode === "desktop" ? "hidden md:flex" : "hidden"} items-center gap-6 lg:gap-8`)}>
           {navLinks.map((link) => (
@@ -161,7 +162,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
             </button>
           ))}
         </nav>
- 
+
         <div className="flex items-center gap-3 shrink-0">
           <div ref={profileRef} className={r("relative hidden sm:block")}>
             <button
@@ -183,7 +184,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
               </div>
             )}
           </div>
- 
+
           <button
             type="button"
             className={r(`${deviceMode === "desktop" ? "md:hidden" : "flex"} inline-flex items-center justify-center w-10 h-10 rounded-md border text-white transition-colors ${mobileOpen ? "bg-white/20 border-white" : "border-white/60 hover:bg-white/20"
@@ -194,7 +195,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
           </button>
         </div>
       </div>
- 
+
       {/* MOBILE NAV WITH PT-6 GAP AND HIGHLIGHTS */}
       {mobileOpen && (
         <nav className={r("absolute top-full left-0 w-full bg-[#0A1E3D] border-t border-white/10 shadow-2xl flex flex-col pt-6 pb-6 px-6 gap-4 z-50")}>
@@ -222,7 +223,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
     </header>
   );
 }
- 
+
 // Renamed from templates to foods, keeping exact images requested
 const foodItems = [
   { title: "Premium Ribeye Steak", price: "$45", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop" },
@@ -232,36 +233,53 @@ const foodItems = [
   { title: "Gourmet Street Tacos", price: "$16", image: "https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?q=80&w=800&auto=format&fit=crop" },
   { title: "Classic Cheeseburger", price: "$15", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop" },
 ];
- 
+
 const buildFeatures = [
   { title: "Design a mouth-watering menu", text: "Showcase your dishes with stunning galleries, categorize your offerings, and easily update prices and seasonal specials in real-time." },
   { title: "Take online reservations", text: "Never double-book a table again. Integrate built-in reservation systems so customers can book their spot directly from their phone." },
   { title: "Accept online orders", text: "Add e-commerce capabilities to your restaurant site for pickup or delivery orders, completely commission-free." },
 ];
- 
+
 const infraItems = [
   { title: "Mobile-optimized design", text: "Hungry customers are searching on their phones. Our templates are automatically formatted to look perfect on any device." },
   { title: "Local SEO tools", text: "Get found by diners in your area. Built-in SEO settings help your restaurant rank higher on Google Maps and local search results." },
   { title: "Fast loading times", text: "We use a worldwide CDN to ensure your menus and high-quality restaurant images load instantly, providing a seamless browsing experience." },
 ];
- 
+
 const faqItems = [
   { q: "Can I easily update my menu prices?", answer: "Yes! The Stackly drag-and-drop builder makes it incredibly easy to update text, swap out seasonal dishes, and adjust pricing instantly without touching a line of code." },
   { q: "Do I need to pay commission for online orders?", answer: "No. Unlike third-party delivery apps, setting up an online ordering system through your Stackly website is commission-free. You keep 100% of your profits." },
   { q: "Can customers book tables through the website?", answer: "Absolutely. You can integrate booking forms and reservation widgets that sync directly with your preferred management software." },
   { q: "Are the restaurant templates mobile friendly?", answer: "Yes, all our restaurant templates are 100% responsive. Your menus, contact info, and booking buttons will look perfect and be easy to tap on smartphones." },
 ];
- 
+
 export default function RestaurantTemplatesPage() {
   const [openFaq, setOpenFaq] = useState(0);
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
- 
+
+  const [email, setEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const handleNewsletter = (e: FormEvent) => {
+    e.preventDefault();
+    if (!isEmailValid) return;
+    setNewsletterStatus("loading");
+    setTimeout(() => {
+      setNewsletterStatus("success");
+      setEmail("");
+      setTimeout(() => setNewsletterStatus("idle"), 5000);
+    }, 1500);
+  };
+
   const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
- 
+
   return (
     <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
- 
+
       {/* FLOATING DEVICE TOOLBAR */}
       <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
@@ -280,19 +298,19 @@ export default function RestaurantTemplatesPage() {
           </button>
         </div>
       </div>
- 
+
       <div className={`flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         {/* RESPONSIVE CANVAS FRAME */}
         <div
           ref={canvasScrollRef}
           className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
-              : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
-                : "w-full min-h-screen"
+            : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+              : "w-full min-h-screen"
             }`}
         >
           <div className="w-full max-w-full overflow-x-hidden min-w-0">
             <RestaurantHeader deviceMode={deviceMode} />
- 
+
             {/* 1. HERO SECTION */}
             <div id="restaurant-home" className={`w-full bg-[#FFF5F5] text-center min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -309,7 +327,7 @@ export default function RestaurantTemplatesPage() {
                 </Link>
               </div>
             </div>
- 
+
             {/* 2. MENU GRID (Changed from Templates to Foods) */}
             <section id="restaurant-menu" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -319,10 +337,10 @@ export default function RestaurantTemplatesPage() {
                     }`}>Our Signature Menu</h2>
                   <p className="text-base text-gray-600 max-w-2xl mx-auto">Explore our carefully curated selection of fresh, delicious dishes made from scratch.</p>
                 </div>
- 
+
                 <div className={`grid ${deviceMode === "desktop" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" :
-                    deviceMode === "tablet" ? "grid-cols-1 sm:grid-cols-2 gap-6" :
-                      "grid-cols-1 gap-6"
+                  deviceMode === "tablet" ? "grid-cols-1 sm:grid-cols-2 gap-6" :
+                    "grid-cols-1 gap-6"
                   }`}>
                   {foodItems.map((item) => (
                     <article key={item.title} className="group flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-red-100 min-w-0">
@@ -345,7 +363,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
- 
+
             {/* 3. ABOUT US SECTION */}
             <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -364,7 +382,7 @@ export default function RestaurantTemplatesPage() {
                     }`}>Tradition meets modern flavor.</h3>
                   <p className="text-base text-gray-600 leading-relaxed mb-6">Founded with a passion for exceptional food, we started as a small family kitchen dedicated to bringing authentic, vibrant flavors to our neighborhood.</p>
                   <p className="text-base text-gray-600 leading-relaxed mb-8">Today, we continue that tradition by sourcing the freshest local ingredients and applying modern culinary techniques to classic recipes. Every bite is crafted to make your dining experience memorable.</p>
- 
+
                   <div className="flex gap-8 border-t border-gray-200 pt-6">
                     <div>
                       <p className="text-3xl font-black text-[#0A1E3D]">10+</p>
@@ -378,7 +396,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
- 
+
             {/* 4. BUILD YOUR WAY (FEATURES) */}
             <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -408,7 +426,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
- 
+
             {/* 5. INFRASTRUCTURE */}
             <section className={`bg-[#0A1E3D] text-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -418,8 +436,8 @@ export default function RestaurantTemplatesPage() {
                   <h2 className={`font-black mb-10 max-w-2xl text-balance leading-tight ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
                     }`}>The powerful infrastructure behind your restaurant.</h2>
                   <div className={`grid ${deviceMode === "desktop" ? "grid-cols-1 md:grid-cols-3 gap-12" :
-                      deviceMode === "tablet" ? "grid-cols-1 sm:grid-cols-2 gap-8" :
-                        "grid-cols-1 gap-8"
+                    deviceMode === "tablet" ? "grid-cols-1 sm:grid-cols-2 gap-8" :
+                      "grid-cols-1 gap-8"
                     }`}>
                     {infraItems.map((item) => (
                       <div key={item.title} className="border-t border-white/20 pt-6">
@@ -431,7 +449,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
- 
+
             {/* 6. FAQ */}
             <section id="restaurant-faq" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -441,7 +459,7 @@ export default function RestaurantTemplatesPage() {
                     }`}>Frequently Asked Questions</h2>
                   <p className="text-base text-gray-600">Everything you need to know about building your restaurant website.</p>
                 </div>
- 
+
                 <div className="space-y-4">
                   {faqItems.map((item, index) => {
                     const isOpen = openFaq === index;
@@ -466,7 +484,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
- 
+
             {/* 7. CONTACT SECTION */}
             <section id="restaurant-contact" className={`bg-gray-50 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -474,7 +492,7 @@ export default function RestaurantTemplatesPage() {
                 <h2 className="text-[#b91c1c] font-black uppercase tracking-[0.2em] text-sm mb-3">Get in Touch</h2>
                 <h3 className={`font-black text-[#0A1E3D] text-balance leading-tight mb-10 ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
                   }`}>Visit Us or Reach Out</h3>
- 
+
                 <div className={`grid ${deviceMode === "desktop" ? "grid-cols-3 gap-8" : "grid-cols-1 gap-6"
                   }`}>
                   <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
@@ -492,52 +510,202 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
- 
-            {/* DEDICATED RESTAURANT FOOTER (200% Zoom Responsive) */}
-            <footer className={r("bg-[#051124] text-white py-12 px-4 sm:px-6 lg:px-8 border-b border-white/10 min-w-0 break-words mt-12 sm:mt-16 md:mt-20")}>
-              <div className={r("max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12")}>
-                <div className="flex flex-col">
-                  <h3 className="text-xl font-black mb-4">Stackly Restaurant.</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">Experience the best culinary delights with our signature dishes and exceptional service in a modern, welcoming atmosphere.</p>
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="text-lg font-bold mb-4">Quick Links</h4>
-                  <div className="flex flex-col gap-3">
-                    {navLinks.map((link) => (
-                      <button
-                        key={link.label}
-                        onClick={() => scrollToSection(link.hash.replace("#", ""))}
-                        className="text-left text-sm text-gray-400 hover:text-white transition-colors w-fit focus-visible:outline-none"
-                      >
-                        {link.label}
-                      </button>
-                    ))}
+
+            <footer className="@container bg-[#0A1E3D] text-white">
+              <div className="mx-auto max-w-7xl px-4 py-12 @md:px-8 @md:py-16">
+                <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
+                  <div>
+                    <h3 className="mb-4 text-lg font-black">Stackly Restaurant</h3>
+                    <p className="text-sm leading-relaxed text-white/60">
+                      Experience the best culinary delights with our signature dishes and exceptional service in a modern, welcoming atmosphere.
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Quick Links</h4>
+                    <ul className="space-y-2.5 text-sm text-white/60">
+                      {navLinks.map((link) => (
+                        <li key={link.label}>
+                          <button onClick={() => scrollToSection(link.hash.replace("#", ""))} className="transition hover:text-white focus:outline-none text-left">
+                            {link.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Opening Hours</h4>
+                    <ul className="space-y-2.5 text-sm text-white/60">
+                      <li>Mon - Fri: 11:00 AM - 10:00 PM</li>
+                      <li>Sat - Sun: 10:00 AM - 11:00 PM</li>
+                      <li>Holidays: Closed</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Newsletter</h4>
+                    <p className="mb-4 text-sm text-white/60">Get updates and exclusive offers delivered to your inbox.</p>
+                    <form onSubmit={handleNewsletter} className="flex flex-col gap-2">
+                      <div className="relative flex w-full min-w-0 items-center rounded-full bg-white ring-1 ring-gray-200 transition-all duration-300 hover:ring-2 hover:ring-[#1E56E5]/50 focus-within:ring-2 focus-within:ring-[#1E56E5] focus-within:hover:ring-[#1E56E5]">
+                        <div className="pointer-events-none absolute left-4 text-gray-400 transition-colors duration-300 group-focus-within:text-gray-300">
+                          <FaEnvelope size={16} />
+                        </div>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="Your email"
+                          className="min-w-0 w-full rounded-full bg-transparent py-3.5 pl-11 pr-14 text-sm text-[#0A1E3D] placeholder-[#0A1E3D] outline-none transition-colors duration-300 hover:text-gray-500 hover:placeholder-gray-400 focus:text-gray-500 focus:placeholder-gray-400"
+                        />
+                        <button
+                          type="submit"
+                          aria-label="Subscribe"
+                          disabled={!isEmailValid || newsletterStatus === "loading" || email.length === 0}
+                          className="absolute right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1E56E5] hover:shadow-lg active:scale-95 disabled:pointer-events-none"
+                        >
+                          {newsletterStatus === "loading" ? (
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          ) : (
+                            <FaPaperPlane size={14} />
+                          )}
+                        </button>
+                      </div>
+                      {!isEmailValid && email.length > 0 && <span className="text-xs text-red-400">Please enter a valid email address.</span>}
+                      {newsletterStatus === "success" && (
+                        <div className="rounded-lg bg-green-500/10 p-2 text-xs font-medium text-green-400">
+                          Thank you for subscribing!
+                        </div>
+                      )}
+                    </form>
                   </div>
                 </div>
-                <div className="flex flex-col">
-                  <h4 className="text-lg font-bold mb-4">Opening Hours</h4>
-                  <p className="text-sm text-gray-400 mb-2">Mon - Fri: 11:00 AM - 10:00 PM</p>
-                  <p className="text-sm text-gray-400 mb-2">Sat - Sun: 10:00 AM - 11:00 PM</p>
-                  <p className="text-sm text-gray-400">Holidays: Closed</p>
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="text-lg font-bold mb-4">Contact Us</h4>
-                  <p className="text-sm text-gray-400 mb-2">123 Culinary Avenue, Food District</p>
-                  <p className="text-sm text-gray-400 mb-2 hover:text-white cursor-pointer transition-colors w-fit">info@stacklyfood.com</p>
-                  <p className="text-sm text-gray-400 hover:text-white cursor-pointer transition-colors w-fit">+1 (555) 123-4567</p>
+
+                <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 @sm:flex-row">
+                  <p className="text-xs text-white/50">Copyright 2018-2026 TheStackly.com INC. All rights reserved.</p>
+
+                  <div className="flex gap-6 text-xs text-white/50">
+                    <button type="button" onClick={() => setIsTermsModalOpen(true)} className="transition hover:text-white">Terms of Use</button>
+                    <button type="button" onClick={() => setIsPrivacyModalOpen(true)} className="transition hover:text-white">Privacy Policy</button>
+                  </div>
                 </div>
               </div>
+
+              <AnimatePresence>
+                {isPrivacyModalOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-[#F8F9FA] shadow-2xl text-left"
+                    >
+                      <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
+                        <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Privacy Policy</h2>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
+                        <p className="mb-8 text-sm leading-relaxed @md:text-base">
+                          Your privacy is important to us. This policy explains how Stackly collects, uses, and protects your information.
+                        </p>
+                        
+                        <div className="space-y-6 text-sm @md:text-base">
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Information We Collect</h3>
+                            <p className="leading-relaxed">We collect account details, contact information, usage data, and project preferences needed to operate the platform.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. How We Use Data</h3>
+                            <p className="leading-relaxed">We use data to provide services, improve templates, process payments, prevent abuse, and send important updates.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Security</h3>
+                            <p className="leading-relaxed">We use reasonable safeguards to protect user data, though no internet transmission is completely risk free.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Your Rights</h3>
+                            <p className="leading-relaxed">You can request access, correction, or deletion of personal data by contacting <a href="mailto:privacy@thestackly.com" className="font-bold text-[#1E56E5] hover:underline">privacy@thestackly.com</a>.</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
+                        <button
+                          onClick={() => setIsPrivacyModalOpen(false)}
+                          className="rounded-full bg-[#0A1E3D] px-10 py-3 text-sm font-bold tracking-widest text-white transition hover:bg-[#06152b] uppercase"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+
+                {isTermsModalOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-[#F8F9FA] shadow-2xl text-left"
+                    >
+                      <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
+                        <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Terms of Use</h2>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
+                        <p className="mb-8 text-sm leading-relaxed @md:text-base">
+                          Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.
+                        </p>
+                        
+                        <div className="space-y-6 text-sm @md:text-base">
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Account Responsibilities</h3>
+                            <p className="leading-relaxed">You are responsible for maintaining your login credentials and all activity under your account.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. Template Usage</h3>
+                            <p className="leading-relaxed">Templates may be customized for your own projects. Redistribution or resale without permission is not allowed.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Payments</h3>
+                            <p className="leading-relaxed">Paid assets and subscriptions are billed according to the plan selected at purchase.</p>
+                          </div>
+                          <div>
+                            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Platform Changes</h3>
+                            <p className="leading-relaxed">We may improve, update, or discontinue features to keep Stackly reliable and secure.</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
+                        <button
+                          onClick={() => setIsTermsModalOpen(false)}
+                          className="rounded-full bg-[#0A1E3D] px-10 py-3 text-sm font-bold tracking-widest text-white transition hover:bg-[#06152b] uppercase"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </footer>
- 
-            {/* Wrapped Global Footer to prevent overflow */}
-            <div className={r("w-full max-w-full shrink-0 overflow-hidden bg-[#071936] relative z-20 mt-12 sm:mt-16 md:mt-20")}>
-              <Footer />
-            </div>
- 
+
           </div>
         </div>
+      </div>
+
+      <div className="mt-4 md:mt-8 w-full">
+        <Footer />
       </div>
     </main>
   );
 }
- 
