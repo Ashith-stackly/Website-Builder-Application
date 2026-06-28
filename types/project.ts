@@ -9,12 +9,14 @@ import type { BuilderComponent } from "@/types/builder";
 export interface Project {
   id: string;
   name: string;
+  description?: string;
   category: string;
   style: string;
   sections: string[];
   thumbnail?: string;
   components?: BuilderComponent[];
   designTokens?: DesignTokens;
+  status?: string;
   createdAt: string;
   updatedAt: string;
 }

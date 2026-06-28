@@ -18,9 +18,14 @@ function SettingsContent() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    loadProjects();
+    const controller = new AbortController();
+    const mountedId = window.setTimeout(() => setMounted(true), 0);
+    void loadProjects(controller.signal);
     if (projectId) trackPageView(`/project/${projectId}/settings`);
-    setMounted(true);
+    return () => {
+      controller.abort();
+      window.clearTimeout(mountedId);
+    };
   }, [loadProjects, projectId]);
 
   if (!mounted) {

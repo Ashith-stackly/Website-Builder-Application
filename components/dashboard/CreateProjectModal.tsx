@@ -23,7 +23,6 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { fadeUp, scaleIn } from "@/lib/motion";
-import { useProjectStore } from "@/store/projectStore";
 
 const categories = [
   { title: "E-commerce", description: "Online store, products, and sales pages", icon: ShoppingBag },
@@ -54,7 +53,6 @@ interface CreateProjectModalProps {
 
 export default function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps) {
   const router = useRouter();
-  const createProject = useProjectStore((s) => s.createProject);
   const [step, setStep] = useState(1);
   const [projectData, setProjectData] = useState({
     name: "",
@@ -108,17 +106,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   };
 
   const handleBuild = () => {
-    // Create project in store
-    const project = createProject({
-      name: projectData.name.trim(),
-      category: projectData.category,
-      style: projectData.template,
-      sections: projectData.sections,
-    });
-
-    // Build URL params for builder
     const params = new URLSearchParams({
-      projectId: project.id,
       projectName: projectData.name.trim(),
       category: projectData.category,
       style: projectData.template,

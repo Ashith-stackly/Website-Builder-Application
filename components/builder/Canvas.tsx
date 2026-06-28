@@ -14,7 +14,6 @@ import ButtonComponent from "@/components/draggable/ButtonComponent";
 import IconComponent from "@/components/draggable/IconComponent";
 import { useBuilderStore } from "@/store/builderStore";
 import { useDesignStore } from "@/store/designStore";
-import { useProjectStore } from "@/store/projectStore";
 import type { BuilderComponent, ComponentType, Viewport } from "@/types/builder";
 import { VIEWPORT_WIDTHS } from "@/types/builder";
 
@@ -51,18 +50,22 @@ function Canvas({
   const redo = useBuilderStore((s) => s.redo);
   const canUndo = useBuilderStore((s) => s.history.length > 0);
   const canRedo = useBuilderStore((s) => s.future.length > 0);
-  const saveToLocalStorage = useBuilderStore((s) => s.saveToLocalStorage);
-  const loadFromLocalStorage = useBuilderStore((s) => s.loadFromLocalStorage);
-  const loadComponents = useBuilderStore((s) => s.loadComponents);
-  const loadWebsiteFromRequirements = useBuilderStore((s) => s.loadWebsiteFromRequirements);
+  const currentProjectId = useBuilderStore((s) => s.currentProjectId);
+  const currentProjectName = useBuilderStore((s) => s.currentProjectName);
+  const isDirty = useBuilderStore((s) => s.isDirty);
+  const isSaving = useBuilderStore((s) => s.isSaving);
+  const saveStatus = useBuilderStore((s) => s.saveStatus);
+  const saveError = useBuilderStore((s) => s.saveError);
+  const loadProject = useBuilderStore((s) => s.loadProject);
+  const autosave = useBuilderStore((s) => s.autosave);
+  const saveHtml = useBuilderStore((s) => s.saveHtml);
+  const markDirty = useBuilderStore((s) => s.markDirty);
+  const canvasMode = useBuilderStore((s) => s.canvasMode);
   const autoSaveEnabled = useDesignStore((s) => s.autoSaveEnabled);
   const tokens = useDesignStore((s) => s.tokens);
-  const setTokens = useDesignStore((s) => s.setTokens);
+  const seo = useDesignStore((s) => s.seo);
   const setLastSavedAt = useDesignStore((s) => s.setLastSavedAt);
   const toggleGlobalStyles = useDesignStore((s) => s.toggleGlobalStyles);
-  const loadProjects = useProjectStore((s) => s.loadProjects);
-  const updateProject = useProjectStore((s) => s.updateProject);
-  const getProjectById = useProjectStore((s) => s.getProjectById);
   const storeAddComponent = useBuilderStore((s) => s.addComponent);
   const insertComponentBefore = useBuilderStore((s) => s.insertComponentBefore);
   const viewport = useBuilderStore((s) => s.viewport);
@@ -112,93 +115,78 @@ function Canvas({
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedProjectRef = useRef<string | null>(null);
+  const autosaveFingerprintRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!projectId || loadedProjectRef.current === projectId) return;
-    loadProjects();
-    const project = getProjectById(projectId);
-    if (!project) return;
-
     loadedProjectRef.current = projectId;
-    window.setTimeout(() => setProjectName(project.name || "My Website"), 0);
-    if (project.designTokens) {
-      setTokens(project.designTokens);
-    }
-    if (project.components && project.components.length > 0) {
-      loadComponents(project.components);
-    } else if (components.length === 0) {
-      loadWebsiteFromRequirements({
-        projectName: project.name || "My Website",
-        category: project.category || "Business",
-        style: project.style || "Modern",
-        sections: project.sections || [],
-      });
-    }
-  }, [components.length, getProjectById, loadComponents, loadProjects, loadWebsiteFromRequirements, projectId, setTokens]);
+    autosaveFingerprintRef.current = null;
+    const controller = new AbortController();
+    void loadProject(projectId, controller.signal);
+    return () => controller.abort();
+  }, [loadProject, projectId]);
 
-  const handleSave = () => {
-    if (projectId) {
-      loadProjects();
-      const project = getProjectById(projectId);
-      if (project) {
-        updateProject(projectId, {
-          name: projectName.trim() || project.name,
-          components,
-          designTokens: tokens,
-        });
-      } else {
-        saveToLocalStorage();
-      }
-    } else {
-      saveToLocalStorage();
+  useEffect(() => {
+    if (currentProjectName) {
+      const id = window.setTimeout(() => setProjectName(currentProjectName), 0);
+      return () => window.clearTimeout(id);
     }
+  }, [currentProjectName]);
+
+  useEffect(() => {
+    const queryProjectName = searchParams.get("projectName");
+    if (!projectId && queryProjectName) {
+      const id = window.setTimeout(() => setProjectName(queryProjectName), 0);
+      return () => window.clearTimeout(id);
+    }
+  }, [projectId, searchParams]);
+
+  const handleSave = async () => {
+    useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
+    const ok = await saveHtml();
+    if (!ok) return;
+
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 2200);
     setLastSavedAt(Date.now());
   };
 
-  /* ── Auto-save every 30s ── */
+  /* ── Backend autosave after a 5-second debounce ── */
   useEffect(() => {
-    if (!autoSaveEnabled || components.length === 0) return;
-    const id = setInterval(() => {
-      if (projectId) {
-        const project = getProjectById(projectId);
-        if (project) {
-          updateProject(projectId, {
-            name: projectName.trim() || project.name,
-            components,
-            designTokens: tokens,
-          });
-        }
-      } else {
-        saveToLocalStorage();
-      }
-      setLastSavedAt(Date.now());
-    }, 30000);
-    return () => clearInterval(id);
-  }, [autoSaveEnabled, components, getProjectById, projectId, projectName, saveToLocalStorage, setLastSavedAt, tokens, updateProject]);
+    if (!autoSaveEnabled || !currentProjectId || components.length === 0) return;
+
+    const fingerprint = JSON.stringify({ components, tokens, seo, canvasMode });
+    if (autosaveFingerprintRef.current === null) {
+      autosaveFingerprintRef.current = fingerprint;
+      return;
+    }
+    if (autosaveFingerprintRef.current === fingerprint) return;
+
+    autosaveFingerprintRef.current = fingerprint;
+    markDirty();
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
+      void autosave(controller.signal).then((ok) => {
+        if (ok) setLastSavedAt(Date.now());
+      });
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [autoSaveEnabled, autosave, canvasMode, components, currentProjectId, currentProjectName, markDirty, projectName, seo, setLastSavedAt, tokens]);
 
   const handleLoad = () => {
-    let ok = false;
-    if (projectId) {
-      loadProjects();
-      const project = getProjectById(projectId);
-      if (project?.components && project.components.length > 0) {
-        loadComponents(project.components);
-        if (project.designTokens) {
-          setTokens(project.designTokens);
-        }
-        setProjectName(project.name || "My Website");
-        ok = true;
-      }
-    } else {
-      ok = loadFromLocalStorage();
+    if (!currentProjectId) {
+      alert("Open a saved backend project to reload it.");
+      return;
     }
-    if (!ok) {
-      // Brief shake feedback would be ideal; keeping simple for now
-      alert("No saved draft found.");
-    }
+    const controller = new AbortController();
+    void loadProject(currentProjectId, controller.signal);
   };
 
   const runTool = (action: () => void) => {
@@ -288,7 +276,7 @@ function Canvas({
                   <ToolMenuButton label="Assets" Icon={Images} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(() => setIsAssetsOpen(true))} />
                   <ToolMenuButton label="Starter" Icon={Sparkles} tone="text-blue-700 bg-blue-50 border-blue-100" onClick={() => runTool(onLoadStarter)} />
                   <ToolMenuButton label="Load" Icon={FolderOpen} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(handleLoad)} />
-                  <ToolMenuButton label={saved ? "Saved" : "Save"} Icon={saved ? Check : Save} tone={saved ? "text-green-700 bg-green-50 border-green-100" : "text-slate-700 bg-slate-50 border-slate-100"} onClick={() => runTool(handleSave)} />
+                  <ToolMenuButton label={isSaving ? "Saving" : saved || saveStatus === "saved" ? "Saved" : "Save"} Icon={saved || saveStatus === "saved" ? Check : Save} tone={saved || saveStatus === "saved" ? "text-green-700 bg-green-50 border-green-100" : "text-slate-700 bg-slate-50 border-slate-100"} onClick={() => runTool(() => { void handleSave(); })} />
                   <ToolMenuButton label="Clear" Icon={Trash2} tone="text-red-700 bg-red-50 border-red-100" onClick={() => runTool(onClear)} />
                 </motion.div>
               )}
@@ -303,6 +291,15 @@ function Canvas({
             <Eye className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Preview</span>
           </button>
+
+          <span
+            className={`hidden max-w-[160px] truncate text-[11px] font-bold lg:inline ${
+              saveStatus === "error" ? "text-red-600" : isDirty ? "text-amber-600" : "text-slate-400"
+            }`}
+            title={saveError ?? undefined}
+          >
+            {saveStatus === "error" ? saveError || "Save failed" : isSaving ? "Saving..." : isDirty ? "Unsaved" : saveStatus === "saved" ? "Saved" : ""}
+          </span>
 
           <ExportButton components={components} />
         </div>

@@ -447,6 +447,13 @@ export interface BuilderState {
   components: BuilderComponent[];
   selectedComponentId: string | null;
   selectedTextStyleTarget: { componentId: string; key: string; label: string } | null;
+  currentProjectId: string | null;
+  currentProjectName: string | null;
+  isDirty: boolean;
+  lastSaved: string | null;
+  isSaving: boolean;
+  saveStatus: "idle" | "saving" | "saved" | "error";
+  saveError: string | null;
   addComponent: (type: ComponentType, parentId?: string | null, afterId?: string | null) => void;
   insertComponentBefore: (type: ComponentType, beforeId: string) => void;
   updateComponent: (id: string, updates: Partial<Omit<BuilderComponent, "id" | "children">> & { styles?: ComponentStyles }) => void;
@@ -474,10 +481,14 @@ export interface BuilderState {
   future: BuilderComponent[][];
   undo: () => void;
   redo: () => void;
-  /** Serialise current canvas to localStorage. */
+  /** Compatibility alias for backend autosave. */
   saveToLocalStorage: () => void;
-  /** Restore canvas from localStorage. Returns false if no draft exists. */
+  /** Local drafts are no longer loaded; projects are restored from the backend. */
   loadFromLocalStorage: () => boolean;
+  loadProject: (id: string, signal?: AbortSignal) => Promise<boolean>;
+  autosave: (signal?: AbortSignal) => Promise<boolean>;
+  markDirty: () => void;
+  saveHtml: (signal?: AbortSignal) => Promise<boolean>;
   /** Reset builder state after logout. */
   resetBuilder: () => void;
   /** Active editing viewport. */

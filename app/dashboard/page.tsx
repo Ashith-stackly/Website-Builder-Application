@@ -27,6 +27,8 @@ function DashboardContent() {
     projects,
     searchQuery,
     sort,
+    isLoading,
+    error,
     loadProjects,
     setSort,
     renameProject,
@@ -38,9 +40,11 @@ function DashboardContent() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   useEffect(() => {
-    loadProjects();
+    const controller = new AbortController();
+    void loadProjects(controller.signal);
     trackVisitor();
     trackPageView("/dashboard");
+    return () => controller.abort();
   }, [loadProjects]);
 
   const filteredProjects = getFilteredProjects();
@@ -127,7 +131,22 @@ function DashboardContent() {
           )}
 
           <motion.div variants={staggerChild}>
-            {hasProjects ? (
+            {isLoading ? (
+              <div className="rounded-3xl border border-slate-200 bg-white/80 px-6 py-16 text-center text-sm font-bold text-slate-500 shadow-sm">
+                Loading projects...
+              </div>
+            ) : error ? (
+              <div className="rounded-3xl border border-red-100 bg-white/80 px-6 py-16 text-center shadow-sm">
+                <p className="text-sm font-bold text-red-600">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => { void loadProjects(); }}
+                  className="mt-4 rounded-xl border border-red-100 bg-red-50 px-5 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : hasProjects ? (
               filteredProjects.length > 0 ? (
                 <ProjectGrid
                   projects={filteredProjects}

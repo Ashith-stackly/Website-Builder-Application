@@ -37,7 +37,7 @@ const collisionDetectionStrategy: CollisionDetection = (args) => {
 };
 
 export default function BuilderLayout() {
-  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveToLocalStorage, copyComponents, pasteComponents } = useBuilder();
+  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveHtml, copyComponents, pasteComponents } = useBuilder();
   const [activePaletteType, setActivePaletteType] = useState<ComponentType | null>(null);
   const [activeCanvasType, setActiveCanvasType] = useState<ComponentType | null>(null);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
@@ -64,7 +64,7 @@ export default function BuilderLayout() {
       if (ctrl) {
         if (e.key === "z" && !e.shiftKey)         { e.preventDefault(); undo(); return; }
         if ((e.key === "z" && e.shiftKey) || e.key === "y") { e.preventDefault(); redo(); return; }
-        if (e.key === "s")                         { e.preventDefault(); saveToLocalStorage(); return; }
+        if (e.key === "s")                         { e.preventDefault(); void saveHtml(); return; }
         if (e.key === "d" && selectedComponentId) { e.preventDefault(); duplicateComponent(selectedComponentId); return; }
         if (e.key === "c" && !inInput)             { e.preventDefault(); copyComponents(); return; }
         if (e.key === "v" && !inInput)             { e.preventDefault(); pasteComponents(); return; }
@@ -84,7 +84,7 @@ export default function BuilderLayout() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isInlineEditing, selectedComponentId, undo, redo, saveToLocalStorage, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents]);
+  }, [isInlineEditing, selectedComponentId, undo, redo, saveHtml, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents]);
   const selectedComponent = selectedComponentId ? findByIdDeep(components, selectedComponentId) : null;
 
   useEffect(() => {

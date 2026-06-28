@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 import { arrayMove } from "@dnd-kit/sortable";
 import { generateHtml } from "@/lib/exportHtml";
+import { autosaveProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
 import { featureItemDefaults } from "@/components/blocks/feature-item/spec";
 import { heroDefaults } from "@/components/blocks/hero/spec";
 import { navigationDefaults } from "@/components/blocks/navigation/spec";
@@ -633,10 +634,52 @@ function captureHistory(
 
 const STORAGE_KEY = "stackly-builder-draft";
 
+let autosaveController: AbortController | null = null;
+let saveHtmlController: AbortController | null = null;
+let autosaveSeq = 0;
+let saveHtmlSeq = 0;
+
+function linkedAbortController(signal?: AbortSignal): AbortController {
+  const controller = new AbortController();
+  if (signal?.aborted) {
+    controller.abort();
+  } else if (signal) {
+    signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+  return controller;
+}
+
+function buildProjectData(state: BuilderState): ProjectBuilderData {
+  return {
+    schemaVersion: 1,
+    components: state.components,
+    sections: state.components,
+    designTokens: useDesignStore.getState().tokens,
+    seo: useDesignStore.getState().seo,
+    canvasMode: state.canvasMode,
+    projectName: state.currentProjectName ?? undefined,
+  };
+}
+
+function getSaveErrorMessage(error: unknown, fallback: string): string {
+  if (isProjectConnectionError(error)) {
+    return "Unable to reach the project service. Your work is still on the canvas.";
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 export const useBuilderStore = create<BuilderState>((set, get) => ({
   components: [],
   selectedComponentId: null,
   selectedTextStyleTarget: null,
+  currentProjectId: null,
+  currentProjectName: null,
+  isDirty: false,
+  lastSaved: null,
+  isSaving: false,
+  saveStatus: "idle",
+  saveError: null,
   selectedComponentIds: [],
   clipboard: null,
   isInlineEditing: false,
@@ -800,20 +843,137 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       };
     }),
   saveToLocalStorage: () => {
-    try {
-      const payload = JSON.stringify({ components: get().components, savedAt: Date.now() });
-      localStorage.setItem(STORAGE_KEY, payload);
-    } catch { /* storage unavailable */ }
+    void get().autosave();
   },
-  loadFromLocalStorage: () => {
+  loadFromLocalStorage: () => false,
+  markDirty: () => set({ isDirty: true, saveStatus: "idle", saveError: null }),
+  loadProject: async (id, signal) => {
+    set({ isSaving: true, saveStatus: "saving", saveError: null });
+
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return false;
-      const { components } = JSON.parse(raw) as { components: BuilderComponent[] };
-      if (!Array.isArray(components)) return false;
-      set((state) => ({ ...captureHistory(state), components, selectedComponentId: null }));
+      const project = await getProject(id, signal);
+      const builderData = project.builderData ?? {};
+      const components = Array.isArray(builderData.components)
+        ? builderData.components
+        : Array.isArray(builderData.sections)
+          ? builderData.sections
+          : [];
+
+      if (builderData.designTokens) {
+        useDesignStore.getState().setTokens(builderData.designTokens);
+      }
+      if (builderData.seo) {
+        useDesignStore.getState().setSEO(builderData.seo);
+      }
+
+      set((state) => ({
+        ...captureHistory(state),
+        components: orderComponents(cloneComponentTree(components)),
+        selectedComponentId: null,
+        selectedTextStyleTarget: null,
+        selectedComponentIds: [],
+        currentProjectId: project._id,
+        currentProjectName: project.projectName || builderData.projectName || "Untitled Project",
+        canvasMode: builderData.canvasMode ?? "flow",
+        isDirty: false,
+        lastSaved: project.updatedAt ?? null,
+        isSaving: false,
+        saveStatus: "saved",
+        saveError: null,
+      }));
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        set({ isSaving: false, saveStatus: "idle" });
+        return false;
+      }
+
+      set({
+        isSaving: false,
+        saveStatus: "error",
+        saveError: getSaveErrorMessage(error, "Unable to open this project."),
+      });
+      return false;
+    }
+  },
+  autosave: async (signal) => {
+    const state = get();
+    if (!state.currentProjectId || state.components.length === 0) return false;
+
+    autosaveController?.abort();
+    autosaveController = linkedAbortController(signal);
+    const seq = ++autosaveSeq;
+
+    set({ isSaving: true, saveStatus: "saving", saveError: null });
+
+    try {
+      const savedAt = new Date().toISOString();
+      await autosaveProject(
+        state.currentProjectId,
+        {
+          builderData: buildProjectData(state),
+          htmlContent: state.exportHtml(),
+        },
+        autosaveController.signal,
+      );
+
+      if (seq === autosaveSeq) {
+        set({ isDirty: false, lastSaved: savedAt, isSaving: false, saveStatus: "saved", saveError: null });
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        if (seq === autosaveSeq) set({ isSaving: false, saveStatus: "idle" });
+        return false;
+      }
+
+      if (seq === autosaveSeq) {
+        set({
+          isSaving: false,
+          saveStatus: "error",
+          saveError: getSaveErrorMessage(error, "Autosave failed. Your work is still on the canvas."),
+        });
+      }
+      return false;
+    }
+  },
+  saveHtml: async (signal) => {
+    const state = get();
+    if (!state.currentProjectId) {
+      set({
+        saveStatus: "error",
+        saveError: "Open a saved backend project before saving HTML.",
+      });
+      return false;
+    }
+
+    saveHtmlController?.abort();
+    saveHtmlController = linkedAbortController(signal);
+    const seq = ++saveHtmlSeq;
+
+    set({ isSaving: true, saveStatus: "saving", saveError: null });
+
+    try {
+      const savedAt = new Date().toISOString();
+      await saveProjectHtml(state.currentProjectId, state.exportHtml(), saveHtmlController.signal);
+
+      if (seq === saveHtmlSeq) {
+        set({ lastSaved: savedAt, isSaving: false, saveStatus: "saved", saveError: null });
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        if (seq === saveHtmlSeq) set({ isSaving: false, saveStatus: "idle" });
+        return false;
+      }
+
+      if (seq === saveHtmlSeq) {
+        set({
+          isSaving: false,
+          saveStatus: "error",
+          saveError: getSaveErrorMessage(error, "Unable to save generated HTML."),
+        });
+      }
       return false;
     }
   },
@@ -835,6 +995,13 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       future: [],
       viewport: "desktop",
       canvasMode: "flow",
+      currentProjectId: null,
+      currentProjectName: null,
+      isDirty: false,
+      lastSaved: null,
+      isSaving: false,
+      saveStatus: "idle",
+      saveError: null,
     });
   },
 

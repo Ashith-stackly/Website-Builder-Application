@@ -255,12 +255,26 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
           </div>
         </div>
 
-        <p className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-slate-400">
-          <Clock3 className="h-3 w-3" />
-          <span>Updated {timeAgo}</span>
-          <span className="text-slate-300">.</span>
-          <span>{project.sections?.length ?? 0} sections</span>
-        </p>
+        {project.description && (
+          <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
+            {project.description}
+          </p>
+        )}
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-slate-400">
+            <Clock3 className="h-3 w-3" />
+            <span>Updated {timeAgo}</span>
+            <span className="text-slate-300">.</span>
+            <span>{project.status || "draft"}</span>
+          </p>
+          <Link
+            href={`/builder?projectId=${project.id}`}
+            className="rounded-lg bg-[#06224C] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-900"
+          >
+            Edit
+          </Link>
+        </div>
       </div>
     </motion.div>
   );

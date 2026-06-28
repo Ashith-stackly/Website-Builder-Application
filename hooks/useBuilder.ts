@@ -22,6 +22,10 @@ export const useBuilderActions = () =>
       redo: s.redo,
       saveToLocalStorage: s.saveToLocalStorage,
       loadFromLocalStorage: s.loadFromLocalStorage,
+      loadProject: s.loadProject,
+      autosave: s.autosave,
+      markDirty: s.markDirty,
+      saveHtml: s.saveHtml,
       /* Wix-style freeform editing */
       toggleSelectComponent: s.toggleSelectComponent,
       copyComponents: s.copyComponents,
