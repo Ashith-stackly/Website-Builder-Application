@@ -198,7 +198,7 @@ export default function BlogManagePage() {
                       </h3>
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold shrink-0 ${
-                          blog.status === "Published"
+                          blog.status === "published"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : "bg-amber-50 text-amber-700 border border-amber-200"
                         }`}
@@ -217,9 +217,9 @@ export default function BlogManagePage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {blog.status === "Published" && (
+                    {blog.status === "published" && (
                       <Link
-                        href={`/blog/${blog.slug}`}
+                        href={`/blog/post?slug=${encodeURIComponent(blog.slug)}`}
                         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors no-underline cursor-pointer"
                         target="_blank"
                       >

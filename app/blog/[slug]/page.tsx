@@ -8,9 +8,9 @@ import { getBlogBySlug, isBlogConnectionError } from "@/lib/blogApi";
 import BlogSeoHead from "@/components/blog/BlogSeoHead";
 import Footer from "@/components/Footer";
 
-export default function BlogViewPage() {
+export function BlogViewPage({ slugOverride }: { slugOverride?: string } = {}) {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug;
+  const slug = slugOverride || params.slug;
 
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,13 +26,9 @@ export default function BlogViewPage() {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setLoading(true);
-    setError(null);
-    setNotPublished(false);
-
     getBlogBySlug(slug, controller.signal)
       .then((data) => {
-        if (data.status !== "Published") {
+        if (data.status !== "published") {
           setNotPublished(true);
           return;
         }
@@ -203,3 +199,5 @@ export default function BlogViewPage() {
     </>
   );
 }
+
+export default BlogViewPage;

@@ -6,7 +6,7 @@ interface BlogSeoHeadProps {
   title: string;
   seoTitle?: string;
   seoDescription?: string;
-  seoKeywords?: string;
+  seoKeywords?: string[];
   featuredImage?: string;
 }
 
@@ -28,7 +28,7 @@ export default function BlogSeoHead({
     const pageTitle = seoTitle?.trim() || title;
     const fullTitle = `${pageTitle} | Stackly Blog`;
     const description = seoDescription?.trim() || "";
-    const keywords = seoKeywords?.trim() || "";
+    const keywords = seoKeywords?.join(", ") || "";
 
     // Set document title
     document.title = fullTitle;

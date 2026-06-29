@@ -9,7 +9,7 @@ export async function generateStaticParams() {
   try {
     const blogs = await getBlogs();
     const params = blogs
-      .filter((blog) => blog.status === "Published")
+      .filter((blog) => blog.status === "published")
       .map((blog) => ({ slug: blog.slug }));
 
     return params.length > 0 ? params : [{ slug: BUILD_FALLBACK_SLUG }];

@@ -10,7 +10,7 @@ import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
 
-const START_BLOGGING_HREF = "/page-not-found";
+const START_BLOGGING_HREF = "/blog/manage/create";
 
 function scrollBlogPreviewToTop() {
   window.scrollTo({ top: 0, behavior: "smooth" });

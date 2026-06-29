@@ -38,13 +38,13 @@ export default function BlogForm({
     initialData?.seoDescription ?? ""
   );
   const [seoKeywords, setSeoKeywords] = useState(
-    initialData?.seoKeywords ?? ""
+    initialData?.seoKeywords?.join(", ") ?? ""
   );
   const [featuredImage, setFeaturedImage] = useState(
     initialData?.featuredImage ?? ""
   );
-  const [status, setStatus] = useState<"Draft" | "Published">(
-    initialData?.status ?? "Draft"
+  const [status, setStatus] = useState<"draft" | "published">(
+    initialData?.status ?? "draft"
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const submitGuardRef = useRef(false);
@@ -87,7 +87,10 @@ export default function BlogForm({
           content: content.trim(),
           seoTitle: seoTitle.trim() || undefined,
           seoDescription: seoDescription.trim() || undefined,
-          seoKeywords: seoKeywords.trim() || undefined,
+          seoKeywords: seoKeywords
+            .split(",")
+            .map((keyword) => keyword.trim())
+            .filter(Boolean),
           featuredImage: featuredImage.trim() || undefined,
           status,
         });
@@ -258,11 +261,11 @@ export default function BlogForm({
         <select
           id="blog-status"
           value={status}
-          onChange={(e) => setStatus(e.target.value as "Draft" | "Published")}
+          onChange={(e) => setStatus(e.target.value as "draft" | "published")}
           className={`${inputClass} cursor-pointer`}
         >
-          <option value="Draft">Draft</option>
-          <option value="Published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
         </select>
       </div>
 

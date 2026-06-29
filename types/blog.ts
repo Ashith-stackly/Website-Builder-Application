@@ -10,8 +10,8 @@ export interface Blog {
   content: string;
   seoTitle?: string;
   seoDescription?: string;
-  seoKeywords?: string;
-  status: "Draft" | "Published";
+  seoKeywords?: string[];
+  status: "draft" | "published";
   featuredImage?: string;
   createdAt: string;
   updatedAt: string;
@@ -22,7 +22,7 @@ export interface BlogListItem {
   _id: string;
   title: string;
   slug: string;
-  status: "Draft" | "Published";
+  status: "draft" | "published";
   createdAt: string;
 }
 
@@ -32,8 +32,8 @@ export interface CreateBlogBody {
   content: string;
   seoTitle?: string;
   seoDescription?: string;
-  seoKeywords?: string;
-  status?: "Draft" | "Published";
+  seoKeywords?: string[];
+  status?: "draft" | "published";
   featuredImage?: string;
 }
 
@@ -43,7 +43,7 @@ export interface UpdateBlogBody {
   content?: string;
   seoTitle?: string;
   seoDescription?: string;
-  seoKeywords?: string;
-  status?: "Draft" | "Published";
+  seoKeywords?: string[];
+  status?: "draft" | "published";
   featuredImage?: string;
 }
