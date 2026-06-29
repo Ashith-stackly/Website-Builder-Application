@@ -1,3 +1,4 @@
+import { LayoutGrid } from "lucide-react";
 import type { BuilderComponent } from "@/types/builder";
 import { toReactStyle } from "./componentStyles";
 
@@ -20,6 +21,7 @@ export default function ColumnsComponent({
   const colCount = component.content || "3";
   const colClass = COL_CLASS[colCount] ?? "grid-cols-1 sm:grid-cols-3";
   const hasChildren = component.children.length > 0;
+  const count = parseInt(colCount) || 3;
 
   return (
     <div
@@ -29,14 +31,23 @@ export default function ColumnsComponent({
       {hasChildren ? (
         children
       ) : (
-        <div className="flex min-h-[110px] w-full items-center justify-center rounded-xl border-2 border-dashed border-[#dbe3ef] text-center text-sm font-medium text-[#566583]">
-          <span>
-            Drop <strong className="text-[#0B1D40]">Feature Items</strong> here
-            <br />
-            <span className="text-xs font-normal text-[#8898aa]">
-              ({colCount} column{colCount !== "1" ? "s" : ""})
-            </span>
-          </span>
+        <div className={`grid gap-3 ${colClass}`}>
+          {Array.from({ length: count }).map((_, i) => (
+            <div
+              key={i}
+              className="group/col flex min-h-[120px] items-center justify-center rounded-xl border-2 border-dashed border-[#dbe3ef] bg-gradient-to-br from-white/60 to-[#f7f9fc] text-center transition-all hover:border-blue-300 hover:from-blue-50/30 hover:to-indigo-50/20 hover:shadow-sm"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef4fb] text-[#566583] transition-colors group-hover/col:bg-blue-100 group-hover/col:text-blue-600">
+                  <LayoutGrid className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-[#566583]">Column {i + 1}</p>
+                  <p className="text-[10px] text-[#8898aa]">Drop blocks here</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

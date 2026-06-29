@@ -32,7 +32,7 @@ function CanvasItem({
   const viewport = useBuilderStore((s) => s.viewport) as Viewport;
   const [isEditing, setIsEditing] = useState(false);
   const isInlineEditable = component.type === "heading" || component.type === "text" || component.type === "button";
-  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery" || component.type === "pricing-table" || component.type === "testimonial" || component.type === "footer" || component.type === "accordion" || component.type === "tabs" || component.type === "form";
+  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery" || component.type === "pricing-table" || component.type === "testimonial" || component.type === "footer" || component.type === "accordion" || component.type === "tabs" || component.type === "form" || component.type === "row";
   const isLocked = component.locked ?? false;
 
   /* ── Resize handle ref ── */
@@ -243,7 +243,7 @@ function CanvasItem({
           className={`relative flex w-full flex-col items-start transition-colors duration-150 ${
             isEditing
               ? "bg-blue-50/20"
-              : isDropTarget && (component.type === "container" || component.type === "columns")
+              : isDropTarget && (component.type === "container" || component.type === "columns" || component.type === "row")
                 ? "bg-blue-50/50 ring-2 ring-inset ring-blue-400/40"
                 : ""
           } ${isInlineEditable && isSelected && !isEditing ? "cursor-text" : ""}`}

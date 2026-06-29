@@ -26,7 +26,8 @@ export type ComponentType =
   | "pricing-table"
   | "testimonial"
   | "footer"
-  | "form";
+  | "form"
+  | "row";
 
 export interface ComponentStyles {
   color?: string;
@@ -351,6 +352,10 @@ export interface FormField {
   options?: string[];
 }
 
+export interface RowProps {
+  layout: "50/50" | "33/33/33" | "25/50/25" | "25/75" | "75/25" | "33/67" | "67/33";
+}
+
 export interface FormProps {
   heading?: string;
   description?: string;
@@ -384,7 +389,7 @@ export interface SEOMetadata {
  */
 export const SECTION_TYPES: ReadonlySet<ComponentType> = new Set([
   "navigation", "hero", "features", "gallery", "contact", "container", "columns",
-  "pricing-table", "testimonial", "footer", "accordion", "tabs", "form",
+  "pricing-table", "testimonial", "footer", "accordion", "tabs", "form", "row",
 ]);
 
 export interface BuilderComponent {

@@ -25,6 +25,7 @@ import PricingTableComponent from "@/components/draggable/PricingTableComponent"
 import TestimonialComponent from "@/components/draggable/TestimonialComponent";
 import FooterComponent from "@/components/draggable/FooterComponent";
 import FormComponent from "@/components/draggable/FormComponent";
+import RowComponent from "@/components/draggable/RowComponent";
 
 export type BuilderRenderer = (props: {
   component: BuilderComponent;
@@ -68,5 +69,6 @@ export const componentRegistry: Record<ComponentType, BuilderRenderer> = {
   testimonial: TestimonialComponent,
   footer: FooterComponent,
   form: FormComponent,
+  row: RowComponent,
 };
 

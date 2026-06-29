@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlignCenter, AlignLeft, AlignRight, ChevronDown, Monitor, RotateCcw, Smartphone, Tablet } from "lucide-react";
 import { ColorSwatch } from "./controls/ColorSwatch";
 import { UnitInput } from "./controls/UnitInput";
@@ -14,6 +14,33 @@ const FONT_WEIGHTS = [
   { value: "600", label: "Semi" },
   { value: "700", label: "Bold" },
 ];
+
+const FONT_FAMILIES = [
+  { label: "Inter", value: "Inter, system-ui, sans-serif", google: "Inter" },
+  { label: "Roboto", value: "Roboto, Arial, sans-serif", google: "Roboto" },
+  { label: "Outfit", value: "Outfit, Arial, sans-serif", google: "Outfit" },
+  { label: "Poppins", value: "Poppins, Arial, sans-serif", google: "Poppins" },
+  { label: "Lato", value: "Lato, Arial, sans-serif", google: "Lato" },
+  { label: "Montserrat", value: "Montserrat, Arial, sans-serif", google: "Montserrat" },
+  { label: "Playfair Display", value: "\"Playfair Display\", Georgia, serif", google: "Playfair Display" },
+  { label: "Merriweather", value: "Merriweather, Georgia, serif", google: "Merriweather" },
+  { label: "System", value: "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif" },
+];
+
+function loadGoogleFont(fontFamily?: string) {
+  if (typeof document === "undefined" || !fontFamily) return;
+  const match = FONT_FAMILIES.find((font) => font.value === fontFamily && font.google);
+  if (!match?.google) return;
+
+  const id = `stackly-font-${match.google.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  if (document.getElementById(id)) return;
+
+  const link = document.createElement("link");
+  link.id = id;
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(match.google).replace(/%20/g, "+")}:wght@400;500;600;700;800&display=swap`;
+  document.head.appendChild(link);
+}
 
 function Section({
   title,
@@ -140,6 +167,10 @@ export function StyleTab({
 
   const ViewportIcon = viewport === "tablet" ? Tablet : viewport === "mobile" ? Smartphone : Monitor;
 
+  useEffect(() => {
+    loadGoogleFont(activeTextStyles.fontFamily || s.fontFamily);
+  }, [activeTextStyles.fontFamily, s.fontFamily]);
+
   return (
     <div className="pb-6">
       {/* Viewport editing banner */}
@@ -170,6 +201,23 @@ export function StyleTab({
             </div>
           </div>
         )}
+        <div>
+          <span className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Font Family</span>
+          <select
+            value={activeTextStyles.fontFamily || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              loadGoogleFont(value);
+              setTypography({ fontFamily: value });
+            }}
+            className="w-full rounded-lg border border-[#dbe3ef] bg-transparent px-2.5 py-2 text-[12px] font-bold text-[#0B1D40] outline-none focus:border-blue-400"
+          >
+            <option value="">Inherit</option>
+            {FONT_FAMILIES.map((font) => (
+              <option key={font.value} value={font.value}>{font.label}</option>
+            ))}
+          </select>
+        </div>
         <div>
           <div className="flex items-center">
             <ColorSwatch

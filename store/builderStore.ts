@@ -20,6 +20,7 @@ import { formDefaults } from "@/components/draggable/FormComponent";
 import { accordionDefaults } from "@/components/draggable/AccordionComponent";
 import { tabsDefaults } from "@/components/draggable/TabsComponent";
 import { mapDefaults } from "@/components/draggable/MapComponent";
+import { rowDefaults } from "@/components/draggable/RowComponent";
 import type { BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
 import { useDesignStore } from "@/store/designStore";
 import type { DesignTokens } from "@/store/designStore";
@@ -178,6 +179,12 @@ const defaults: Record<ComponentType, ComponentDefault> = {
     content: "",
     props: { ...formDefaults },
     styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "32px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
+  row: {
+    content: "50/50",
+    props: { ...rowDefaults },
+    styles: { backgroundColor: "#ffffff", padding: "24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
     children: [],
   },
 };
@@ -558,7 +565,7 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
       return section as ComponentType;
     })
     .filter((section): section is ComponentType =>
-      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container", "video", "map", "accordion", "tabs", "spacer", "social-links", "countdown", "pricing-table", "testimonial", "footer", "form"].includes(section),
+      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container", "video", "map", "accordion", "tabs", "spacer", "social-links", "countdown", "pricing-table", "testimonial", "footer", "form", "row"].includes(section),
     );
 
   return sectionTypes.map((type, index) => {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ImageIcon, Link, RefreshCw, Trash2 } from "lucide-react";
 import type { BuilderComponent } from "@/types/builder";
 import { ImagePicker } from "@/components/assets/ImagePicker";
+import { DropZone } from "@/components/assets/DropZone";
 import { useAssetStore } from "@/store/assetStore";
 
 interface ImagePanelProps {
@@ -13,6 +14,8 @@ interface ImagePanelProps {
 
 export function ImagePanel({ component, onUpdate }: ImagePanelProps) {
   const getDataUrl = useAssetStore((s) => s.getDataUrl);
+  const getUrl = useAssetStore((s) => s.getUrl);
+  const uploadFiles = useAssetStore((s) => s.uploadFiles);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const currentSrc = component.content || "";
@@ -41,8 +44,21 @@ export function ImagePanel({ component, onUpdate }: ImagePanelProps) {
     });
   };
 
+  const handleUpload = async (files: File[]) => {
+    const uploaded = await uploadFiles(files.slice(0, 1));
+    const asset = uploaded[0];
+    if (!asset) return;
+
+    const dataUrl = await getDataUrl(asset.id);
+    const objectUrl = dataUrl ? null : await getUrl(asset.id);
+    onUpdate(component.id, {
+      content: dataUrl ?? objectUrl ?? "",
+      props: { ...component.props, assetId: asset.id, alt: currentAlt || asset.name },
+    });
+  };
+
   return (
-    <div className="space-y-4 px-5 py-5">
+    <div className="space-y-4">
       {/* Preview + actions */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
         {hasImage ? (
@@ -60,6 +76,13 @@ export function ImagePanel({ component, onUpdate }: ImagePanelProps) {
           </div>
         )}
       </div>
+
+      <DropZone
+        compact
+        multiple={false}
+        onFiles={handleUpload}
+        className="bg-white/70"
+      />
 
       {/* Action buttons */}
       <div className="flex gap-2">

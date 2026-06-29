@@ -39,6 +39,7 @@ import type {
   TabItem,
   TabsProps,
   TestimonialProps,
+  RowProps,
 } from "@/types/builder";
 import HeadingComponent from "@/components/draggable/HeadingComponent";
 import TextComponent from "@/components/draggable/TextComponent";
@@ -60,8 +61,13 @@ import PricingTableComponent, { pricingTableDefaults } from "@/components/dragga
 import TestimonialComponent, { testimonialDefaults } from "@/components/draggable/TestimonialComponent";
 import FooterComponent, { footerDefaults } from "@/components/draggable/FooterComponent";
 import FormComponent, { formDefaults } from "@/components/draggable/FormComponent";
+import RowComponent, { rowDefaults, ROW_LAYOUTS } from "@/components/draggable/RowComponent";
 import { ContentField, contentInputClass } from "@/components/builder/PanelFields";
+import { DropZone } from "@/components/assets/DropZone";
+import { ImagePicker } from "@/components/assets/ImagePicker";
+import { useAssetStore } from "@/store/assetStore";
 import { escapeHtml } from "@/lib/htmlUtils";
+import { useState } from "react";
 
 type ContentProps = { content: string };
 type ImageBlockProps = { src: string; alt?: string; assetId?: string };
@@ -116,11 +122,84 @@ const TextPanel = (props: PanelProps<ContentProps>) => <TextContentPanel {...pro
 const ButtonPanel = (props: PanelProps<ContentProps>) => <TextContentPanel {...props} label="Button Label" />;
 const InputPanel = (props: PanelProps<ContentProps>) => <TextContentPanel {...props} label="Placeholder" />;
 
-function ImagePanel({ data, setContent, setProp }: PanelProps<ImageBlockProps>) {
+function ImagePanel({ data, setContent, setProp, component }: PanelProps<ImageBlockProps>) {
+  const uploadFiles = useAssetStore((s) => s.uploadFiles);
+  const getDataUrl = useAssetStore((s) => s.getDataUrl);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const currentSrc = data.src || "";
+  const hasImage = Boolean(currentSrc && currentSrc !== "/showcase.webp");
+
+  const handleUpload = async (files: File[]) => {
+    const assets = await uploadFiles(files);
+    if (assets.length > 0) {
+      const asset = assets[0];
+      const dataUrl = await getDataUrl(asset.id);
+      if (dataUrl) {
+        setContent?.(dataUrl);
+        setProp("assetId" as keyof ImageBlockProps, asset.id as ImageBlockProps[keyof ImageBlockProps]);
+      }
+    }
+  };
+
+  const handlePickerSelect = async (url: string, assetId?: string) => {
+    let storedUrl = url;
+    if (assetId) {
+      const dataUrl = await getDataUrl(assetId);
+      if (dataUrl) storedUrl = dataUrl;
+    }
+    setContent?.(storedUrl);
+    setProp("assetId" as keyof ImageBlockProps, (assetId ?? null) as ImageBlockProps[keyof ImageBlockProps]);
+    setPickerOpen(false);
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Image preview */}
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+        {hasImage ? (
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={currentSrc}
+              alt={data.alt || "Preview"}
+              className="h-36 w-full object-cover"
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
+          </div>
+        ) : (
+          <div className="flex h-28 flex-col items-center justify-center gap-2 text-gray-300">
+            <ImageIcon className="h-10 w-10" />
+            <span className="text-[11px] font-medium">No image selected</span>
+          </div>
+        )}
+      </div>
+
+      {/* Upload drop zone */}
+      <DropZone onFiles={handleUpload} compact multiple={false} />
+
+      {/* Asset picker button */}
+      <button
+        type="button"
+        onClick={() => setPickerOpen(true)}
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#0B1D40]/20 bg-[#0B1D40] py-2.5 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
+      >
+        <ImageIcon className="h-3.5 w-3.5" />
+        {hasImage ? "Replace from Assets" : "Choose from Assets"}
+      </button>
+
+      {/* URL input */}
       <ContentField label="Image URL" value={data.src} onChange={(value) => setContent?.(value)} />
+
+      {/* Alt text */}
       <ContentField label="Alt Text" value={data.alt ?? ""} onChange={(value) => setProp("alt", value)} />
+
+      <ImagePicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handlePickerSelect}
+        currentUrl={currentSrc}
+      />
     </div>
   );
 }
@@ -742,4 +821,87 @@ export const formSpec: BlockSpec<FormProps> = {
   Panel: FormPanel,
   exportHtml: (data, styleAttr) => `<section${styleAttr}>${data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : ""}${data.description ? `<p style="text-align:center">${escapeHtml(data.description)}</p>` : ""}<form>${data.fields.map((field) => field.type === "textarea" ? `<label style="display:block;margin-bottom:12px"><span>${escapeHtml(field.label)}</span><textarea placeholder="${escapeHtml(field.placeholder || "")}" rows="4"></textarea></label>` : `<label style="display:block;margin-bottom:12px"><span>${escapeHtml(field.label)}</span><input type="${escapeHtml(field.type)}" placeholder="${escapeHtml(field.placeholder || "")}" /></label>`).join("")}<button type="submit">${escapeHtml(data.submitLabel)}</button></form></section>`,
   ai: { description: "A contact/signup form with configurable fields.", exampleOutput: formDefaults },
+};
+
+/* ─── Row block ──────────────────────────────────────────────────────── */
+
+function readRow(component: BuilderComponent): RowProps {
+  const props = asObject(component.props);
+  const layout = asString(props.layout, "") || component.content || "50/50";
+  return { layout: layout as RowProps["layout"] };
+}
+
+/** Visual layout presets for the Row panel */
+const ROW_LAYOUT_LABELS: Record<string, string> = {
+  "50/50":    "½  ½",
+  "33/33/33": "⅓  ⅓  ⅓",
+  "25/50/25": "¼  ½  ¼",
+  "25/75":    "¼  ¾",
+  "75/25":    "¾  ¼",
+  "33/67":    "⅓  ⅔",
+  "67/33":    "⅔  ⅓",
+};
+
+function RowPanel({ data, setContent, setProp }: PanelProps<RowProps>) {
+  return (
+    <div className="space-y-4">
+      <span className="block text-[13px] font-bold text-[#0B1D40]">Column Layout</span>
+      <div className="grid grid-cols-2 gap-2">
+        {ROW_LAYOUTS.map((layout) => {
+          const isActive = data.layout === layout;
+          const cols = layout.split("/");
+          return (
+            <button
+              key={layout}
+              type="button"
+              onClick={() => {
+                setContent?.(layout);
+                setProp("layout", layout as RowProps["layout"]);
+              }}
+              className={`flex flex-col items-center gap-2 rounded-xl border-2 px-3 py-3 text-center transition-all ${
+                isActive
+                  ? "border-[#0B1D40] bg-[#0B1D40]/[0.06] shadow-sm"
+                  : "border-[#dbe3ef] bg-white hover:border-blue-300 hover:bg-blue-50/30"
+              }`}
+            >
+              {/* Visual column preview */}
+              <div className="flex w-full gap-1" style={{ height: 24 }}>
+                {cols.map((col, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-sm ${isActive ? "bg-[#0B1D40]" : "bg-[#dbe3ef]"}`}
+                    style={{ flex: parseInt(col) || 1 }}
+                  />
+                ))}
+              </div>
+              <span className={`text-[10px] font-bold ${isActive ? "text-[#0B1D40]" : "text-[#566583]"}`}>
+                {ROW_LAYOUT_LABELS[layout] || layout}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="rounded-lg bg-[#eef4fb] px-3 py-2 text-[11px] font-medium leading-5 text-[#566583]">
+        Drop child blocks into this row to create side-by-side layouts.
+      </p>
+    </div>
+  );
+}
+
+export const rowSpec: BlockSpec<RowProps> = {
+  type: "row",
+  label: "Row",
+  group: "layout",
+  icon: Columns3,
+  defaults: rowDefaults,
+  read: readRow,
+  Renderer: RowComponent,
+  Panel: RowPanel,
+  accepts: "any",
+  exportHtml: (data, styleAttr) => {
+    const cols = data.layout.split("/");
+    const gridCols = cols.map((c) => `${parseInt(c) || 1}fr`).join(" ");
+    return `<section${styleAttr}><div style="display:grid;grid-template-columns:${gridCols};gap:16px"></div></section>`;
+  },
+  ai: { description: "A row container with configurable column layout.", exampleOutput: rowDefaults },
 };

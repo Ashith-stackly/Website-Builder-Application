@@ -95,6 +95,15 @@ const renderComponent = (component: BuilderComponent): string => {
   const styleAttr = componentAttr(component);
   const content = escapeHtml(component.content);
   const children = component.children.map(renderComponent).join("\n");
+  const rowGrid: Record<string, string> = {
+    "50/50": "1fr 1fr",
+    "33/33/33": "1fr 1fr 1fr",
+    "25/50/25": "1fr 2fr 1fr",
+    "25/75": "1fr 3fr",
+    "75/25": "3fr 1fr",
+    "33/67": "1fr 2fr",
+    "67/33": "2fr 1fr",
+  };
 
   if (component.type === "container") {
     return `<section${styleAttr}>${children || content}</section>`;
@@ -102,6 +111,12 @@ const renderComponent = (component: BuilderComponent): string => {
 
   if (component.type === "columns") {
     return `<div${componentAttr(component, { display: "flex", gap: "16px", ...component.styles })}>${children}</div>`;
+  }
+
+  if (component.type === "row") {
+    const layout = String(component.props?.layout || component.content || "50/50");
+    const gridTemplateColumns = rowGrid[layout] ?? rowGrid["50/50"];
+    return `<section${componentAttr(component, { ...component.styles })}><div style="display:grid;grid-template-columns:${escapeHtml(gridTemplateColumns)};gap:16px">${children}</div></section>`;
   }
 
   // ── Registry path ────────────────────────────────────────────────────────────

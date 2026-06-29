@@ -144,7 +144,7 @@ export default function BuilderLayout() {
       } else if (isOverItem) {
         const overComponent = components.find((c) => c.id === overId);
 
-        if (overComponent?.type === "container" || overComponent?.type === "columns") {
+        if (overComponent?.type === "container" || overComponent?.type === "columns" || overComponent?.type === "row") {
           addComponent(type, overId);
         } else {
           addComponent(type, null, overId);

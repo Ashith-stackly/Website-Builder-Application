@@ -15,6 +15,7 @@ import { EffectsTab } from "./panel/EffectsTab";
 import LayersPanel from "./LayersPanel";
 import { ImagePanel } from "@/components/blocks/image/ImagePanel";
 import { useAssetStore } from "@/store/assetStore";
+import { ROW_LAYOUTS } from "@/components/draggable/RowComponent";
 
 type Tab = "content" | "style" | "effects" | "layers";
 
@@ -266,6 +267,34 @@ export default function PropertyEditor({
           </div>
           <p className="rounded-lg bg-[#eef4fb] px-3 py-2 text-[11px] font-medium leading-5 text-[#566583]">
             Drag <strong className="text-[#0B1D40]">Feature Items</strong> in to create a side-by-side layout.
+          </p>
+        </div>
+      );
+    }
+
+    if (component.type === "row") {
+      const currentLayout = String(component.props?.layout || component.content || "50/50");
+      return (
+        <div className="space-y-3">
+          <span className="block text-[13px] font-bold text-[#0B1D40]">Row Layout</span>
+          <div className="grid grid-cols-2 gap-2">
+            {ROW_LAYOUTS.map((layout) => (
+              <button
+                key={layout}
+                type="button"
+                className={`rounded-lg border px-2 py-2.5 text-[12px] font-bold transition ${
+                  currentLayout === layout
+                    ? "border-[#0B1D40] bg-[#0B1D40] text-white"
+                    : "border-[#dbe3ef] bg-white/60 text-[#0B1D40] hover:border-blue-300 hover:bg-blue-50"
+                }`}
+                onClick={() => onUpdate(component.id, { content: layout, props: { layout } })}
+              >
+                {layout}
+              </button>
+            ))}
+          </div>
+          <p className="rounded-lg bg-[#eef4fb] px-3 py-2 text-[11px] font-medium leading-5 text-[#566583]">
+            Drop blocks into the row to arrange them across the selected column split.
           </p>
         </div>
       );

@@ -49,6 +49,7 @@ import { pricingTableSpec } from "@/components/blocks/pricing-table/spec";
 import { testimonialSpec } from "@/components/blocks/testimonial/spec";
 import { footerSpec }      from "@/components/blocks/footer/spec";
 import { formSpec }        from "@/components/blocks/form/spec";
+import { rowSpec }         from "@/components/blocks/row/spec";
 
 /* ─── Renderer props ─────────────────────────────────────────────────
    Mirrors BuilderRenderer in componentRegistry.ts — kept here so
@@ -181,4 +182,5 @@ export const blockRegistry: Partial<Record<ComponentType, BlockSpec<any>>> = {
   testimonial:    testimonialSpec,
   footer:         footerSpec,
   form:           formSpec,
+  row:            rowSpec,
 };

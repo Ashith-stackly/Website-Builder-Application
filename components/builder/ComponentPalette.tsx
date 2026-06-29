@@ -41,6 +41,7 @@ const BLOCK_COLORS: Record<ComponentType, string> = {
   testimonial: "bg-yellow-400/20 text-yellow-200",
   footer: "bg-indigo-400/20 text-indigo-200",
   form: "bg-violet-400/20 text-violet-200",
+  row: "bg-teal-400/20 text-teal-200",
 };
  
 const paletteItems: Array<{ type: ComponentType; label: string; group: PaletteGroup; icon: React.ComponentType<{ className?: string }> }> = [
@@ -66,6 +67,7 @@ const paletteItems: Array<{ type: ComponentType; label: string; group: PaletteGr
   { type: "divider", label: "Divider", group: "Basic Blocks", icon: Minus },
   { type: "container", label: "Container", group: "Basic Blocks", icon: LayoutTemplate },
   { type: "video", label: "Video", group: "Basic Blocks", icon: Play },
+  { type: "row", label: "Row", group: "Basic Blocks", icon: LayoutGrid },
   { type: "spacer", label: "Spacer", group: "Basic Blocks", icon: Minus },
  
   /* ── Advanced Blocks ── */

@@ -58,6 +58,7 @@ const TYPE_ICONS: Record<ComponentType, React.ComponentType<{ className?: string
   testimonial: Heart,
   footer: AlignLeft,
   form: FileText,
+  row: LayoutGrid,
 };
 
 const LayerRow = memo(function LayerRow({
