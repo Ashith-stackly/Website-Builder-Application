@@ -36,6 +36,7 @@ import { useAssetStore } from "@/store/assetStore";
 import { useBuilderStore } from "@/store/builderStore";
 import { useDesignStore } from "@/store/designStore";
 import { useProjectStore } from "@/store/projectStore";
+import { defaultUserSettings, readUserSettings, USER_SETTINGS_EVENT } from "@/lib/userSettings";
  
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
  
@@ -339,6 +340,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [mobileCategory, setMobileCategory] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [displayUser, setDisplayUser] = useState(defaultUserSettings);
   const [scrollProgress, setScrollProgress] = useState(0);
   const prefersReducedMotion = useReducedMotion();
   const navRef = useRef<HTMLElement>(null);
@@ -352,6 +354,13 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   useEffect(() => {
     keepVisibleRef.current = keepVisible;
   });
+
+  useEffect(() => {
+    const refresh = () => setDisplayUser(readUserSettings());
+    refresh();
+    window.addEventListener(USER_SETTINGS_EVENT, refresh);
+    return () => window.removeEventListener(USER_SETTINGS_EVENT, refresh);
+  }, []);
  
   const scrollLandingSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: string, closeMobile = false) => {
     const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -844,7 +853,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             >
               <AnimatePresence>{(isProfileMenuOpen || focusedAction === "profile") && <ActiveIconHighlight />}</AnimatePresence>
               <span className="relative z-10 h-full w-full overflow-hidden rounded-full">
-                <img src={assetPath("/profile.webp")} alt="User Profile Picture" className="h-full w-full object-cover" />
+                <img src={displayUser.avatar.startsWith("data:") ? displayUser.avatar : assetPath(displayUser.avatar)} alt={`${displayUser.name} profile picture`} className="h-full w-full object-cover" />
               </span>
             </motion.button>
  
@@ -871,11 +880,11 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                   <div className="mb-1 border-b border-gray-50 px-4 py-2">
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">User Menu</p>
                   </div>
-                  <Link href="/login" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                  <Link href="/dashboard/settings#profile-settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
                     <FaCircleUser className="w-4 opacity-50" />
                     ACCOUNT
                   </Link>
-                  <Link href="/login" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                  <Link href="/dashboard/settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
                     <FaGear className="w-4 opacity-50" />
                     SETTINGS
                   </Link>

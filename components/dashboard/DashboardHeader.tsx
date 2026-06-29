@@ -7,9 +7,8 @@ import { motion } from "framer-motion";
 import { FaBell, FaChartColumn, FaGear } from "react-icons/fa6";
 import { BarChart3, LayoutDashboard, LogOut, Settings, User } from "lucide-react";
 import { assetPath } from "@/lib/paths";
+import { defaultUserSettings, readUserSettings, USER_SETTINGS_EVENT } from "@/lib/userSettings";
 
-const DASHBOARD_DISPLAY_USER_NAME = "Stackly User";
-const DASHBOARD_DISPLAY_USER_EMAIL = "user@stackly.com";
 const NAV_ITEMS = [
   { id: "workspace" as const, label: "WORKSPACE" },
   { id: "myWebsites" as const, label: "MY WEBSITES" },
@@ -50,6 +49,7 @@ export default function DashboardHeader() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const profileWrapRef = useRef<HTMLDivElement>(null);
+  const [displayUser, setDisplayUser] = useState(defaultUserSettings);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -59,6 +59,13 @@ export default function DashboardHeader() {
     }
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => setDisplayUser(readUserSettings());
+    refresh();
+    window.addEventListener(USER_SETTINGS_EVENT, refresh);
+    return () => window.removeEventListener(USER_SETTINGS_EVENT, refresh);
   }, []);
 
   function handleNavClick(id: NavId) {
@@ -122,7 +129,7 @@ export default function DashboardHeader() {
           <button type="button" className={stacklyIconButtonClass} aria-label="Analytics" onClick={() => router.push("/dashboard/analytics")}>
             <FaChartColumn className="text-sm" aria-hidden />
           </button>
-          <button type="button" className={stacklyIconButtonClass} aria-label="Settings">
+          <button type="button" className={stacklyIconButtonClass} aria-label="Settings" onClick={() => router.push("/dashboard/settings")}>
             <FaGear className="text-sm" aria-hidden />
           </button>
           <button type="button" className={stacklyIconButtonClass} aria-label="Notifications">
@@ -139,16 +146,16 @@ export default function DashboardHeader() {
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-95 md:h-9 md:w-9"
               aria-expanded={profileOpen}
               aria-haspopup="true"
-              aria-label={`Profile menu, ${DASHBOARD_DISPLAY_USER_NAME}`}
+              aria-label={`Profile menu, ${displayUser.name}`}
             >
-              <img src={assetPath("/profile.webp")} alt="User Profile Picture" className="h-full w-full object-cover" />
+              <img src={displayUser.avatar.startsWith("data:") ? displayUser.avatar : assetPath(displayUser.avatar)} alt="User Profile Picture" className="h-full w-full object-cover" />
             </button>
 
             {profileOpen && (
               <div className="absolute right-0 top-full z-50 mt-2 w-[222px] overflow-hidden rounded-2xl border border-[#d5dbe3] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.18)]" role="menu">
                 <div className="border-b border-[#e6ebf2] px-4 py-3">
-                  <p className="text-sm font-bold leading-tight text-[#243b5f]">{DASHBOARD_DISPLAY_USER_NAME}</p>
-                  <p className="mt-0.5 text-xs font-semibold text-[#9aa9bc]">{DASHBOARD_DISPLAY_USER_EMAIL}</p>
+                  <p className="text-sm font-bold leading-tight text-[#243b5f]">{displayUser.name}</p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#9aa9bc]">{displayUser.email}</p>
                 </div>
 
                 <div className="py-1.5">
@@ -160,14 +167,14 @@ export default function DashboardHeader() {
                     <BarChart3 className="h-4 w-4" />
                     Analytics
                   </Link>
-                  <button type="button" className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[#3e5373] transition-colors hover:bg-[#f8fafc]" role="menuitem">
+                  <Link href="/dashboard/settings#profile-settings" onClick={() => setProfileOpen(false)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[#3e5373] transition-colors hover:bg-[#f8fafc]" role="menuitem">
                     <User className="h-4 w-4" />
                     Profile
-                  </button>
-                  <button type="button" className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[#3e5373] transition-colors hover:bg-[#f8fafc]" role="menuitem">
+                  </Link>
+                  <Link href="/dashboard/settings" onClick={() => setProfileOpen(false)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[#3e5373] transition-colors hover:bg-[#f8fafc]" role="menuitem">
                     <Settings className="h-4 w-4" />
                     Settings
-                  </button>
+                  </Link>
                 </div>
 
                 <div className="border-t border-[#e6ebf2] py-1.5">

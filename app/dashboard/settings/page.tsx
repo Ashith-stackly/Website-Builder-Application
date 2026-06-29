@@ -7,9 +7,12 @@ import { fadeUp } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { trackPageView } from "@/lib/analytics";
 import ProjectSettingsForm from "@/components/dashboard/ProjectSettingsForm";
+import ProfileSettingsPanel from "@/components/dashboard/ProfileSettingsPanel";
+import SettingsQuickLinks from "@/components/dashboard/SettingsQuickLinks";
+import SubscriptionPanel from "@/components/dashboard/SubscriptionPanel";
 import Link from "next/link";
 import { assetPath } from "@/lib/paths";
-import { ArrowLeft, FolderOpen } from "lucide-react";
+import { ArrowLeft, FolderOpen, Settings2 } from "lucide-react";
 
 function SettingsContent() {
   const searchParams = useSearchParams();
@@ -38,14 +41,20 @@ function SettingsContent() {
 
   if (!projectId) {
     return (
-      <main className="dashboard-page min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20">
-        <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+      <main className="dashboard-page min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_32%),linear-gradient(135deg,#f8fbff,#eef6ff_50%,#fff7ed)]">
+        <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
+          <SettingsHero title="Tune your account" description="Update your profile and manage the subscription details reflected across Stackly." />
+          <SettingsQuickLinks />
+          <ProfileSettingsPanel />
+          <SubscriptionPanel />
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-white/70 bg-white/80 px-5 py-10 text-center shadow-sm">
           <FolderOpen className="h-12 w-12 text-slate-300" />
           <h2 className="mt-4 text-xl font-bold text-[#06224C]">No Project Selected</h2>
-          <p className="mt-2 text-sm text-slate-400">Please select a project from the dashboard.</p>
+          <p className="mt-2 text-sm text-slate-400">Select a project to edit its project-specific settings.</p>
           <Link href="/dashboard" className="mt-6 rounded-xl bg-[#06224C] px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-blue-900">
             Back to Dashboard
           </Link>
+          </div>
         </div>
       </main>
     );
@@ -78,10 +87,23 @@ function SettingsContent() {
         </div>
       </motion.header>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
+        <SettingsHero title="Shape this workspace" description="Keep account, subscription, and project preferences aligned in one place." />
+        <SettingsQuickLinks />
+        <ProfileSettingsPanel />
+        <SubscriptionPanel />
         <ProjectSettingsForm projectId={projectId} />
       </div>
     </main>
+  );
+}
+
+function SettingsHero({ title, description }: { title: string; description: string }) {
+  return (
+    <motion.section variants={fadeUp} initial="hidden" animate="visible" className="flex items-center justify-between gap-5 overflow-hidden rounded-3xl bg-gradient-to-r from-[#06224C] via-blue-700 to-cyan-500 p-6 text-white shadow-[0_28px_80px_rgba(6,34,76,0.22)] sm:p-8">
+      <div><p className="text-[10px] font-black uppercase tracking-[0.32em] text-cyan-100">Dashboard settings</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">{title}</h1><p className="mt-3 max-w-2xl text-sm font-medium text-white/80">{description}</p></div>
+      <Settings2 className="hidden h-10 w-10 shrink-0 text-cyan-100 sm:block" />
+    </motion.section>
   );
 }
 
