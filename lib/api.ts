@@ -132,3 +132,40 @@ export async function resetPassword(body: ResetPasswordBody): Promise<{ message?
     body: JSON.stringify(payload),
   });
 }
+
+// ── Contact API Types ──────────────────────────────────────────────────
+
+/** Payload sent to POST /api/contact */
+export type ContactPayload = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  message: string;
+};
+
+/** Response returned from POST /api/contact */
+export type ContactResponse = {
+  success: boolean;
+  message: string;
+  contact?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    message: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+};
+
+// ── Contact API Endpoint ───────────────────────────────────────────────
+
+/** POST /api/contact — Submit a contact form enquiry */
+export async function submitContact(
+  body: ContactPayload
+): Promise<ContactResponse> {
+  return apiRequest<ContactResponse>("/contact", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}

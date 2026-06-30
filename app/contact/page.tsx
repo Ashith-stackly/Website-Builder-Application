@@ -1,8 +1,10 @@
 "use client";
 import React, { useState } from 'react';
 import Footer from '@/components/Footer';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { fadeUp, slideIn, staggerContainer } from '@/lib/motion';
+import { submitContact, isApiConnectionError } from '@/lib/api';
+import type { ContactPayload } from '@/lib/api';
 import {
   FaFacebookF,
   FaEnvelope,
@@ -17,22 +19,38 @@ import {
   FaYoutube,
 } from 'react-icons/fa6';
 
-const ContactSection = () => {
-  // Form State
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    message: ''
-  });
+// ── Constants ──────────────────────────────────────────────────────────
 
-  // Error States
+/** Initial (empty) form state — reused on reset after successful submission */
+const INITIAL_FORM: ContactPayload = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  message: '',
+};
+
+/** Standard email regex for client-side validation */
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ── Component ──────────────────────────────────────────────────────────
+
+const ContactSection = () => {
+  // ── Form state ─────────────────────────────────────────────────────
+  const [formData, setFormData] = useState<ContactPayload>(INITIAL_FORM);
+
+  // ── Inline field-level error messages ──────────────────────────────
   const [errors, setErrors] = useState({
     email: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
   });
 
+  // ── Submission lifecycle states ────────────────────────────────────
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [submitError, setSubmitError] = useState('');
+
+  // ── Static data ────────────────────────────────────────────────────
   const socialLinks = [
     { icon: FaFacebookF, color: 'text-[#1877F2]', label: 'Facebook', url: 'https://www.facebook.com/thestackly/' },
     { icon: FaYoutube, color: 'text-[#FF0000]', label: 'YouTube', url: 'https://www.youtube.com/@TheStackly' },
@@ -42,9 +60,15 @@ const ContactSection = () => {
     { icon: FaGlobe, color: 'text-[#06224C]', label: 'Website', url: 'https://www.thestackly.com/' },
   ];
 
-  // Validation Logic
+  // ── Handlers ───────────────────────────────────────────────────────
+
+  /** Live input change handler with inline validation for names and email */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+
+    // Clear any previous submit-level messages when the user starts editing
+    if (successMessage) setSuccessMessage('');
+    if (submitError) setSubmitError('');
 
     // Name Validation: Only allow letters
     if (name === 'firstName' || name === 'lastName') {
@@ -57,8 +81,7 @@ const ContactSection = () => {
 
     // Live Email Validation
     if (name === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (value && !emailRegex.test(value)) {
+      if (value && !EMAIL_REGEX.test(value)) {
         setErrors({ ...errors, email: 'Please type in valid format (e.g: ranade@gmail.com)' });
       } else {
         setErrors({ ...errors, email: '' });
@@ -66,12 +89,78 @@ const ContactSection = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Validates every field before submission.
+   * Returns `true` when the form is valid; sets `submitError` otherwise.
+   */
+  const validateForm = (): boolean => {
+    // Step 4: All required fields must be filled
+    const { firstName, lastName, email, message } = formData;
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !message.trim()) {
+      setSubmitError('All fields are required');
+      return false;
+    }
+
+    // Step 5: Email format check
+    if (!EMAIL_REGEX.test(email)) {
+      setSubmitError('Please enter a valid email address.');
+      return false;
+    }
+
+    // Also bail out if there is still an inline email error visible
+    if (errors.email) {
+      return false;
+    }
+
+    return true;
+  };
+
+  /**
+   * Form submission handler.
+   * Validates → calls the backend → handles success / error / network issues.
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!errors.email && formData.email) {
-      alert("Message Sent Successfully!");
+
+    // Step 12: Prevent duplicate submissions while a request is in-flight
+    if (isLoading) return;
+
+    // Clear previous messages
+    setSuccessMessage('');
+    setSubmitError('');
+
+    // Client-side validation (Steps 4 & 5)
+    if (!validateForm()) return;
+
+    // Step 7: Enter loading state
+    setIsLoading(true);
+
+    try {
+      // Step 6: Call POST /api/contact via the reusable API helper
+      const response = await submitContact(formData);
+
+      // Step 8: On success — show message and reset the form
+      setSuccessMessage(response.message || 'Contact submitted successfully');
+      setFormData(INITIAL_FORM);
+      setErrors({ email: '', firstName: '', lastName: '' });
+    } catch (error: unknown) {
+      // Step 11: Network / connection errors
+      if (isApiConnectionError(error)) {
+        setSubmitError('Unable to connect to server. Please check your internet connection and try again.');
+      } else if (error instanceof Error) {
+        // Steps 9 & 10: Backend validation (400) or server errors (500)
+        // The apiRequest helper already extracts `message` from the response body.
+        setSubmitError(error.message || 'Something went wrong. Please try again later.');
+      } else {
+        setSubmitError('An unexpected error occurred. Please try again later.');
+      }
+    } finally {
+      // Step 7 (cleanup): Always exit loading state
+      setIsLoading(false);
     }
   };
+
+  // ── Render ─────────────────────────────────────────────────────────
 
   return (
     <main className="site-page flex min-h-screen flex-col bg-[#FFF1F2]">
@@ -168,6 +257,34 @@ const ContactSection = () => {
             <h3 className="text-2xl sm:text-3xl font-black text-[#06224C] mb-1">Send a Message</h3>
             <p className="text-xs sm:text-sm text-gray-400 font-bold mb-8 uppercase tracking-wide">we will get back to you within 48 hours.</p>
 
+            {/* ── Success / Error banners ──────────────────────────────── */}
+            <AnimatePresence mode="wait">
+              {successMessage && (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700"
+                  role="status"
+                >
+                  {successMessage}
+                </motion.div>
+              )}
+              {submitError && (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600"
+                  role="alert"
+                >
+                  {submitError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
@@ -192,8 +309,19 @@ const ContactSection = () => {
                 <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 text-sm focus:border-blue-400 focus:bg-white outline-none resize-none transition-all"></textarea>
               </div>
 
-              <motion.button type="submit" className="w-full bg-[#06224C] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-blue-900 transition-all shadow-lg" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                Send Message <FaPaperPlane className="text-[10px]" aria-hidden="true" />
+              {/* Submit button — shows loading state & is disabled while request is in-flight */}
+              <motion.button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full bg-[#06224C] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-lg ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-900'}`}
+                whileHover={isLoading ? {} : { scale: 1.02 }}
+                whileTap={isLoading ? {} : { scale: 0.98 }}
+              >
+                {isLoading ? (
+                  <>Sending...</>
+                ) : (
+                  <>Send Message <FaPaperPlane className="text-[10px]" aria-hidden="true" /></>
+                )}
               </motion.button>
             </form>
           </motion.div>
