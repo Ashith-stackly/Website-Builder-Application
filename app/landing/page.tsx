@@ -885,6 +885,11 @@ export default function Home() {
             </motion.article>
           ))}
         </motion.div>
+        <div className="mt-10 flex justify-center">
+          <Link href="/templates" className="inline-flex items-center gap-2 rounded-xl bg-[#06224C] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 hover:scale-[1.02] active:scale-95">
+            View All Templates <FaArrowRight className="text-[10px]" />
+          </Link>
+        </div>
       </section>
 
       <section className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">

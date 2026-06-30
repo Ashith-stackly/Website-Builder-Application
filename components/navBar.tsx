@@ -664,6 +664,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
           <div className="hidden items-center justify-center gap-12 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
             <Link href="/landing" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>HOME</MotionNavItem></Link>
             <Link href="/aboutus" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>ABOUT US</MotionNavItem></Link>
+            <Link href="/templates" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
  
             <div
               className="relative"
@@ -980,6 +981,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
           <div className="flex flex-col">
             <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Home</Link></motion.div>
             <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/aboutus" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">About Us</Link></motion.div>
+            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/templates" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Templates</Link></motion.div>
  
             <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}>
               <button

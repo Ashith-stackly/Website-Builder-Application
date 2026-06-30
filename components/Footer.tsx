@@ -230,6 +230,16 @@ export default function Footer() {
       return;
     }
 
+    if (key === "templates") {
+      router.push("/templates");
+      return;
+    }
+
+    if (key === "blog") {
+      router.push("/blog");
+      return;
+    }
+
     setActiveModal(key as ModalKey);
   };
 
