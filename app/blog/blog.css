@@ -5,12 +5,7 @@ html:has(main.blog-page),
   --blog-header-height: 3.25rem;
   --blog-nav-gap: clamp(1rem, 2.5vw, 1.5rem);
   --blog-header-content-gap: 0;
-  --blog-scroll-offset: calc(
-    var(--stackly-nav-height-measured, var(--stackly-nav-height)) +
-      var(--blog-nav-gap) +
-      var(--blog-header-height) +
-      0.5rem
-  );
+  --blog-scroll-offset: calc(var(--stackly-nav-height-measured, var(--stackly-nav-height)) + var(--blog-nav-gap) + var(--blog-header-height) + 0.5rem);
 }
 
 html:has(main.blog-page) {
@@ -110,6 +105,7 @@ html:has(main.blog-page) {
 }
 
 @media (min-width: 768px) {
+
   html:has(main.blog-page),
   .blog-page {
     --stackly-nav-height: 3.75rem;
@@ -571,13 +567,11 @@ html:has(main.blog-page) {
 /* Top zone — continuous hero → image → templates (screenshot flow) */
 .blog-top-zone {
   --blog-top-split: 38%;
-  background: linear-gradient(
-    180deg,
-    var(--blog-blue-bg) 0%,
-    var(--blog-blue-bg) var(--blog-top-split),
-    var(--blog-pink-bg) var(--blog-top-split),
-    var(--blog-pink-bg) 100%
-  );
+  background: linear-gradient(180deg,
+      var(--blog-blue-bg) 0%,
+      var(--blog-blue-bg) var(--blog-top-split),
+      var(--blog-pink-bg) var(--blog-top-split),
+      var(--blog-pink-bg) 100%);
   width: 100%;
   min-width: 0;
   padding-top: 0;
@@ -1293,12 +1287,12 @@ html:has(main.blog-page) {
 }
 
 .blog-support-card--expanded h3,
-.blog-support-card--expanded > p {
+.blog-support-card--expanded>p {
   text-align: center;
   align-self: center;
 }
 
-.blog-support-card--expanded > p {
+.blog-support-card--expanded>p {
   max-width: 22rem;
 }
 
@@ -1342,8 +1336,8 @@ html:has(main.blog-page) {
   color: #4b5563;
 }
 
-.blog-support-details-steps li + li,
-.blog-support-details-list li + li {
+.blog-support-details-steps li+li,
+.blog-support-details-list li+li {
   margin-top: 0.45rem;
 }
 
@@ -1702,8 +1696,8 @@ html:has(main.blog-page) {
   color: var(--blog-navy-muted);
 }
 
-.blog-about-content p + p,
-.blog-contact-content p + p {
+.blog-about-content p+p,
+.blog-contact-content p+p {
   margin-top: 1rem;
 }
 
@@ -1803,6 +1797,7 @@ html:has(main.blog-page) {
   }
 
   @media (hover: hover) {
+
     .blog-support-card:hover,
     .blog-category-card:hover {
       transform: none;
@@ -1864,6 +1859,7 @@ html:has(main.blog-page) {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .blog-page *,
   .blog-page *::before,
   .blog-page *::after {
