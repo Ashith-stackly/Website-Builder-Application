@@ -61,28 +61,28 @@ const categories = [
   { title: "Portfolio", image: "/landing-optimized/port.webp", alt: "Portfolio website preview", previewHref: "/portfolio", editHref: "/blockpages?template=portfolio" },
   { title: "E-Commerce Templates", image: "/landing-optimized/ecommerce.webp", alt: "E-commerce website preview", previewHref: "/e-commerce", editHref: "/blockpages?template=ecommerce" },
   { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview", previewHref: "/digital-marketing", editHref: "/blockpages?template=digital-marketing" },
- 
-   {
+
+  {
     title: "Blogging",
     image: "/landing-optimized/bloggg.webp",
     alt: "Blogging website preview",
     previewHref: "/blog",
     editHref: "/blockpages?template=blog",
   },
-{
+  {
     title: "Construction Themes",
     image: "/landing-optimized/construction02.webp",
     alt: "Construction website preview",
     previewHref: "/construction",
     editHref: "/blockpages?template=construction"
   },
-   {
-  title: "Restaurant",
+  {
+    title: "Restaurant",
     image: "/landing-optimized/foodd03.webp",
     alt: "Restaurant website preview",
     previewHref: "/restaurant",
     editHref: "/blockpages?template=restaurant"
-  }, 
+  },
 ];
 
 const topProducts = [
@@ -243,7 +243,6 @@ function LandingContactSection() {
     firstName: "",
     lastName: "",
     email: "",
-    projectType: "",
     message: "",
   });
   const [emailError, setEmailError] = useState("");
@@ -357,16 +356,7 @@ function LandingContactSection() {
               {emailError && <span className="block text-[10px] font-bold text-red-500">{emailError}</span>}
             </label>
 
-            <label className="block space-y-2">
-              <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Project Type</span>
-              <select name="projectType" value={formData.projectType} onChange={handleInputChange} required className="w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white">
-                <option value="" disabled>Select a project type</option>
-                <option value="ecommerce">E-commerce Website</option>
-                <option value="portfolio">Portfolio Design</option>
-                <option value="landing">Landing Page</option>
-                <option value="business">Business Corporate</option>
-              </select>
-            </label>
+
 
             <label className="block space-y-2">
               <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Message</span>
@@ -666,14 +656,14 @@ export default function Home() {
 
       <section className="mx-auto w-full max-w-7xl px-4 pt-8 md:px-8">
         {/* 1. MOBILE VIEW: Static Image Only (Hidden on Desktop) */}
-<motion.div
+        <motion.div
           className="relative min-h-[480px] overflow-hidden rounded-[2rem] bg-[#fde2e4] md:hidden"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
->
-<motion.picture variants={fadeUp}>
-<img
+        >
+          <motion.picture variants={fadeUp}>
+            <img
               src={assetPath("/landing-optimized/landinmble3.webp")}
               alt="Stackly drag and drop website builder preview"
               className="absolute inset-0 h-full w-full object-cover object-center"
@@ -681,7 +671,7 @@ export default function Home() {
               fetchPriority="high"
               decoding="async"
             />
-</motion.picture>
+          </motion.picture>
 
           <motion.div
             className="relative z-10 flex min-h-[480px] items-end justify-center p-8"
@@ -691,20 +681,20 @@ export default function Home() {
               opacity: { duration: 0.45, ease: "easeOut" },
               y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
             }}
->
-<CreateProjectFlow />
-</motion.div>
-</motion.div>
+          >
+            <CreateProjectFlow />
+          </motion.div>
+        </motion.div>
 
         {/* 2. DESKTOP VIEW: Carousel Effect (Hidden on Mobile) */}
-<motion.div
+        <motion.div
           className="relative hidden md:flex min-h-[540px] lg:min-h-[600px] w-full overflow-hidden rounded-[3rem] shadow-2xl"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
->
+        >
           {/* Animated Background */}
-<motion.div 
+          <motion.div
             className="absolute inset-0 z-0"
             animate={{ background: bannerSlides[currentSlide].bg }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
@@ -712,28 +702,28 @@ export default function Home() {
 
           <div className="flex w-full flex-row items-center justify-between p-12 lg:p-20 relative z-10 h-full">
             {/* Left Content */}
-<div className="flex w-1/2 flex-col items-start pr-12 text-white h-full justify-center">
-<AnimatePresence mode="wait">
-<motion.div
+            <div className="flex w-1/2 flex-col items-start pr-12 text-white h-full justify-center">
+              <AnimatePresence mode="wait">
+                <motion.div
                   key={currentSlide}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.6, ease: "easeOut" }}
->
-<h1 className="mb-6 text-5xl font-black lg:text-[5.5rem] tracking-tight leading-none">{bannerSlides[currentSlide].title}</h1>
-<p className="mb-8 text-sm leading-relaxed text-white/80 lg:text-base max-w-md">
+                >
+                  <h1 className="mb-6 text-5xl font-black lg:text-[5.5rem] tracking-tight leading-none">{bannerSlides[currentSlide].title}</h1>
+                  <p className="mb-8 text-sm leading-relaxed text-white/80 lg:text-base max-w-md">
                     {bannerSlides[currentSlide].description}
-</p>
-</motion.div>
-</AnimatePresence>
-<div className="mt-2 w-full max-w-sm">
-<CreateProjectFlow />
-</div>
-</div>
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+              <div className="mt-2 w-full max-w-sm">
+                <CreateProjectFlow />
+              </div>
+            </div>
 
             {/* Right Image Carousel */}
-<div className="relative flex h-[400px] w-1/2 items-center justify-center">
+            <div className="relative flex h-[400px] w-1/2 items-center justify-center">
               {bannerSlides.map((slide, index) => {
                 let offset = index - currentSlide;
                 if (offset < -1) offset += bannerSlides.length;
@@ -742,9 +732,9 @@ export default function Home() {
                 const isCenter = offset === 0;
 
                 if (offset < -1 || offset > 1) return null;
- 
+
                 return (
-<motion.div
+                  <motion.div
                     key={slide.id}
                     className={`absolute w-[260px] h-[260px] lg:w-[340px] lg:h-[340px] rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl ${isCenter ? 'border-2 border-white/20' : 'border border-transparent hover:border-white/20'}`}
                     initial={false}
@@ -758,22 +748,22 @@ export default function Home() {
                     onClick={() => {
                       if (!isCenter) setCurrentSlide(index);
                     }}
->
-<img
+                  >
+                    <img
                       src={assetPath(slide.image)}
                       alt={slide.title}
                       className="h-full w-full object-cover pointer-events-none"
                     />
-</motion.div>
+                  </motion.div>
                 );
               })}
-</div>
-</div>
- 
+            </div>
+          </div>
+
           {/* Pagination Dots */}
-<div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-3">
+          <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-3">
             {bannerSlides.map((_, index) => (
-<button
+              <button
                 key={index}
                 type="button"
                 onClick={() => setCurrentSlide(index)}
@@ -781,9 +771,9 @@ export default function Home() {
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}
-</div>
-</motion.div>
-</section>
+          </div>
+        </motion.div>
+      </section>
 
       {/* ── WHO WE ARE SECTION ─────────────────────────────── */}
       <motion.div
@@ -806,23 +796,23 @@ export default function Home() {
         <motion.div className="w-full lg:w-1/2 space-y-4 md:space-y-6 text-left" variants={staggerContainer}>
           {/* Added About Us box and Blue Line */}
           <motion.div className="" variants={fadeUp}>
-             <span className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
-               About us
-             </span>
+            <span className="text-sm font-black uppercase tracking-[0.2em] text-blue-600">
+              About us
+            </span>
           </motion.div>
-          
+
           <motion.div className="flex items-center gap-3" variants={fadeUp}>
             <div className="w-1.5 h-6 bg-blue-600"></div>
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-[#0A2357]">Who We Are</h2>
           </motion.div>
-          
+
           <motion.p className="text-base md:text-lg leading-relaxed font-bold text-[#0A2357] italic" variants={fadeUp}>
             Stackly is a powerful platform that streamlines workflow, enhances efficiency, and drives digital success.
           </motion.p>
           <motion.p className="text-sm leading-relaxed text-gray-600" variants={fadeUp}>
             Founded in 2015, Stackly has grown into one of the leading and most trusted companies in the industry.
           </motion.p>
-          
+
           <motion.button
             onClick={() => router.push("/aboutus")}
             className="inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95"
@@ -905,50 +895,50 @@ export default function Home() {
             const isWishlisted = wishlistItems.some((item) => item.title === product.title);
 
             return (
-            <motion.article key={product.title} className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={scaleIn} whileHover={softHover}>
-              <div className="mb-5 h-52 overflow-hidden rounded-[1.5rem] bg-gray-50">
-                <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
-              </div>
-              <div className="flex flex-1 flex-col px-2">
-                <div className="mb-1 flex items-start justify-between gap-2">
-                  <h3 className="text-xl font-bold text-[#06224C]">{product.title}</h3>
-                  <button
-                    type="button"
-                    onClick={() => toggleWishlistItem(product)}
-                    aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
-                    aria-pressed={isWishlisted}
-                    className={`p-1 transition hover:text-red-500 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
-                  >
-                    <FaHeart className="text-xl" />
-                  </button>
+              <motion.article key={product.title} className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={scaleIn} whileHover={softHover}>
+                <div className="mb-5 h-52 overflow-hidden rounded-[1.5rem] bg-gray-50">
+                  <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                 </div>
-                <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
-                <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-[#06224C]">$ {product.price}</span>
-                    <span className="text-[10px] font-bold text-gray-400">({product.sales} Sales)</span>
+                <div className="flex flex-1 flex-col px-2">
+                  <div className="mb-1 flex items-start justify-between gap-2">
+                    <h3 className="text-xl font-bold text-[#06224C]">{product.title}</h3>
+                    <button
+                      type="button"
+                      onClick={() => toggleWishlistItem(product)}
+                      aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
+                      aria-pressed={isWishlisted}
+                      className={`p-1 transition hover:text-red-500 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
+                    >
+                      <FaHeart className="text-xl" />
+                    </button>
                   </div>
-                  <div className="flex items-center gap-1 text-yellow-400" aria-label="Rating 5 out of 5">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <FaStar key={index} className="text-xs" />
-                    ))}
+                  <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
+                  <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-black text-[#06224C]">$ {product.price}</span>
+                      <span className="text-[10px] font-bold text-gray-400">({product.sales} Sales)</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-yellow-400" aria-label="Rating 5 out of 5">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <FaStar key={index} className="text-xs" />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => addToCart(product)}
+                      aria-label={`Add ${product.title} to cart`}
+                      className="flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition hover:bg-blue-50"
+                    >
+                      <FaCartShopping />
+                    </button>
+                    <a href="#templates" className="flex h-10 flex-1 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105">
+                      View Template
+                    </a>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => addToCart(product)}
-                    aria-label={`Add ${product.title} to cart`}
-                    className="flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition hover:bg-blue-50"
-                  >
-                    <FaCartShopping />
-                  </button>
-                  <a href="#templates" className="flex h-10 flex-1 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105">
-                    View Template
-                  </a>
-                </div>
-              </div>
-            </motion.article>
+              </motion.article>
             );
           })}
         </motion.div>
@@ -966,11 +956,10 @@ export default function Home() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setActiveFilter(filter.value)}
-                  className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${
-                    active
+                  className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${active
                       ? "border-[#06224C] bg-[#06224C] text-white"
                       : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                  }`}
+                    }`}
                 >
                   {filter.label}
                   <FaChevronDown className="text-[10px]" />
