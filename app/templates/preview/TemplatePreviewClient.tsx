@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, use } from "react";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   FaArrowLeft,
   FaDesktop,
@@ -112,13 +112,10 @@ function formatUsageCount(count: number): string {
 
 // ── Component ──────────────────────────────────────────────────────────
 
-export default function TemplatePreviewPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+export default function TemplatePreviewClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
 
   // ── State ──────────────────────────────────────────────────────────
   const [template, setTemplate] = useState<Template | null>(null);
@@ -129,6 +126,12 @@ export default function TemplatePreviewPage({
 
   // ── Fetch Template ─────────────────────────────────────────────────
   useEffect(() => {
+    if (!id) {
+      setError("Template ID is missing.");
+      setIsLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
 
     async function fetchTemplate() {
@@ -187,7 +190,7 @@ export default function TemplatePreviewPage({
         : null;
 
     if (!token) {
-      router.push(`/login?redirect=/templates/${id}/preview`);
+      router.push(`/login?redirect=/templates/preview?id=${id}`);
       return;
     }
 

@@ -453,7 +453,7 @@ export default function TemplatesPage() {
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3">
                     <Link
-                      href={`/templates/${template._id}/preview`}
+                      href={`/templates/preview/?id=${template._id}`}
                       className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50"
                     >
                       <FaEye className="text-xs" /> Preview
