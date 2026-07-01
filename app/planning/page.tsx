@@ -32,11 +32,11 @@ const PLANNING_INVOICE_CONTACT: PlanningInvoiceContactDefaults = {
 const plans = [
   {
     name: "Basic",
-    oldPrice: "$80",
-    newPrice: "$40",
+    oldPrice: "₹80",
+    newPrice: "₹40",
     saveText: "Save 50%",
-    yearlyOldPrice: "$960",
-    yearlyNewPrice: "$403",
+    yearlyOldPrice: "₹960",
+    yearlyNewPrice: "₹403",
     yearlySaveText: "Save 58%",
     features: [
       "Free domain for 1 year",
@@ -48,11 +48,11 @@ const plans = [
   },
   {
     name: "Business Plan",
-    oldPrice: "$300",
-    newPrice: "$150",
+    oldPrice: "₹300",
+    newPrice: "₹150",
     saveText: "Save 50%",
-    yearlyOldPrice: "$3,600",
-    yearlyNewPrice: "$1,512",
+    yearlyOldPrice: "₹3,600",
+    yearlyNewPrice: "₹1,512",
     yearlySaveText: "Save 58%",
     isRecommended: true,
     features: [
@@ -63,16 +63,16 @@ const plans = [
       "Accept payments",
       "Basic eCommerce",
       "Scheduling and services",
-      "10 site collaborators",
+      "5 site collaborators",
     ],
   },
   {
     name: "Advanced",
-    oldPrice: "$400",
-    newPrice: "$280",
+    oldPrice: "₹400",
+    newPrice: "₹280",
     saveText: "Save 30%",
-    yearlyOldPrice: "$4,800",
-    yearlyNewPrice: "$3,360",
+    yearlyOldPrice: "₹4,800",
+    yearlyNewPrice: "₹3,360",
     yearlySaveText: "Save 30%",
     features: [
       "Free domain for 1 year",
@@ -82,7 +82,7 @@ const plans = [
       "Accept payments",
       "Basic eCommerce",
       "Scheduling and services",
-      "5 site collaborators",
+      "10 site collaborators",
     ],
   },
 ];
@@ -132,7 +132,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Apr 02 2026",
     invoiceId: "INV-200987",
-    amount: "$39.00",
+    amount: "₹39.00",
     status: "Paid",
     planName: "Business Plan (Monthly)",
     planTier: "Business Plan",
@@ -148,7 +148,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Mar 15 2026",
     invoiceId: "INV-121289",
-    amount: "$39.00",
+    amount: "₹39.00",
     status: "Paid",
     planName: "Basic (Monthly)",
     planTier: "Basic",
@@ -164,7 +164,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Feb 08 2026",
     invoiceId: "INV-100123",
-    amount: "$39.00",
+    amount: "₹39.00",
     status: "Paid",
     planName: "Advanced (Yearly)",
     planTier: "Advanced",
@@ -180,7 +180,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Jan 20 2026",
     invoiceId: "INV-100154",
-    amount: "$39.00",
+    amount: "₹39.00",
     status: "Paid",
     planName: "Business Plan (Monthly)",
     planTier: "Pro",
@@ -196,7 +196,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Dec 20 2025",
     invoiceId: "INV-101164",
-    amount: "$39.00",
+    amount: "₹39.00",
     status: "Paid",
     planName: "Business Plan (Monthly)",
     planTier: "Pro",
@@ -212,7 +212,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Dec 10 2025",
     invoiceId: "INV-100140",
-    amount: "$0.00",
+    amount: "₹0.00",
     status: "Free",
     planName: "Basic (Free)",
     planTier: "Free",
@@ -226,7 +226,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Nov 20 2025",
     invoiceId: "INV-100100",
-    amount: "$0.00",
+    amount: "₹0.00",
     status: "Free",
     planName: "Basic (Free)",
     planTier: "Free",
@@ -240,7 +240,7 @@ const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
   {
     date: "Oct 08 2025",
     invoiceId: "INV-100240",
-    amount: "$0.00",
+    amount: "₹0.00",
     status: "Free",
     planName: "Basic (Free)",
     planTier: "Free",
@@ -289,7 +289,7 @@ function saveBillingHistoryToStorage(entries: BillingHistoryEntry[]) {
   }
 }
 
-/** Stackly-branded HTML invoice (open file and use browser Print → Save as PDF if needed). */
+/** Stackly-branded HTML invoice using ₹ (INR) currency symbol. */
 async function downloadBillingInvoiceSummary(entry: BillingHistoryEntry) {
   if (typeof window === "undefined") return;
   await downloadPlanningInvoiceForEntry(entry, PLANNING_INVOICE_CONTACT, entry.invoiceId);
@@ -324,9 +324,9 @@ export default function PlanningPage() {
     historyMonthFilter === "all"
       ? billingHistory
       : billingHistory.filter((entry) => {
-          if (historyYearFromDate(entry.date) !== currentYear) return false;
-          return historyMonthIndexFromDate(entry.date) === Number(historyMonthFilter);
-        });
+        if (historyYearFromDate(entry.date) !== currentYear) return false;
+        return historyMonthIndexFromDate(entry.date) === Number(historyMonthFilter);
+      });
 
   useEffect(() => {
     const stored = loadBillingHistoryFromStorage();
@@ -377,45 +377,45 @@ export default function PlanningPage() {
     paymentDetail: string;
   }) {
     if (!selectedPlan) return;
-      const now = new Date();
-      const invoiceId = `INV-${Math.floor(100000 + Math.random() * 899999)}`;
-      const active = getActivePrice(selectedPlan);
-    const finalAmount = opts.isFree ? "$0" : active.newPrice;
-      const createdInvoice: InvoiceData = {
-        invoiceId,
-        date: now.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+    const now = new Date();
+    const invoiceId = `INV-${Math.floor(100000 + Math.random() * 899999)}`;
+    const active = getActivePrice(selectedPlan);
+    const finalAmount = opts.isFree ? "₹0" : active.newPrice;
+    const createdInvoice: InvoiceData = {
+      invoiceId,
+      date: now.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
       planName: `${selectedPlan.name} ${opts.isFree ? "(Free)" : billingYearly ? "(Yearly)" : "(Monthly)"}`,
-        amount: finalAmount,
-        name: PLANNING_DISPLAY_USER_NAME,
+      amount: finalAmount,
+      name: PLANNING_DISPLAY_USER_NAME,
       email: PLANNING_INVOICE_CONTACT.email,
       contactNo: PLANNING_INVOICE_CONTACT.phone,
       address: PLANNING_INVOICE_CONTACT.address,
-      };
-      setInvoiceData(createdInvoice);
-      setBillingHistory((prev) => {
-        const row: BillingHistoryEntry = {
-          date: createdInvoice.date,
-          invoiceId: createdInvoice.invoiceId,
-          amount: createdInvoice.amount,
+    };
+    setInvoiceData(createdInvoice);
+    setBillingHistory((prev) => {
+      const row: BillingHistoryEntry = {
+        date: createdInvoice.date,
+        invoiceId: createdInvoice.invoiceId,
+        amount: createdInvoice.amount,
         status: opts.isFree ? "Free" : "Paid",
-          planName: createdInvoice.planName,
-          planTier: selectedPlan.name,
-          websiteLabel: "Stackly workspace subscription",
+        planName: createdInvoice.planName,
+        planTier: selectedPlan.name,
+        websiteLabel: "Stackly workspace subscription",
         paymentMethodLabel: opts.paymentMethodLabel,
         paymentDetail: opts.paymentDetail,
-          buyerName: createdInvoice.name,
-          buyerEmail: createdInvoice.email,
-          buyerPhone: createdInvoice.contactNo,
-          buyerAddress: createdInvoice.address,
-          generatedAt: now.toISOString(),
-        };
-        const next = [row, ...prev.filter((e) => e.invoiceId !== row.invoiceId)];
-        saveBillingHistoryToStorage(next);
-        return next;
-      });
-      setPaymentLoading(false);
-      setIsFreeCheckout(false);
-      setPlanningView("invoice");
+        buyerName: createdInvoice.name,
+        buyerEmail: createdInvoice.email,
+        buyerPhone: createdInvoice.contactNo,
+        buyerAddress: createdInvoice.address,
+        generatedAt: now.toISOString(),
+      };
+      const next = [row, ...prev.filter((e) => e.invoiceId !== row.invoiceId)];
+      saveBillingHistoryToStorage(next);
+      return next;
+    });
+    setPaymentLoading(false);
+    setIsFreeCheckout(false);
+    setPlanningView("invoice");
   }
 
   async function handlePayWithRazorpay() {
@@ -507,163 +507,159 @@ export default function PlanningPage() {
             </div>
 
             {planningView === "plans" && (
-            <div className="planning-hero-panel rounded-lg bg-gradient-to-br from-slate-50 via-blue-50 to-white px-5 py-8 shadow-sm ring-1 ring-slate-200/80 sm:px-8 sm:py-10 md:px-10">
-              <div className="mx-auto w-full max-w-5xl">
-            <h1 className="planning-fade-up text-center text-3xl font-bold text-slate-950 sm:text-[44px] sm:leading-tight">
-              Choose the Best Plan for You
-            </h1>
-              <p className="planning-fade-up mx-auto mt-4 max-w-2xl text-center text-[13px] font-medium leading-relaxed text-slate-700 sm:text-sm md:text-base">
-                Create your website for free and upgrade when you’re ready
-              </p>
+              <div className="planning-hero-panel rounded-lg bg-gradient-to-br from-slate-50 via-blue-50 to-white px-5 py-8 shadow-sm ring-1 ring-slate-200/80 sm:px-8 sm:py-10 md:px-10">
+                <div className="mx-auto w-full max-w-5xl">
+                  <h1 className="planning-fade-up text-center text-3xl font-bold text-slate-950 sm:text-[44px] sm:leading-tight">
+                    Choose the Best Plan for You
+                  </h1>
+                  <p className="planning-fade-up mx-auto mt-4 max-w-2xl text-center text-[13px] font-medium leading-relaxed text-slate-700 sm:text-sm md:text-base">
+                    Create your website for free and upgrade when you’re ready
+                  </p>
 
-              <div className="planning-fade-up mt-5 flex justify-center sm:mt-6">
-                <button
-                  type="button"
-                  onClick={() => handlePurchasePlan(plans[0], true)}
-                  className="inline-flex items-center gap-2 rounded-full border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-5 py-2.5 text-[11px] font-semibold text-white no-underline shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 active:translate-y-0 active:scale-100 sm:text-xs"
-                >
-                  <span>Start Your Free Plan</span>
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden>
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle
-                        cx="10"
-                        cy="10"
-                        r="8.25"
-                        stroke="white"
-                        strokeWidth="1.2"
-                        fill="none"
-                      />
-                      <path
-                        d="M8 10h4M11.5 7l3 3-3 3"
-                        stroke="white"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
-                      />
-                    </svg>
-                  </span>
-                </button>
-            </div>
-
-              <div className="planning-fade-up mt-8 w-full pl-0 sm:pl-5 md:pl-8 lg:pl-10">
-                <div className="grid w-full min-w-0 grid-cols-1 gap-y-3 md:grid-cols-4 md:items-center md:gap-x-4 lg:gap-x-6">
-                  <p className="min-w-0 text-center text-sm font-bold leading-snug text-slate-900 md:text-left">
-              What you get with every plan:
-            </p>
-                  <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
-                    Custom Domain
-                  </span>
-                  <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
-                    Reliable web hosting
-                  </span>
-                  <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
-                    24/7 customer care
-                  </span>
-                </div>
-            </div>
-
-              <div className="planning-fade-up mt-8 flex w-full justify-center px-3 sm:px-4">
-                <div className="planning-billing-toggle-wrap flex w-full max-w-xl items-center gap-3 sm:gap-5">
-                  <span
-                    className={`planning-billing-label inline-flex min-h-9 min-w-0 flex-1 select-none items-center justify-end gap-1 py-1.5 pl-2 pr-1 text-right text-sm leading-tight sm:pr-2 ${
-                      !billingYearly ? "font-bold text-slate-950" : "font-medium text-slate-500"
-                    }`}
-                  >
-                    <span className="planning-billing-label-line">Bill</span>
-                    <span className="planning-billing-label-line">Monthly</span>
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={billingYearly}
-                    aria-label="Toggle monthly or yearly billing"
-                    onClick={() => setBillingYearly((v) => !v)}
-                    className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center self-center rounded-full border border-slate-300 bg-white px-0.5 align-middle shadow-inner transition-colors duration-300 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700/40 focus-visible:ring-offset-2"
-                  >
-                    <span
-                      className={`pointer-events-none absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-blue-700 shadow-sm transition-transform duration-300 ${
-                        billingYearly ? "translate-x-6" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-                  <span
-                    className={`planning-billing-label inline-flex min-h-9 min-w-0 flex-1 select-none items-center justify-start gap-1 py-1.5 pl-1 pr-2 text-left text-sm leading-tight sm:pl-2 ${
-                      billingYearly ? "font-bold text-slate-950" : "font-medium text-slate-500"
-                    }`}
-                  >
-                    <span className="planning-billing-label-line">Bill</span>
-                    <span className="planning-billing-label-line">Yearly</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-              <div className="planning-plans-grid mx-auto mt-8 grid w-full max-w-5xl grid-cols-1 gap-5 md:grid-cols-3 md:items-stretch md:gap-6">
-              {plans.map((plan) => (
-                <article
-                  key={plan.name}
-                    className={`planning-plan-card group relative flex h-full min-h-0 flex-col rounded-lg border border-slate-200 bg-white p-4 text-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/20 hover:bg-gradient-to-b hover:from-slate-950 hover:to-blue-700 hover:text-white hover:shadow-xl hover:shadow-blue-950/20 sm:p-4 ${
-                      plan.isRecommended ? "planning-recommended-card" : ""
-                    }`}
-                >
-                  {plan.isRecommended && (
-                      <div className="planning-recommended-badge absolute right-0 top-0 z-10 rounded-bl-md rounded-tr-lg border border-white/10 bg-blue-600 px-3 py-1.5 text-[9px] font-extrabold leading-none tracking-wide text-white shadow-sm transition-colors group-hover:border-slate-900/40 group-hover:bg-white group-hover:text-slate-950 hover:border-slate-900/40 hover:bg-white hover:text-slate-950">
-                      RECOMMENDED
-                    </div>
-                  )}
-                    <div className={`mb-1.5 flex items-center justify-between gap-2 ${plan.isRecommended ? "planning-recommended-content-offset" : ""}`}>
-                    <div>
-                        <h2 className="text-base font-bold leading-tight transition-colors group-hover:text-white">{plan.name}</h2>
-                        <p className="mt-0.5 text-xs leading-tight text-blue-900 transition-colors group-hover:text-white/85">
-                          {billingYearly ? "Per year" : "Per month"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="planning-price-row mb-1.5 flex items-start justify-between gap-2 lg:items-end">
-                      <div className="planning-price-oldsave flex min-w-0 flex-wrap items-end gap-x-1.5 gap-y-0.5 pr-1">
-                        <div className="text-sm font-bold text-slate-900 line-through transition-colors group-hover:text-white">
-                          {billingYearly ? plan.yearlyOldPrice : plan.oldPrice}
-                        </div>
-                        <div className="text-[10px] font-semibold leading-tight text-slate-500 transition-colors group-hover:text-white/85">
-                          {billingYearly ? plan.yearlySaveText : plan.saveText}
-                        </div>
-                      </div>
-                      <div className="planning-price-chip relative top-0 mr-1 shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-base font-bold leading-none text-blue-950 transition-colors lg:-top-2 lg:mr-3 lg:px-3.5 lg:py-1.5 lg:text-xl group-hover:border-white/30 group-hover:bg-white group-hover:text-blue-700">
-                        {billingYearly ? plan.yearlyNewPrice : plan.newPrice}
-                  </div>
-                    </div>
-                    <div className="mb-2 h-px w-full bg-slate-200 transition-colors group-hover:bg-white/30" />
-
-                    <ul className="space-y-1 text-xs leading-snug text-slate-700 transition-colors group-hover:text-white sm:text-sm sm:leading-snug">
-                    {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-1.5">
-                          <FaCheckCircle className="mt-px shrink-0 text-[10px] text-blue-700 transition-colors group-hover:text-white" aria-hidden={true} />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                    <div className="mt-2 min-h-0 w-full flex-1 shrink-0" aria-hidden />
-
+                  <div className="planning-fade-up mt-5 flex justify-center sm:mt-6">
                     <button
                       type="button"
-                      onClick={() => handlePurchasePlan(plan)}
-                      className="block w-full shrink-0 rounded-full bg-gradient-to-r from-slate-950 to-blue-700 py-2 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 group-hover:bg-none group-hover:bg-white group-hover:text-blue-700 group-hover:opacity-100 hover:bg-none hover:bg-white hover:text-blue-700 hover:shadow-md active:scale-[0.98]"
-                  >
-                    Purchase Plan
+                      onClick={() => handlePurchasePlan(plans[0], true)}
+                      className="inline-flex items-center gap-2 rounded-full border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-5 py-2.5 text-[11px] font-semibold text-white no-underline shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 active:translate-y-0 active:scale-100 sm:text-xs"
+                    >
+                      <span>Start Your Free Plan</span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden>
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle
+                            cx="10"
+                            cy="10"
+                            r="8.25"
+                            stroke="white"
+                            strokeWidth="1.2"
+                            fill="none"
+                          />
+                          <path
+                            d="M8 10h4M11.5 7l3 3-3 3"
+                            stroke="white"
+                            strokeWidth="1.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </svg>
+                      </span>
                     </button>
-                </article>
-              ))}
-            </div>
-          </div>
+                  </div>
+
+                  <div className="planning-fade-up mt-8 w-full pl-0 sm:pl-5 md:pl-8 lg:pl-10">
+                    <div className="grid w-full min-w-0 grid-cols-1 gap-y-3 md:grid-cols-4 md:items-center md:gap-x-4 lg:gap-x-6">
+                      <p className="min-w-0 text-center text-sm font-bold leading-snug text-slate-900 md:text-left">
+                        What you get with every plan:
+                      </p>
+                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
+                        Custom Domain
+                      </span>
+                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
+                        Reliable web hosting
+                      </span>
+                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
+                        24/7 customer care
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="planning-fade-up mt-8 flex w-full justify-center px-3 sm:px-4">
+                    <div className="planning-billing-toggle-wrap flex w-full max-w-xl items-center gap-3 sm:gap-5">
+                      <span
+                        className={`planning-billing-label inline-flex min-h-9 min-w-0 flex-1 select-none items-center justify-end gap-1 py-1.5 pl-2 pr-1 text-right text-sm leading-tight sm:pr-2 ${!billingYearly ? "font-bold text-slate-950" : "font-medium text-slate-500"
+                          }`}
+                      >
+                        <span className="planning-billing-label-line">Bill</span>
+                        <span className="planning-billing-label-line">Monthly</span>
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={billingYearly}
+                        aria-label="Toggle monthly or yearly billing"
+                        onClick={() => setBillingYearly((v) => !v)}
+                        className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center self-center rounded-full border border-slate-300 bg-white px-0.5 align-middle shadow-inner transition-colors duration-300 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700/40 focus-visible:ring-offset-2"
+                      >
+                        <span
+                          className={`pointer-events-none absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-blue-700 shadow-sm transition-transform duration-300 ${billingYearly ? "translate-x-6" : "translate-x-0"
+                            }`}
+                        />
+                      </button>
+                      <span
+                        className={`planning-billing-label inline-flex min-h-9 min-w-0 flex-1 select-none items-center justify-start gap-1 py-1.5 pl-1 pr-2 text-left text-sm leading-tight sm:pl-2 ${billingYearly ? "font-bold text-slate-950" : "font-medium text-slate-500"
+                          }`}
+                      >
+                        <span className="planning-billing-label-line">Bill</span>
+                        <span className="planning-billing-label-line">Yearly</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="planning-plans-grid mx-auto mt-8 grid w-full max-w-5xl grid-cols-1 gap-5 md:grid-cols-3 md:items-stretch md:gap-6">
+                  {plans.map((plan) => (
+                    <article
+                      key={plan.name}
+                      className={`planning-plan-card group relative flex h-full min-h-0 flex-col rounded-lg border border-slate-200 bg-white p-4 text-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/20 hover:bg-gradient-to-b hover:from-slate-950 hover:to-blue-700 hover:text-white hover:shadow-xl hover:shadow-blue-950/20 sm:p-4 ${plan.isRecommended ? "planning-recommended-card" : ""
+                        }`}
+                    >
+                      {plan.isRecommended && (
+                        <div className="planning-recommended-badge absolute right-0 top-0 z-10 rounded-bl-md rounded-tr-lg border border-white/10 bg-blue-600 px-3 py-1.5 text-[9px] font-extrabold leading-none tracking-wide text-white shadow-sm transition-colors group-hover:border-slate-900/40 group-hover:bg-white group-hover:text-slate-950 hover:border-slate-900/40 hover:bg-white hover:text-slate-950">
+                          RECOMMENDED
+                        </div>
+                      )}
+                      <div className={`mb-1.5 flex items-center justify-between gap-2 ${plan.isRecommended ? "planning-recommended-content-offset" : ""}`}>
+                        <div>
+                          <h2 className="text-base font-bold leading-tight transition-colors group-hover:text-white">{plan.name}</h2>
+                          <p className="mt-0.5 text-xs leading-tight text-blue-900 transition-colors group-hover:text-white/85">
+                            {billingYearly ? "Per year" : "Per month"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="planning-price-row mb-1.5 flex items-start justify-between gap-2 lg:items-end">
+                        <div className="planning-price-oldsave flex min-w-0 flex-wrap items-end gap-x-1.5 gap-y-0.5 pr-1">
+                          <div className="text-sm font-bold text-slate-900 line-through transition-colors group-hover:text-white">
+                            {billingYearly ? plan.yearlyOldPrice : plan.oldPrice}
+                          </div>
+                          <div className="text-[10px] font-semibold leading-tight text-slate-500 transition-colors group-hover:text-white/85">
+                            {billingYearly ? plan.yearlySaveText : plan.saveText}
+                          </div>
+                        </div>
+                        <div className="planning-price-chip relative top-0 mr-1 shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-base font-bold leading-none text-blue-950 transition-colors lg:-top-2 lg:mr-3 lg:px-3.5 lg:py-1.5 lg:text-xl group-hover:border-white/30 group-hover:bg-white group-hover:text-blue-700">
+                          {billingYearly ? plan.yearlyNewPrice : plan.newPrice}
+                        </div>
+                      </div>
+                      <div className="mb-2 h-px w-full bg-slate-200 transition-colors group-hover:bg-white/30" />
+
+                      <ul className="space-y-1 text-xs leading-snug text-slate-700 transition-colors group-hover:text-white sm:text-sm sm:leading-snug">
+                        {plan.features.map((feature) => (
+                          <li key={feature} className="flex items-start gap-1.5">
+                            <FaCheckCircle className="mt-px shrink-0 text-[10px] text-blue-700 transition-colors group-hover:text-white" aria-hidden={true} />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-2 min-h-0 w-full flex-1 shrink-0" aria-hidden />
+
+                      <button
+                        type="button"
+                        onClick={() => handlePurchasePlan(plan)}
+                        className="block w-full shrink-0 rounded-full bg-gradient-to-r from-slate-950 to-blue-700 py-2 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 group-hover:bg-none group-hover:bg-white group-hover:text-blue-700 group-hover:opacity-100 hover:bg-none hover:bg-white hover:text-blue-700 hover:shadow-md active:scale-[0.98]"
+                      >
+                        Purchase Plan
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
             )}
 
             {planningView === "payment" && selectedPlan && (
@@ -710,8 +706,8 @@ export default function PlanningPage() {
                         <code className="break-all rounded bg-black/20 px-1">RAZORPAY_KEY_SECRET</code> in .env.local, restart{" "}
                         <code className="break-all rounded bg-black/20 px-1">npm run dev</code>, and run{" "}
                         <code className="break-all rounded bg-black/20 px-1">npm run razorpay-api</code>.
-                        </p>
-                      </div>
+                      </p>
+                    </div>
                   ) : null}
                   <div className="rounded-xl border border-white/15 bg-white/10 p-4 text-xs shadow-lg shadow-blue-950/10 backdrop-blur sm:p-5 sm:text-sm">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">Order summary</p>
@@ -732,9 +728,9 @@ export default function PlanningPage() {
                       </>
                     )}
                     {!isFreeCheckout ? (
-                          <p className="mt-2 text-[11px] leading-snug text-white/75">
+                      <p className="mt-2 text-[11px] leading-snug text-white/75">
                         Secure Razorpay popup — UPI, cards, netbanking, and wallets.
-                          </p>
+                      </p>
                     ) : null}
                   </div>
                 </div>
