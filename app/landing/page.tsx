@@ -32,6 +32,7 @@ import {
   FaYoutube,
 } from "react-icons/fa6";
 import { fadeUp, scaleIn, staggerContainer } from "@/lib/motion";
+import { hasDemoSubscription } from "@/lib/demoAuth";
 import { assetPath } from "@/lib/paths";
 type TemplateCategory = "portfolio" | "blog" | "ecommerce" | "business";
 
@@ -402,7 +403,9 @@ export default function Home() {
   // The Backend Team will update this function to check the user's actual subscription status.
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
     event.preventDefault();
-    const hasActiveSubscription = false; // <-- BACKEND TEAM: Swap this boolean with real API/context state
+    // Demo tester (frontend-only login) gets a default active subscription.
+    // BACKEND TEAM: replace hasDemoSubscription() with real API/context state.
+    const hasActiveSubscription = hasDemoSubscription();
 
     if (hasActiveSubscription) {
       router.push(targetUrl);

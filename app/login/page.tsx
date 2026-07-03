@@ -15,6 +15,7 @@ import {
   observeAuthPlaceholderFit,
 } from "@/lib/authPlaceholderFit";
 import { isApiConnectionError, login as loginApi } from "@/lib/api";
+import { activateDemoSession, isDemoLoginCredentials } from "@/lib/demoAuth";
 import { assetPath } from "@/lib/paths";
 import {
   getSignupEmailValidationError,
@@ -362,6 +363,21 @@ export default function LoginPage() {
       setErrors((prev) => ({ ...prev, form: undefined }));
 
       const contact = form.email.trim();
+
+      // Frontend-only demo account (no backend). Grants a default subscription
+      // so template "Edit" buttons open the builder. Remove once auth is wired up.
+      if (isDemoLoginCredentials(contact, form.password)) {
+        activateDemoSession();
+        setForm(initialLoginState);
+        setErrors((prev) => ({ ...prev, form: "Login successful!" }));
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          router.push("/landing");
+        }, 2000);
+        return;
+      }
+
       const isMobileContact = isValidSimpleMobileContact(contact);
       const result = await loginApi({
         ...(isMobileContact
