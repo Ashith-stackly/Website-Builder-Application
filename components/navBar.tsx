@@ -1162,7 +1162,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                       <button
                         type="button"
                         onClick={() => removeCartItem(title)}
-                        className="mt-5 text-gray-300 transition hover:text-red-500 focus-visible:outline-none focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
+                        className="mt-5 text-gray-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
                         aria-label={`Remove ${item.title} from cart`}
                       >
                         <FaTrashCan className="text-xl" />
@@ -1197,7 +1197,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                       <button
                         type="button"
                         onClick={() => removeWishlistItem(title)}
-                        className="text-gray-300 transition hover:text-red-500 focus-visible:outline-none focus-visible:text-red-500 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
+                        className="text-gray-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
                         aria-label={`Remove ${item.title} from wishlist`}
                       >
                         <FaXmark />

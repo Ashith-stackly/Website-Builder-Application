@@ -5,11 +5,33 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import CreateProjectFlow from "@/components/CreateProjectFlow";
-import { useEffect, useMemo, useState } from "react";
-import { motion, type TargetAndTransition, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { motion, type TargetAndTransition, AnimatePresence, animate, useInView } from "framer-motion";
+
+function StatCounter({ endValue, suffix = "" }: { endValue: number, suffix?: string }) {
+  const nodeRef = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(nodeRef, { once: true });
+
+  useEffect(() => {
+    if (isInView && nodeRef.current) {
+      const controls = animate(0, endValue, {
+        duration: 2,
+        onUpdate(value) {
+          if (nodeRef.current) {
+            nodeRef.current.textContent = Math.round(value).toString() + suffix;
+          }
+        }
+      });
+      return () => controls.stop();
+    }
+  }, [isInView, endValue, suffix]);
+
+  return <span ref={nodeRef}>0{suffix}</span>;
+}
 import {
   FaArrowRight,
   FaCartShopping,
+  FaCheck,
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
@@ -26,13 +48,13 @@ import {
   FaPhoneVolume,
   FaPlus,
   FaStar,
+  FaWandMagicSparkles,
   FaWhatsapp,
   FaXmark,
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6";
 import { fadeUp, scaleIn, staggerContainer } from "@/lib/motion";
-import { hasDemoSubscription } from "@/lib/demoAuth";
 import { assetPath } from "@/lib/paths";
 type TemplateCategory = "portfolio" | "blog" | "ecommerce" | "business";
 
@@ -87,12 +109,12 @@ const categories = [
 ];
 
 const topProducts = [
-  { title: "ShopNest", type: "E-commerce Website", price: 29, sales: "10.5K", image: "/landing-optimized/shopnest.webp", alt: "ShopNest template preview" },
-  { title: "BuySphere", type: "Template Website", price: 10, sales: "3.4K", image: "/landing-optimized/buysphere.webp", alt: "BuySphere template preview" },
-  { title: "TurboCart", type: "Template Website", price: 35, sales: "2.9K", image: "/landing-optimized/turbocart.webp", alt: "TurboCart template preview" },
-  { title: "MegaBasket", type: "Template Website", price: 29, sales: "4.2K", image: "/landing-optimized/megabasket.webp", alt: "MegaBasket template preview" },
-  { title: "NexaStore", type: "Template Website", price: 10, sales: "4.7K", image: "/landing-optimized/nexastore1.webp", alt: "NexaStore template preview" },
-  { title: "SampleStore", type: "Template Website", price: 35, sales: "5.0K", image: "/landing-optimized/samplestore.webp", alt: "SampleStore template preview" },
+  { title: "ShopNest", type: "E-commerce Website", price: 290, sales: "10.5K", image: "/landing-optimized/shopnest.webp", alt: "ShopNest template preview" },
+  { title: "BuySphere", type: "Template Website", price: 100, sales: "3.4K", image: "/landing-optimized/buysphere.webp", alt: "BuySphere template preview" },
+  { title: "TurboCart", type: "Template Website", price: 350, sales: "2.9K", image: "/landing-optimized/turbocart.webp", alt: "TurboCart template preview" },
+  { title: "MegaBasket", type: "Template Website", price: 290, sales: "4.2K", image: "/landing-optimized/megabasket.webp", alt: "MegaBasket template preview" },
+  { title: "NexaStore", type: "Template Website", price: 100, sales: "4.7K", image: "/landing-optimized/nexastore1.webp", alt: "NexaStore template preview" },
+  { title: "SampleStore", type: "Template Website", price: 350, sales: "5.0K", image: "/landing-optimized/samplestore.webp", alt: "SampleStore template preview" },
 ];
 
 const bannerSlides = [
@@ -142,15 +164,15 @@ const STORAGE_SYNC_EVENT = "stackly-storage-change";
 
 const templates = [
   { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", badge: "Free" },
-  { title: "Agency Pro", category: "portfolio", image: "/landing-optimized/portfolio03.webp", alt: "Agency Pro template", description: "A polished showcase for design teams.", price: 19, badge: "Premium" },
-  { title: "Minimal Studio", category: "portfolio", image: "/landing-optimized/portfolio04.webp", alt: "Minimal Studio template", description: "Clean white-space focused layout.", badge: "Free" },
-  { title: "Personal Blog", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
-  { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 15, badge: "Premium" },
-  { title: "Store", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "Store template", description: "A product-first storefront layout.", price: 29, badge: "Premium" },
-  { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 19, badge: "Premium" },
-  { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 19, badge: "Premium" },
-  { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 29, badge: "Premium" },
-  { title: "Construction", category: "business", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 25, badge: "Premium" },
+  { title: "Digital Marketing", category: "portfolio", image: "/portfolio03.webp", alt: "Agency Pro template", description: "A polished showcase for design teams.", price: 190, badge: "Premium" },
+  { title: "Restaurant", category: "portfolio", image: "/portfolio04.webp", alt: "Minimal Studio template", description: "Clean white-space focused layout.", badge: "Free" },
+  { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
+  { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
+  { title: "Store", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "Store template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
+  { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
+  { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 250, badge: "Premium" },
+  { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 290, badge: "Premium" },
+  { title: "Construction", category: "business", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 250, badge: "Premium" },
 ] satisfies Array<{
   title: string;
   category: TemplateCategory;
@@ -200,8 +222,8 @@ const faqs = [
     answer: "You can build business sites, portfolios, blogs, landing pages, eCommerce stores, and more without writing code.",
   },
   {
-    question: "What are the advantages of a drag & drop builder?",
-    answer: "The main advantages are ease of use, faster development, flexible editing, and built-in tools that help you launch quickly.",
+    question: "What are the uses of a drag & drop builder?",
+    answer: "The main uses are ease of use, faster development, flexible editing, and built-in tools that help you launch quickly.",
   },
   {
     question: "How long does it take to build a website?",
@@ -264,31 +286,44 @@ function LandingContactSection() {
     setFormData((current) => ({ ...current, [name]: nextValue }));
 
     if (name === "email") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      setEmailError(value && !emailRegex.test(value) ? "Please type in valid format (e.g: ranade@gmail.com)" : "");
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|io|app|co|in)$/i;
+      setEmailError(value && !emailRegex.test(value.trim()) ? "Please enter a valid email address (e.g., ranade@gmail.com)" : "");
     }
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|io|app|co|in)$/i;
+    if (!formData.email || !emailRegex.test(formData.email.trim())) {
+      setEmailError("Please enter a valid email address (e.g., ranade@gmail.com)");
+      return;
+    }
+
     if (!emailError && formData.email) {
       alert("Message Sent Successfully!");
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        message: "",
+      });
+      setEmailError("");
     }
   };
 
   return (
     <motion.section id="contact" className="mx-auto my-12 max-w-7xl px-4 md:my-24 md:px-8" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
       <SectionHeading>Contact</SectionHeading>
-      <motion.div className="flex flex-col items-start gap-10 rounded-[2rem] bg-[#E6EFF1] p-6 shadow-sm lg:flex-row lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={staggerContainer}>
-        <motion.div className="flex w-full flex-col justify-center gap-8 lg:w-5/12" variants={fadeUp}>
+      <motion.div className="flex flex-col items-stretch gap-6 rounded-[2rem] bg-[#E6EFF1] p-4 sm:p-8 lg:flex-row lg:items-start lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={staggerContainer}>
+        <motion.div className="flex w-full flex-col justify-center gap-6 sm:gap-8 lg:w-5/12" variants={fadeUp}>
           <div className="space-y-4">
             <div className="flex items-center gap-2 font-black text-[#06224C]">
               <FaPhoneVolume className="text-xl" aria-hidden="true" />
               <span className="text-xs uppercase tracking-[0.2em]">Contact</span>
             </div>
             <h2 className="text-3xl font-black leading-tight text-[#06224C] sm:text-4xl md:text-5xl">
-              Let&apos;s Get In Touch.
+              Let&apos;s Get In Touch
             </h2>
             <p className="text-base font-medium text-gray-600 sm:text-lg">
               Or simply reach out directly to
@@ -308,9 +343,9 @@ function LandingContactSection() {
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
                     <Icon className={`${item.color} text-2xl`} aria-hidden="true" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{item.label}</p>
-                    <p className="max-w-[320px] text-sm font-bold leading-relaxed text-[#06224C]">{item.value}</p>
+                    <p className="text-sm font-bold leading-relaxed text-[#06224C] break-all sm:break-normal">{item.value}</p>
                   </div>
                 </div>
               );
@@ -333,10 +368,10 @@ function LandingContactSection() {
           </div>
         </motion.div>
 
-        <motion.div className="w-full rounded-[2rem] border border-white bg-white p-6 shadow-2xl sm:p-10 lg:w-7/12" variants={fadeUp} whileHover={{ y: -4, boxShadow: "0 28px 70px rgba(6,34,76,0.16)", transition: { duration: 0.22 } }}>
+        <motion.div className="w-full rounded-[2rem] border border-white bg-white p-4 sm:p-10 lg:w-7/12" variants={fadeUp} whileHover={{ y: -4, boxShadow: "0 28px 70px rgba(6,34,76,0.16)", transition: { duration: 0.22 } }}>
           <h3 className="mb-1 text-2xl font-black text-[#06224C] sm:text-3xl">Send a Message</h3>
           <p className="mb-8 text-xs font-bold uppercase tracking-wide text-gray-400 sm:text-sm">
-            we will get back to you within 48 hours.
+            we will get back to you within 48 hours
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -361,12 +396,12 @@ function LandingContactSection() {
 
             <label className="block space-y-2">
               <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Message</span>
-              <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white" />
+              <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." required className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white" />
             </label>
 
-            <button type="submit" className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#06224C] py-4 text-xs font-black uppercase tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98]">
-              Send Message
-              <FaPaperPlane className="text-[10px]" aria-hidden="true" />
+            <button type="submit" className="flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98]">
+              <span>Send Message</span>
+              <FaPaperPlane className="text-[10px] shrink-0" aria-hidden="true" />
             </button>
           </form>
         </motion.div>
@@ -379,13 +414,15 @@ export default function Home() {
   const router = useRouter(); // Added router for navigation intercepts
   const [activeFilter, setActiveFilter] = useState<(typeof templateFilters)[number]["value"]>("all");
   const [activeFeature, setActiveFeature] = useState(0);
-  const [openFaq, setOpenFaq] = useState(0);
+  const [openFaq, setOpenFaq] = useState(-1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [hasLoadedWishlist, setHasLoadedWishlist] = useState(false);
   const [wishlistToast, setWishlistToast] = useState<string | null>(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [comingSoonTemplate, setComingSoonTemplate] = useState("");
 
   // Slider State
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -399,14 +436,69 @@ export default function Home() {
     return () => mql.removeEventListener("change", updateSpread);
   }, []);
 
+  // Scroll Restoration on Refresh (Hard Reload)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const navigationEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const isReload = navigationEntry?.type === "reload";
+
+    if (isReload) {
+      const savedScrollPos = sessionStorage.getItem("landing-page-scroll-position");
+      if (savedScrollPos) {
+        const scrollPos = parseInt(savedScrollPos, 10);
+        // Wait two animation frames to ensure hydration and layout are stable
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo(0, scrollPos);
+          });
+        });
+      }
+    }
+
+    const saveScrollPosition = () => {
+      sessionStorage.setItem("landing-page-scroll-position", window.scrollY.toString());
+    };
+
+    window.addEventListener("scroll", saveScrollPosition, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", saveScrollPosition);
+    };
+  }, []);
+
+  const [cartTitles, setCartTitles] = useState<string[]>([]);
+
+  useEffect(() => {
+    const syncCartFromStorage = () => {
+      const rawCart = window.localStorage.getItem("cartItems") || "[]";
+      try {
+        const parsedCart = JSON.parse(rawCart) as CartItem[];
+        setCartTitles((current) => {
+          const nextTitles = parsedCart.map((item) => item.title);
+          return JSON.stringify(current) === JSON.stringify(nextTitles) ? current : nextTitles;
+        });
+      } catch {
+        setCartTitles([]);
+      }
+    };
+
+    syncCartFromStorage();
+
+    window.addEventListener("storage", syncCartFromStorage);
+    window.addEventListener(STORAGE_SYNC_EVENT, syncCartFromStorage);
+
+    return () => {
+      window.removeEventListener("storage", syncCartFromStorage);
+      window.removeEventListener(STORAGE_SYNC_EVENT, syncCartFromStorage);
+    };
+  }, []);
+
   // --- SUBSCRIPTION CHECK PLACEHOLDER ---
-  // The Backend Team will update this function to check the user's actual subscription status.
+  // The Backend Team will update this boolean with real API/context state
+  const hasActiveSubscription = false;
+
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
     event.preventDefault();
-    // Demo tester (frontend-only login) gets a default active subscription.
-    // BACKEND TEAM: replace hasDemoSubscription() with real API/context state.
-    const hasActiveSubscription = hasDemoSubscription();
-
     if (hasActiveSubscription) {
       router.push(targetUrl);
     } else {
@@ -560,11 +652,11 @@ export default function Home() {
     }
 
     const existingItem = currentCart.find((item) => item.title === product.title);
-    const nextCart = existingItem
-      ? currentCart.map((item) => (
-        item.title === product.title ? { ...item, quantity: (item.quantity || 1) + 1 } : item
-      ))
-      : [...currentCart, { ...product, quantity: 1 }];
+    if (existingItem) {
+      return;
+    }
+
+    const nextCart = [...currentCart, { ...product, quantity: 1 }];
     const nextCartCount = nextCart.reduce((total, item) => total + (item.quantity || 1), 0);
 
     window.localStorage.setItem("cartItems", JSON.stringify(nextCart));
@@ -787,11 +879,11 @@ export default function Home() {
         whileInView="visible"
         viewport={{ once: true, amount: 0.25 }}
       >
-        <motion.div className="w-full lg:w-1/2 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white flex-shrink-0" variants={fadeUp} whileHover={softHover}>
+        <motion.div className="w-full lg:w-1/2 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white flex-shrink-0 aspect-video" variants={fadeUp} whileHover={softHover}>
           <img
             src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800"
             alt="Stackly office"
-            className="w-full h-auto object-cover transition duration-700 hover:scale-105"
+            className="w-full h-full object-cover transition duration-700 hover:scale-105"
             loading="lazy"
           />
         </motion.div>
@@ -810,7 +902,7 @@ export default function Home() {
           </motion.div>
 
           <motion.p className="text-base md:text-lg leading-relaxed font-bold text-[#0A2357] italic" variants={fadeUp}>
-            Stackly is a powerful platform that streamlines workflow, enhances efficiency, and drives digital success.
+            Stackly is a powerful platform that streamlines workflows, enhances efficiency, and drives digital success.
           </motion.p>
           <motion.p className="text-sm leading-relaxed text-gray-600" variants={fadeUp}>
             Founded in 2015, Stackly has grown into one of the leading and most trusted companies in the industry.
@@ -823,7 +915,7 @@ export default function Home() {
             whileHover={{ scale: 1.04, filter: "brightness(1.08)" }}
             whileTap={{ scale: 0.98 }}
           >
-            READ MORE..
+            READ MORE...
           </motion.button>
         </motion.div>
       </motion.div>
@@ -867,7 +959,7 @@ export default function Home() {
       <section id="categories" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Categories</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
-        <motion.div key={`categories-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+        <motion.div key={`categories-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {visibleCategories.map((category) => (
             <motion.article key={category.title} className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl" variants={scaleIn} whileHover={softHover}>
               <div className="h-44 overflow-hidden md:h-52">
@@ -877,7 +969,7 @@ export default function Home() {
                 <h3 className="text-base font-bold uppercase tracking-tight text-gray-800 md:text-lg">{category.title}</h3>
                 <div className="mt-4 flex justify-center gap-6 text-[10px] font-black uppercase text-blue-600 underline">
                   <Link
-                    href={category.editHref ?? "#templates"}
+                    href={hasActiveSubscription ? (category.editHref ?? "#templates") : "/planning"}
                     onClick={(e) => checkSubscriptionAndRoute(e, category.editHref ?? "#templates")}
                   >
                     Edit
@@ -894,13 +986,14 @@ export default function Home() {
           </Link>
         </div>
       </section>
-
+ 
       <section className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Top Selling This Week</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
-        <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+        <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {visibleTopProducts.map((product) => {
             const isWishlisted = wishlistItems.some((item) => item.title === product.title);
+            const isInCart = cartTitles.includes(product.title);
 
             return (
               <motion.article key={product.title} className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={scaleIn} whileHover={softHover}>
@@ -923,7 +1016,7 @@ export default function Home() {
                   <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
                   <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-black text-[#06224C]">$ {product.price}</span>
+                      <span className="text-2xl font-black text-[#06224C]">₹ {product.price}</span>
                       <span className="text-[10px] font-bold text-gray-400">({product.sales} Sales)</span>
                     </div>
                     <div className="flex items-center gap-1 text-yellow-400" aria-label="Rating 5 out of 5">
@@ -936,10 +1029,11 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => addToCart(product)}
-                      aria-label={`Add ${product.title} to cart`}
-                      className="flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition hover:bg-blue-50"
+                      disabled={isInCart}
+                      aria-label={isInCart ? `${product.title} is already in cart` : `Add ${product.title} to cart`}
+                      className={`flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition ${isInCart ? "opacity-60 cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
                     >
-                      <FaCartShopping />
+                      {isInCart ? <FaCheck className="text-sm" /> : <FaCartShopping />}
                     </button>
                     <a href="#templates" className="flex h-10 flex-1 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105">
                       View Template
@@ -954,7 +1048,7 @@ export default function Home() {
 
       <section id="templates" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>All Templates</SectionHeading>
-        <motion.div className="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm md:rounded-[2.5rem] md:p-10" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.14 }}>
+        <motion.div className="rounded-[2rem] border border-gray-100 bg-white p-4 shadow-sm md:rounded-[2.5rem] md:p-10" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <div className="mb-12 flex flex-wrap justify-center gap-3" aria-label="Template categories">
             {templateFilters.map((filter) => {
               const active = activeFilter === filter.value;
@@ -965,8 +1059,8 @@ export default function Home() {
                   aria-pressed={active}
                   onClick={() => setActiveFilter(filter.value)}
                   className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${active
-                      ? "border-[#06224C] bg-[#06224C] text-white"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                    ? "border-[#06224C] bg-[#06224C] text-white"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
                     }`}
                 >
                   {filter.label}
@@ -977,7 +1071,7 @@ export default function Home() {
           </div>
 
           {/* Added key to force re-render/re-animation when state changes */}
-          <motion.div key={`templates-${activeFilter}-${submittedSearch}`} className="grid grid-cols-1 gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.12 }}>
+          <motion.div key={`templates-${activeFilter}-${submittedSearch}`} className="grid grid-cols-1 gap-x-6 gap-y-8 sm:gap-x-10 sm:gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             {visibleTemplates.map((template) => (
               <motion.article key={template.title} className="group" variants={scaleIn} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
                 <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-md">
@@ -987,35 +1081,61 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="px-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-xl font-black leading-tight text-[#06224C]">{template.title}</h3>
-                    {template.price ? <span className="text-sm font-bold text-blue-600">$ {template.price}</span> : <FaArrowRight className="mt-1 text-[#06224C]" />}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-xl font-black leading-tight text-[#06224C]">{template.title}</h3>
+                      {template.price && (
+                        <span className="mt-1.5 block text-sm font-bold text-blue-600 sm:hidden">
+                          ₹ {template.price}
+                        </span>
+                      )}
+                    </div>
+                    {template.price ? (
+                      <span className="hidden text-sm font-bold text-blue-600 shrink-0 sm:block">₹ {template.price}</span>
+                    ) : (
+                      <FaArrowRight className="mt-1 text-[#06224C] shrink-0" />
+                    )}
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-gray-500">{template.description}</p>
-                  <div className="mt-4 flex gap-3">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     <Link
                       href={
-                        template.category === "portfolio"
-                          ? "/portfolio"
-                          : template.category === "ecommerce"
-                            ? "/e-commerce"
-                            : template.category === "blog"
-                              ? "/blog"
-                              : "#features"
+                        template.title === "Digital Marketing"
+                          ? "/digital-marketing"
+                          : template.title === "Restaurant"
+                            ? "/restaurant"
+                            : template.title === "Construction"
+                              ? "/construction"
+                              : ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)
+                                ? "#"
+                                : template.category === "portfolio"
+                                  ? "/portfolio"
+                                  : template.category === "ecommerce"
+                                    ? "/e-commerce"
+                                    : template.category === "blog"
+                                      ? "/blog"
+                                      : "#features"
                       }
-                      className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105"
+                      onClick={(e) => {
+                        if (["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)) {
+                          e.preventDefault();
+                          setComingSoonTemplate(template.title);
+                          setShowComingSoon(true);
+                        }
+                      }}
+                      className="min-w-[80px] flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap"
                     >
                       Preview
                     </Link>
                     <Link
-                      href={template.price ? "/planning" : `/blockpages?template=${template.category}`}
+                      href={template.price || !hasActiveSubscription ? "/planning" : `/blockpages?template=${template.category}`}
                       onClick={(e) => {
                         // Only intercept if it's the "Edit" button (no price)
                         if (!template.price) {
                           checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
                         }
                       }}
-                      className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110"
+                      className="min-w-[80px] flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap"
                     >
                       {template.price ? "Buy" : "Edit"}
                     </Link>
@@ -1045,12 +1165,14 @@ export default function Home() {
           </motion.div>
           <motion.div className="mb-10 grid w-full max-w-5xl grid-cols-1 gap-6 sm:grid-cols-3" variants={staggerContainer}>
             {[
-              ["500K +", "users"],
-              ["12 +", "countries"],
-              ["10 +", "sites created daily"],
-            ].map(([value, label]) => (
+              { endValue: 500, suffix: "K +", label: "users" },
+              { endValue: 12, suffix: " +", label: "countries" },
+              { endValue: 10, suffix: " +", label: "sites created daily" },
+            ].map(({ endValue, suffix, label }) => (
               <motion.div key={label} className="rounded-2xl bg-white p-6 shadow-lg transition hover:scale-105 md:p-8" variants={scaleIn} whileHover={{ y: -5, scale: 1.04, transition: { duration: 0.22 } }}>
-                <p className="text-2xl font-black text-gray-800 md:text-4xl">{value}</p>
+                <p className="text-2xl font-black text-gray-800 md:text-4xl">
+                  <StatCounter endValue={endValue} suffix={suffix} />
+                </p>
                 <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-gray-500 md:text-xs">{label}</p>
               </motion.div>
             ))}
@@ -1151,9 +1273,11 @@ export default function Home() {
               const isOpen = openFaq === index;
               return (
                 <motion.div key={faq.question} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm" variants={scaleIn} whileHover={{ y: -3, boxShadow: "0 18px 40px rgba(6,34,76,0.10)", transition: { duration: 0.2 } }}>
-                  <button type="button" onClick={() => setOpenFaq(isOpen ? -1 : index)} className="flex w-full items-start justify-between gap-4 p-5 text-left transition hover:bg-gray-50 md:p-6">
-                    <h3 className="text-sm font-bold leading-snug text-[#06224C] md:text-base">{faq.question}</h3>
-                    {isOpen ? <FaMinus className="mt-1 flex-shrink-0 text-[#06224C]" /> : <FaPlus className="mt-1 flex-shrink-0 text-[#06224C]" />}
+                  <button type="button" onClick={() => setOpenFaq(isOpen ? -1 : index)} className="w-full p-5 text-left transition hover:bg-gray-50 md:p-6">
+                    <div className="flex w-full items-start justify-between gap-4">
+                      <h3 className="text-sm font-bold leading-snug text-[#06224C] md:text-base flex-1 min-w-0">{faq.question}</h3>
+                      {isOpen ? <FaMinus className="mt-1 flex-shrink-0 text-[#06224C]" /> : <FaPlus className="mt-1 flex-shrink-0 text-[#06224C]" />}
+                    </div>
                   </button>
                   {isOpen && <p className="px-5 pb-5 pt-0 text-sm leading-relaxed text-gray-700 md:px-6 md:pb-6">{faq.answer}</p>}
                 </motion.div>
@@ -1164,16 +1288,18 @@ export default function Home() {
       </section>
 
       <section className="mx-auto my-12 max-w-7xl bg-[#FFF1F1] px-4 py-12 md:px-8 md:py-20">
-        <motion.div className="overflow-hidden rounded-[2.5rem] bg-[#082A5A] p-8 text-center shadow-[0_24px_70px_rgba(8,42,90,0.20)] md:rounded-[3rem] md:p-16" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }}>
+        <motion.div className="overflow-hidden rounded-[2.5rem] bg-[#082A5A] p-4 sm:p-8 md:p-16 text-center shadow-[0_24px_70px_rgba(8,42,90,0.20)] md:rounded-[3rem]" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }}>
           <h2 className="mb-3 font-serif text-2xl font-black leading-tight text-white md:text-5xl">
             Drag & drop your vision to life
           </h2>
           <p className="mb-8 font-serif text-2xl font-black text-white md:text-4xl">
             Your vision. Your goals. Your website.
           </p>
-          <Link href="/builder" className="inline-flex rounded-full bg-white px-10 py-3.5 text-sm font-bold uppercase tracking-wider text-[#06224C] shadow-xl transition hover:scale-[1.04] hover:bg-blue-50 hover:brightness-105">
-            Get Started
-          </Link>
+          <div className="flex justify-center w-full min-w-0">
+            <Link href="/builder" className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold uppercase tracking-wider text-[#06224C] shadow-xl transition hover:scale-[1.04] hover:bg-blue-50 hover:brightness-105 sm:px-10 sm:py-3.5">
+              Get Started
+            </Link>
+          </div>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-2 text-sm text-white">
             <Link href="/">TheStackly.com</Link>
             <span>/</span>
@@ -1191,6 +1317,48 @@ export default function Home() {
           {wishlistToast}
         </div>
       )}
+
+      <AnimatePresence>
+        {showComingSoon && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowComingSoon(false)}
+              className="absolute inset-0 bg-[#06224C]/40 backdrop-blur-sm"
+            />
+            
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="relative w-full max-w-sm overflow-hidden rounded-[2rem] bg-white p-8 text-center shadow-[0_24px_70px_rgba(6,34,76,0.30)] ring-1 ring-slate-100"
+            >
+              {/* Decorative Header Icon */}
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                <FaWandMagicSparkles className="text-2xl animate-pulse" />
+              </div>
+              
+              <h3 className="mb-2 text-2xl font-black text-[#06224C]">Coming Soon</h3>
+              <p className="mb-6 text-sm font-semibold text-gray-500 leading-relaxed">
+                The <span className="font-bold text-[#06224C]">{comingSoonTemplate}</span> template is currently under design and will be available very soon. Stay tuned!
+              </p>
+              
+              <button
+                type="button"
+                onClick={() => setShowComingSoon(false)}
+                className="w-full rounded-2xl bg-[#06224C] py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition hover:bg-blue-900 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Got It
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

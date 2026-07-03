@@ -122,9 +122,9 @@ const whyChooseItems = [
 ];
 
 const statsBar = [
-  { icon: FaClipboardList, targetValue: 250, suffix: "+", label: "Project Completed" },
-  { icon: FaUsers, targetValue: 150, suffix: "+", label: "Happy Customer" },
-  { icon: FaClock, targetValue: 10, suffix: "+", label: "Years of experience" },
+  { icon: FaClipboardList, targetValue: 250, suffix: "+", label: "Projects Completed" },
+  { icon: FaUsers, targetValue: 150, suffix: "+", label: "Happy Customers" },
+  { icon: FaClock, targetValue: 10, suffix: "+", label: "Years of Experience" },
   { icon: FaCircleCheck, targetValue: 98, suffix: "%", label: "Client Satisfaction Rating" },
 ];
 
@@ -133,21 +133,21 @@ const testimonials = [
     name: "Michael Anderson",
     role: "CEO, Anderson Realty Group",
     text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.",
-    img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop",
+    img: "/Michael Anderson.webp",
     isDark: false,
   },
   {
     name: "Sarah Thompson",
     role: "",
     text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful",
-    img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
+    img: "/Sarah Thompson.webp",
     isDark: true,
   },
   {
     name: "David Wilson",
     role: "",
     text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.",
-    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop",
+    img: "/David Wilson.webp",
     isDark: false,
   },
 ];
@@ -158,7 +158,7 @@ function TemplateFooter() {
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isEmailValid = /^[^\s@]+@gmail\.com$/.test(email);
 
   const handleNewsletter = (e: FormEvent) => {
     e.preventDefault();
@@ -177,7 +177,7 @@ function TemplateFooter() {
         <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
           <div>
             <h3 className="mb-4 text-lg font-black">Digital Marketing</h3>
-            <p className="text-sm leading-relaxed text-white/60">
+            <p className="text-sm font-medium leading-relaxed text-white/60 @md:text-base">
               The precision-first agency for high-growth enterprises. Driven by data, defined by results. Headquarters in SF &amp; NYC.
             </p>
           </div>
@@ -196,15 +196,15 @@ function TemplateFooter() {
           <div>
             <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Resources</h4>
             <ul className="space-y-2.5 text-sm text-white/60">
-              {["Privacy Policy", "Terms of Service", "Cookie Policy", "Careers"].map((link) => (
+              {["Privacy Policy", "Terms of Use", "Cookie Policy", "Careers"].map((link) => (
                 <li key={link}>
-                  {link === "Privacy Policy" || link === "Terms of Service" ? (
-                    <button 
-                      type="button" 
+                  {link === "Privacy Policy" || link === "Terms of Use" ? (
+                    <button
+                      type="button"
                       className="transition hover:text-white"
                       onClick={() => {
                         if (link === "Privacy Policy") setIsPrivacyModalOpen(true);
-                        else if (link === "Terms of Service") setIsTermsModalOpen(true);
+                        else if (link === "Terms of Use") setIsTermsModalOpen(true);
                       }}
                     >
                       {link}
@@ -220,7 +220,7 @@ function TemplateFooter() {
           </div>
           <div>
             <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Newsletter</h4>
-            <p className="mb-4 text-sm text-white/60">Get performance marketing insights delivered weekly to your inbox.</p>
+            <p className="mb-4 text-sm font-medium leading-relaxed text-white/60 @md:text-base">Get performance marketing insights delivered weekly to your inbox.</p>
             <form onSubmit={handleNewsletter} className="flex flex-col gap-2">
               <div className="relative flex w-full min-w-0 items-center rounded-full bg-white ring-1 ring-gray-200 transition-all duration-300 hover:ring-2 hover:ring-[#1E56E5]/50 focus-within:ring-2 focus-within:ring-[#1E56E5] focus-within:hover:ring-[#1E56E5]">
                 <div className="pointer-events-none absolute left-4 text-gray-400 transition-colors duration-300 group-focus-within:text-gray-300">
@@ -275,13 +275,13 @@ function TemplateFooter() {
 
       <AnimatePresence>
         {isPrivacyModalOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -290,32 +290,32 @@ function TemplateFooter() {
               <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
                 <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Privacy Policy</h2>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
-                <p className="mb-8 text-sm leading-relaxed @md:text-base">
+                <p className="mb-8 text-sm font-medium leading-relaxed @md:text-base">
                   Your privacy is important to us. This policy explains how Stackly collects, uses, and protects your information.
                 </p>
-                
+
                 <div className="space-y-6 text-sm @md:text-base">
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Information We Collect</h3>
-                    <p className="leading-relaxed">We collect account details, contact information, usage data, and project preferences needed to operate the platform.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">We collect account details, contact information, usage data, and project preferences needed to operate the platform.</p>
                   </div>
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. How We Use Data</h3>
-                    <p className="leading-relaxed">We use data to provide services, improve templates, process payments, prevent abuse, and send important updates.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">We use data to provide services, improve templates, process payments, prevent abuse, and send important updates.</p>
                   </div>
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Security</h3>
-                    <p className="leading-relaxed">We use reasonable safeguards to protect user data, though no internet transmission is completely risk free.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">We use reasonable safeguards to protect user data, though no internet transmission is completely risk free.</p>
                   </div>
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Your Rights</h3>
-                    <p className="leading-relaxed">You can request access, correction, or deletion of personal data by contacting <a href="mailto:privacy@thestackly.com" className="font-bold text-[#1E56E5] hover:underline">privacy@thestackly.com</a>.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">You can request access, correction, or deletion of personal data by contacting <a href="mailto:privacy@thestackly.com" className="font-bold text-[#1E56E5] hover:underline">privacy@thestackly.com</a>.</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
                 <button
                   onClick={() => setIsPrivacyModalOpen(false)}
@@ -329,13 +329,13 @@ function TemplateFooter() {
         )}
 
         {isTermsModalOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -344,32 +344,32 @@ function TemplateFooter() {
               <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
                 <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Terms of Use</h2>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
-                <p className="mb-8 text-sm leading-relaxed @md:text-base">
+                <p className="mb-8 text-sm font-medium leading-relaxed @md:text-base">
                   Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.
                 </p>
-                
+
                 <div className="space-y-6 text-sm @md:text-base">
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Account Responsibilities</h3>
-                    <p className="leading-relaxed">You are responsible for maintaining your login credentials and all activity under your account.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">You are responsible for maintaining your login credentials and all activity under your account.</p>
                   </div>
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. Template Usage</h3>
-                    <p className="leading-relaxed">Templates may be customized for your own projects. Redistribution or resale without permission is not allowed.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">Templates may be customized for your own projects. Redistribution or resale without permission is not allowed.</p>
                   </div>
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Payments</h3>
-                    <p className="leading-relaxed">Paid assets and subscriptions are billed according to the plan selected at purchase.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">Paid assets and subscriptions are billed according to the plan selected at purchase.</p>
                   </div>
                   <div>
                     <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Platform Changes</h3>
-                    <p className="leading-relaxed">We may improve, update, or discontinue features to keep Stackly reliable and secure.</p>
+                    <p className="text-sm font-medium leading-relaxed @md:text-base">We may improve, update, or discontinue features to keep Stackly reliable and secure.</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
                 <button
                   onClick={() => setIsTermsModalOpen(false)}
@@ -386,9 +386,9 @@ function TemplateFooter() {
   );
 }
 
-function CountUp({ targetValue, suffix = "" }: { targetValue: number; suffix?: string }) {
+function CountUp({ targetValue, suffix = "", prefix = "", decimals = 0 }: { targetValue: number; suffix?: string; prefix?: string; decimals?: number }) {
   const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest));
+  const rounded = useTransform(count, (latest) => decimals > 0 ? latest.toFixed(decimals) : Math.round(latest).toString());
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -401,7 +401,7 @@ function CountUp({ targetValue, suffix = "" }: { targetValue: number; suffix?: s
 
   return (
     <span ref={ref} className="inline-flex">
-      <motion.span>{rounded}</motion.span>{suffix}
+      {prefix}<motion.span>{rounded}</motion.span>{suffix}
     </span>
   );
 }
@@ -420,7 +420,7 @@ export default function DigitalMarketingPreviewPage() {
   const [contactForm, setContactForm] = useState({ firstName: "", lastName: "", email: "", message: "" });
   const [contactStatus, setContactStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email);
+  const isEmailValid = /^[^\s@]+@gmail\.com$/.test(contactForm.email);
   const isFormValid = contactForm.firstName.trim() && contactForm.lastName.trim() && isEmailValid && contactForm.message.trim();
 
   const handleContactSubmit = (e: React.FormEvent) => {
@@ -435,6 +435,13 @@ export default function DigitalMarketingPreviewPage() {
       setTimeout(() => setContactStatus("idle"), 5000);
     }, 1500);
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.history.scrollRestoration = "manual";
+      window.scrollTo(0, 0);
+    }
+  }, []);
 
   useEffect(() => {
     if (isHoveredTestimonials) return;
@@ -476,11 +483,10 @@ export default function DigitalMarketingPreviewPage() {
                     key={mode}
                     type="button"
                     onClick={() => setPreviewMode(mode)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow-sm transition @sm:h-9 @sm:w-9 ${
-                      previewMode === mode
-                        ? "border-[#06224C] bg-gray-50 font-bold text-[#06224C] ring-2 ring-[#06224C]"
-                        : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                    }`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow-sm transition @sm:h-9 @sm:w-9 ${previewMode === mode
+                      ? "border-[#06224C] bg-gray-50 font-bold text-[#06224C] ring-2 ring-[#06224C]"
+                      : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
+                      }`}
                     title={title}
                   >
                     <Icon size={14} />
@@ -492,20 +498,18 @@ export default function DigitalMarketingPreviewPage() {
 
             <div
               ref={canvasScrollRef}
-              className={`relative z-0 min-w-0 flex-1 overflow-visible transition-colors duration-300 ${
-                previewMode === "tablet" || previewMode === "mobile" ? "rounded-xl bg-gray-200/50 p-2 @sm:p-4" : ""
-              }`}
+              className={`relative z-0 min-w-0 flex-1 overflow-visible transition-colors duration-300 ${previewMode === "tablet" || previewMode === "mobile" ? "rounded-xl bg-gray-200/50 p-2 @sm:p-4" : ""
+                }`}
             >
               <div
-                className={`dm-shell @container break-words min-w-0 relative mx-auto flex min-h-[33rem] flex-col overflow-hidden bg-[#FFF5F5] transition-all duration-500 ease-in-out ${
-                  previewMode === "mobile"
-                    ? "w-full max-w-[375px] rounded-xl border-2 border-gray-300 shadow-2xl"
-                    : previewMode === "tablet"
-                      ? "w-full max-w-[768px] rounded-xl border-2 border-gray-300 shadow-2xl"
-                      : previewMode === "desktop"
-                        ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
-                        : "w-full max-w-full"
-                }`}
+                className={`dm-shell @container break-words min-w-0 relative mx-auto flex min-h-[33rem] flex-col overflow-hidden bg-[#FFF5F5] transition-all duration-500 ease-in-out ${previewMode === "mobile"
+                  ? "w-full max-w-[375px] rounded-xl border-2 border-gray-300 shadow-2xl"
+                  : previewMode === "tablet"
+                    ? "w-full max-w-[768px] rounded-xl border-2 border-gray-300 shadow-2xl"
+                    : previewMode === "desktop"
+                      ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
+                      : "w-full max-w-full"
+                  }`}
               >
                 {/* Stackly preview chrome — matches portfolio */}
                 <motion.div
@@ -588,20 +592,20 @@ export default function DigitalMarketingPreviewPage() {
 
 
                 {/* Hero */}
-                <section id="home" className="relative flex min-h-[420px] items-center justify-center overflow-hidden @md:min-h-[520px]">
-                  <div className="absolute inset-0">
+                <section id="home" className="relative flex min-h-[320px] w-full items-center justify-center overflow-hidden @sm:min-h-[420px] @md:min-h-[520px]">
+                  <div className="absolute inset-0 bg-[#0A1E3D]">
                     <motion.img
                       initial={{ scale: 1.1, opacity: 0 }}
                       whileInView={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 1 }}
                       viewport={{ once: true }}
-                      src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=1600&auto=format&fit=crop"
+                      src="/Digital marketing.webp"
                       alt="Precision Marketing"
                       className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/60" />
                   </div>
-                  <motion.div 
+                  <motion.div
                     initial="hidden"
                     whileInView="show"
                     viewport={{ once: true }}
@@ -616,14 +620,14 @@ export default function DigitalMarketingPreviewPage() {
                       <button
                         type="button"
                         onClick={() => scrollToSection("contact")}
-                        className="rounded-lg bg-white px-8 py-3.5 text-[15px] font-bold text-[#0A1E3D] transition hover:scale-105"
+                        className="cursor-pointer rounded-lg bg-white px-8 py-3.5 text-[15px] font-bold text-[#0A1E3D] transition hover:scale-105"
                       >
                         Get Started
                       </button>
                       <button
                         type="button"
                         onClick={() => scrollToSection("about")}
-                        className="rounded-lg bg-[#0044E4] px-8 py-3.5 text-[15px] font-bold text-white transition hover:scale-105"
+                        className="cursor-pointer rounded-lg bg-[#0A1E3D] px-8 py-3.5 text-[15px] font-bold text-white transition hover:scale-105"
                       >
                         Learn More
                       </button>
@@ -633,7 +637,7 @@ export default function DigitalMarketingPreviewPage() {
 
                 {/* Mission & Vision */}
                 <section id="about" className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
-                  <motion.div 
+                  <motion.div
                     initial="hidden"
                     whileInView="show"
                     viewport={{ once: true, margin: "-50px" }}
@@ -654,13 +658,13 @@ export default function DigitalMarketingPreviewPage() {
                         {
                           badge: "Mission",
                           text: "Our mission is to help businesses grow through innovative digital marketing strategies that increase visibility, engagement, and measurable results.",
-                          img: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop",
+                          img: "/Digital marketing mission.webp",
                           reverse: false,
                         },
                         {
                           badge: "Vision",
                           text: "To empower businesses with innovative digital marketing solutions that drive growth, enhance brand visibility, and create lasting success in the digital world.",
-                          img: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=800&auto=format&fit=crop",
+                          img: "/Digital marketing vision.webp",
                           reverse: true,
                         },
                       ].map((card) => (
@@ -680,7 +684,7 @@ export default function DigitalMarketingPreviewPage() {
                               </p>
                             </div>
                             <div className="overflow-hidden rounded-xl">
-                              <img src={card.img} alt={card.badge} className="w-full aspect-[4/3] object-cover @sm:aspect-[16/9] @md:h-[320px] @md:aspect-auto" loading="lazy" />
+                              <img src={card.img} alt={card.badge} className="w-full h-auto object-cover" loading="lazy" />
                             </div>
                           </div>
                         </motion.div>
@@ -691,7 +695,7 @@ export default function DigitalMarketingPreviewPage() {
 
                 {/* Services */}
                 <section id="services" className="bg-[#0A1E3D] px-4 py-12 @md:px-8 @md:py-20">
-                  <motion.div 
+                  <motion.div
                     initial="hidden"
                     whileInView="show"
                     viewport={{ once: true, margin: "-50px" }}
@@ -699,7 +703,7 @@ export default function DigitalMarketingPreviewPage() {
                     className="mx-auto max-w-6xl"
                   >
                     <motion.h2 variants={fadeInUp} className="mb-4 text-[clamp(1.25rem,6cqw,1.875rem)] font-bold text-white @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Our Services</motion.h2>
-                    <motion.p variants={fadeInUp} className="mb-12 max-w-md text-sm leading-relaxed text-white/80 @md:text-base">
+                    <motion.p variants={fadeInUp} className="mb-12 max-w-md text-sm font-medium leading-relaxed text-white/80 @md:text-base">
                       Delivering innovative solutions that help businesses grow, improve efficiency, and achieve lasting success.
                     </motion.p>
                     <div className="grid grid-cols-1 gap-5 @xl:grid-cols-2 @4xl:grid-cols-3 @4xl:gap-6">
@@ -707,14 +711,16 @@ export default function DigitalMarketingPreviewPage() {
                         <motion.div
                           variants={fadeInUp}
                           whileHover={{ y: -5 }}
+                          whileFocus={{ y: -5 }}
                           key={service.title}
-                          className="group min-w-0 rounded-xl bg-[#123163] p-6 shadow-sm transition-colors hover:bg-[#163a75] @md:p-8"
+                          tabIndex={0}
+                          className="group min-w-0 rounded-xl bg-[#123163] p-6 shadow-sm transition-colors hover:bg-[#163a75] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0A1E3D] @md:p-8"
                         >
                           <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
                             <h3 className="w-full min-w-0 break-words text-base font-semibold text-white @md:text-lg">{service.title}</h3>
-                            <FaArrowRight className="shrink-0 text-white/70 transition group-hover:translate-x-1 group-hover:text-white" />
+                            <FaArrowRight className="shrink-0 text-white/70 transition group-hover:translate-x-1 group-hover:text-white group-focus:translate-x-1 group-focus:text-white" />
                           </div>
-                          <p className="min-w-0 break-words text-[13px] leading-relaxed text-white/80 @md:text-sm">{service.desc}</p>
+                          <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-white/80 @md:text-base">{service.desc}</p>
                         </motion.div>
                       ))}
                     </div>
@@ -723,7 +729,7 @@ export default function DigitalMarketingPreviewPage() {
 
                 {/* Business Planning */}
                 <section className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
-                  <motion.div 
+                  <motion.div
                     initial="hidden"
                     whileInView="show"
                     viewport={{ once: true, margin: "-50px" }}
@@ -742,16 +748,16 @@ export default function DigitalMarketingPreviewPage() {
                               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1E56E5]" />
                               <h3 className="min-w-0 break-words text-sm font-bold text-[#0A1E3D]">{card.title}</h3>
                             </div>
-                            <p className="min-w-0 break-words text-[13px] leading-relaxed text-[#4A5568] @md:text-sm">{card.desc}</p>
+                            <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">{card.desc}</p>
                           </div>
                         ))}
                       </div>
                     </motion.div>
                     <motion.div variants={slideInRight} className="min-w-0 w-full overflow-hidden rounded-2xl shadow-xl">
                       <img
-                        src="https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=800&auto=format&fit=crop"
+                        src="/Business planning.webp"
                         alt="Business planning"
-                        className="w-full aspect-[4/3] object-cover @md:aspect-auto @md:h-full"
+                        className="w-full h-auto object-cover"
                         loading="lazy"
                       />
                     </motion.div>
@@ -760,7 +766,7 @@ export default function DigitalMarketingPreviewPage() {
 
                 {/* Why Choose Us */}
                 <section className="bg-[#FFF0F0] px-4 pb-12 @md:px-8 @md:pb-20">
-                  <motion.div 
+                  <motion.div
                     initial="hidden"
                     whileInView="show"
                     viewport={{ once: true, margin: "-50px" }}
@@ -771,37 +777,40 @@ export default function DigitalMarketingPreviewPage() {
                       <div className="p-4 @sm:p-6 @md:p-8 @lg:p-12">
                         <motion.h2 variants={fadeInUp} className="mb-12 text-center text-[clamp(1.25rem,6cqw,1.875rem)] font-bold text-[#1E56E5] @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Why Choose US</motion.h2>
                         <div className="grid items-center gap-10 @2xl:grid-cols-2 @2xl:gap-16">
-                          <motion.div variants={slideInLeft} className="relative min-w-0 w-full flex items-center justify-center">
-                          <div className="w-full flex-1 max-w-md border-2 border-[#1E56E5] p-1">
-                            <img
-                              src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=800&auto=format&fit=crop"
-                              alt="Analytics dashboard"
-                              className="w-full aspect-[4/3] object-cover"
-                              loading="lazy"
-                            />
-                          </div>
-                          <motion.div variants={fadeInUp} className="absolute -right-2 -bottom-4 bg-white p-2 shadow-lg @sm:p-3 @md:-right-4 @md:top-8 @md:-bottom-auto @md:p-4 scale-75 origin-bottom-right @sm:scale-90 @md:scale-100">
-                            <p className="text-[clamp(8px,2cqw,10px)] font-bold uppercase tracking-wider text-gray-500">Organic Traffic</p>
-                            <p className="text-[clamp(14px,4cqw,1.25rem)] font-black text-[#0A1E3D]">
-                              18.2K <span className="text-[clamp(10px,2.5cqw,14px)] font-bold text-green-500">+14.8%</span>
-                            </p>
+                          <motion.div variants={slideInLeft} className="min-w-0 w-full flex items-center justify-center">
+                            <div className="relative w-fit max-w-full">
+                              <div className="w-full max-w-md border-2 border-[#1E56E5] p-1">
+                                <img
+                                  src="/Organic traffic.webp"
+                                  alt="Analytics dashboard"
+                                  className="w-auto h-auto max-w-full max-h-[45vh] object-contain"
+                                  loading="lazy"
+                                />
+                              </div>
+                              <motion.div variants={fadeInUp} className="absolute right-0 bottom-0 translate-x-2 translate-y-2 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl scale-75 origin-bottom-right @sm:translate-x-[10%] @sm:translate-y-[10%] @md:translate-x-[20%] @md:translate-y-[20%] @sm:scale-90 @md:scale-100">
+                                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Organic Traffic</p>
+                                <div className="flex items-baseline gap-2">
+                                  <p className="text-2xl font-black leading-none text-[#0A1E3D]"><CountUp targetValue={18.2} decimals={1} suffix="K" /></p>
+                                  <span className="text-sm font-bold leading-none text-green-700"><CountUp targetValue={14.8} decimals={1} prefix="+" suffix="%" /></span>
+                                </div>
+                              </motion.div>
+                            </div>
                           </motion.div>
-                        </motion.div>
-                        <motion.div variants={slideInRight} className="min-w-0">
-                          <h3 className="min-w-0 break-words mb-8 max-w-[24rem] text-[clamp(1.125rem,5cqw,1.5rem)] font-bold leading-snug text-[#0A1E3D] @md:text-[clamp(1.25rem,6cqw,1.875rem)]">
-                            We Deliver Results That Drive Business Growth
-                          </h3>
-                          <ul className="space-y-6">
-                            {whyChooseItems.map((item) => (
-                              <motion.li variants={fadeInUp} key={item} className="flex min-w-0 items-center gap-4">
-                                <FaRegCheckCircle className="shrink-0 text-[22px] text-[#0A1E3D]" />
-                                <span className="min-w-0 break-words text-[15px] font-medium text-[#4A5568] @md:text-base">{item}</span>
-                              </motion.li>
-                            ))}
-                          </ul>
-                        </motion.div>
+                          <motion.div variants={slideInRight} className="min-w-0">
+                            <h3 className="min-w-0 break-words mb-8 max-w-[24rem] text-[clamp(1.125rem,5cqw,1.5rem)] font-bold leading-snug text-[#0A1E3D] @md:text-[clamp(1.25rem,6cqw,1.875rem)]">
+                              We Deliver Results That Drive Business Growth
+                            </h3>
+                            <ul className="space-y-6">
+                              {whyChooseItems.map((item) => (
+                                <motion.li variants={fadeInUp} key={item} className="flex min-w-0 items-center gap-4">
+                                  <FaRegCheckCircle className="shrink-0 text-[22px] text-[#0A1E3D]" />
+                                  <span className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">{item}</span>
+                                </motion.li>
+                              ))}
+                            </ul>
+                          </motion.div>
+                        </div>
                       </div>
-                    </div>
                       <div className="grid grid-cols-1 @xs:grid-cols-2 @2xl:grid-cols-4 gap-4 @md:gap-6 bg-[#0A1E3D] px-4 py-6 @md:px-6 @md:py-8 @2xl:px-10 @2xl:py-8">
                         {statsBar.map((stat) => (
                           <motion.div variants={fadeInUp} key={stat.label} className="flex min-w-0 items-center gap-3 @md:gap-4">
@@ -821,7 +830,7 @@ export default function DigitalMarketingPreviewPage() {
 
                 {/* Testimonials */}
                 <section id="blog" className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
-                  <div 
+                  <div
                     className="mx-auto max-w-6xl text-center"
                     onMouseEnter={() => setIsHoveredTestimonials(true)}
                     onMouseLeave={() => setIsHoveredTestimonials(false)}
@@ -837,7 +846,7 @@ export default function DigitalMarketingPreviewPage() {
                         Our client&apos;s success stories showcase the impact of <br className="hidden @sm:block" /> our digital marketing expertise.
                       </p>
                     </motion.div>
-                    
+
                     <div className="relative min-h-[300px] overflow-hidden">
                       <AnimatePresence mode="popLayout" custom={slideDirection}>
                         <motion.div
@@ -853,9 +862,8 @@ export default function DigitalMarketingPreviewPage() {
                           {visibleTestimonials.map((t, i) => (
                             <motion.div
                               key={`${t.name}-${i}`}
-                              className={`group flex w-full min-w-0 flex-col rounded-2xl p-6 shadow-sm @md:p-8 transition-colors duration-500 bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white ${
-                                i === 1 ? "flex" : "hidden @3xl:flex"
-                              }`}
+                              className={`group flex w-full min-w-0 flex-col rounded-2xl p-6 shadow-sm @md:p-8 transition-colors duration-500 bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white ${i === 1 ? "flex" : "hidden @3xl:flex"
+                                }`}
                             >
                               <img src={t.img} alt={t.name} className="mx-auto mb-4 h-16 w-16 rounded-full object-cover" />
                               <div className="mb-6 flex justify-center gap-1 text-[#FBBF24]">
@@ -863,7 +871,7 @@ export default function DigitalMarketingPreviewPage() {
                                   <FaStar key={si} size={14} />
                                 ))}
                               </div>
-                              <p className="min-w-0 break-words flex-1 text-left text-[13px] leading-relaxed transition-colors duration-500 @md:text-sm text-[#4A5568] group-hover:text-gray-300">
+                              <p className="min-w-0 break-words flex-1 text-left text-sm font-medium leading-relaxed transition-colors duration-500 @md:text-base text-[#4A5568] group-hover:text-gray-300">
                                 {t.text}
                               </p>
                               <div className="min-w-0 mt-6 text-right">
@@ -905,19 +913,19 @@ export default function DigitalMarketingPreviewPage() {
                 </section>
 
                 {/* CTA Banner */}
-                <motion.section 
+                <motion.section
                   initial="hidden"
                   whileInView="show"
                   viewport={{ once: true, margin: "-50px" }}
                   variants={staggerContainer}
                   className="relative overflow-hidden bg-[#0A1E3D] px-4 py-16 text-center @md:px-8 @md:py-24"
                 >
-                  <p className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none text-[clamp(4rem,15cqi,10rem)] font-black uppercase tracking-widest text-white/10">
+                  <p className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap text-[clamp(1.75rem,10cqw,10rem)] font-black uppercase tracking-widest text-white/10 @sm:text-[clamp(3rem,12cqw,10rem)] @md:text-[clamp(4rem,15cqw,10rem)]">
                     PRECISION
                   </p>
                   <div className="relative z-10 mx-auto max-w-2xl">
                     <motion.h2 variants={fadeInUp} className="mb-4 text-[clamp(1.125rem,5cqw,1.5rem)] font-black text-white @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Ready to Scale Your Growth?</motion.h2>
-                    <motion.p variants={fadeInUp} className="mb-8 text-sm leading-relaxed text-white/90 @md:text-base">
+                    <motion.p variants={fadeInUp} className="mb-8 text-sm font-medium leading-relaxed text-white/90 @md:text-base">
                       Stop guessing. Start growing. Our performance audits reveal exactly where you&apos;re leaving money on the table. Join 100+ brands scaling with precision.
                     </motion.p>
                     <motion.div variants={fadeInUp} className="flex flex-wrap items-center justify-center gap-4">
@@ -941,7 +949,7 @@ export default function DigitalMarketingPreviewPage() {
 
                 {/* Contact */}
                 <section id="contact" className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
-                  <motion.div 
+                  <motion.div
                     initial="hidden"
                     whileInView="show"
                     viewport={{ once: true, margin: "-50px" }}
@@ -952,7 +960,7 @@ export default function DigitalMarketingPreviewPage() {
                       <h2 className="mb-6 w-full max-w-[16rem] text-[clamp(1.25rem,6cqw,1.875rem)] font-bold leading-tight text-[#0A1E3D] break-words @md:text-[clamp(1.5rem,7cqw,2.25rem)]">
                         Get in<br />touch with us
                       </h2>
-                      <p className="mb-10 text-[15px] font-medium leading-relaxed text-[#4A5568] @md:text-base">
+                      <p className="mb-10 text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">
                         We&apos;re here to help! Whether you have a question about our services, need assistance with your account or want to provide feedback, our team is ready to assist you.
                       </p>
                       <div className="mb-10 space-y-6">
@@ -990,7 +998,7 @@ export default function DigitalMarketingPreviewPage() {
                       <form className="flex flex-col gap-4 @md:gap-6" onSubmit={handleContactSubmit}>
                         <div className="grid min-w-0 grid-cols-1 gap-6 @md:grid-cols-2">
                           <label className="flex min-w-0 flex-col">
-                            <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#4A5568]">First Name</span>
+                            <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#4A5568]">First Name <span className="text-red-500">*</span></span>
                             <input
                               type="text"
                               value={contactForm.firstName}
@@ -1001,7 +1009,7 @@ export default function DigitalMarketingPreviewPage() {
                             {hasSubmitted && contactForm.firstName.trim() === "" && <span className="mt-1 text-xs text-red-500">First name is required.</span>}
                           </label>
                           <label className="flex min-w-0 flex-col">
-                            <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#4A5568]">Last Name</span>
+                            <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#4A5568]">Last Name <span className="text-red-500">*</span></span>
                             <input
                               type="text"
                               value={contactForm.lastName}
@@ -1013,7 +1021,7 @@ export default function DigitalMarketingPreviewPage() {
                           </label>
                         </div>
                         <label className="flex min-w-0 flex-col">
-                          <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#4A5568]">Email</span>
+                          <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#4A5568]">Email <span className="text-red-500">*</span></span>
                           <input
                             type="email"
                             value={contactForm.email}
@@ -1025,7 +1033,7 @@ export default function DigitalMarketingPreviewPage() {
                           {hasSubmitted && contactForm.email.length === 0 && <span className="mt-1 text-xs text-red-500">Email is required.</span>}
                         </label>
                         <label className="flex min-w-0 flex-col">
-                          <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#0A1E3D]">How can we help you?</span>
+                          <span className="mb-2 text-[clamp(12px,3cqw,15px)] font-bold text-[#4A5568]">How can we help you? <span className="text-red-500">*</span></span>
                           <textarea
                             rows={4}
                             value={contactForm.message}

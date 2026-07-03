@@ -35,10 +35,10 @@ type ModalKey =
 
 const modalContent: Record<ModalKey, { title: string; body: ReactNode }> = {
   terms: {
-    title: "Terms of Use",
+    title: "Terms of Service",
     body: (
       <>
-        <p>Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.</p>
+        <p>Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Service.</p>
         <h4>1. Account Responsibilities</h4>
         <p>You are responsible for maintaining your login credentials and all activity under your account.</p>
         <h4>2. Template Usage</h4>
@@ -162,7 +162,7 @@ const modalContent: Record<ModalKey, { title: string; body: ReactNode }> = {
 const footerGroups = [
   ["Product", [["Features", "features"], ["Templates", "templates"], ["Pricing", "pricing"], ["Changelog", "changelog"]]],
   ["Resources", [["User Guide", "documentation"], ["API Reference", "api"], ["Blog", "blog"], ["Status", "status"]]],
-  ["Company", [["About", "about"], ["Privacy Policy", "privacy"], ["Terms of Service", "terms"], ["Contact", "contact"]]],
+  ["Company", [["About", "about"], ["Privacy Policy", "privacy"], ["Contact", "contact"]]],
 ] as const;
 
 const socials = [
@@ -355,7 +355,7 @@ export default function Footer() {
             </motion.div>
 
             <div className="flex gap-6 text-xs text-white/50">
-              <button type="button" onClick={() => setActiveModal("terms")} className="transition hover:text-white">Terms of Use</button>
+              <button type="button" onClick={() => setActiveModal("terms")} className="transition hover:text-white">Terms of Service</button>
               <button type="button" onClick={() => setActiveModal("privacy")} className="transition hover:text-white">Privacy Policy</button>
             </div>
           </div>

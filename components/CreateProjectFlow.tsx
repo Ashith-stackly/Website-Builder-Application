@@ -131,7 +131,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           {step === 1 && (
             <div className="space-y-4 sm:space-y-6">
               <div className="space-y-2">
-                <h4 className="text-xl sm:text-2xl font-black text-[#06224C] leading-tight break-words">Your Project Name.</h4>
+                <h4 className="text-xl sm:text-2xl font-black text-[#06224C] leading-tight break-words">Your Project Name</h4>
                 {/* <p className="text-xs sm:text-sm text-gray-500 font-medium">Letters and numbers only.</p> */}
               </div>
               <div className="relative">
@@ -139,7 +139,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                   type="text"
                   name="projectName"
                   placeholder="e.g. MyProject01"
-                  className={`w-full border-2 rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 text-base sm:text-lg outline-none transition-all font-bold ${error ? 'border-red-400 bg-red-50' : 'border-gray-100 bg-gray-50 focus:border-blue-500 focus:bg-white'}`}
+                  className={`w-full border-2 rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 text-base sm:text-lg outline-none transition-all font-bold text-[#06224C] ${error ? 'border-red-400 bg-red-50' : 'border-gray-100 bg-gray-50 focus:border-blue-500 focus:bg-white'}`}
                   value={projectData.name}
                   onChange={handleNameChange}
                 />
@@ -237,19 +237,21 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         </div>
  
         {/* Footer Actions - Uses flex-wrap for high zoom */}
-        <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-2">
-          <button
-            onClick={handleBack}
-            className={`px-4 py-2 sm:px-8 sm:py-3 font-black text-[10px] sm:text-xs uppercase tracking-widest text-gray-400 hover:text-[#06224C] transition-colors ${step === 1 ? 'invisible' : ''}`}
-          >
-            Back
-          </button>
+        <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center gap-2">
+          {step > 1 && (
+            <button
+              onClick={handleBack}
+              className="px-4 py-2 sm:px-8 sm:py-3 font-black text-[10px] sm:text-xs uppercase tracking-widest text-gray-400 hover:text-[#06224C] transition-colors"
+            >
+              Back
+            </button>
+          )}
          
           {step < 4 ? (
             <button
               onClick={handleNext}
               disabled={!!error || !projectData.name}
-              className="bg-[#06224C] text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-blue-900 transition-all disabled:opacity-50 shadow-lg whitespace-nowrap"
+              className="ml-auto bg-[#06224C] text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-blue-900 transition-all disabled:opacity-50 shadow-lg whitespace-nowrap"
             >
               Continue <FaArrowRight className="inline ml-1" />
             </button>
@@ -257,7 +259,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <button
               onClick={handleBuild}
               disabled={!projectData.template || projectData.sections.length === 0}
-              className="bg-green-600 text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg disabled:opacity-50 whitespace-nowrap"
+              className="ml-auto bg-green-600 text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg disabled:opacity-50 whitespace-nowrap"
             >
               Build <FaWandMagicSparkles className="inline ml-1" />
             </button>
@@ -275,7 +277,7 @@ export default function CreateProjectFlow() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-4 font-bold text-white shadow-xl transition hover:scale-105 active:scale-95"
+        className="inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-4 font-bold text-white shadow-xl transition hover:scale-105 active:scale-95 cursor-pointer"
       >
         Get Started
         <span className="rounded-full bg-white p-1 text-[10px] text-[#0A2357]">
