@@ -55,6 +55,7 @@ import {
   FaYoutube,
 } from "react-icons/fa6";
 import { fadeUp, scaleIn, staggerContainer } from "@/lib/motion";
+import { hasDemoSubscription } from "@/lib/demoAuth";
 import { assetPath } from "@/lib/paths";
 type TemplateCategory = "portfolio" | "blog" | "ecommerce" | "business";
 
@@ -493,19 +494,22 @@ export default function Home() {
     };
   }, []);
 
-  // --- SUBSCRIPTION CHECK PLACEHOLDER ---
-  // The Backend Team will update this boolean with real API/context state
-  const hasActiveSubscription = false;
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+
+  useEffect(() => {
+    setHasActiveSubscription(hasDemoSubscription());
+  }, []);
 
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
     event.preventDefault();
-    if (hasActiveSubscription) {
+    // Demo login stores subscription in sessionStorage (current tab only).
+    // BACKEND TEAM: replace hasDemoSubscription() with real API/context state.
+    if (hasDemoSubscription()) {
       router.push(targetUrl);
     } else {
       router.push("/planning");
     }
   };
-  // --------------------------------------
 
   const normalizedSearch = submittedSearch.trim().toLowerCase();
   const visibleTemplates = useMemo(
