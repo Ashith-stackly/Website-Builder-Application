@@ -37,6 +37,9 @@ function scrollToSection(sectionId: string) {
   }
 }
 
+// SAFELIST FOR TAILWIND JIT (Required for getModeClasses dynamically generated tablet widths)
+// w-[calc(50%-12px)] w-[calc(33.333%-16px)] w-[calc(50%-16px)] w-[calc(33.333%-21px)]
+// bg-gradient-to-r block flex flex-1 flex-row flex-wrap gap-12 gap-16 gap-2.5 gap-3 gap-4 gap-6 gap-8 gap-x-4 gap-x-8 gap-y-4 gap-y-5 grid grid-cols-2 h-12 h-40 h-48 h-56 h-60 h-64 h-72 h-80 h-auto hidden inline-flex items-center items-start justify-between justify-center justify-end left-1/3 mb-10 mb-12 mb-16 mb-3 mb-4 mb-6 mb-8 min-w-[250px] mt-0 mt-0.5 mt-1 mt-12 mt-8 mx-0 opacity-90 overflow-visible p-10 p-12 p-14 p-16 p-4 p-6 p-8 pb-0 pb-16 pb-20 pb-24 pb-5 pt-16 pt-2 pt-8 px-0 px-12 px-4 px-6 px-8 py-16 py-2.5 py-24 py-3 py-3.5 py-5 py-8 rounded-[2.5rem] rounded-[2rem] rounded-[3rem] rounded-3xl rounded-b-3xl rounded-t-3xl shrink-0 space-y-6 text-2xl text-3xl text-4xl text-5xl text-base text-left text-lg text-sm text-xl text-xs to-transparent translate-x-8 -translate-x-8 w-1/2 w-12 w-3/5 w-40 w-48 w-8 w-auto
 function getModeClasses(classesStr: string, deviceMode: "desktop" | "tablet" | "mobile") {
   if (deviceMode === "desktop") return classesStr;
 
@@ -52,35 +55,46 @@ function getModeClasses(classesStr: string, deviceMode: "desktop" | "tablet" | "
     const baseMap = new Map<string, string>();
 
     const getBaseKey = (cls: string) => {
-      if (cls.startsWith("p-") || cls.startsWith("pt-") || cls.startsWith("pb-") || cls.startsWith("pl-") || cls.startsWith("pr-") || cls.startsWith("px-") || cls.startsWith("py-")) {
-        return cls.split("-")[0];
-      }
-      if (cls.startsWith("m-") || cls.startsWith("mt-") || cls.startsWith("mb-") || cls.startsWith("ml-") || cls.startsWith("mr-") || cls.startsWith("mx-") || cls.startsWith("my-")) {
-        return cls.split("-")[0];
-      }
-      if (cls.startsWith("grid-cols-")) return "grid-cols";
-      if (cls.startsWith("col-span-")) return "col-span";
-      if (cls === "flex-row" || cls === "flex-col" || cls === "flex-row-reverse" || cls === "flex-col-reverse") return "flex-dir";
-      if (cls.startsWith("w-") || cls === "w-full" || cls === "w-auto" || cls === "w-fit") return "width";
-      if (cls.startsWith("h-") || cls === "h-full" || cls === "h-auto" || cls === "h-screen") return "height";
-      if (cls.startsWith("rounded-")) return "rounded";
-      if (cls.startsWith("gap-") || cls.startsWith("gap-x-") || cls.startsWith("gap-y-")) {
-        return cls.split("-")[0] + (cls.includes("-x-") ? "-x" : cls.includes("-y-") ? "-y" : "");
-      }
-      if (cls.startsWith("items-")) return "items-align";
-      if (cls.startsWith("justify-")) return "justify-align";
-      if (cls.startsWith("opacity-")) return "opacity";
-      if (cls.startsWith("left-") || cls.startsWith("right-") || cls.startsWith("top-") || cls.startsWith("bottom-")) {
-        return cls.split("-")[0];
-      }
-      if (cls.startsWith("shadow-") || cls === "shadow") return "shadow";
-      if (cls.startsWith("text-")) {
-        const value = cls.slice(5);
-        if (value.startsWith("[") || /^(xs|sm|base|lg|\d*xl)$/.test(value)) {
-          return "text-size";
+      let prefix = "";
+      let coreCls = cls;
+      const prefixes = ["first:", "last:", "hover:", "focus:", "active:", "group-hover:"];
+      for (const p of prefixes) {
+        if (coreCls.startsWith(p)) {
+          prefix += p;
+          coreCls = coreCls.slice(p.length);
         }
       }
-      if (cls === "hidden" || cls === "block" || cls === "flex" || cls === "grid" || cls === "inline-flex" || cls === "inline-block") return "display";
+
+      if (coreCls.startsWith("p-") || coreCls.startsWith("pt-") || coreCls.startsWith("pb-") || coreCls.startsWith("pl-") || coreCls.startsWith("pr-") || coreCls.startsWith("px-") || coreCls.startsWith("py-")) {
+        return prefix + coreCls.split("-")[0];
+      }
+      if (coreCls.startsWith("m-") || coreCls.startsWith("mt-") || coreCls.startsWith("mb-") || coreCls.startsWith("ml-") || coreCls.startsWith("mr-") || coreCls.startsWith("mx-") || coreCls.startsWith("my-")) {
+        return prefix + coreCls.split("-")[0];
+      }
+      if (coreCls.startsWith("grid-cols-")) return prefix + "grid-cols";
+      if (coreCls.startsWith("col-span-")) return prefix + "col-span";
+      if (coreCls === "flex-row" || coreCls === "flex-col" || coreCls === "flex-row-reverse" || coreCls === "flex-col-reverse") return prefix + "flex-dir";
+      if (coreCls.startsWith("w-") || coreCls === "w-full" || coreCls === "w-auto" || coreCls === "w-fit") return prefix + "width";
+      if (coreCls.startsWith("h-") || coreCls === "h-full" || coreCls === "h-auto" || coreCls === "h-screen") return prefix + "height";
+      if (coreCls.startsWith("rounded-")) return prefix + "rounded";
+      if (coreCls.startsWith("gap-") || coreCls.startsWith("gap-x-") || coreCls.startsWith("gap-y-")) {
+        return prefix + coreCls.split("-")[0] + (coreCls.includes("-x-") ? "-x" : coreCls.includes("-y-") ? "-y" : "");
+      }
+      if (coreCls.startsWith("items-")) return prefix + "items-align";
+      if (coreCls.startsWith("justify-")) return prefix + "justify-align";
+      if (coreCls.startsWith("opacity-")) return prefix + "opacity";
+      if (coreCls.startsWith("left-") || coreCls.startsWith("right-") || coreCls.startsWith("top-") || coreCls.startsWith("bottom-")) {
+        return prefix + coreCls.split("-")[0];
+      }
+      if (coreCls.startsWith("shadow-") || coreCls === "shadow") return prefix + "shadow";
+      if (coreCls.startsWith("text-")) {
+        const value = coreCls.slice(5);
+        if (value.startsWith("[#")) return prefix + "text-color";
+        if (value.startsWith("[") || /^(xs|sm|base|lg|\d*xl)$/.test(value)) {
+          return prefix + "text-size";
+        }
+      }
+      if (coreCls === "hidden" || coreCls === "block" || coreCls === "flex" || coreCls === "grid" || coreCls === "inline-flex" || coreCls === "inline-block") return prefix + "display";
       return cls;
     };
 
@@ -115,7 +129,7 @@ const navLinks = [
   { label: "Projects", hash: "#const-projects" },
   { label: "Features", hash: "#const-features" },
   { label: "Process", hash: "#const-process" },
-  { label: "Resources", hash: "#const-resources" },
+  { label: "Contact Us", hash: "#const-contact" },
 ] as const;
 
 // =========================================================================
@@ -174,11 +188,12 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                   <div key={link.label} className="relative group">
                     <button
                       type="button"
-                      className="text-sm font-bold text-white/90 group-hover:text-white transition-colors flex items-center gap-1 whitespace-nowrap p-2"
+                      className="text-sm font-bold text-white/90 group-hover:text-white transition-colors flex items-center gap-1 whitespace-nowrap p-2 relative"
                       onClick={() => scrollToSection(link.hash.replace("#", ""))}
                     >
                       {link.label}
                       <FaChevronDown size={10} className="mt-0.5 shrink-0 transition-transform duration-300 group-hover:rotate-180" />
+                      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
                     </button>
                     {/* Invisible hover bridge & dropdown box */}
                     <div className="absolute top-full left-0 pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
@@ -203,11 +218,11 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                 <button
                   key={link.label}
                   type="button"
-                  className="text-sm font-bold text-white/90 hover:text-white transition-colors flex items-center gap-1 whitespace-nowrap p-2"
+                  className="text-sm font-bold text-white/90 hover:text-white transition-colors flex items-center gap-1 whitespace-nowrap p-2 relative group"
                   onClick={() => scrollToSection(link.hash.replace("#", ""))}
                 >
                   {link.label}
-                  {link.label === "Resources" && <FaChevronDown size={10} className="mt-0.5 shrink-0" />}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
                 </button>
               );
             })}
@@ -217,12 +232,12 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
         <div className="flex items-center gap-2 shrink-0">
           {showDesktopNav && (
             <div className="hidden sm:flex items-center gap-4">
-              <button className="text-white/80 hover:text-white" aria-label="Search">
+              {/* <button className="text-white/80 hover:text-white" aria-label="Search">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.3-4.3" />
                 </svg>
-              </button>
+              </button> */}
               <div ref={profileRef} className="relative">
                 <button
                   type="button"
@@ -333,12 +348,12 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
 // --- DATA ARRAYS ---
 const allProjectsData = [
-  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "https://images.unsplash.com/photo-1623990670247-b2258ecf2b2a?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
-  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800&auto=format&fit=crop" },
-  { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop" },
-  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop" },
-  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=800&auto=format&fit=crop" },
-  { id: 6, title: "Oakwood Homes", category: "Residential", desc: "Beautiful, family-friendly residential construction built with sustainable materials and modern amenities.", img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop" },
+  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "/construction.webp" },
+  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: "/Architect.webp" },
+  { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: "/Restaurant.webp" },
+  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: "/building.webp" },
+  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: "/interior.webp" },
+  { id: 6, title: "Oakwood Homes", category: "Residential", desc: "Beautiful, family-friendly residential construction built with sustainable materials and modern amenities.", img: "/residential.webp" },
 ];
 
 const services = [
@@ -355,34 +370,66 @@ const processSteps = [
 ];
 
 const recentProjects = [
-  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1531834685032-c34bf0d84c77?q=80&w=800&auto=format&fit=crop",
+  {
+    img: "/lux.webp",
+    title: "Luxury Resort",
+    category: "Hospitality",
+    desc: "A breathtaking luxury resort featuring modern amenities and stunning natural surroundings."
+  },
+  {
+    img: "/interior.webp",
+    title: "Corporate HQ",
+    category: "Commercial",
+    desc: "State-of-the-art corporate headquarters designed for collaboration and innovation."
+  },
+  {
+    img: "/resident.webp",
+    title: "Eco Residence",
+    category: "Residential",
+    desc: "Environmentally friendly home construction with sustainable materials and smart energy solutions."
+  },
+  {
+    img: " /infra.webp",
+    title: "Skyline Bridge",
+    category: "Infrastructure",
+    desc: "A marvel of modern engineering connecting the city's key financial districts."
+  },
+  {
+    img: "/Architect.webp",
+    title: "Urban Center",
+    category: "Architecture",
+    desc: "A modern commercial building offering sustainable and intelligent workspace solutions."
+  },
+  {
+    img: " /renov.webp",
+    title: "City Plaza Renovation",
+    category: "Renovation",
+    desc: "Revitalizing a historic city plaza with contemporary design elements and improved accessibility."
+  },
 ];
 
 const faqs = [
-  "How long does a typical construction project take?",
-  "What is included in your project estimate?",
-  "Do you provide warranties on your work?",
-  "Are your contractors licensed and insured?",
-  "Do you handle all permits and inspections?",
-  "Can you help with project design and planning?",
-  "How do you ensure project stays on budget?",
-  "Do you offer financing options?",
-  "How do you ensure quality and safety on every project?",
+  { question: "How long does a typical construction project take?", answer: "Project timelines vary based on scope and complexity. Small renovations may take 4-8 weeks, while custom homes or commercial builds can range from 6 to 12+ months. We provide a detailed schedule during the planning phase." },
+  { question: "What is included in your project estimate?", answer: "Our comprehensive estimates cover all materials, labor, permits, subcontractor fees, and project management costs. We provide a transparent breakdown so you know exactly where your investment is going, with no hidden surprises." },
+  { question: "Do you provide warranties on your work?", answer: "Yes, we offer comprehensive warranties on both materials and labor. Specific warranty periods depend on the project type, but we stand firmly behind our workmanship and ensure your complete satisfaction long after the project is finished." },
+  { question: "Are your contractors licensed and insured?", answer: "Absolutely. BuildNest Construction is fully licensed, bonded, and insured. Every subcontractor we partner with is thoroughly vetted and required to maintain up-to-date insurance and proper licensing for their specific trade." },
+  { question: "Do you handle all permits and inspections?", answer: "Yes, we manage the entire permitting and inspection process on your behalf. Our team works closely with local municipalities to ensure all plans meet building codes and pass mandatory inspections without unnecessary delays." },
+  { question: "Can you help with project design and planning?", answer: "We offer full design-build services. Our in-house architectural designers and engineers collaborate with you from the initial concept and blueprints all the way through to material selection and final construction." },
+  { question: "How do you ensure project stays on budget?", answer: "We utilize detailed upfront planning, locked-in material pricing where possible, and transparent communication. If any unexpected issues arise or changes are requested, we immediately provide cost implications before proceeding." },
+  { question: "Do you offer financing options?", answer: "Yes, we partner with several leading financial institutions to offer flexible financing solutions. Whether you are looking for construction-to-permanent loans or renovation financing, we can help connect you with the right lender." },
+  { question: "How do you ensure quality and safety on every project?", answer: "Safety is our top priority. We conduct regular site inspections, enforce strict OSHA compliance, and hold weekly safety meetings. Quality is ensured through multi-point inspections by our dedicated project managers at every major milestone." },
 ];
 
 const testimonialsData = [
-  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=150&auto=format&fit=crop" },
-  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop" },
-  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop" },
-  { name: "Elena Rodriguez", role: "Commercial Investor", text: "From the initial consultation to the final handover, the process was seamless. They managed our commercial build flawlessly, keeping us strictly within our budget without compromising on materials.", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop" },
-  { name: "Marcus Chen", role: "Restaurant Owner", text: "Renovating our flagship restaurant while keeping operations running was a massive challenge. BuildNest coordinated everything perfectly. The new interior design is absolutely breathtaking.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop" },
-  { name: "Sophia Patel", role: "Residential Client", text: "We trusted them with our dream home, and they delivered beyond measure. Their landscape development team specifically did an incredible job tying the outdoor living space to our architecture.", img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=150&auto=format&fit=crop" },
+  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: "/mical.webp" },
+  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: "/sara.webp" },
+  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: "/david.webp" },
+  { name: "Elena Rodriguez", role: "Commercial Investor", text: "From the initial consultation to the final handover, the process was seamless. They managed our commercial build flawlessly, keeping us strictly within our budget without compromising on materials.", img: "/elina.webp" },
+  { name: "Marcus Chen", role: "Restaurant Owner", text: "Renovating our flagship restaurant while keeping operations running was a massive challenge. BuildNest coordinated everything perfectly. The new interior design is absolutely breathtaking.", img: "/marcus.webp" },
+  { name: "Sophia Patel", role: "Residential Client", text: "We trusted them with our dream home, and they delivered beyond measure. Their landscape development team specifically did an incredible job tying the outdoor living space to our architecture.", img: "/sopia.webp" },
 ];
+
+const infiniteTestimonials = Array(50).fill(testimonialsData).flat();
 
 // =========================================================================
 // MAIN TEMPLATE
@@ -413,13 +460,28 @@ export default function ConstructionTemplatePage() {
   const recentWorkScrollRef = useRef<HTMLDivElement | null>(null);
   const scrollRecentWork = (direction: "left" | "right") => {
     if (recentWorkScrollRef.current) {
-      const scrollAmount = direction === "left" ? -350 : 350;
+      const child = recentWorkScrollRef.current.firstElementChild as HTMLElement;
+      const childWidth = child ? child.offsetWidth : 350;
+      const gap = window.innerWidth >= 640 ? 24 : 16;
+      const scrollAmount = direction === "left" ? -(childWidth + gap) : (childWidth + gap);
       recentWorkScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
   };
 
   const testimonialsScrollRef = useRef<HTMLDivElement | null>(null);
-  const [activeTestimonial, setActiveTestimonial] = useState(1);
+  const [activeTestimonial, setActiveTestimonial] = useState(150);
+
+  // Scroll to the middle of the infinite list on mount
+  useEffect(() => {
+    if (testimonialsScrollRef.current) {
+      const container = testimonialsScrollRef.current;
+      const child = container.children[150] as HTMLElement;
+      if (child) {
+        // Calculate the scroll position to center the 150th child
+        container.scrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
+      }
+    }
+  }, []);
 
   // Calculates which testimonial is visually in the center of the scroll container
   const handleTestimonialScroll = useCallback(() => {
@@ -505,24 +567,45 @@ export default function ConstructionTemplatePage() {
       }, 1500);
     }
   };
-  // Ensure active state runs once on mount so initial center card highlights
+  // Center the second card on mount so the left side is not empty
   useEffect(() => {
+    if (testimonialsScrollRef.current) {
+      const container = testimonialsScrollRef.current;
+      const secondCard = container.children[1] as HTMLElement;
+      if (secondCard) {
+        const scrollPosition = secondCard.offsetLeft - container.clientWidth / 2 + secondCard.clientWidth / 2;
+        container.scrollLeft = scrollPosition;
+      }
+    }
     const timeout = setTimeout(handleTestimonialScroll, 100);
     return () => clearTimeout(timeout);
-  }, [handleTestimonialScroll]);
+  }, []);
 
   const scrollTestimonials = (direction: "left" | "right") => {
     if (testimonialsScrollRef.current) {
-      const scrollAmount = direction === "left" ? -350 : 350;
-      testimonialsScrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      const container = testimonialsScrollRef.current;
+      const firstCard = container.firstElementChild as HTMLElement;
+      const scrollAmount = firstCard ? firstCard.offsetWidth + 32 : 350; // 32px is roughly the gap (sm:gap-8)
+
+      const isAtStart = container.scrollLeft <= 5;
+      const isAtEnd = Math.ceil(container.scrollLeft + container.clientWidth) >= container.scrollWidth - 5;
+
+      if (direction === "left" && isAtStart) {
+        container.scrollTo({ left: container.scrollWidth, behavior: "smooth" });
+      } else if (direction === "right" && isAtEnd) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        const finalScroll = direction === "left" ? -scrollAmount : scrollAmount;
+        container.scrollBy({ left: finalScroll, behavior: "smooth" });
+      }
     }
   };
 
   const filteredProjects =
-    activeTab === "All Projects" ? allProjectsData.slice(0, 3) : allProjectsData.filter((p) => p.category === activeTab);
+    activeTab === "All Projects" ? allProjectsData : allProjectsData.filter((p) => p.category === activeTab);
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
+    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer">
       {/* FLOATING DEVICE TOOLBAR */}
       <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
@@ -580,7 +663,7 @@ export default function ConstructionTemplatePage() {
                   <div className={r("absolute inset-0 md:left-1/3")}>
                     <div className={r("absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#CDC7C0] via-[#CDC7C0]/85 to-[#CDC7C0]/40 md:to-transparent z-10")} />
                     <img
-                      src="https://images.unsplash.com/photo-1508450859948-4e04fabaa4ea?q=80&w=1200&auto=format&fit=crop"
+                      src="/construnction.webp"
                       alt="Construction Silhouette"
                       className={r("w-full h-full object-cover object-center mix-blend-multiply opacity-40 md:opacity-90")}
                       loading="eager"
@@ -589,11 +672,12 @@ export default function ConstructionTemplatePage() {
 
                   <div className={r("relative z-20 w-full md:w-3/5 p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col justify-center")}>
                     <h1 className={r("font-black text-[#0A1E3D] leading-[1.15] mb-3 text-[28px] sm:text-4xl lg:text-5xl")}>
-                      WE TURN DREAMS TO
+                      WE TURN YOUR DREAMS
                       <br />
-                      IDEAL REALITY
+                      INTO REALITY
                     </h1>
-                    <p className={r("text-[#0A1E3D]/80 mb-6 text-sm leading-relaxed max-w-md sm:mb-8")}>
+
+                    <p className={r("text-[#06152B] mb-6 text-sm leading-relaxed max-w-md sm:mb-8")}>
                       Innovative and functional architectural solutions tailored to your vision and needs.
                     </p>
 
@@ -633,16 +717,16 @@ export default function ConstructionTemplatePage() {
                       </div>
                     </div>
 
-                    <div className={r("flex flex-col items-start gap-3 xs:flex-row xs:flex-wrap xs:items-center sm:gap-4")}>
+                    <div className={r("flex flex-row items-center gap-3 flex-wrap sm:gap-4")}>
                       <button
                         onClick={() => scrollToSection("const-contact")}
-                        className="bg-[#0A1E3D] text-white px-5 py-3 rounded-md font-bold hover:bg-blue-900 transition-colors shadow-md text-sm text-center w-fit"
+                        className="bg-[#0A1E3D] text-white px-5 py-3 rounded-md font-bold hover:bg-blue-900 transition-colors shadow-md text-sm text-center w-fit cursor-pointer"
                       >
                         Free Consultation
                       </button>
                       <button
                         onClick={() => scrollToSection("const-process")}
-                        className={r("border-b-2 border-transparent text-[#0A1E3D] py-2 font-bold hover:border-[#0A1E3D] transition-all text-sm text-center w-full xs:w-auto")}
+                        className="bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] px-5 py-2.5 rounded-md font-bold hover:bg-[#0A1E3D] hover:text-white transition-colors shadow-sm text-sm text-center w-fit cursor-pointer"
                       >
                         View How It Works
                       </button>
@@ -659,14 +743,14 @@ export default function ConstructionTemplatePage() {
               <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-center gap-3 mb-3 sm:hidden">
                   <span className="w-6 h-[2px] bg-gray-300 block" />
-                  <p className="text-gray-500 font-medium text-xs">Our Projects</p>
+                  <p className="text-gray-900 font-medium text-xs">Our Projects</p>
                   <span className="w-6 h-[2px] bg-gray-300 block" />
                 </div>
 
                 <div className={r("relative hidden sm:flex items-center justify-center mb-10")}>
                   <div className={r("absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-4")}>
                     <span className="w-8 h-[2px] bg-gray-300 block" />
-                    <p className="text-gray-500 font-medium text-sm">Our Projects</p>
+                    <p className="text-gray-700 font-medium text-sm">Our Projects</p>
                   </div>
                   <h2 className="font-black text-[#0A1E3D] text-center text-3xl">Our Construction Projects</h2>
                 </div>
@@ -677,7 +761,7 @@ export default function ConstructionTemplatePage() {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={r(`shrink-0 snap-start px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap ${activeTab === tab ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
+                      className={r(`shrink-0 snap-start px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all shadow-sm whitespace-nowrap ${activeTab === tab ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white"
                         }`)}
                     >
                       {tab}
@@ -704,16 +788,16 @@ export default function ConstructionTemplatePage() {
 
                           <div className={r("p-5 flex flex-col flex-1 sm:p-6")}>
                             <h3 className={r("text-base font-black text-[#0A1E3D] mb-2.5 leading-snug sm:text-lg sm:mb-3")}>
-                              {p.title} <span className="text-sm font-medium text-gray-500 font-sans tracking-wide">({p.category})</span>
+                              {p.title} <span className="text-sm font-medium text-gray-700 font-sans tracking-wide">({p.category})</span>
                             </h3>
-                            <p className={r("text-gray-500 text-sm mb-5 leading-relaxed flex-1 sm:mb-6")}>{p.desc}</p>
+                            <p className={r("text-gray-700 text-sm mb-5 leading-relaxed flex-1 sm:mb-6")}>{p.desc}</p>
                             <div className="flex justify-end">
-                              <button
+                              {/* <button
                                 onClick={() => scrollToSection("const-projects")}
                                 className="text-xs font-bold text-[#0A1E3D] hover:text-blue-600 transition-colors whitespace-nowrap"
                               >
                                 View More...
-                              </button>
+                              </button> */}
                             </div>
                           </div>
                         </div>
@@ -746,8 +830,8 @@ export default function ConstructionTemplatePage() {
                 <div className={r("bg-[#0A1E3D] text-white py-7 px-5 grid grid-cols-2 gap-4 rounded-t-2xl sm:py-8 sm:px-12 sm:gap-8 lg:grid-cols-4 sm:rounded-t-3xl")}>
                   {[
                     { icon: FaClipboardList, num: "27+", label: "Years Industry Experience" },
-                    { icon: FaUserGroup, num: "2000+", label: "Happy Customer" },
-                    { icon: FaHelmetSafety, num: "150+", label: "Certified Construction" },
+                    { icon: FaUserGroup, num: "2000+", label: "Happy Customers" },
+                    { icon: FaHelmetSafety, num: "150+", label: "Certified Projects" },
                     { icon: FaCertificate, num: "100%", label: "Client Satisfaction Rating" },
                   ].map((s, i) => (
                     <div key={i} className={r("flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3")}>
@@ -775,7 +859,7 @@ export default function ConstructionTemplatePage() {
                     </div>
                     <div className={r("rounded-2xl overflow-hidden shadow-lg h-52 sm:h-64 lg:h-[350px]")}>
                       <img
-                        src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800&auto=format&fit=crop"
+                        src="/services.webp"
                         className="w-full h-full object-cover"
                         alt="Construction team"
                         loading="lazy"
@@ -784,22 +868,18 @@ export default function ConstructionTemplatePage() {
                   </div>
                 </div>
 
-                <div className={r("mt-6 lg:-mt-16 lg:px-12 relative z-10 sm:mt-8")}>
+                <div className={r("mt-9 lg:-mt-12 lg:px-12 relative z-10 sm:mt-8")}>
                   <div className={r("grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3")}>
                     {services.map((s, i) => (
                       <div
                         key={i}
-                        className={r(`flex flex-col p-6 rounded-2xl shadow-xl transition-transform hover:-translate-y-2 sm:p-8 lg:p-10 lg:min-h-[400px] ${s.isDark ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D]"
-                          }`)}
+                        className={r("group flex flex-col p-6 rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-2 sm:p-8 lg:p-10 lg:min-h-[400px] bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white")}
                       >
                         <h3 className={r("text-lg font-black mb-4 leading-snug whitespace-pre-line sm:text-xl sm:mb-6 lg:text-2xl")}>{s.title}</h3>
-                        <p className={r(`text-sm mb-7 leading-relaxed flex-1 sm:mb-10 ${s.isDark ? "text-gray-300" : "text-gray-600"}`)}>{s.desc}</p>
+                        <p className={r("text-sm mb-7 leading-relaxed flex-1 sm:mb-10 text-gray-600 group-hover:text-gray-300 transition-colors duration-300")}>{s.desc}</p>
                         <button
                           onClick={() => scrollToSection("const-contact")}
-                          className={r(`px-3 py-2 rounded-full font-bold text-xs transition-colors border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm ${s.isDark
-                            ? "bg-transparent text-white border-white/30 hover:bg-white hover:text-[#0A1E3D]"
-                            : "bg-transparent text-[#0A1E3D] border-[#0A1E3D]/30 hover:bg-[#0A1E3D] hover:text-white"
-                            }`)}
+                          className={r("px-3 py-2 rounded-full font-bold text-xs transition-all duration-300 border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm border-[#0A1E3D]/30 text-[#0A1E3D] group-hover:border-white/30 group-hover:text-white hover:!bg-white hover:!text-[#0A1E3D]")}
                         >
                           Explore Service
                         </button>
@@ -826,7 +906,7 @@ export default function ConstructionTemplatePage() {
                   </h2>
                   <div className={r("rounded-2xl overflow-hidden shadow-lg w-full h-56 sm:h-72 lg:h-[400px]")}>
                     <img
-                      src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=800&auto=format&fit=crop"
+                      src="/plan.webp"
                       alt="Construction Process"
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -847,7 +927,7 @@ export default function ConstructionTemplatePage() {
                           {step.step}
                         </div>
                         <h3 className={r("text-lg font-black text-[#0A1E3D] mb-2 sm:text-xl sm:mb-3")}>{step.title}</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
+                        <p className="text-sm text-gray-900 leading-relaxed">{step.desc}</p>
                       </div>
                     );
                   })}
@@ -887,14 +967,14 @@ export default function ConstructionTemplatePage() {
                       <button
                         aria-label="Previous"
                         onClick={() => scrollRecentWork("left")}
-                        className={r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0")}
+                        className={`${r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 transition-all shadow-md shrink-0")} focus:outline-none focus:ring-4 focus:ring-blue-300`}
                       >
                         <FaArrowLeft size={16} />
                       </button>
                       <button
                         aria-label="Next"
                         onClick={() => scrollRecentWork("right")}
-                        className={r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0")}
+                        className={`${r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 transition-all shadow-md shrink-0")} focus:outline-none focus:ring-4 focus:ring-blue-300`}
                       >
                         <FaArrowRight size={16} />
                       </button>
@@ -912,12 +992,17 @@ export default function ConstructionTemplatePage() {
                   ref={recentWorkScrollRef}
                   className={r("flex overflow-x-auto gap-4 sm:gap-6 pb-8 snap-x snap-mandatory relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]")}
                 >
-                  {recentProjects.map((img, i) => (
+                  {recentProjects.map((project, i) => (
                     <div
                       key={i}
-                      className={r("shrink-0 snap-center w-[85%] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-[450px] sm:rounded-[2rem]")}
+                      className={r("group shrink-0 snap-center w-[85%] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-[450px] sm:rounded-[2rem] relative")}
                     >
-                      <img src={img} alt="Recent Project" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
+                      <img src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E3D] via-[#0A1E3D]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 sm:p-8">
+                        <span className="text-blue-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project.category}</span>
+                        <h3 className="text-white font-black text-xl sm:text-3xl mb-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">{project.title}</h3>
+                        <p className="text-white/80 text-sm leading-relaxed line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150">{project.desc}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -959,35 +1044,66 @@ export default function ConstructionTemplatePage() {
                   </div>
                 </div>
 
-                <div className={r("grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-4")}>
-                  {faqs.map((q, i) => {
-                    const isActive = activeFaq === i;
-                    return (
-                      <div
-                        key={i}
-                        className={`rounded-xl shadow-sm overflow-hidden h-fit flex flex-col transition-colors duration-300 ${isActive ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
-                          }`}
-                      >
-                        <button
-                          aria-expanded={isActive}
-                          className={r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base")}
-                          onClick={() => setActiveFaq(isActive ? null : i)}
+                <div className={r("grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-8 items-start")}>
+                  <div className="flex flex-col gap-3 sm:gap-4">
+                    {faqs.map((faq, i) => {
+                      if (i % 2 !== 0) return null;
+                      const isActive = activeFaq === i;
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-xl shadow-sm overflow-hidden h-fit flex flex-col transition-colors duration-300 ${isActive ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
+                            }`}
                         >
-                          <span>{q}</span>
-                          <FaChevronDown
-                            className={`shrink-0 transform transition-transform duration-300 ${isActive ? "rotate-180 text-white" : "rotate-0 text-[#0A1E3D]"}`}
-                          />
-                        </button>
-                        {isActive && (
-                          <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 pt-2 mt-[-8px] sm:px-6 sm:pb-5")}>
-                            {i < 4
-                              ? "Project timelines vary based on scope and complexity, but our team works efficiently to deliver every project on schedule while maintaining the highest standards of quality and safety."
-                              : "We ensure every phase is communicated thoroughly and handled with expert care to give you the most efficient results possible."}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          <button
+                            aria-expanded={isActive}
+                            className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base rounded-xl")} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
+                            onClick={() => setActiveFaq(isActive ? null : i)}
+                          >
+                            <span>{faq.question}</span>
+                            <FaChevronDown
+                              className={`shrink-0 transform transition-transform duration-300 ${isActive ? "rotate-180 text-white" : "rotate-0 text-[#0A1E3D]"}`}
+                            />
+                          </button>
+                          {isActive && (
+                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 pt-2 mt-[-8px] sm:px-6 sm:pb-5")}>
+                              {faq.answer}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:gap-4">
+                    {faqs.map((faq, i) => {
+                      if (i % 2 === 0) return null;
+                      const isActive = activeFaq === i;
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-xl shadow-sm overflow-hidden h-fit flex flex-col transition-colors duration-300 ${isActive ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
+                            }`}
+                        >
+                          <button
+                            aria-expanded={isActive}
+                            className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base rounded-xl")} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
+                            onClick={() => setActiveFaq(isActive ? null : i)}
+                          >
+                            <span>{faq.question}</span>
+                            <FaChevronDown
+                              className={`shrink-0 transform transition-transform duration-300 ${isActive ? "rotate-180 text-white" : "rotate-0 text-[#0A1E3D]"}`}
+                            />
+                          </button>
+                          {isActive && (
+                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 pt-2 mt-[-8px] sm:px-6 sm:pb-5")}>
+                              {faq.answer}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </section>
@@ -1003,7 +1119,7 @@ export default function ConstructionTemplatePage() {
                       <span className={r("w-8 h-px bg-gray-400 block shrink-0 sm:w-12")} /> Testimonials
                     </p>
                     <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight sm:text-4xl lg:text-5xl")}>
-                      Trusted For Professional Construction Excellence.
+                      Trusted for Professional Construction Excellence.
                     </h2>
                   </div>
                   <p className={r("text-gray-600 text-sm leading-relaxed mt-4 lg:mt-0 lg:text-base")}>
@@ -1016,15 +1132,11 @@ export default function ConstructionTemplatePage() {
                   onScroll={handleTestimonialScroll}
                   className={r("flex overflow-x-auto gap-6 sm:gap-8 pb-12 pt-12 mb-4 snap-x snap-mandatory relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]")}
                 >
-                  {testimonialsData.map((t, i) => {
-                    const isHighlighted = i === activeTestimonial;
+                  {infiniteTestimonials.map((t, i) => {
                     return (
                       <div
-                        key={i}
-                        className={r(`shrink-0 snap-center w-[85%] sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-21px)] p-6 rounded-2xl shadow-xl border relative flex flex-col justify-between sm:p-8 transition-all duration-500 ${isHighlighted
-                          ? "bg-[#0A1E3D] text-white border-[#0A1E3D] scale-110 z-10"
-                          : "bg-[#F4FAFF] border-white/50 text-[#0A1E3D] scale-95 opacity-70"
-                          }`)}
+                        key={`${i}-${t.name}`}
+                        className={r("group shrink-0 snap-center w-[85%] sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-21px)] p-6 rounded-2xl shadow-xl border relative flex flex-col justify-between sm:p-8 transition-all duration-500 bg-[#F4FAFF] border-white/50 text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white hover:border-[#0A1E3D] hover:-translate-y-2")}
                       >
                         <div className="flex flex-col flex-1">
                           <div className={r("flex gap-1 text-yellow-400 mb-5 sm:mb-6")}>
@@ -1034,31 +1146,31 @@ export default function ConstructionTemplatePage() {
                             <FaStar />
                             <FaStar />
                           </div>
-                          <p className={r(`text-sm leading-relaxed mb-10 flex-1 ${isHighlighted ? "text-gray-300" : "text-gray-600"}`)}>&quot;{t.text}&quot;</p>
+                          <p className={r("text-sm leading-relaxed mb-10 flex-1 text-gray-600 group-hover:text-gray-300 transition-colors duration-500")}>&quot;{t.text}&quot;</p>
                         </div>
 
-                        <div className={r(`border-t flex flex-col items-center text-center relative pt-8 ${isHighlighted ? "border-gray-600" : "border-gray-300"}`)}>
+                        <div className={r("border-t flex flex-col items-center text-center relative pt-8 border-gray-300 group-hover:border-gray-600 transition-colors duration-500")}>
                           <img src={t.img} alt={t.name} className="w-16 h-16 rounded-full object-cover shadow-md absolute -top-8 bg-white" />
                           <p className="font-black text-base mb-1">{t.name}</p>
-                          <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">{t.role}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 group-hover:opacity-80 transition-opacity duration-500">{t.role}</p>
                         </div>
                       </div>
                     )
                   })}
                 </div>
 
-                <div className="flex justify-center gap-3">
+                <div className="flex justify-center gap-3 mb-8 sm:mb-12">
                   <button
                     aria-label="Previous Testimonial"
                     onClick={() => scrollTestimonials("left")}
-                    className={r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0")}
+                    className={`${r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 transition-all shadow-md shrink-0")} focus:outline-none focus:ring-4 focus:ring-blue-300`}
                   >
                     <FaArrowLeft size={16} />
                   </button>
                   <button
                     aria-label="Next Testimonial"
                     onClick={() => scrollTestimonials("right")}
-                    className={r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all shadow-md shrink-0")}
+                    className={`${r("w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0A1E3D] text-white flex items-center justify-center hover:bg-blue-900 active:scale-95 transition-all shadow-md shrink-0")} focus:outline-none focus:ring-4 focus:ring-blue-300`}
                   >
                     <FaArrowRight size={16} />
                   </button>
@@ -1071,7 +1183,7 @@ export default function ConstructionTemplatePage() {
             ================================================================= */}
             <section className={r("w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-24 sm:px-6 lg:px-8")}>
               <div className={r("max-w-7xl mx-auto bg-[#EAF2FA] rounded-3xl p-6 flex flex-col gap-8 overflow-hidden shadow-sm border border-white sm:rounded-[2.5rem] sm:p-10 md:p-16 md:flex-row md:items-center md:gap-12")}>
-                <div className="w-full md:w-1/2">
+                <div className="w-full md:w-1/2 relative z-30">
                   <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight mb-4 sm:text-3xl md:text-5xl sm:mb-6")}>
                     Let&apos;s Build Together with Expert Construction Services
                   </h2>
@@ -1088,13 +1200,13 @@ export default function ConstructionTemplatePage() {
                 <div className={r("w-full md:w-1/2 relative h-44 sm:h-60 md:h-auto flex items-center justify-center")}>
                   <img
                     src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop"
-                    className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-64 md:h-64 object-cover rounded-xl shadow-2xl -rotate-12 -translate-x-5 sm:-translate-x-8 md:-translate-x-12 z-10 grayscale hover:grayscale-0 transition-all duration-500")}
+                    className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl -rotate-12 -translate-x-5 sm:-translate-x-8 md:-translate-x-8 lg:-translate-x-12 z-10 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Architecture"
                     loading="lazy"
                   />
                   <img
                     src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop"
-                    className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-64 md:h-64 object-cover rounded-xl shadow-2xl rotate-12 translate-x-5 sm:translate-x-8 md:translate-x-12 z-20 grayscale hover:grayscale-0 transition-all duration-500")}
+                    className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl rotate-12 translate-x-5 sm:translate-x-8 md:translate-x-8 lg:translate-x-12 z-20 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Building"
                     loading="lazy"
                   />
@@ -1108,7 +1220,7 @@ export default function ConstructionTemplatePage() {
             <section id="const-contact" className={r("w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-24 sm:px-6 lg:px-8")}>
               <div className={r("max-w-7xl mx-auto flex flex-col gap-10 md:flex-row md:gap-16 lg:gap-24")}>
                 <div className="w-full md:w-1/2">
-                  <p className={r("text-gray-500 font-medium uppercase tracking-widest text-xs sm:text-sm flex items-center gap-3 mb-3 sm:gap-4 sm:mb-4")}>
+                  <p className={r("text-gray-900 font-medium uppercase tracking-widest text-xs sm:text-sm flex items-center gap-3 mb-3 sm:gap-4 sm:mb-4")}>
                     <span className={r("w-8 h-px bg-gray-400 block shrink-0 sm:w-12")} /> Contact Us
                   </p>
                   <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight mb-4 sm:text-4xl md:text-5xl sm:mb-6")}>Get in touch with us</h2>
@@ -1151,37 +1263,48 @@ export default function ConstructionTemplatePage() {
 
                 <div className={r("w-full md:w-1/2 bg-[#EAF2FA] p-5 rounded-2xl border border-white shadow-sm h-fit sm:p-8 md:p-12 sm:rounded-3xl")}>
                   <form className={r("flex flex-col gap-4 sm:gap-6")} onSubmit={handleContactSubmit}>
-                    <div className={r("grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6")}>
+                    <div className={r("grid grid-cols-1 gap-4 lg:grid-cols-2 sm:gap-6")}>
                       <label className="flex flex-col">
-                        <span className="text-sm font-bold text-[#0A1E3D] mb-2">First Name</span>
+                        <span className="text-sm font-bold text-[#0A1E3D] mb-2">
+                          First Name <span className="text-red-600">*</span>
+                        </span>
                         <input
                           type="text"
                           value={formData.firstName}
-                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.firstName ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500`)}
+                          onChange={(e) => {
+                            setFormData({ ...formData, firstName: e.target.value });
+                            if (formErrors.firstName) setFormErrors({ ...formErrors, firstName: "" });
+                          }}
+                          className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.firstName ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-white focus:border-blue-400'} focus:ring-4 focus:ring-blue-400/10 text-[#0A1E3D] text-sm shadow-sm transition-all placeholder:text-gray-500`)}
                           placeholder="Enter your first name"
                         />
                         {formErrors.firstName && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.firstName}</span>}
                       </label>
                       <label className="flex flex-col">
-                        <span className="text-sm font-bold text-[#0A1E3D] mb-2">Last Name</span>
+                        <span className="text-sm font-bold text-[#0A1E3D] mb-2">Last Name <span className="text-red-600">*</span></span>
                         <input
                           type="text"
                           value={formData.lastName}
-                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.lastName ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500`)}
+                          onChange={(e) => {
+                            setFormData({ ...formData, lastName: e.target.value });
+                            if (formErrors.lastName) setFormErrors({ ...formErrors, lastName: "" });
+                          }}
+                          className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.lastName ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-white focus:border-blue-400'} focus:ring-4 focus:ring-blue-400/10 text-[#0A1E3D] text-sm shadow-sm transition-all placeholder:text-gray-500`)}
                           placeholder="Enter your last name"
                         />
                         {formErrors.lastName && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.lastName}</span>}
                       </label>
                     </div>
                     <label className="flex flex-col">
-                      <span className="text-sm font-bold text-[#0A1E3D] mb-2">Email</span>
+                      <span className="text-sm font-bold text-[#0A1E3D] mb-2">Email <span className="text-red-600">*</span></span>
                       <input
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm shadow-sm transition-colors placeholder:text-gray-500`)}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          if (formErrors.email) setFormErrors({ ...formErrors, email: "" });
+                        }}
+                        className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-white focus:border-blue-400'} focus:ring-4 focus:ring-blue-400/10 text-[#0A1E3D] text-sm shadow-sm transition-all placeholder:text-gray-500`)}
                         placeholder="Enter your email address"
                       />
                       {formErrors.email && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.email}</span>}
@@ -1191,8 +1314,11 @@ export default function ConstructionTemplatePage() {
                       <textarea
                         rows={5}
                         value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.message ? 'border-red-500 bg-red-50' : 'border-transparent bg-[#C6D4E1] focus:bg-white'} focus:border-blue-400 focus:ring-0 text-sm resize-none shadow-sm transition-colors placeholder:text-gray-500`)}
+                        onChange={(e) => {
+                          setFormData({ ...formData, message: e.target.value });
+                          if (formErrors.message) setFormErrors({ ...formErrors, message: "" });
+                        }}
+                        className={r(`w-full p-3.5 sm:p-4 rounded-xl border ${formErrors.message ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-white focus:border-blue-400'} focus:ring-4 focus:ring-blue-400/10 text-[#0A1E3D] text-sm resize-none shadow-sm transition-all placeholder:text-gray-500`)}
                         placeholder="Enter your message"
                       ></textarea>
                       {formErrors.message && <span className="text-red-500 text-xs mt-1.5 font-semibold">{formErrors.message}</span>}
@@ -1231,7 +1357,7 @@ export default function ConstructionTemplatePage() {
                   <div>
                     <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Services</h4>
                     <ul className="space-y-2.5 text-sm text-white/60">
-                      <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">General Construction</button></li>
+                      <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">struction</button></li>
                       <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">Property Maintenance</button></li>
                       <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">Virtual Design & Build</button></li>
                       <li><button onClick={() => scrollToSection("const-features")} className="transition hover:text-white focus:outline-none text-left">Architectural Design</button></li>
@@ -1298,13 +1424,13 @@ export default function ConstructionTemplatePage() {
 
               <AnimatePresence>
                 {isPrivacyModalOpen && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
                   >
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
@@ -1313,12 +1439,12 @@ export default function ConstructionTemplatePage() {
                       <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
                         <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Privacy Policy</h2>
                       </div>
-                      
+
                       <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
                         <p className="mb-8 text-sm leading-relaxed @md:text-base">
                           Your privacy is important to us. This policy explains how Stackly collects, uses, and protects your information.
                         </p>
-                        
+
                         <div className="space-y-6 text-sm @md:text-base">
                           <div>
                             <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Information We Collect</h3>
@@ -1338,7 +1464,7 @@ export default function ConstructionTemplatePage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
                         <button
                           onClick={() => setIsPrivacyModalOpen(false)}
@@ -1352,13 +1478,13 @@ export default function ConstructionTemplatePage() {
                 )}
 
                 {isTermsModalOpen && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
                   >
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
@@ -1367,12 +1493,12 @@ export default function ConstructionTemplatePage() {
                       <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
                         <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Terms of Use</h2>
                       </div>
-                      
+
                       <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
                         <p className="mb-8 text-sm leading-relaxed @md:text-base">
                           Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.
                         </p>
-                        
+
                         <div className="space-y-6 text-sm @md:text-base">
                           <div>
                             <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Account Responsibilities</h3>
@@ -1392,7 +1518,7 @@ export default function ConstructionTemplatePage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
                         <button
                           onClick={() => setIsTermsModalOpen(false)}
