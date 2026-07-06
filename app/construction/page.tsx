@@ -348,11 +348,11 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
 // --- DATA ARRAYS ---
 const allProjectsData = [
-  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "/construction.webp" },
-  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: "/Architect.webp" },
+  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "/construction1.webp" },
+  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: "/architech.webp" },
   { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: "/Restaurant.webp" },
-  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: "/building.webp" },
-  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: "/interior.webp" },
+  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: "/skyline.webp" },
+  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: "/interio.webp" },
   { id: 6, title: "Oakwood Homes", category: "Residential", desc: "Beautiful, family-friendly residential construction built with sustainable materials and modern amenities.", img: "/residential.webp" },
 ];
 
@@ -371,7 +371,7 @@ const processSteps = [
 
 const recentProjects = [
   {
-    img: "/lux.webp",
+    img: "/luxury.webp",
     title: "Luxury Resort",
     category: "Hospitality",
     desc: "A breathtaking luxury resort featuring modern amenities and stunning natural surroundings."
@@ -383,7 +383,7 @@ const recentProjects = [
     desc: "State-of-the-art corporate headquarters designed for collaboration and innovation."
   },
   {
-    img: "/resident.webp",
+    img: "/residental1.webp",
     title: "Eco Residence",
     category: "Residential",
     desc: "Environmentally friendly home construction with sustainable materials and smart energy solutions."
@@ -402,9 +402,9 @@ const recentProjects = [
   },
   {
     img: " /renov.webp",
-    title: "City Plaza Renovation",
+    title: " Renovation Works",
     category: "Renovation",
-    desc: "Revitalizing a historic city plaza with contemporary design elements and improved accessibility."
+    desc: "Renovating residential and commercial buildings to improve aesthetics, comfort, functionality, and long-term durability."
   },
 ];
 
@@ -859,7 +859,7 @@ export default function ConstructionTemplatePage() {
                     </div>
                     <div className={r("rounded-2xl overflow-hidden shadow-lg h-52 sm:h-64 lg:h-[350px]")}>
                       <img
-                        src="/services.webp"
+                        src="/Build.webp"
                         className="w-full h-full object-cover"
                         alt="Construction team"
                         loading="lazy"
@@ -1199,13 +1199,13 @@ export default function ConstructionTemplatePage() {
                 </div>
                 <div className={r("w-full md:w-1/2 relative h-44 sm:h-60 md:h-auto flex items-center justify-center")}>
                   <img
-                    src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop"
+                    src=" /draw.webp"
                     className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl -rotate-12 -translate-x-5 sm:-translate-x-8 md:-translate-x-8 lg:-translate-x-12 z-10 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Architecture"
                     loading="lazy"
                   />
                   <img
-                    src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop"
+                    src="/skyline.webp"
                     className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl rotate-12 translate-x-5 sm:translate-x-8 md:translate-x-8 lg:translate-x-12 z-20 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Building"
                     loading="lazy"

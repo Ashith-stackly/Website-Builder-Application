@@ -12,6 +12,11 @@ import ImageRightSidebar from "./imageblock/RightSidebar";
 import TextCanvas from "./textblock/Canvas";
 import TextRightSidebar from "./textblock/RightSidebar";
 import type { TextBlockState, TextTemplateType } from "./textblock/types";
+import {
+  getBlockpagesTemplateLabel,
+  isTextEditorTemplate,
+  parseBlockpagesTemplate,
+} from "@/lib/blockpagesTemplates";
 import VideoCanvas from "./videoblock/Canvas";
 import VideoRightSidebar from "./videoblock/RightSidebar";
 import type { VideoBlockData } from "./videoblock/types";
@@ -89,10 +94,19 @@ const initialTextBlockState: TextBlockState = {
 export default function BlockPagesClient() {
   const searchParams = useSearchParams();
   const requestedTemplate = searchParams.get("template");
-  const initialTemplate: TextTemplateType = requestedTemplate === "portfolio" ? "portfolio" : "ecommerce";
-  const shouldOpenTextEditor = requestedTemplate === "portfolio" || requestedTemplate === "ecommerce";
+  const initialTemplate: TextTemplateType = parseBlockpagesTemplate(requestedTemplate);
+  const shouldOpenTextEditor = isTextEditorTemplate(initialTemplate);
   const [activeBlockPage, setActiveBlockPage] = useState<BlockPageType>(shouldOpenTextEditor ? "text" : "image");
   const [textTemplate, setTextTemplate] = useState<TextTemplateType>(initialTemplate);
+
+  useEffect(() => {
+    const parsed = parseBlockpagesTemplate(searchParams.get("template"));
+    setTextTemplate(parsed);
+    if (isTextEditorTemplate(parsed)) {
+      setActiveBlockPage("text");
+    }
+  }, [searchParams]);
+
   const [buttonBlocks, setButtonBlocks] = useState<BlockData[]>([initialButtonBlock]);
   const [selectedButtonBlockId, setSelectedButtonBlockId] = useState<string | null>(initialButtonBlock.id);
   const [pastButtonStates, setPastButtonStates] = useState<BlockData[][]>([]);
@@ -680,6 +694,7 @@ export default function BlockPagesClient() {
               }}
               isButtonEditingMode={isButtonEditingMode}
               customButtons={customButtons}
+              editingButtonId={editingButtonId}
               onEditButton={(buttonId) => {
                 setEditingButtonId(buttonId);
                 setActiveBlockPage("button");

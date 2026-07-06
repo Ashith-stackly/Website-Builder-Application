@@ -198,7 +198,7 @@ const features = [
     quote: "Shape-based layouts make your site feel creative, polished, and professional.",
   },
   {
-    title: "Dynamic Views",
+    title: "Widgets",
     description: "Deliver a more interactive browsing experience using fixed and scroll-based visual features.",
     image: "/landing-optimized/dynamic.webp",
     quote: "Interactive backgrounds create a stylish and captivating browsing experience.",
@@ -287,7 +287,7 @@ function LandingContactSection() {
     setFormData((current) => ({ ...current, [name]: nextValue }));
 
     if (name === "email") {
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|io|app|co|in)$/i;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
       setEmailError(value && !emailRegex.test(value.trim()) ? "Please enter a valid email address (e.g., ranade@gmail.com)" : "");
     }
   };
@@ -295,7 +295,7 @@ function LandingContactSection() {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|net|io|app|co|in)$/i;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
     if (!formData.email || !emailRegex.test(formData.email.trim())) {
       setEmailError("Please enter a valid email address (e.g., ranade@gmail.com)");
       return;
@@ -378,17 +378,17 @@ function LandingContactSection() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <label className="space-y-2">
-                <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">First Name</span>
+                <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">First Name <span className="text-red-500">*</span></span>
                 <input name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
               </label>
               <label className="space-y-2">
-                <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Last Name</span>
+                <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Last Name <span className="text-red-500">*</span></span>
                 <input name="lastName" type="text" value={formData.lastName} onChange={handleInputChange} placeholder="Last Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
               </label>
             </div>
 
             <label className="block space-y-2">
-              <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Email Address</span>
+              <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Email Address <span className="text-red-500">*</span></span>
               <input name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="test@gmail.com" required className={`w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white ${emailError ? "border-red-500" : "border-gray-200"}`} />
               {emailError && <span className="block text-[10px] font-bold text-red-500">{emailError}</span>}
             </label>
@@ -396,7 +396,7 @@ function LandingContactSection() {
 
 
             <label className="block space-y-2">
-              <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Message</span>
+              <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Message <span className="text-red-500">*</span></span>
               <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." required className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white" />
             </label>
 
@@ -497,7 +497,9 @@ export default function Home() {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
 
   useEffect(() => {
-    setHasActiveSubscription(hasDemoSubscription());
+    Promise.resolve().then(() => {
+      setHasActiveSubscription(hasDemoSubscription());
+    });
   }, []);
 
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
@@ -1004,19 +1006,21 @@ export default function Home() {
                 <div className="mb-5 h-52 overflow-hidden rounded-[1.5rem] bg-gray-50">
                   <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                 </div>
-                <div className="flex flex-1 flex-col px-2">
-                  <div className="mb-1 flex items-start justify-between gap-2">
-                    <h3 className="text-xl font-bold text-[#06224C]">{product.title}</h3>
-                    <button
-                      type="button"
-                      onClick={() => toggleWishlistItem(product)}
-                      aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
-                      aria-pressed={isWishlisted}
-                      className={`p-1 transition hover:text-red-500 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
-                    >
-                      <FaHeart className="text-xl" />
-                    </button>
+                <div className="flex flex-1 flex-col px-2 relative">
+                  <div className="mb-1 pr-10">
+                    <h3 className="text-lg font-bold text-[#06224C] sm:text-xl truncate" title={product.title}>
+                      {product.title}
+                    </h3>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleWishlistItem(product)}
+                    aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
+                    aria-pressed={isWishlisted}
+                    className={`absolute right-2 top-0.5 p-1 transition hover:text-red-500 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
+                  >
+                    <FaHeart className="text-xl" />
+                  </button>
                   <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
                   <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -1062,13 +1066,12 @@ export default function Home() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setActiveFilter(filter.value)}
-                  className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${active
+                  className={`inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${active
                     ? "border-[#06224C] bg-[#06224C] text-white"
                     : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
                     }`}
                 >
                   {filter.label}
-                  <FaChevronDown className="text-[10px]" />
                 </button>
               );
             })}
@@ -1247,12 +1250,12 @@ export default function Home() {
               const isActive = activeFeature === index;
               return (
                 <motion.div key={item.title} className="rounded-xl border border-transparent transition hover:bg-white/40 hover:border-blue-300/40 hover:shadow-lg" variants={scaleIn} whileHover={{ y: -3, transition: { duration: 0.2 } }}>
-                  <button type="button" onClick={() => setActiveFeature(index)} className="flex w-full items-start justify-between gap-3 rounded-xl p-4 text-left">
-                    <h3 className="flex items-start gap-3 text-lg font-black text-[#06224C] md:text-2xl">
-                      <span className="text-blue-600">{index + 1}.</span>
+                  <button type="button" onClick={() => setActiveFeature(index)} className="flex w-full items-center justify-between gap-3 rounded-xl p-2 text-left">
+                    <h3 className="text-lg font-black text-[#06224C] md:text-2xl min-w-0 flex-1 pr-6">
+                      <span className="text-blue-600 mr-2">{index + 1}.</span>
                       {item.title}
                     </h3>
-                    <FaChevronDown className={`mt-1 flex-shrink-0 text-gray-400 transition ${isActive ? "rotate-180 text-blue-600" : ""}`} />
+                    <FaChevronDown className={`flex-shrink-0 text-gray-400 transition ${isActive ? "rotate-180 text-blue-600" : ""}`} />
                   </button>
                   {isActive && (
                     <p className="px-4 pb-4 pt-1 text-sm leading-relaxed text-gray-600 md:text-base">
