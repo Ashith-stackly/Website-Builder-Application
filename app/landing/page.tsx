@@ -1114,7 +1114,7 @@ export default function Home() {
                             : template.title === "Construction"
                               ? "/construction"
                               : ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)
-                                ? "#"
+                                ? "/coming-soon"
                                 : template.category === "portfolio"
                                   ? "/portfolio"
                                   : template.category === "ecommerce"
@@ -1125,9 +1125,13 @@ export default function Home() {
                       }
                       onClick={(e) => {
                         if (["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)) {
-                          e.preventDefault();
-                          setComingSoonTemplate(template.title);
-                          setShowComingSoon(true);
+                          // Intercept normal left click (no ctrl, shift, meta, alt or right click)
+                          const isNormalClick = e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey;
+                          if (isNormalClick) {
+                            e.preventDefault();
+                            setComingSoonTemplate(template.title);
+                            setShowComingSoon(true);
+                          }
                         }
                       }}
                       className="min-w-[80px] flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap"
