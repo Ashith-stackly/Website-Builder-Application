@@ -27,6 +27,7 @@ import {
   FaCertificate,
 } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
+import { assetPath } from "@/lib/paths";
 
 const START_BUILDING_HREF = "/signup";
 
@@ -348,12 +349,12 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
 // --- DATA ARRAYS ---
 const allProjectsData = [
-  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "/construction1.webp" },
-  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: "/architech.webp" },
-  { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: "/Restaurant.webp" },
-  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: "/skyline.webp" },
-  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: "/interio.webp" },
-  { id: 6, title: "Oakwood Homes", category: "Residential", desc: "Beautiful, family-friendly residential construction built with sustainable materials and modern amenities.", img: "/residential.webp" },
+  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: assetPath("/construction1.webp") },
+  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: assetPath("/architech.webp") },
+  { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: assetPath("/Restaurant.webp") },
+  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: assetPath("/skyline.webp") },
+  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: assetPath("/interio.webp") },
+  { id: 6, title: "Oakwood Homes", category: "Residential", desc: "Beautiful, family-friendly residential construction built with sustainable materials and modern amenities.", img: assetPath("/residential.webp") },
 ];
 
 const services = [
@@ -371,37 +372,37 @@ const processSteps = [
 
 const recentProjects = [
   {
-    img: "/luxury.webp",
+    img: assetPath("/luxury.webp"),
     title: "Luxury Resort",
     category: "Hospitality",
     desc: "A breathtaking luxury resort featuring modern amenities and stunning natural surroundings."
   },
   {
-    img: "/interior.webp",
+    img: assetPath("/interior.webp"),
     title: "Corporate HQ",
     category: "Commercial",
     desc: "State-of-the-art corporate headquarters designed for collaboration and innovation."
   },
   {
-    img: "/residental1.webp",
+    img: assetPath("/residental1.webp"),
     title: "Eco Residence",
     category: "Residential",
     desc: "Environmentally friendly home construction with sustainable materials and smart energy solutions."
   },
   {
-    img: " /infra.webp",
+    img: assetPath("/infra.webp"),
     title: "Skyline Bridge",
     category: "Infrastructure",
     desc: "A marvel of modern engineering connecting the city's key financial districts."
   },
   {
-    img: "/Architect.webp",
+    img: assetPath("/Architect.webp"),
     title: "Urban Center",
     category: "Architecture",
     desc: "A modern commercial building offering sustainable and intelligent workspace solutions."
   },
   {
-    img: " /renov.webp",
+    img: assetPath("/renov.webp"),
     title: " Renovation Works",
     category: "Renovation",
     desc: "Renovating residential and commercial buildings to improve aesthetics, comfort, functionality, and long-term durability."
@@ -421,12 +422,12 @@ const faqs = [
 ];
 
 const testimonialsData = [
-  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: "/mical.webp" },
-  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: "/sara.webp" },
-  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: "/david.webp" },
-  { name: "Elena Rodriguez", role: "Commercial Investor", text: "From the initial consultation to the final handover, the process was seamless. They managed our commercial build flawlessly, keeping us strictly within our budget without compromising on materials.", img: "/elina.webp" },
-  { name: "Marcus Chen", role: "Restaurant Owner", text: "Renovating our flagship restaurant while keeping operations running was a massive challenge. BuildNest coordinated everything perfectly. The new interior design is absolutely breathtaking.", img: "/marcus.webp" },
-  { name: "Sophia Patel", role: "Residential Client", text: "We trusted them with our dream home, and they delivered beyond measure. Their landscape development team specifically did an incredible job tying the outdoor living space to our architecture.", img: "/sopia.webp" },
+  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: assetPath("/mical.webp") },
+  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: assetPath("/sara.webp") },
+  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: assetPath("/david.webp") },
+  { name: "Elena Rodriguez", role: "Commercial Investor", text: "From the initial consultation to the final handover, the process was seamless. They managed our commercial build flawlessly, keeping us strictly within our budget without compromising on materials.", img: assetPath("/elina.webp") },
+  { name: "Marcus Chen", role: "Restaurant Owner", text: "Renovating our flagship restaurant while keeping operations running was a massive challenge. BuildNest coordinated everything perfectly. The new interior design is absolutely breathtaking.", img: assetPath("/marcus.webp") },
+  { name: "Sophia Patel", role: "Residential Client", text: "We trusted them with our dream home, and they delivered beyond measure. Their landscape development team specifically did an incredible job tying the outdoor living space to our architecture.", img: assetPath("/sopia.webp") },
 ];
 
 const infiniteTestimonials = Array(50).fill(testimonialsData).flat();
@@ -663,7 +664,7 @@ export default function ConstructionTemplatePage() {
                   <div className={r("absolute inset-0 md:left-1/3")}>
                     <div className={r("absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#CDC7C0] via-[#CDC7C0]/85 to-[#CDC7C0]/40 md:to-transparent z-10")} />
                     <img
-                      src="/construnction.webp"
+                      src={assetPath("/construnction.webp")}
                       alt="Construction Silhouette"
                       className={r("w-full h-full object-cover object-center mix-blend-multiply opacity-40 md:opacity-90")}
                       loading="eager"
@@ -859,7 +860,7 @@ export default function ConstructionTemplatePage() {
                     </div>
                     <div className={r("rounded-2xl overflow-hidden shadow-lg h-52 sm:h-64 lg:h-[350px]")}>
                       <img
-                        src="/Build.webp"
+                        src={assetPath("/Build.webp")}
                         className="w-full h-full object-cover"
                         alt="Construction team"
                         loading="lazy"
@@ -906,7 +907,7 @@ export default function ConstructionTemplatePage() {
                   </h2>
                   <div className={r("rounded-2xl overflow-hidden shadow-lg w-full h-56 sm:h-72 lg:h-[400px]")}>
                     <img
-                      src="/plan.webp"
+                      src={assetPath("/plan.webp")}
                       alt="Construction Process"
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -1199,13 +1200,13 @@ export default function ConstructionTemplatePage() {
                 </div>
                 <div className={r("w-full md:w-1/2 relative h-44 sm:h-60 md:h-auto flex items-center justify-center")}>
                   <img
-                    src=" /draw.webp"
+                    src={assetPath("/draw.webp")}
                     className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl -rotate-12 -translate-x-5 sm:-translate-x-8 md:-translate-x-8 lg:-translate-x-12 z-10 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Architecture"
                     loading="lazy"
                   />
                   <img
-                    src="/skyline.webp"
+                    src={assetPath("/skyline.webp")}
                     className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl rotate-12 translate-x-5 sm:translate-x-8 md:translate-x-8 lg:translate-x-12 z-20 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Building"
                     loading="lazy"
