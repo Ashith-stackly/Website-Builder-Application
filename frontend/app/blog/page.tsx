@@ -9,6 +9,7 @@ import { blogCategories } from "@/lib/blogCategories";
 import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BLOGGING_HREF = "/blog/manage/create";
 
@@ -637,10 +638,13 @@ const hireProfessionalDetails = {
 };
 
 export default function BlogPage() {
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState(0);
   const [hireMoreOpen, setHireMoreOpen] = useState(false);
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : deviceMode;
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const categoriesRef = useRef<HTMLElement | null>(null);
@@ -674,14 +678,13 @@ export default function BlogPage() {
       : blogCategories.filter((blog) => blog.id === selectedCategory);
 
   return (
-    <main className="site-page blog-page flex flex-col min-h-screen bg-white overflow-visible w-full max-w-full min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%]">
-      {/* ====== MAIN BUILDER LAYOUT ====== */}
-      <div className="flex flex-1">
+    <main className={`${isBlockpages ? "@container blog-page w-full max-w-full min-w-0 overflow-x-hidden" : "site-page blog-page flex flex-col min-h-screen bg-white overflow-visible w-full max-w-full min-w-0"} font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%]`}>
+      <div className={`${isBlockpages ? "w-full min-w-0" : "flex flex-1"}`}>
         {/* MAIN CONTENT */}
-        <div className="flex-1 bg-white p-[clamp(0.35rem,2cqw,1.75rem)] flex justify-center min-w-0">
-          <div className="w-full max-w-[1200px] relative flex flex-col min-w-0">
-            {/* FLOATING DEVICE TOOLBAR */}
-            <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
+        <div className={`${isBlockpages ? "w-full min-w-0" : "flex-1 bg-white p-[clamp(0.35rem,2cqw,1.75rem)] flex justify-center min-w-0"}`}>
+          <div className={`${isBlockpages ? "w-full min-w-0" : "w-full max-w-[1200px] relative flex flex-col min-w-0"}`}>
+            {!isBlockpages ? (
+            <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
               <div className="blog-device-toolbar-inner flex items-center gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5 @max-[340px]:p-1 @max-[340px]:px-2 @max-[340px]:gap-1">
                 <button
                   type="button"
@@ -704,16 +707,17 @@ export default function BlogPage() {
                 </button>
               </div>
             </div>
+            ) : null}
 
             {/* Canvas Box */}
-            <div ref={canvasScrollRef} className={`flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300 ${deviceMode !== "desktop" ? "bg-gray-200/50 p-2 @@min-[640px]:p-4 rounded-xl" : ""}`}>
-              <div className={`@container mx-auto w-full min-h-[530px] bg-[#F2F2F2] rounded-xl border-2 border-gray-300 flex flex-col relative overflow-hidden transition-all duration-500 ease-in-out ${deviceMode === "mobile"
+            <div ref={isBlockpages ? undefined : canvasScrollRef} className={`${isBlockpages ? "w-full min-w-0" : "flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300"} ${!isBlockpages && activeDeviceMode !== "desktop" ? "bg-gray-200/50 p-2 @@min-[640px]:p-4 rounded-xl" : ""}`}>
+              <div className={`${isBlockpages ? "w-full min-w-0" : "@container mx-auto w-full min-h-[530px] bg-[#F2F2F2] rounded-xl border-2 border-gray-300 flex flex-col relative overflow-hidden transition-all duration-500 ease-in-out"} ${!isBlockpages && activeDeviceMode === "mobile"
                   ? "max-w-[375px] shadow-2xl"
-                  : deviceMode === "tablet"
+                  : !isBlockpages && activeDeviceMode === "tablet"
                     ? "max-w-[768px] shadow-2xl"
-                    : "max-w-full"
+                    : !isBlockpages ? "max-w-full" : ""
                 }`}>
-                <div className="blog-page w-full max-w-full overflow-x-hidden overflow-visible min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%]">
+                <div className={`blog-page w-full max-w-full overflow-x-hidden min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%] ${isBlockpages ? "" : "overflow-visible"}`}>
                   <BlogHeader selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
 
                   {/* Top — continuous hero + image + templates (matches screenshot flow) */}
@@ -1182,7 +1186,7 @@ export default function BlogPage() {
           </div>
         </div>
       </div>
-      <Footer />
+      {!isBlockpages && <Footer />}
 
       <style jsx={false}>{`
         .blog-page {

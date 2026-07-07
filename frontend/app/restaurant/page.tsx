@@ -4,9 +4,11 @@ import { useState, useRef, useCallback, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "../../components/Footer";
-import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane } from "react-icons/fa";
+import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane, FaUtensils, FaUsers, FaCouch, FaLeaf, FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaBars, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
+import { assetPath } from "@/lib/paths";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BUILDING_HREF = "/signup";
 
@@ -103,7 +105,11 @@ const navLinks = [
   { label: "Contact", hash: "#restaurant-contact" },
 ] as const;
 
-function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "mobile" }) {
+interface RestaurantHeaderProps {
+  deviceMode: "desktop" | "tablet" | "mobile";
+}
+
+function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -138,15 +144,15 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
   const showDesktopNav = deviceMode === "desktop";
 
   return (
-    <header ref={headerRef} className={r("bg-[#0A1E3D] text-white w-full max-w-full relative z-50")}>
+    <header ref={headerRef} className={r("bg-[#0A1E3D] text-white w-full max-w-full sticky top-0 z-50 shadow-md")}>
       <div className={r(`w-full mx-auto py-4 flex items-center justify-between px-4 sm:px-6 lg:px-8 ${deviceMode === "desktop" ? "max-w-7xl" : ""
         }`)}>
         <button
           type="button"
-          className="text-xl font-black text-white no-underline shrink-0 bg-none border-none cursor-pointer p-0 hover:opacity-90 focus-visible:outline-none"
+          className="text-sm sm:text-lg md:text-xl font-black text-white no-underline bg-none border-none cursor-pointer p-0 hover:opacity-90 focus-visible:outline-none min-w-0 break-words text-left"
           onClick={() => scrollToSection("restaurant-home")}
         >
-          Stackly Restaurant.
+          Stackly Restaurant
         </button>
 
         {/* DESKTOP NAV WITH HIGHLIGHTS AND GAPS */}
@@ -163,11 +169,12 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
           ))}
         </nav>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
+
           <div ref={profileRef} className={r("relative hidden sm:block")}>
             <button
               type="button"
-              className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/80 text-white bg-transparent transition-all hover:bg-white/20 hover:scale-105"
+              className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/80 text-white bg-transparent transition-all hover:bg-white/20 hover:scale-105 cursor-pointer"
               onClick={() => { setProfileOpen((open) => !open); setMobileOpen(false); }}
             >
               <FaUser size={14} aria-hidden />
@@ -176,7 +183,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
               <div className="absolute top-12 right-0 w-40 py-2 bg-white rounded-lg shadow-xl border border-gray-100 z-60">
                 <button
                   type="button"
-                  className="flex items-center gap-3 w-full py-2.5 px-4 text-left text-sm font-bold text-red-600 hover:bg-red-50"
+                  className="flex items-center gap-3 w-full py-2.5 px-4 text-left text-sm font-bold text-red-600 hover:bg-red-50 cursor-pointer"
                   onClick={handleLogout}
                 >
                   <FaRightFromBracket size={14} /> Logout
@@ -203,7 +210,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
             <button
               key={link.label}
               type="button"
-              className="py-3 px-4 text-white text-base font-bold text-left w-full transition-all duration-300 hover:bg-white/20 hover:pl-6 rounded-md border border-transparent hover:border-white/20"
+              className="py-3 px-4 text-white text-base font-bold text-left w-full transition-all duration-300 hover:bg-white/20 hover:pl-6 rounded-md border border-transparent hover:border-white/20 cursor-pointer"
               onClick={() => { scrollToSection(link.hash.replace("#", "")); setMobileOpen(false); }}
             >
               {link.label}
@@ -212,7 +219,7 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
           <div className="mt-4 pt-4 border-t border-white/10">
             <button
               type="button"
-              className="flex items-center gap-3 py-3 px-4 w-full text-left text-red-400 text-base font-bold hover:bg-white/10 transition-colors rounded-md"
+              className="flex items-center gap-3 py-3 px-4 w-full text-left text-red-400 text-base font-bold hover:bg-white/10 transition-colors rounded-md cursor-pointer"
               onClick={handleLogout}
             >
               <FaRightFromBracket size={16} /> Logout
@@ -226,12 +233,36 @@ function RestaurantHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "
 
 // Renamed from templates to foods, keeping exact images requested
 const foodItems = [
-  { title: "Premium Ribeye Steak", price: "$45", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop" },
-  { title: "Artisan Cafe Pastries", price: "$12", image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=800&auto=format&fit=crop" },
-  { title: "Authentic Wood-Fired Pizza", price: "$18", image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=800&auto=format&fit=crop" },
-  { title: "Avocado Brunch Toast", price: "$14", image: "https://images.unsplash.com/photo-1493770348161-369560ae357d?q=80&w=800&auto=format&fit=crop" },
-  { title: "Gourmet Street Tacos", price: "$16", image: "https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?q=80&w=800&auto=format&fit=crop" },
-  { title: "Classic Cheeseburger", price: "$15", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop" },
+  {
+    title: "Premium Ribeye Steak",
+    price: "₹450",
+    image: assetPath("/premium-ribeye-steak.webp"),
+  },
+  {
+    title: "Artisan Cafe Pastries",
+    price: "₹120",
+    image: assetPath("/artisan-cafe-pastries.webp"),
+  },
+  {
+    title: "Authentic Wood-Fired Pizza",
+    price: "₹180",
+    image: assetPath("/authentic-wood-fired-pizza.webp"),
+  },
+  {
+    title: "Avocado Brunch Toast",
+    price: "₹140",
+    image: assetPath("/avocado-brunch-toast.webp"),
+  },
+  {
+    title: "Gourmet Street Tacos",
+    price: "₹160",
+    image: assetPath("/gourmet-street-tacos.webp"),
+  },
+  {
+    title: "Classic Cheeseburger",
+    price: "₹150",
+    image: assetPath("/classic-cheeseburger.webp"),
+  },
 ];
 
 const buildFeatures = [
@@ -253,9 +284,31 @@ const faqItems = [
   { q: "Are the restaurant templates mobile friendly?", answer: "Yes, all our restaurant templates are 100% responsive. Your menus, contact info, and booking buttons will look perfect and be easy to tap on smartphones." },
 ];
 
+const testimonials = [
+  {
+    quote: "Absolutely delicious! The food, the service, and the atmosphere were all perfect. Highly recommended.",
+    name: "John Smith",
+    role: "CEO, Besnik",
+  },
+  {
+    quote: "An unforgettable dining experience. Every dish was a masterpiece, full of rich flavors and beautiful presentation.",
+    name: "Sarah Jenkins",
+    role: "Food Critic, Gourmet Life",
+  },
+  {
+    quote: "The service was incredibly warm and friendly, and the relaxing ambience made our anniversary dinner truly special.",
+    name: "Michael Chang",
+    role: "Founder, DineOut",
+  }
+];
+
 export default function RestaurantTemplatesPage() {
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [openFaq, setOpenFaq] = useState(0);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : deviceMode;
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [email, setEmail] = useState("");
@@ -275,13 +328,15 @@ export default function RestaurantTemplatesPage() {
     }, 1500);
   };
 
-  const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
+  const r = useCallback((classes: string) => getModeClasses(classes, activeDeviceMode), [activeDeviceMode]);
+
+
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
+    <main className={isBlockpages ? "@container restaurant-shell w-full min-w-0 max-w-full overflow-x-hidden bg-white font-sans text-gray-900 box-border" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6"}>
 
-      {/* FLOATING DEVICE TOOLBAR */}
-      <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
+      {!isBlockpages && (
+      <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
           <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
             <FaEye size={16} />
@@ -298,64 +353,102 @@ export default function RestaurantTemplatesPage() {
           </button>
         </div>
       </div>
+      )}
 
-      <div className={`flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         {/* RESPONSIVE CANVAS FRAME */}
         <div
-          ref={canvasScrollRef}
-          className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+          ref={isBlockpages ? undefined : canvasScrollRef}
+          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
             : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
               : "w-full min-h-screen"
             }`}
         >
           <div className="w-full max-w-full overflow-x-hidden min-w-0">
-            <RestaurantHeader deviceMode={deviceMode} />
+            <RestaurantHeader
+              deviceMode={activeDeviceMode}
+            />
 
             {/* 1. HERO SECTION */}
-            <div id="restaurant-home" className={`w-full bg-[#FFF5F5] text-center min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <div id="restaurant-home" className={`w-full bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
-              <div className="max-w-3xl mx-auto break-words">
-                <h1 className={`font-black text-balance leading-[1.15] text-[#0A1E3D] mb-6 ${deviceMode === "desktop" ? "text-3xl sm:text-4xl md:text-5xl lg:text-6xl" : "text-3xl"
-                  }`}>
-                  Create a Mouth-Watering Restaurant Website
-                </h1>
-                <p className="text-base text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                  Attract hungry customers with a stunning, mobile-friendly website. Showcase your menu, take online reservations, and grow your restaurant business without writing a single line of code.
-                </p>
-                <Link href={START_BUILDING_HREF} className="inline-flex items-center justify-center min-h-[3.5rem] px-8 rounded-full bg-[#0A1E3D] text-white text-base font-bold shadow-xl transition-all hover:bg-red-800 hover:-translate-y-1">
-                  Start Building Free
-                </Link>
+              <div className={`mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 ${activeDeviceMode === "desktop" ? "max-w-7xl w-full" : "max-w-3xl"
+                }`}>
+                {/* Left side: Text content */}
+                <div className="flex-1 text-left break-words w-full max-w-xl min-w-0">
+                  <h1 className={r("font-black text-balance leading-[1.15] text-[#0A1E3D] mb-6 text-2xl sm:text-3xl md:text-5xl lg:text-6xl break-words")}>
+                    We Serve The Taste You Love
+                  </h1>
+                  <div className="text-sm sm:text-base text-gray-600 mb-8 space-y-2 leading-relaxed break-words">
+                    <p>Welcome to a place where every meal tells a story.</p>
+                    <p>We serve handcrafted dishes made from premium, locally sourced ingredients.</p>
+                    <p>Relax, unwind, and enjoy a dining experience designed to delight.</p>
+                    <p>Creating unforgettable memories, one plate at a time.</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-start w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection("restaurant-menu")}
+                      className="inline-flex items-center justify-center min-h-[3.5rem] px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 w-full sm:w-auto text-center cursor-pointer"
+                    >
+                      Explore Food
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection("restaurant-contact")}
+                      className="inline-flex items-center justify-center min-h-[3.5rem] px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 w-full sm:w-auto text-center cursor-pointer"
+                    >
+                      Reserve Table
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right side: Two Overlapping Images */}
+                <div className="flex-1 w-full max-w-[550px] relative aspect-[4/3] flex items-center justify-center min-w-0">
+                  {/* Base / Right Image */}
+                  <div className="w-[60%] h-[90%] absolute right-0 top-[5%] rounded-3xl overflow-hidden shadow-lg z-10">
+                    <img
+                      src={encodeURI(assetPath("/Image - 2.webp"))}
+                      alt="Chef plating food in kitchen"
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                  {/* Overlapping / Left Image */}
+                  <div className="w-[55%] aspect-[1.3] absolute left-0 bottom-[5%] rounded-3xl overflow-hidden shadow-2xl z-20 border-[4px] sm:border-[6px] border-[#FFF5F5]">
+                    <img
+                      src={encodeURI(assetPath("/Image -1.webp"))}
+                      alt="Drinks and gourmet dishes"
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* 2. MENU GRID (Changed from Templates to Foods) */}
-            <section id="restaurant-menu" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-menu" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-10 break-words">
-                  <h2 className={`font-black text-[#0A1E3D] mb-4 text-balance ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
-                    }`}>Our Signature Menu</h2>
-                  <p className="text-base text-gray-600 max-w-2xl mx-auto">Explore our carefully curated selection of fresh, delicious dishes made from scratch.</p>
+                  <h2 className={r("font-black text-[#0A1E3D] mb-4 text-balance text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Our Signature Menu</h2>
+                  <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto leading-relaxed break-words">Explore our carefully curated selection of fresh, delicious dishes made from scratch.</p>
                 </div>
 
-                <div className={`grid ${deviceMode === "desktop" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" :
-                  deviceMode === "tablet" ? "grid-cols-1 sm:grid-cols-2 gap-6" :
-                    "grid-cols-1 gap-6"
-                  }`}>
+                <div className={r("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8")}>
                   {foodItems.map((item) => (
-                    <article key={item.title} className="group flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-red-100 min-w-0">
+                    <article
+                      key={item.title}
+                      className="group flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-red-100 min-w-0"
+                    >
                       <div className="overflow-hidden rounded-xl bg-gray-100 aspect-[4/3] mb-5">
                         <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                       </div>
                       <div className="flex-1 flex flex-col min-w-0">
-                        <div className="flex justify-between items-start mb-5 gap-3">
-                          <h3 className="text-lg font-bold text-[#0A1E3D] truncate leading-tight">{item.title}</h3>
-                          <span className="font-black text-[#b91c1c] shrink-0">{item.price}</span>
-                        </div>
-                        <div className="mt-auto">
-                          <button type="button" className="w-full rounded-xl bg-[#b91c1c] flex items-center justify-center py-3 text-sm font-bold text-white hover:bg-red-800 transition-colors">
-                            Order Now
-                          </button>
+                        <div className="flex justify-between items-start gap-3">
+                          <h3 className="text-base sm:text-lg font-bold text-[#0A1E3D] break-words leading-tight flex-1">{item.title}</h3>
+                          <span className="font-black text-[#0F2D5C] shrink-0">{item.price}</span>
                         </div>
                       </div>
                     </article>
@@ -365,21 +458,19 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 3. ABOUT US SECTION */}
-            <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
-              <div className={`max-w-7xl mx-auto grid items-center ${deviceMode === "desktop" ? "grid-cols-1 lg:grid-cols-2 gap-16" : "grid-cols-1 gap-10"
-                }`}>
-                <div className="rounded-[2rem] overflow-hidden shadow-xl">
+              <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
+                <div className="rounded-[2rem] overflow-hidden shadow-xl w-full min-w-0">
                   <img
                     src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop"
                     alt="Restaurant Interior"
-                    className="w-full h-auto aspect-[4/3] object-cover"
+                    className="w-full h-auto aspect-[4/3] object-cover max-w-full"
                   />
                 </div>
-                <div className="break-words">
-                  <h2 className="text-[#b91c1c] font-black uppercase tracking-[0.2em] text-sm mb-3">Our Story</h2>
-                  <h3 className={`font-black text-[#0A1E3D] text-balance leading-tight mb-6 ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
-                    }`}>Tradition meets modern flavor.</h3>
+                <div className="break-words min-w-0">
+                  <h2 className="text-[#0F2D5C] font-black uppercase tracking-[0.2em] text-xs sm:text-sm mb-3">Our Story</h2>
+                  <h3 className={r("font-black text-[#0A1E3D] text-balance leading-tight mb-6 text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Tradition meets modern flavor.</h3>
                   <p className="text-base text-gray-600 leading-relaxed mb-6">Founded with a passion for exceptional food, we started as a small family kitchen dedicated to bringing authentic, vibrant flavors to our neighborhood.</p>
                   <p className="text-base text-gray-600 leading-relaxed mb-8">Today, we continue that tradition by sourcing the freshest local ingredients and applying modern culinary techniques to classic recipes. Every bite is crafted to make your dining experience memorable.</p>
 
@@ -397,52 +488,124 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
+            {/* 3.5 WHY CHOOSE US SECTION */}
+            <section id="restaurant-why-choose-us" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-10 break-words">
+                  <span className="text-[#0F2D5C] uppercase tracking-[0.2em] text-xs sm:text-sm font-black">Why Choose Us</span>
+                </div>
+
+                <div className={r("w-full bg-[#0F2D5C] rounded-[2rem] shadow-xl p-6 sm:p-12 lg:p-16")}>
+                  <div className="text-center mb-12 max-w-3xl mx-auto break-words">
+                    <h3 className={r("font-black text-[#FFFFFF] mb-4 text-balance text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>
+                      Loved By Food Lovers
+                    </h3>
+                    <p className="text-sm sm:text-base text-[#FFFFFF]/80 max-w-2xl mx-auto leading-relaxed break-words">
+                      Join thousands of happy diners who enjoy delicious meals, warm hospitality, and unforgettable dining experiences with every visit.
+                    </p>
+                  </div>
+
+                  <div className={r("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6")}>
+                    {/* Card 1 */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                      <div className="min-w-0 break-words">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
+                          <FaUtensils size={28} className="sm:hidden" />
+                          <FaUtensils size={32} className="hidden sm:block" />
+                        </div>
+                        <h4 className="text-[#0A1E3D] text-base sm:text-lg font-black text-center mb-3 break-words">Signature Flavors</h4>
+                        <p className="text-gray-600 text-xs sm:text-sm text-center leading-relaxed break-words">
+                          Every signature dish is carefully prepared to deliver the perfect balance of taste, quality, and creativity.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Card 2 */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                      <div className="min-w-0 break-words">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
+                          <FaUsers size={28} className="sm:hidden" />
+                          <FaUsers size={32} className="hidden sm:block" />
+                        </div>
+                        <h4 className="text-[#0A1E3D] text-base sm:text-lg font-black text-center mb-3 break-words">Friendly Service</h4>
+                        <p className="text-gray-600 text-xs sm:text-sm text-center leading-relaxed break-words">
+                          Experience warm hospitality and attentive service that makes every guest feel right at home.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                      <div className="min-w-0 break-words">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
+                          <FaCouch size={28} className="sm:hidden" />
+                          <FaCouch size={32} className="hidden sm:block" />
+                        </div>
+                        <h4 className="text-[#0A1E3D] text-base sm:text-lg font-black text-center mb-3 break-words">Relaxing Ambience</h4>
+                        <p className="text-gray-600 text-xs sm:text-sm text-center leading-relaxed break-words">
+                          Step into a calm and stylish environment where delicious food and a relaxing ambiance come together beautifully.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                      <div className="min-w-0 break-words">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
+                          <FaLeaf size={28} className="sm:hidden" />
+                          <FaLeaf size={32} className="hidden sm:block" />
+                        </div>
+                        <h4 className="text-[#0A1E3D] text-base sm:text-lg font-black text-center mb-3 break-words">Quality Ingredients</h4>
+                        <p className="text-gray-600 text-xs sm:text-sm text-center leading-relaxed break-words">
+                          Our commitment to quality starts with the ingredients, ensuring every dish is crafted with freshness, flavor, and care.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* 4. BUILD YOUR WAY (FEATURES) */}
-            <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
-              <div className={`max-w-7xl mx-auto grid items-center ${deviceMode === "desktop" ? "grid-cols-1 lg:grid-cols-2 gap-16" : "grid-cols-1 gap-10"
-                }`}>
-                <div className="break-words order-2 lg:order-1">
-                  <h2 className={`font-black text-[#0A1E3D] text-balance leading-tight mb-8 ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
-                    }`}>Build your restaurant site your way.</h2>
+              <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
+                <div className="break-words order-2 lg:order-1 min-w-0">
+                  <h2 className={r("font-black text-[#0A1E3D] text-balance leading-tight mb-8 text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Build your restaurant site your way.</h2>
                   <div className="space-y-8">
                     {buildFeatures.map((item) => (
-                      <div key={item.title}>
-                        <h3 className="text-lg font-bold text-[#0A1E3D] mb-2">{item.title}</h3>
-                        <p className="text-base text-gray-600 leading-relaxed">{item.text}</p>
+                      <div key={item.title} className="min-w-0 break-words">
+                        <h3 className="text-base sm:text-lg font-bold text-[#0A1E3D] mb-2 break-words">{item.title}</h3>
+                        <p className="text-sm sm:text-base text-gray-600 leading-relaxed break-words">{item.text}</p>
                       </div>
                     ))}
                   </div>
-                  <Link href={START_BUILDING_HREF} className="inline-flex items-center justify-center min-h-[3.5rem] mt-10 px-8 rounded-full bg-[#0A1E3D] text-white text-base font-bold transition-all hover:bg-[#112a52] hover:-translate-y-1 hover:shadow-lg">
+                  <Link href={START_BUILDING_HREF} className="inline-flex items-center justify-center min-h-[3.5rem] mt-10 px-4 sm:px-8 rounded-full bg-[#0A1E3D] text-white text-sm sm:text-base font-bold transition-all hover:bg-[#112a52] hover:-translate-y-1 hover:shadow-lg w-full sm:w-auto text-center">
                     Create Your Site
                   </Link>
                 </div>
-                <div className="rounded-[2rem] overflow-hidden shadow-2xl order-1 lg:order-2 w-full">
+                <div className="rounded-[2rem] overflow-hidden shadow-2xl order-1 lg:order-2 w-full min-w-0">
                   <img
                     src="https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?q=80&w=800&auto=format&fit=crop"
                     alt="Chef plating food"
-                    className="w-full h-auto aspect-[4/3] object-cover"
+                    className="w-full h-auto aspect-[4/3] object-cover max-w-full"
                   />
                 </div>
               </div>
             </section>
 
+
             {/* 5. INFRASTRUCTURE */}
-            <section className={`bg-[#0A1E3D] text-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section className={`bg-[#0A1E3D] text-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className="max-w-7xl mx-auto">
-                <div className={`bg-white/5 rounded-3xl border border-white/10 ${deviceMode === "desktop" ? "p-10 lg:p-16" : "p-6"
-                  }`}>
-                  <h2 className={`font-black mb-10 max-w-2xl text-balance leading-tight ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
-                    }`}>The powerful infrastructure behind your restaurant.</h2>
-                  <div className={`grid ${deviceMode === "desktop" ? "grid-cols-1 md:grid-cols-3 gap-12" :
-                    deviceMode === "tablet" ? "grid-cols-1 sm:grid-cols-2 gap-8" :
-                      "grid-cols-1 gap-8"
-                    }`}>
+                <div className={r("bg-white/5 rounded-3xl border border-white/10 p-6 sm:p-10 lg:p-16")}>
+                  <h2 className={r("font-black mb-10 max-w-2xl text-balance leading-tight text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>The powerful infrastructure behind your restaurant.</h2>
+                  <div className={r("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12")}>
                     {infraItems.map((item) => (
-                      <div key={item.title} className="border-t border-white/20 pt-6">
-                        <h3 className="text-lg font-bold mb-3">{item.title}</h3>
-                        <p className="text-gray-300 leading-relaxed text-sm">{item.text}</p>
+                      <div key={item.title} className="border-t border-white/20 pt-6 min-w-0 break-words">
+                        <h3 className="text-base sm:text-lg font-bold mb-3 break-words">{item.title}</h3>
+                        <p className="text-gray-300 leading-relaxed text-xs sm:text-sm break-words">{item.text}</p>
                       </div>
                     ))}
                   </div>
@@ -451,13 +614,12 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 6. FAQ */}
-            <section id="restaurant-faq" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-faq" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-12 break-words">
-                  <h2 className={`font-black text-[#0A1E3D] mb-4 text-balance ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
-                    }`}>Frequently Asked Questions</h2>
-                  <p className="text-base text-gray-600">Everything you need to know about building your restaurant website.</p>
+                  <h2 className={r("font-black text-[#0A1E3D] mb-4 text-balance text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Frequently Asked Questions</h2>
+                  <p className="text-sm sm:text-base text-gray-600 break-words max-w-full leading-relaxed">Everything you need to know about building your restaurant website.</p>
                 </div>
 
                 <div className="space-y-4">
@@ -470,11 +632,11 @@ export default function RestaurantTemplatesPage() {
                           className="w-full flex items-center justify-between p-5 bg-gray-50/50 text-left"
                           onClick={() => setOpenFaq(isOpen ? -1 : index)}
                         >
-                          <span className="font-bold text-[#0A1E3D] pr-4 text-base">{item.q}</span>
-                          <span className="text-2xl text-gray-400 shrink-0 font-light" aria-hidden>{isOpen ? "−" : "+"}</span>
+                          <span className="font-bold text-[#0A1E3D] pr-4 text-sm sm:text-base break-words whitespace-normal text-left flex-1">{item.q}</span>
+                          <span className="text-xl sm:text-2xl text-gray-400 shrink-0 font-light" aria-hidden>{isOpen ? "−" : "+"}</span>
                         </button>
                         {isOpen && (
-                          <div className="p-5 pt-2 text-base text-gray-600 leading-relaxed border-t border-gray-100 bg-white">
+                          <div className="p-5 pt-2 text-sm sm:text-base text-gray-600 leading-relaxed border-t border-gray-100 bg-white break-words whitespace-normal">
                             {item.answer}
                           </div>
                         )}
@@ -485,86 +647,212 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
-            {/* 7. CONTACT SECTION */}
-            <section id="restaurant-contact" className={`bg-gray-50 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-              }`}>
-              <div className="max-w-5xl mx-auto text-center break-words">
-                <h2 className="text-[#b91c1c] font-black uppercase tracking-[0.2em] text-sm mb-3">Get in Touch</h2>
-                <h3 className={`font-black text-[#0A1E3D] text-balance leading-tight mb-10 ${deviceMode === "desktop" ? "text-3xl md:text-4xl" : "text-2xl"
-                  }`}>Visit Us or Reach Out</h3>
+            {/* 6.5 GUEST EXPERIENCES (TESTIMONIALS) */}
+            <section id="restaurant-testimonials" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+              <div className="max-w-7xl mx-auto">
+                <div className={r("w-full bg-[#0F2D5C] rounded-[2rem] sm:rounded-[2.5rem] shadow-xl p-6 sm:p-12 lg:p-16")}>
+                  <div className="text-center mb-8 break-words" style={{ overflowWrap: "anywhere" }}>
+                    <h2 className="text-white font-black uppercase tracking-[0.2em] text-xs sm:text-sm mb-3">Guest Experiences</h2>
+                  </div>
 
-                <div className={`grid ${deviceMode === "desktop" ? "grid-cols-3 gap-8" : "grid-cols-1 gap-6"
-                  }`}>
-                  <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h4 className="font-bold text-[#0A1E3D] mb-3 text-lg">Location</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">123 Culinary Avenue<br />Food District, FD 10020</p>
-                  </div>
-                  <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h4 className="font-bold text-[#0A1E3D] mb-3 text-lg">Hours</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">Mon - Fri: 11AM - 10PM<br />Sat - Sun: 10AM - 11PM</p>
-                  </div>
-                  <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h4 className="font-bold text-[#0A1E3D] mb-3 text-lg">Contact</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">info@stacklyfood.com<br />+1 (555) 123-4567</p>
+                  <div className={r("flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 min-h-[320px] w-full min-w-0 text-center lg:text-left")}>
+                    {/* Left Image (John Smith or active testimonial guest) */}
+                    <div className={r("flex-1 max-w-[200px] sm:max-w-[240px] w-full flex justify-center min-w-0")}>
+                      <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
+                        <img
+                          src={assetPath("/testimonial-1.webp")}
+                          alt="Guest Experience 1"
+                          className="w-full h-auto object-cover max-w-full"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Center Testimonial Content */}
+                    <div className="flex-[2] text-center flex flex-col items-center justify-center w-full max-w-full px-4 min-w-0">
+                      <span className="text-[white] text-5xl sm:text-6xl font-serif leading-none select-none mb-2">❝</span>
+                      
+                      <div className="min-h-[140px] flex flex-col justify-center w-full max-w-full min-w-0">
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={activeTestimonial}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex flex-col items-center w-full max-w-full min-w-0"
+                          >
+                            <p className="text-[white] text-base sm:text-lg lg:text-xl font-bold leading-relaxed mb-6 italic break-words whitespace-normal text-center w-full max-w-full" style={{ overflowWrap: "anywhere" }}>
+                              "{testimonials[activeTestimonial].quote}"
+                            </p>
+                            <h4 className="text-[white] text-sm sm:text-base font-black tracking-wide uppercase break-words" style={{ overflowWrap: "anywhere" }}>
+                              {testimonials[activeTestimonial].name}
+                            </h4>
+                            <p className="text-[white]/70 text-xs sm:text-sm font-semibold mt-1 break-words" style={{ overflowWrap: "anywhere" }}>
+                              {testimonials[activeTestimonial].role}
+                            </p>
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Navigation Arrows */}
+                      <div className="flex gap-4 mt-6">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTestimonial((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1))}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white hover:text-[#0F2D5C] transition-all duration-300 shadow-sm cursor-pointer font-bold text-base sm:text-lg"
+                          aria-label="Previous Testimonial"
+                        >
+                          ←
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTestimonial((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1))}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white/30 flex items-center justify-center text-white hover:bg-white hover:text-[#0F2D5C] transition-all duration-300 shadow-sm cursor-pointer font-bold text-base sm:text-lg"
+                          aria-label="Next Testimonial"
+                        >
+                          →
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Right Image */}
+                    <div className={r(`flex-1 max-w-[200px] sm:max-w-[240px] w-full justify-center min-w-0 ${activeDeviceMode === "desktop" ? "lg:flex hidden" : "hidden"}`)}>
+                      <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
+                        <img
+                          src={assetPath("/testimonial-2.webp")}
+                          alt="Guest Experience 2"
+                          className="w-full h-auto object-cover max-w-full"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            <footer className="@container bg-[#0A1E3D] text-white">
-              <div className="mx-auto max-w-7xl px-4 py-12 @md:px-8 @md:py-16">
+
+            {/* 7. CONTACT SECTION */}
+            <section id="restaurant-contact" className={`bg-gray-50 min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+              }`}>
+              <div className="max-w-5xl mx-auto text-center break-words">
+                <h2 className="text-[#0A1E3D] font-black uppercase tracking-[0.2em] text-xs sm:text-sm mb-3">Get in Touch</h2>
+                <h3 className={r("font-black text-[#0A1E3D] text-balance leading-tight mb-10 text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Visit Us or Reach Out</h3>
+
+                <div className={r("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8")}>
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
+                    <h4 className="font-bold text-[#0A1E3D] mb-3 text-base sm:text-lg">Location</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">770 Marthalli<br />Food District, 560037</p>
+                  </div>
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
+                    <h4 className="font-bold text-[#0A1E3D] mb-3 text-base sm:text-lg">Hours</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">Mon - Fri: 11AM - 10PM<br />Sat - Sun: 10AM - 11PM</p>
+                  </div>
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
+                    <h4 className="font-bold text-[#0A1E3D] mb-3 text-base sm:text-lg">Contact</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">info@stacklyfood.com<br />+91 9745684731 </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <footer className={`@container bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+              <div className="mx-auto max-w-7xl w-full">
                 <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   <div>
-                    <h3 className="mb-4 text-lg font-black">Stackly Restaurant</h3>
-                    <p className="text-sm leading-relaxed text-white/60">
+                    <h3 className="mb-4 text-lg font-bold text-[#0A1E3D]">Stackly Restaurant</h3>
+                    <p className="text-sm leading-relaxed text-gray-600">
                       Experience the best culinary delights with our signature dishes and exceptional service in a modern, welcoming atmosphere.
                     </p>
                   </div>
                   <div>
-                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Quick Links</h4>
-                    <ul className="space-y-2.5 text-sm text-white/60">
-                      {navLinks.map((link) => (
-                        <li key={link.label}>
-                          <button onClick={() => scrollToSection(link.hash.replace("#", ""))} className="transition hover:text-white focus:outline-none text-left">
-                            {link.label}
-                          </button>
-                        </li>
-                      ))}
+                    <h4 className="mb-4 text-lg font-bold text-[#0A1E3D]">Follow Us On</h4>
+                    <ul className="space-y-2.5 text-sm text-gray-600">
+                      <li>
+                        <a
+                          href="https://facebook.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 transition-all duration-300 hover:text-[#0A1E3D] hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1E3D]/50 focus-visible:rounded"
+                        >
+                          <FaFacebookF className="shrink-0" />
+                          <span>Facebook</span>
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="https://twitter.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 transition-all duration-300 hover:text-[#0A1E3D] hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1E3D]/50 focus-visible:rounded"
+                        >
+                          <FaTwitter className="shrink-0" />
+                          <span>Twitter</span>
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="https://instagram.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 transition-all duration-300 hover:text-[#0A1E3D] hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1E3D]/50 focus-visible:rounded"
+                        >
+                          <FaInstagram className="shrink-0" />
+                          <span>Instagram</span>
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="https://youtube.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 transition-all duration-300 hover:text-[#0A1E3D] hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1E3D]/50 focus-visible:rounded"
+                        >
+                          <FaYoutube className="shrink-0" />
+                          <span>YouTube</span>
+                        </a>
+                      </li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Opening Hours</h4>
-                    <ul className="space-y-2.5 text-sm text-white/60">
+                    <h4 className="mb-4 text-lg font-bold text-[#0A1E3D]">Opening Hours</h4>
+                    <ul className="space-y-2.5 text-sm text-gray-600">
                       <li>Mon - Fri: 11:00 AM - 10:00 PM</li>
                       <li>Sat - Sun: 10:00 AM - 11:00 PM</li>
                       <li>Holidays: Closed</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Newsletter</h4>
-                    <p className="mb-4 text-sm text-white/60">Get updates and exclusive offers delivered to your inbox.</p>
-                    <form onSubmit={handleNewsletter} className="flex flex-col gap-2">
-                      <div className="relative flex w-full min-w-0 items-center rounded-full bg-white ring-1 ring-gray-200 transition-all duration-300 hover:ring-2 hover:ring-[#1E56E5]/50 focus-within:ring-2 focus-within:ring-[#1E56E5] focus-within:hover:ring-[#1E56E5]">
-                        <div className="pointer-events-none absolute left-4 text-gray-400 transition-colors duration-300 group-focus-within:text-gray-300">
-                          <FaEnvelope size={16} />
+                    <h4 className="mb-4 text-lg font-bold text-[#0A1E3D]">Newsletter</h4>
+                    <p className="mb-4 text-sm text-gray-600">Get updates and exclusive offers delivered to your inbox.</p>
+                    <form onSubmit={handleNewsletter} className="flex flex-col gap-2 w-full min-w-0">
+                      <div className="relative flex flex-col sm:flex-row w-full min-w-0 items-stretch sm:items-center rounded-2xl sm:rounded-full bg-white ring-1 ring-gray-200 transition-all duration-300 hover:ring-2 hover:ring-[#0A1E3D]/50 focus-within:ring-2 focus-within:ring-[#0A1E3D] p-1.5 sm:p-0 gap-2 sm:gap-0">
+                        <div className="relative flex items-center w-full min-w-0">
+                          <div className="pointer-events-none absolute left-4 text-gray-400">
+                            <FaEnvelope size={16} />
+                          </div>
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Your email"
+                            className="min-w-0 w-full rounded-full bg-transparent py-3.5 pl-11 pr-4 sm:pr-14 text-sm text-[#0A1E3D] placeholder-[#0A1E3D]/60 outline-none transition-colors duration-300 hover:text-[#0A1E3D] hover:placeholder-[#0A1E3D]/40 focus:text-[#0A1E3D] focus:placeholder-[#0A1E3D]/40"
+                          />
                         </div>
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="Your email"
-                          className="min-w-0 w-full rounded-full bg-transparent py-3.5 pl-11 pr-14 text-sm text-[#0A1E3D] placeholder-[#0A1E3D] outline-none transition-colors duration-300 hover:text-gray-500 hover:placeholder-gray-400 focus:text-gray-500 focus:placeholder-gray-400"
-                        />
                         <button
                           type="submit"
                           aria-label="Subscribe"
                           disabled={!isEmailValid || newsletterStatus === "loading" || email.length === 0}
-                          className="absolute right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1E56E5] hover:shadow-lg active:scale-95 disabled:pointer-events-none"
+                          className="sm:absolute sm:right-1.5 flex h-10 w-full sm:w-10 shrink-0 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#112a52] hover:shadow-lg active:scale-95 disabled:pointer-events-none cursor-pointer"
                         >
                           {newsletterStatus === "loading" ? (
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                           ) : (
-                            <FaPaperPlane size={14} />
+                            <span className="flex items-center justify-center gap-2">
+                              <span className="sm:hidden text-xs font-bold uppercase tracking-wider">Subscribe</span>
+                              <FaPaperPlane size={14} />
+                            </span>
                           )}
                         </button>
                       </div>
@@ -578,12 +866,12 @@ export default function RestaurantTemplatesPage() {
                   </div>
                 </div>
 
-                <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 @sm:flex-row">
-                  <p className="text-xs text-white/50">Copyright 2018-2026 TheStackly.com INC. All rights reserved.</p>
+                <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-6 sm:flex-row text-center sm:text-left">
+                  <p className="text-xs text-gray-600 break-words w-full sm:w-auto">Copyright 2018-2026 TheStackly.com INC. All rights reserved.</p>
 
-                  <div className="flex gap-6 text-xs text-white/50">
-                    <button type="button" onClick={() => setIsTermsModalOpen(true)} className="transition hover:text-white">Terms of Use</button>
-                    <button type="button" onClick={() => setIsPrivacyModalOpen(true)} className="transition hover:text-white">Privacy Policy</button>
+                  <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-600 w-full sm:w-auto">
+                    <button type="button" onClick={() => setIsTermsModalOpen(true)} className="transition hover:text-[#0A1E3D] cursor-pointer">Terms of Use</button>
+                    <button type="button" onClick={() => setIsPrivacyModalOpen(true)} className="transition hover:text-[#0A1E3D] cursor-pointer">Privacy Policy</button>
                   </div>
                 </div>
               </div>
@@ -703,9 +991,12 @@ export default function RestaurantTemplatesPage() {
         </div>
       </div>
 
+      {!isBlockpages && (
       <div className="mt-4 md:mt-8 w-full">
         <Footer />
       </div>
+      )}
+
     </main>
   );
 }

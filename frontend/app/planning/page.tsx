@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import Footer from "@/components/Footer";
+import { activateFrontendSubscription } from "@/lib/demoAuth";
 import { downloadPlanningInvoiceForEntry } from "@/lib/planningInvoiceHtml";
 import type { PlanningInvoiceContactDefaults } from "@/lib/planningInvoiceHtml";
 import {
@@ -415,6 +416,7 @@ export default function PlanningPage() {
     });
     setPaymentLoading(false);
     setIsFreeCheckout(false);
+    activateFrontendSubscription();
     setPlanningView("invoice");
   }
 

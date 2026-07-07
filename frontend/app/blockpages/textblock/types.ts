@@ -1,5 +1,12 @@
 export type TextEditorTarget = 'main' | 'text' | 'header' | 'footer';
-export type TextTemplateType = 'ecommerce' | 'portfolio';
+export type TextTemplateType =
+  | 'portfolio'
+  | 'ecommerce'
+  | 'blog'
+  | 'construction'
+  | 'restaurant'
+  | 'digital-marketing'
+  | 'business';
  
 export interface TextStyles {
   color: string;

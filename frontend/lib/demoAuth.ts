@@ -42,13 +42,24 @@ export function activateDemoSession(): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("stackly-auth-token", DEMO_AUTH_TOKEN);
   window.sessionStorage.setItem(DEMO_SESSION_KEY, DEMO_LOGIN_EMAIL);
+  activateFrontendSubscription();
+}
+
+/** Marks an active subscription for the current tab (demo login or planning checkout). */
+export function activateFrontendSubscription(): void {
+  if (typeof window === "undefined") return;
   window.sessionStorage.setItem(DEMO_SUBSCRIPTION_KEY, "active");
 }
 
 /**
- * True when the current tab has the demo subscription active.
+ * True when the current tab has an active frontend subscription.
  * Uses sessionStorage, so this is false in a freshly opened tab.
  */
+export function hasFrontendSubscription(): boolean {
+  return hasDemoSubscription();
+}
+
+/** @deprecated Use hasFrontendSubscription */
 export function hasDemoSubscription(): boolean {
   if (typeof window === "undefined") return false;
   return window.sessionStorage.getItem(DEMO_SUBSCRIPTION_KEY) === "active";

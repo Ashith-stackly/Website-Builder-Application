@@ -27,6 +27,8 @@ import {
   FaCertificate,
 } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
+import { assetPath } from "@/lib/paths";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BUILDING_HREF = "/signup";
 
@@ -348,12 +350,12 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
 // --- DATA ARRAYS ---
 const allProjectsData = [
-  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: "/construction.webp" },
-  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: "/Architect.webp" },
-  { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: "/Restaurant.webp" },
-  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: "/building.webp" },
-  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: "/interior.webp" },
-  { id: 6, title: "Oakwood Homes", category: "Residential", desc: "Beautiful, family-friendly residential construction built with sustainable materials and modern amenities.", img: "/residential.webp" },
+  { id: 1, title: "Build Master", category: "Construction", desc: "Delivering reliable construction solutions with exceptional craftsmanship, innovative design, and lasting quality for every project.", img: assetPath("/construction1.webp") },
+  { id: 2, title: "Architect", category: "Architecture", desc: "Transforming ideas into innovative architectural designs that blend functionality, aesthetics, and sustainability for lasting impact.", img: assetPath("/architech.webp") },
+  { id: 3, title: "Restaurant", category: "Renovation", desc: "Transforming existing spaces into modern, functional, and visually stunning environments through expert renovation solutions.", img: assetPath("/Restaurant.webp") },
+  { id: 4, title: "Skyline Tower", category: "Building", desc: "A towering achievement in modern commercial building engineering, offering sustainable and intelligent workspace solutions.", img: assetPath("/skyline.webp") },
+  { id: 5, title: "Luxe Living", category: "Interior", desc: "Premium interior design solutions that maximize space utility while delivering breathtaking visual aesthetics.", img: assetPath("/interio.webp") },
+  { id: 6, title: "Oakwood Homes", category: "Residential", desc: "Beautiful, family-friendly residential construction built with sustainable materials and modern amenities.", img: assetPath("/residential.webp") },
 ];
 
 const services = [
@@ -371,40 +373,40 @@ const processSteps = [
 
 const recentProjects = [
   {
-    img: "/lux.webp",
+    img: assetPath("/luxury.webp"),
     title: "Luxury Resort",
     category: "Hospitality",
     desc: "A breathtaking luxury resort featuring modern amenities and stunning natural surroundings."
   },
   {
-    img: "/interior.webp",
+    img: assetPath("/interior.webp"),
     title: "Corporate HQ",
     category: "Commercial",
     desc: "State-of-the-art corporate headquarters designed for collaboration and innovation."
   },
   {
-    img: "/resident.webp",
+    img: assetPath("/residental1.webp"),
     title: "Eco Residence",
     category: "Residential",
     desc: "Environmentally friendly home construction with sustainable materials and smart energy solutions."
   },
   {
-    img: " /infra.webp",
+    img: assetPath("/infra.webp"),
     title: "Skyline Bridge",
     category: "Infrastructure",
     desc: "A marvel of modern engineering connecting the city's key financial districts."
   },
   {
-    img: "/Architect.webp",
+    img: assetPath("/Architect.webp"),
     title: "Urban Center",
     category: "Architecture",
     desc: "A modern commercial building offering sustainable and intelligent workspace solutions."
   },
   {
-    img: " /renov.webp",
-    title: "City Plaza Renovation",
+    img: assetPath("/renov.webp"),
+    title: " Renovation Works",
     category: "Renovation",
-    desc: "Revitalizing a historic city plaza with contemporary design elements and improved accessibility."
+    desc: "Renovating residential and commercial buildings to improve aesthetics, comfort, functionality, and long-term durability."
   },
 ];
 
@@ -421,12 +423,12 @@ const faqs = [
 ];
 
 const testimonialsData = [
-  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: "/mical.webp" },
-  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: "/sara.webp" },
-  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: "/david.webp" },
-  { name: "Elena Rodriguez", role: "Commercial Investor", text: "From the initial consultation to the final handover, the process was seamless. They managed our commercial build flawlessly, keeping us strictly within our budget without compromising on materials.", img: "/elina.webp" },
-  { name: "Marcus Chen", role: "Restaurant Owner", text: "Renovating our flagship restaurant while keeping operations running was a massive challenge. BuildNest coordinated everything perfectly. The new interior design is absolutely breathtaking.", img: "/marcus.webp" },
-  { name: "Sophia Patel", role: "Residential Client", text: "We trusted them with our dream home, and they delivered beyond measure. Their landscape development team specifically did an incredible job tying the outdoor living space to our architecture.", img: "/sopia.webp" },
+  { name: "Michael Anderson", role: "CEO, Anderson Realty Group", text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.", img: assetPath("/mical.webp") },
+  { name: "Sarah Thompson", role: "Homeowner", text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful.", img: assetPath("/sara.webp") },
+  { name: "David Wilson", role: "Property Developer", text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.", img: assetPath("/david.webp") },
+  { name: "Elena Rodriguez", role: "Commercial Investor", text: "From the initial consultation to the final handover, the process was seamless. They managed our commercial build flawlessly, keeping us strictly within our budget without compromising on materials.", img: assetPath("/elina.webp") },
+  { name: "Marcus Chen", role: "Restaurant Owner", text: "Renovating our flagship restaurant while keeping operations running was a massive challenge. BuildNest coordinated everything perfectly. The new interior design is absolutely breathtaking.", img: assetPath("/marcus.webp") },
+  { name: "Sophia Patel", role: "Residential Client", text: "We trusted them with our dream home, and they delivered beyond measure. Their landscape development team specifically did an incredible job tying the outdoor living space to our architecture.", img: assetPath("/sopia.webp") },
 ];
 
 const infiniteTestimonials = Array(50).fill(testimonialsData).flat();
@@ -435,7 +437,10 @@ const infiniteTestimonials = Array(50).fill(testimonialsData).flat();
 // MAIN TEMPLATE
 // =========================================================================
 export default function ConstructionTemplatePage() {
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : deviceMode;
   const [email, setEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -452,7 +457,7 @@ export default function ConstructionTemplatePage() {
       setTimeout(() => setNewsletterStatus("idle"), 5000);
     }, 1500);
   };
-  const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
+  const r = useCallback((classes: string) => getModeClasses(classes, activeDeviceMode), [activeDeviceMode]);
   const [activeTab, setActiveTab] = useState("All Projects");
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
@@ -605,46 +610,47 @@ export default function ConstructionTemplatePage() {
     activeTab === "All Projects" ? allProjectsData : allProjectsData.filter((p) => p.category === activeTab);
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer">
-      {/* FLOATING DEVICE TOOLBAR */}
-      <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
-        <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
-          <Link
-            href="/landing#templates"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white hover:bg-gray-50 text-[#0A1E3D] transition"
-            title="Back to Landing"
-          >
-            <FaEye size={16} />
-          </Link>
-          <div className="w-px h-6 bg-gray-300 mx-1" />
-          <button
-            aria-label="Desktop View"
-            onClick={() => setDeviceMode("desktop")}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "desktop" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
-          >
-            <FaLaptop size={16} />
-          </button>
-          <button
-            aria-label="Tablet View"
-            onClick={() => setDeviceMode("tablet")}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "tablet" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
-          >
-            <FaTabletAlt size={16} />
-          </button>
-          <button
-            aria-label="Mobile View"
-            onClick={() => setDeviceMode("mobile")}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "mobile" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
-          >
-            <FaMobileAlt size={16} />
-          </button>
+    <main className={isBlockpages ? "@container construction-shell w-full min-w-0 max-w-full overflow-x-hidden bg-[#FDF8F5] font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer"}>
+      {!isBlockpages && (
+        <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+          <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
+            <Link
+              href="/landing#templates"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white hover:bg-gray-50 text-[#0A1E3D] transition"
+              title="Back to Landing"
+            >
+              <FaEye size={16} />
+            </Link>
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+            <button
+              aria-label="Desktop View"
+              onClick={() => setDeviceMode("desktop")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "desktop" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
+            >
+              <FaLaptop size={16} />
+            </button>
+            <button
+              aria-label="Tablet View"
+              onClick={() => setDeviceMode("tablet")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "tablet" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
+            >
+              <FaTabletAlt size={16} />
+            </button>
+            <button
+              aria-label="Mobile View"
+              onClick={() => setDeviceMode("mobile")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "mobile" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
+            >
+              <FaMobileAlt size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className={`flex-1 flex justify-center w-full ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         <div
-          ref={canvasScrollRef}
-          className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto ${deviceMode === "mobile"
+          ref={isBlockpages ? undefined : canvasScrollRef}
+          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto ${deviceMode === "mobile"
             ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
             : deviceMode === "tablet"
               ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
@@ -652,7 +658,7 @@ export default function ConstructionTemplatePage() {
             }`}
         >
           <div className="w-full overflow-x-hidden bg-[#FDF8F5]">
-            <ConstructionHeader deviceMode={deviceMode} />
+            <ConstructionHeader deviceMode={activeDeviceMode} />
 
             {/* =================================================================
                 1. HERO
@@ -663,7 +669,7 @@ export default function ConstructionTemplatePage() {
                   <div className={r("absolute inset-0 md:left-1/3")}>
                     <div className={r("absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#CDC7C0] via-[#CDC7C0]/85 to-[#CDC7C0]/40 md:to-transparent z-10")} />
                     <img
-                      src="/construnction.webp"
+                      src={assetPath("/construnction.webp")}
                       alt="Construction Silhouette"
                       className={r("w-full h-full object-cover object-center mix-blend-multiply opacity-40 md:opacity-90")}
                       loading="eager"
@@ -859,7 +865,7 @@ export default function ConstructionTemplatePage() {
                     </div>
                     <div className={r("rounded-2xl overflow-hidden shadow-lg h-52 sm:h-64 lg:h-[350px]")}>
                       <img
-                        src="/services.webp"
+                        src={assetPath("/Build.webp")}
                         className="w-full h-full object-cover"
                         alt="Construction team"
                         loading="lazy"
@@ -906,7 +912,7 @@ export default function ConstructionTemplatePage() {
                   </h2>
                   <div className={r("rounded-2xl overflow-hidden shadow-lg w-full h-56 sm:h-72 lg:h-[400px]")}>
                     <img
-                      src="/plan.webp"
+                      src={assetPath("/plan.webp")}
                       alt="Construction Process"
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -999,9 +1005,9 @@ export default function ConstructionTemplatePage() {
                     >
                       <img src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E3D] via-[#0A1E3D]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 sm:p-8">
-                        <span className="text-blue-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project.category}</span>
-                        <h3 className="text-white font-black text-xl sm:text-3xl mb-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">{project.title}</h3>
-                        <p className="text-white/80 text-sm leading-relaxed line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150">{project.desc}</p>
+                        <span className={r("text-blue-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500")}>{project.category}</span>
+                        <h3 className={r("text-white font-black text-xl sm:text-3xl mb-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75")}>{project.title}</h3>
+                        <p className={r("text-white/80 text-xs sm:text-sm leading-relaxed line-clamp-none sm:line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150")}>{project.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -1183,7 +1189,7 @@ export default function ConstructionTemplatePage() {
             ================================================================= */}
             <section className={r("w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-24 sm:px-6 lg:px-8")}>
               <div className={r("max-w-7xl mx-auto bg-[#EAF2FA] rounded-3xl p-6 flex flex-col gap-8 overflow-hidden shadow-sm border border-white sm:rounded-[2.5rem] sm:p-10 md:p-16 md:flex-row md:items-center md:gap-12")}>
-                <div className="w-full md:w-1/2 relative z-30">
+                <div className={r("w-full md:w-1/2 relative z-30")}>
                   <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight mb-4 sm:text-3xl md:text-5xl sm:mb-6")}>
                     Let&apos;s Build Together with Expert Construction Services
                   </h2>
@@ -1199,13 +1205,13 @@ export default function ConstructionTemplatePage() {
                 </div>
                 <div className={r("w-full md:w-1/2 relative h-44 sm:h-60 md:h-auto flex items-center justify-center")}>
                   <img
-                    src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop"
+                    src={assetPath("/draw.webp")}
                     className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl -rotate-12 -translate-x-5 sm:-translate-x-8 md:-translate-x-8 lg:-translate-x-12 z-10 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Architecture"
                     loading="lazy"
                   />
                   <img
-                    src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800&auto=format&fit=crop"
+                    src={assetPath("/skyline.webp")}
                     className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl rotate-12 translate-x-5 sm:translate-x-8 md:translate-x-8 lg:translate-x-12 z-20 grayscale hover:grayscale-0 transition-all duration-500")}
                     alt="Building"
                     loading="lazy"
@@ -1219,7 +1225,7 @@ export default function ConstructionTemplatePage() {
             ================================================================= */}
             <section id="const-contact" className={r("w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-24 sm:px-6 lg:px-8")}>
               <div className={r("max-w-7xl mx-auto flex flex-col gap-10 md:flex-row md:gap-16 lg:gap-24")}>
-                <div className="w-full md:w-1/2">
+                <div className={r("w-full md:w-1/2")}>
                   <p className={r("text-gray-900 font-medium uppercase tracking-widest text-xs sm:text-sm flex items-center gap-3 mb-3 sm:gap-4 sm:mb-4")}>
                     <span className={r("w-8 h-px bg-gray-400 block shrink-0 sm:w-12")} /> Contact Us
                   </p>
@@ -1537,9 +1543,11 @@ export default function ConstructionTemplatePage() {
         </div>
       </div>
 
-      <div className="mt-4 md:mt-8 w-full">
-        <Footer />
-      </div>
+      {!isBlockpages && (
+        <div className="mt-4 md:mt-8 w-full">
+          <Footer />
+        </div>
+      )}
     </main>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect, FormEvent } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence, useMotionValueEvent, useReducedMotion, useScroll, animate, useMotionValue, useTransform, useInView } from "framer-motion";
 import {
@@ -28,6 +27,11 @@ import {
 } from "react-icons/fa6";
 import { assetPath } from "@/lib/paths";
 import Footer from "@/components/Footer";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+
+function dmAsset(path: string) {
+  return encodeURI(assetPath(path));
+}
 
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -133,21 +137,21 @@ const testimonials = [
     name: "Michael Anderson",
     role: "CEO, Anderson Realty Group",
     text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.",
-    img: "/Michael Anderson.webp",
+    img: dmAsset("/Michael Anderson.webp"),
     isDark: false,
   },
   {
     name: "Sarah Thompson",
     role: "",
     text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful",
-    img: "/Sarah Thompson.webp",
+    img: dmAsset("/Sarah Thompson.webp"),
     isDark: true,
   },
   {
     name: "David Wilson",
     role: "",
     text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.",
-    img: "/David Wilson.webp",
+    img: dmAsset("/David Wilson.webp"),
     isDark: false,
   },
 ];
@@ -407,7 +411,10 @@ function CountUp({ targetValue, suffix = "", prefix = "", decimals = 0 }: { targ
 }
 
 export default function DigitalMarketingPreviewPage() {
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [previewMode, setPreviewMode] = useState("preview");
+  const activePreviewMode = isBlockpages ? "desktop" : previewMode;
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
   const [innerNavHidden, setInnerNavHidden] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(1);
@@ -466,12 +473,12 @@ export default function DigitalMarketingPreviewPage() {
   ];
 
   return (
-    <main className="site-page flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-white">
-      <div className="flex w-full max-w-full flex-1 overflow-x-hidden">
-        <div className="flex min-w-0 flex-1 justify-center overflow-x-hidden bg-white p-4 @md:p-7">
-          <div className="relative flex w-full max-w-[1200px] min-w-0 flex-col overflow-x-hidden">
-            {/* Preview toolbar - matches portfolio preview UX */}
-            <div className="fixed bottom-6 left-1/2 z-[100] hidden -translate-x-1/2 @lg:bottom-auto @lg:top-[50%] @lg:-translate-y-1/2 md:block">
+    <main className={`${isBlockpages ? "@container w-full max-w-full min-w-0 overflow-x-hidden" : "site-page flex min-h-screen w-full max-w-full flex-col overflow-x-hidden"} bg-white`}>
+      <div className={`flex w-full max-w-full ${isBlockpages ? "min-w-0" : "flex-1 overflow-x-hidden"}`}>
+        <div className={`flex min-w-0 ${isBlockpages ? "w-full" : "flex-1 justify-center overflow-x-hidden bg-white p-4 @md:p-7"}`}>
+          <div className={`relative flex w-full min-w-0 flex-col overflow-x-hidden ${isBlockpages ? "" : "max-w-[1200px]"}`}>
+            {!isBlockpages ? (
+            <div className="fixed bottom-6 left-1/2 z-[100] hidden -translate-x-1/2 @lg:bottom-auto @lg:top-[50%] @lg:-translate-y-1/2 md:block" data-template-chrome="true" data-device-preview-toolbar="true">
               <div className="flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] @sm:gap-2">
                 {[
                   { mode: "preview", icon: FaEye, title: "Preview" },
@@ -495,18 +502,21 @@ export default function DigitalMarketingPreviewPage() {
                 ))}
               </div>
             </div>
+            ) : null}
 
             <div
-              ref={canvasScrollRef}
-              className={`relative z-0 min-w-0 flex-1 overflow-visible transition-colors duration-300 ${previewMode === "tablet" || previewMode === "mobile" ? "rounded-xl bg-gray-200/50 p-2 @sm:p-4" : ""
+              ref={isBlockpages ? undefined : canvasScrollRef}
+              className={`relative z-0 min-w-0 ${isBlockpages ? "w-full" : "flex-1 overflow-visible transition-colors duration-300"} ${!isBlockpages && (activePreviewMode === "tablet" || activePreviewMode === "mobile") ? "rounded-xl bg-gray-200/50 p-2 @sm:p-4" : ""
                 }`}
             >
               <div
-                className={`dm-shell @container break-words min-w-0 relative mx-auto flex min-h-[33rem] flex-col overflow-hidden bg-[#FFF5F5] transition-all duration-500 ease-in-out ${previewMode === "mobile"
+                className={`dm-shell @container break-words min-w-0 relative mx-auto flex min-h-[33rem] flex-col overflow-hidden bg-[#FFF5F5] transition-all duration-500 ease-in-out ${isBlockpages
+                  ? "w-full max-w-full"
+                  : activePreviewMode === "mobile"
                   ? "w-full max-w-[375px] rounded-xl border-2 border-gray-300 shadow-2xl"
-                  : previewMode === "tablet"
+                  : activePreviewMode === "tablet"
                     ? "w-full max-w-[768px] rounded-xl border-2 border-gray-300 shadow-2xl"
-                    : previewMode === "desktop"
+                    : activePreviewMode === "desktop"
                       ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
                       : "w-full max-w-full"
                   }`}
@@ -523,13 +533,12 @@ export default function DigitalMarketingPreviewPage() {
                         href="/landing"
                         className="flex h-7 w-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[50%] bg-white px-1 @sm:h-8 @sm:w-[72px]"
                       >
-                        <Image
+                        <img
                           src={assetPath("/stackly-logo.webp")}
                           alt="Stackly logo"
                           width={80}
                           height={24}
-                          className="h-[10px] object-contain @sm:h-[12px]"
-                          unoptimized
+                          className="h-[10px] w-auto object-contain @sm:h-[12px]"
                         />
                       </Link>
                       <span className="break-words text-[clamp(0.75rem,2.5vw,0.875rem)] font-semibold text-white @sm:text-sm">
@@ -548,7 +557,7 @@ export default function DigitalMarketingPreviewPage() {
                   <div className="relative hidden w-full items-center justify-between @3xl:flex">
                     <div className="z-10 flex shrink-0 items-center justify-start">
                       <Link href="/landing" className="flex h-10 min-w-[92px] items-center justify-center rounded-[50%] bg-white px-3">
-                        <Image src={assetPath("/stackly-logo.webp")} alt="Stackly logo" width={92} height={28} className="h-[18px] w-auto" unoptimized />
+                        <img src={assetPath("/stackly-logo.webp")} alt="Stackly logo" width={92} height={28} className="h-[18px] w-auto object-contain" />
                       </Link>
                     </div>
                     <span className="pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-lg font-semibold text-white">
@@ -599,7 +608,7 @@ export default function DigitalMarketingPreviewPage() {
                       whileInView={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 1 }}
                       viewport={{ once: true }}
-                      src="/Digital marketing.webp"
+                      src={dmAsset("/Digital Marketing.webp")}
                       alt="Precision Marketing"
                       className="h-full w-full object-cover"
                     />
@@ -658,13 +667,13 @@ export default function DigitalMarketingPreviewPage() {
                         {
                           badge: "Mission",
                           text: "Our mission is to help businesses grow through innovative digital marketing strategies that increase visibility, engagement, and measurable results.",
-                          img: "/Digital marketing mission.webp",
+                          img: dmAsset("/Digital marketing mission.webp"),
                           reverse: false,
                         },
                         {
                           badge: "Vision",
                           text: "To empower businesses with innovative digital marketing solutions that drive growth, enhance brand visibility, and create lasting success in the digital world.",
-                          img: "/Digital marketing vision.webp",
+                          img: dmAsset("/Digital marketing vision.webp"),
                           reverse: true,
                         },
                       ].map((card) => (
@@ -755,7 +764,7 @@ export default function DigitalMarketingPreviewPage() {
                     </motion.div>
                     <motion.div variants={slideInRight} className="min-w-0 w-full overflow-hidden rounded-2xl shadow-xl">
                       <img
-                        src="/Business planning.webp"
+                        src={dmAsset("/Business planning.webp")}
                         alt="Business planning"
                         className="w-full h-auto object-cover"
                         loading="lazy"
@@ -781,7 +790,7 @@ export default function DigitalMarketingPreviewPage() {
                             <div className="relative w-fit max-w-full">
                               <div className="w-full max-w-md border-2 border-[#1E56E5] p-1">
                                 <img
-                                  src="/Organic traffic.webp"
+                                  src={dmAsset("/Organic traffic.webp")}
                                   alt="Analytics dashboard"
                                   className="w-auto h-auto max-w-full max-h-[45vh] object-contain"
                                   loading="lazy"
@@ -1077,7 +1086,7 @@ export default function DigitalMarketingPreviewPage() {
         </div>
       </div>
 
-      <Footer />
+      {!isBlockpages && <Footer />}
     </main>
   );
 }

@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import TextCanvas from "./Canvas";
 import TextRightSidebar from "./RightSidebar";
 import type { TextBlockState, TextTemplateType } from "./types";
+import { parseBlockpagesTemplate } from "@/lib/blockpagesTemplates";
  
 const initialTextBlockState: TextBlockState = {
   selectedTarget: "main",
@@ -28,7 +29,7 @@ const initialTextBlockState: TextBlockState = {
  
 export default function TextBlockPage() {
   const searchParams = useSearchParams();
-  const template: TextTemplateType = searchParams.get("template") === "portfolio" ? "portfolio" : "ecommerce";
+  const template: TextTemplateType = parseBlockpagesTemplate(searchParams.get("template"));
   const [textBlockState, setTextBlockState] = useState<TextBlockState>(initialTextBlockState);
   const [pastStates, setPastStates] = useState<TextBlockState[]>([]);
   const [futureStates, setFutureStates] = useState<TextBlockState[]>([]);
