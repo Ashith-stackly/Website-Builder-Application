@@ -338,8 +338,8 @@ function Footer() {
             <div className="w-full md:w-1/2">
               <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-white">Subscribe to our Updates</h3>
               <p className="mb-4 max-w-md text-sm leading-relaxed text-white/60">Get template drops, builder updates, and product notes in your inbox.</p>
-              <form onSubmit={handleSubscribe} className="flex flex-wrap items-center gap-3 w-full max-w-md" aria-label="Subscribe to updates form" noValidate>
-                <div className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300 min-w-[240px]">
+              <form onSubmit={handleSubscribe} className="flex flex-col gap-3 w-full max-w-md" aria-label="Subscribe to updates form" noValidate>
+                <div className="flex w-full min-w-0 items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300">
                   <label className="relative flex flex-grow items-center min-w-0">
                     <span className="sr-only">Email address</span>
                     <FaEnvelope6 className="absolute left-4 text-gray-400" />
@@ -463,7 +463,7 @@ function Footer() {
 export default function Portfolioedit() {
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
   const [innerNavHidden, setInnerNavHidden] = useState(false);
-  const [previewMode, setPreviewMode] = useState("preview");
+  const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
   const [isEditMode, setIsEditMode] = useState(false);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
   const { scrollY: canvasScrollY } = useScroll();
@@ -557,84 +557,45 @@ export default function Portfolioedit() {
   const portfolioNavHidden = innerNavHidden && !innerMobileMenuOpen && !prefersReducedMotion;
 
   return (
-    <main className="site-page flex flex-col min-h-screen bg-white w-full max-w-full overflow-x-hidden">
-      {/* ====== MAIN BUILDER LAYOUT ====== */}
-      <div className="flex flex-1 overflow-x-hidden max-w-full w-full">
-        {/* MAIN CONTENT */}
-        <div className="flex-1 bg-white p-4 @md:p-7 flex justify-center min-w-0 overflow-x-hidden max-w-full w-full">
-          <div className="w-full max-w-[1200px] relative flex flex-col min-w-0 overflow-x-hidden">
-            {/* FIXED/FLOATING PREVIEW TOOLBAR */}
-            <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block">
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
-                 <button
-                   onClick={() => setPreviewMode("preview")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "preview"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Preview"
-                 >
-                    <FaEye size={14} />
-                 </button>
-                 <button
-                   onClick={() => setPreviewMode("desktop")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "desktop"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Desktop View"
-                 >
-                    <FaLaptop size={14} />
-                 </button>
-                 <button
-                   onClick={() => setPreviewMode("tablet")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "tablet"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Tablet View"
-                 >
-                    <FaTabletAlt size={14} />
-                 </button>
-                 <button
-                   onClick={() => setPreviewMode("mobile")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "mobile"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Mobile View"
-                 >
-                    <FaMobileAlt size={14} />
-                 </button>
-              </div>
-            </div>
+    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
+      <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+        <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
+          <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
+            <FaEye size={16} />
+          </Link>
+          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+          <button onClick={() => setDeviceMode("desktop")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "desktop" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Desktop View">
+            <FaLaptop size={16} />
+          </button>
+          <button onClick={() => setDeviceMode("tablet")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "tablet" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Tablet View">
+            <FaTabletAlt size={16} />
+          </button>
+          <button onClick={() => setDeviceMode("mobile")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "mobile" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Mobile View">
+            <FaMobileAlt size={16} />
+          </button>
+        </div>
+      </div>
 
-            {/* Canvas Box */}
-            <div ref={canvasScrollRef} className={`flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300 ${(previewMode === "tablet" || previewMode === "mobile") ? "bg-gray-200/50 p-2 @sm:p-4 rounded-xl" : ""}`}>
-              <div className={`@container mx-auto min-h-[530px] bg-[#F2F2F2] flex flex-col relative portfolio-shell overflow-hidden box-border transition-all duration-500 ease-in-out ${
-                previewMode === "mobile"
-                  ? "w-[375px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
-                  : previewMode === "tablet"
-                    ? "w-[768px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
-                    : previewMode === "desktop"
-                      ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
-                      : "w-full max-w-full"
-              }`}>
+      <div className={`flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+        {/* RESPONSIVE CANVAS FRAME */}
+        <div
+          ref={canvasScrollRef}
+          className={`@container bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "desktop" ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
+            : "w-full min-h-screen"
+            }`}
+        >
+          <div className="w-full max-w-full overflow-x-hidden min-w-0">
+            <motion.div
+              className="sticky top-0 z-50 backdrop-blur-md bg-[#06224C]/95 flex w-full flex-wrap items-center justify-between gap-2 @sm:gap-4 px-3 @sm:px-4 py-2 @sm:py-3 @md:px-8 @xl:flex-nowrap border-b border-gray-300"
+              animate={{
+                y: portfolioNavHidden ? -96 : 0,
+                opacity: portfolioNavHidden ? 0 : 1,
+              }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
 
-
-                {/* <div className="flex w-full flex-wrap items-center justify-between gap-2 @sm:gap-4 px-3 @sm:px-4 py-2 @sm:py-3 @md:px-8 @xl:flex-nowrap border-b border-gray-300 bg-[#06224C] rounded-t-xl"> */}
-                <motion.div
-                  className="sticky top-0 z-50 backdrop-blur-md bg-[#06224C]/95 flex w-full flex-wrap items-center justify-between gap-2 @sm:gap-4 px-3 @sm:px-4 py-2 @sm:py-3 @md:px-8 @xl:flex-nowrap border-b border-gray-300 rounded-t-xl"
-                  animate={{
-                    y: portfolioNavHidden ? -96 : 0,
-                    opacity: portfolioNavHidden ? 0 : 1,
-                  }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                >
 
                   {/* ✅ MOBILE LAYOUT */}
                   <div className="flex w-full items-center justify-between @3xl:hidden relative px-1 flex-wrap gap-2">
@@ -1564,9 +1525,7 @@ export default function Portfolioedit() {
             </div>
           </div>
         </div>
-      </div>
-      </div>
-      {(previewMode === "desktop" || previewMode === "preview" || previewMode === "tablet") && <Footer />}
+      {(deviceMode === "desktop" || deviceMode === "preview") && <Footer />}
     </main>
   );
 }

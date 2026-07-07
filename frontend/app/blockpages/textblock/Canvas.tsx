@@ -5,6 +5,7 @@ import { ChevronDown, Eye, Redo2, Save, Send, Undo2 } from "lucide-react";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import { routePath } from "@/lib/paths";
 import { getBlockpagesTemplateLabel } from "@/lib/blockpagesTemplates";
+import { buildBlockpagesSectionStylesCss } from "@/lib/blockpagesTemplateSections";
 import PortfolioPreview from "./PortfolioPreview";
 import StorefrontPreview from "./StorefrontPreview";
 import TemplatePreviewRouter from "./TemplatePreviewRouter";
@@ -319,6 +320,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               `}</style>
             ) : null}
             <style>{`
+              ${buildBlockpagesSectionStylesCss(state.sectionStyles)}
  
               [data-textblock-canvas] .buyscreen-header,
               [data-textblock-canvas] .buyscreen-categories,
@@ -403,6 +405,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               >
                 <div
                   data-textblock-canvas
+                  data-blockpages-scroll-root
                   className="@container min-h-[560px] h-[calc(100vh-220px)] w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar [overflow-wrap:break-word] [word-wrap:break-word]"
                 >
                   <style>{`
@@ -411,12 +414,21 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     [data-textblock-canvas] .restaurant-shell,
                     [data-textblock-canvas] .construction-shell,
                     [data-textblock-canvas] .blog-page,
+                    [data-textblock-canvas] .blog-blockpages-root,
                     [data-textblock-canvas] .dm-shell {
                       max-width: 100%;
                       min-width: 0;
                       overflow-x: hidden;
                       overflow-y: visible;
                       box-sizing: border-box;
+                    }
+                    [data-textblock-canvas] .blog-blockpages-root,
+                    [data-textblock-canvas] .blog-blockpages-root > div,
+                    [data-textblock-canvas] .dm-shell,
+                    [data-textblock-canvas] .dm-shell > div {
+                      min-height: auto !important;
+                      max-height: none !important;
+                      overflow-y: visible !important;
                     }
                     [data-textblock-canvas] h1,
                     [data-textblock-canvas] h2,
@@ -502,6 +514,11 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         editingButtonId={editingButtonId}
                         isVideoEditingMode={isVideoEditingMode}
                         onEditVideo={onEditVideo}
+                        videoBlocks={videoBlocks}
+                        isIconEditingMode={isIconEditingMode}
+                        onEditIcon={onEditIcon}
+                        editingIconId={editingIconId}
+                        customIcons={customIcons}
                         appliedDividers={appliedDividers}
                         onRemoveDivider={onRemoveDivider}
                         onUpdateDividerPosition={onUpdateDividerPosition}

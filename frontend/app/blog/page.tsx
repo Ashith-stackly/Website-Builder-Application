@@ -13,10 +13,7 @@ import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BLOGGING_HREF = "/blog/manage/create";
 
-function scrollBlogPreviewToTop() {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  document.getElementById("blog-home")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
+
 
 function scrollToBlogSection(sectionId: string) {
   const target = document.getElementById(sectionId);
@@ -643,8 +640,7 @@ export default function BlogPage() {
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState(0);
   const [hireMoreOpen, setHireMoreOpen] = useState(false);
-  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
-  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : deviceMode;
+  const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const categoriesRef = useRef<HTMLElement | null>(null);
@@ -678,47 +674,46 @@ export default function BlogPage() {
       : blogCategories.filter((blog) => blog.id === selectedCategory);
 
   return (
-    <main className={`${isBlockpages ? "@container blog-page w-full max-w-full min-w-0 overflow-x-hidden" : "site-page blog-page flex flex-col min-h-screen bg-white overflow-visible w-full max-w-full min-w-0"} font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%]`}>
-      <div className={`${isBlockpages ? "w-full min-w-0" : "flex flex-1"}`}>
-        {/* MAIN CONTENT */}
-        <div className={`${isBlockpages ? "w-full min-w-0" : "flex-1 bg-white p-[clamp(0.35rem,2cqw,1.75rem)] flex justify-center min-w-0"}`}>
-          <div className={`${isBlockpages ? "w-full min-w-0" : "w-full max-w-[1200px] relative flex flex-col min-w-0"}`}>
-            {!isBlockpages ? (
-            <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
-              <div className="blog-device-toolbar-inner flex items-center gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5 @max-[340px]:p-1 @max-[340px]:px-2 @max-[340px]:gap-1">
-                <button
-                  type="button"
-                  onClick={scrollBlogPreviewToTop}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition"
-                  title="Preview"
-                  aria-label="Scroll preview to top"
-                >
-                  <FaEye size={14} />
-                </button>
-                <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
-                <button onClick={() => setDeviceMode("desktop")} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
-                  <FaLaptop size={14} />
-                </button>
-                <button onClick={() => setDeviceMode("tablet")} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "tablet" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Tablet View">
-                  <FaTabletAlt size={14} />
-                </button>
-                <button onClick={() => setDeviceMode("mobile")} className={`w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition ${deviceMode === "mobile" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Mobile View">
-                  <FaMobileAlt size={14} />
-                </button>
-              </div>
-            </div>
-            ) : null}
+    <main
+      className={
+        isBlockpages
+          ? "@container blog-blockpages-root w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible bg-[var(--blog-white)] font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer"
+          : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6"
+      }
+    >
+      {!isBlockpages && (
+        <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+          <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
+            <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
+              <FaEye size={16} />
+            </Link>
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <button onClick={() => setDeviceMode("desktop")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "desktop" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Desktop View">
+              <FaLaptop size={16} />
+            </button>
+            <button onClick={() => setDeviceMode("tablet")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "tablet" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Tablet View">
+              <FaTabletAlt size={16} />
+            </button>
+            <button onClick={() => setDeviceMode("mobile")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "mobile" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Mobile View">
+              <FaMobileAlt size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
-            {/* Canvas Box */}
-            <div ref={isBlockpages ? undefined : canvasScrollRef} className={`${isBlockpages ? "w-full min-w-0" : "flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300"} ${!isBlockpages && activeDeviceMode !== "desktop" ? "bg-gray-200/50 p-2 @@min-[640px]:p-4 rounded-xl" : ""}`}>
-              <div className={`${isBlockpages ? "w-full min-w-0" : "@container mx-auto w-full min-h-[530px] bg-[#F2F2F2] rounded-xl border-2 border-gray-300 flex flex-col relative overflow-hidden transition-all duration-500 ease-in-out"} ${!isBlockpages && activeDeviceMode === "mobile"
-                  ? "max-w-[375px] shadow-2xl"
-                  : !isBlockpages && activeDeviceMode === "tablet"
-                    ? "max-w-[768px] shadow-2xl"
-                    : !isBlockpages ? "max-w-full" : ""
-                }`}>
-                <div className={`blog-page w-full max-w-full overflow-x-hidden min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%] ${isBlockpages ? "" : "overflow-visible"}`}>
-                  <BlogHeader selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+        {/* RESPONSIVE CANVAS FRAME */}
+        <div
+          ref={isBlockpages ? undefined : canvasScrollRef}
+          className={isBlockpages ? "@container w-full min-w-0" : `@container bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "desktop" ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
+            : "w-full min-h-screen"
+            }`}
+        >
+          <div className="w-full max-w-full overflow-x-hidden min-w-0">
+            <div className={`blog-page w-full max-w-full overflow-x-hidden min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%] ${isBlockpages ? "" : "overflow-visible"}`}>
+              <BlogHeader selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
 
                   {/* Top — continuous hero + image + templates (matches screenshot flow) */}
                   <div
@@ -1012,7 +1007,7 @@ export default function BlogPage() {
                             onClick={openCategoryPage}
                             className="group/card w-full flex flex-col h-full p-0 bg-[var(--blog-white)] rounded-[var(--blog-radius-md)] overflow-hidden shadow-[0_4px_20px_rgba(0,31,63,0.08)] text-left [scroll-margin-top:var(--blog-scroll-offset)] border-2 border-transparent cursor-pointer transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[4px] @max-[899px]:hover:translate-y-0 target:border-[var(--blog-accent)] target:outline-2 target:outline-[var(--blog-accent)] target:outline-offset-4 @max-[899px]:target:outline-offset-2 target:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           >
-                            <div className="blog-category-card-image h-[200px] w-full overflow-hidden rounded-t-[var(--blog-radius-md)] shrink-0">
+                            <div className="blog-category-card-image aspect-[16/10] w-full overflow-hidden rounded-t-[var(--blog-radius-md)] shrink-0">
                               <img
                                 className="block w-full h-full object-cover transition-transform duration-250 ease group-hover/card:scale-[1.04]"
                                 src={assetPath(category.image)}
@@ -1184,9 +1179,8 @@ export default function BlogPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      {!isBlockpages && <Footer />}
+
+      {!isBlockpages && (deviceMode === "desktop" || deviceMode === "preview") && <Footer />}
 
       <style jsx={false}>{`
         .blog-page {

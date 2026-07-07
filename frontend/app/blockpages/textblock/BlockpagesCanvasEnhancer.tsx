@@ -1,16 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createElement, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import { motion } from "framer-motion";
 import { FaMinus, FaPen, FaPlus, FaTrash } from "react-icons/fa";
 import type { BlockData } from "../buttonblock/types";
 import type { DividerBlockProps } from "../dividerblock/types";
 import type { IconBlockProps } from "../iconsblock/types";
+import type { VideoBlockData } from "../videoblock/types";
 import { applyCustomButtonStyle } from "@/lib/blockpagesButtonStyles";
+import {
+  collectEditableIconAnchors,
+  findCanvasVideoSlot,
+} from "@/lib/blockpagesEditTargets";
 import DividerPreview from "../dividerblock/DividerPreview";
 import IconPreview from "../iconsblock/IconPreview";
+import BlockpagesInlineVideo from "../videoblock/BlockpagesInlineVideo";
 
-type OverlayKind = "image" | "button" | "video";
+type OverlayKind = "image" | "button" | "video" | "icon";
 
 type EditOverlayTarget = {
   id: string;
@@ -35,6 +42,8 @@ type BlockpagesCanvasEnhancerProps = {
   isIconEditingMode?: boolean;
   onEditIcon?: (iconId: string) => void;
   editingIconId?: string | null;
+  customIcons?: Record<string, IconBlockProps>;
+  videoBlocks?: VideoBlockData[];
   appliedDividers?: { id: string; props: DividerBlockProps; position?: { x: number; y: number }; scale?: number }[];
   onRemoveDivider?: (id: string) => void;
   onUpdateDividerPosition?: (id: string, position: { x: number; y: number }) => void;
@@ -52,12 +61,15 @@ const OVERLAY_BUTTON_CLASS: Record<OverlayKind, string> = {
     "bg-white/90 text-gray-800 p-1.5 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform border border-gray-200",
   video:
     "bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform border border-gray-200",
+  icon:
+    "bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform border border-gray-200",
 };
 
 const OVERLAY_OFFSET: Record<OverlayKind, { top: number; left: number }> = {
   image: { top: -8, left: -8 },
   button: { top: -12, left: -12 },
   video: { top: 16, left: -8 },
+  icon: { top: -8, left: -8 },
 };
 
 function isInsideBuilderChrome(node: Element | null) {
@@ -280,6 +292,11 @@ export default function BlockpagesCanvasEnhancer({
   editingButtonId,
   isVideoEditingMode = false,
   onEditVideo,
+  isIconEditingMode = false,
+  onEditIcon,
+  editingIconId,
+  customIcons = {},
+  videoBlocks = [],
   appliedDividers = [],
   onRemoveDivider,
   onUpdateDividerPosition,
@@ -290,6 +307,8 @@ export default function BlockpagesCanvasEnhancer({
   onUpdateIconScale,
 }: BlockpagesCanvasEnhancerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const iconRootsRef = useRef<Map<string, Root>>(new Map());
+  const videoRootRef = useRef<Root | null>(null);
   const [overlayTargets, setOverlayTargets] = useState<EditOverlayTarget[]>([]);
 
   const syncOverlayTargets = useCallback(() => {
@@ -380,6 +399,11 @@ export default function BlockpagesCanvasEnhancer({
       }) as HTMLImageElement | undefined;
 
       if (heroImage) {
+        const slot =
+          (heroImage.closest(".relative, .aspect-video, [class*='rounded']") as HTMLElement | null) ??
+          heroImage.parentElement;
+        (slot ?? heroImage).setAttribute("data-blockpages-video-slot", "true");
+
         const position = getOverlayPosition(container, heroImage, "video");
         if (position) {
           targets.push({
@@ -393,8 +417,36 @@ export default function BlockpagesCanvasEnhancer({
       }
     }
 
+    const iconAnchors = collectEditableIconAnchors(container);
+    iconAnchors.forEach((anchor, index) => {
+      const iconId = anchor.getAttribute("data-blockpages-icon-id") || `icon_${index}`;
+      anchor.setAttribute("data-blockpages-icon-id", iconId);
+
+      if (isIconEditingMode && onEditIcon) {
+        const position = getOverlayPosition(container, anchor, "icon");
+        if (position) {
+          targets.push({
+            id: iconId,
+            kind: "icon",
+            top: position.top,
+            left: position.left,
+            title: "Edit Icon",
+          });
+        }
+      }
+    });
+
     setOverlayTargets(targets);
-  }, [isImageEditingMode, isButtonEditingMode, isVideoEditingMode, onEditImage, onEditButton, onEditVideo]);
+  }, [
+    isImageEditingMode,
+    isButtonEditingMode,
+    isVideoEditingMode,
+    isIconEditingMode,
+    onEditImage,
+    onEditButton,
+    onEditVideo,
+    onEditIcon,
+  ]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -442,7 +494,121 @@ export default function BlockpagesCanvasEnhancer({
         element.style.outlineOffset = "";
       }
     });
-  }, [customImages, customButtons, editingImageId, editingButtonId, isButtonEditingMode]);
+
+    const iconAnchors = collectEditableIconAnchors(container);
+    iconAnchors.forEach((anchor, index) => {
+      const iconId = anchor.getAttribute("data-blockpages-icon-id") || `icon_${index}`;
+      anchor.setAttribute("data-blockpages-icon-id", iconId);
+
+      if (editingIconId === iconId) {
+        anchor.style.outline = "2px dashed #63e5ff";
+        anchor.style.outlineOffset = "4px";
+      } else if (!isIconEditingMode) {
+        anchor.style.outline = "";
+        anchor.style.outlineOffset = "";
+      }
+    });
+  }, [customImages, customButtons, editingImageId, editingButtonId, editingIconId, isButtonEditingMode, isIconEditingMode]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const roots = iconRootsRef.current;
+    const activeIconIds = new Set(Object.keys(customIcons));
+
+    Object.entries(customIcons).forEach(([iconId, props]) => {
+      const anchor = container.querySelector(`[data-blockpages-icon-id="${iconId}"]`) as HTMLElement | null;
+      if (!anchor) return;
+
+      anchor.querySelectorAll("svg, img").forEach((element) => {
+        (element as HTMLElement).style.display = "none";
+      });
+
+      let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
+      if (!mountPoint) {
+        mountPoint = document.createElement("span");
+        mountPoint.setAttribute("data-blockpages-custom-icon-mount", "true");
+        mountPoint.className = "inline-flex items-center justify-center";
+        anchor.appendChild(mountPoint);
+      }
+
+      let root = roots.get(iconId);
+      if (!root) {
+        root = createRoot(mountPoint);
+        roots.set(iconId, root);
+      }
+      root.render(createElement(IconPreview, { props }));
+    });
+
+    container.querySelectorAll("[data-blockpages-icon-id]").forEach((node) => {
+      const anchor = node as HTMLElement;
+      const iconId = anchor.getAttribute("data-blockpages-icon-id");
+      if (!iconId || activeIconIds.has(iconId)) return;
+
+      anchor.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((mount) => mount.remove());
+      anchor.querySelectorAll("svg, img").forEach((element) => {
+        (element as HTMLElement).style.display = "";
+      });
+
+      const root = roots.get(iconId);
+      if (root) {
+        root.unmount();
+        roots.delete(iconId);
+      }
+    });
+  }, [customIcons]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const videoProps = videoBlocks[0]?.props;
+    const hasSavedVideo =
+      typeof window !== "undefined" && Boolean(window.localStorage.getItem("portfolioVideoData"));
+    const hasVideoContent =
+      Boolean(videoProps?.sourceType === "upload" && videoProps.uploadUrl) ||
+      Boolean(videoProps?.sourceType === "embed" && videoProps.embedCode?.trim());
+
+    if (!hasSavedVideo || !hasVideoContent || !videoProps) {
+      return;
+    }
+
+    const slot = findCanvasVideoSlot(container);
+    if (!slot) return;
+
+    slot.setAttribute("data-blockpages-video-slot", "true");
+    slot.style.position = slot.style.position || "relative";
+    slot.style.overflow = "hidden";
+
+    const existingMedia = slot.querySelector("video, iframe, [data-blockpages-video-id]");
+    if (existingMedia && existingMedia.parentElement === slot) {
+      existingMedia.remove();
+    } else {
+      slot.querySelectorAll("img").forEach((img) => {
+        img.style.display = "none";
+      });
+    }
+
+    let mountPoint = slot.querySelector("[data-blockpages-video-mount]") as HTMLElement | null;
+    if (!mountPoint) {
+      mountPoint = document.createElement("div");
+      mountPoint.setAttribute("data-blockpages-video-mount", "true");
+      mountPoint.className = "h-full w-full min-h-[220px]";
+      slot.appendChild(mountPoint);
+    }
+
+    if (!videoRootRef.current) {
+      videoRootRef.current = createRoot(mountPoint);
+    }
+
+    videoRootRef.current.render(
+      createElement(BlockpagesInlineVideo, {
+        blockProps: videoProps,
+        posterFallback: customImages["video_block_bg"],
+      })
+    );
+  }, [videoBlocks, customImages]);
 
   useLayoutEffect(() => {
     syncOverlayTargets();
@@ -454,8 +620,29 @@ export default function BlockpagesCanvasEnhancer({
       window.requestAnimationFrame(syncOverlayTargets);
     };
 
+    const handleScrollToSection = (event: Event) => {
+      const sectionId = (event as CustomEvent<string>).detail;
+      if (!sectionId) return;
+
+      const escapeSectionId =
+        typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(sectionId) : sectionId;
+
+      const scrollRoot =
+        container.closest("[data-textblock-canvas]") ??
+        container.closest("[data-blockpages-scroll-root]") ??
+        container;
+
+      const target =
+        scrollRoot.querySelector(`#${escapeSectionId}`) ??
+        container.querySelector(`#${escapeSectionId}`) ??
+        document.getElementById(sectionId);
+
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     window.addEventListener("resize", handleReposition);
     window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("scrollToSectionEvent", handleScrollToSection as EventListener);
 
     const observer = new MutationObserver(handleReposition);
     observer.observe(container, { childList: true, subtree: true, attributes: true });
@@ -468,6 +655,7 @@ export default function BlockpagesCanvasEnhancer({
       window.clearTimeout(delayed2);
       window.removeEventListener("resize", handleReposition);
       window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("scrollToSectionEvent", handleScrollToSection as EventListener);
       observer.disconnect();
     };
   }, [syncOverlayTargets]);
@@ -476,6 +664,7 @@ export default function BlockpagesCanvasEnhancer({
     if (target.kind === "image") onEditImage?.(target.id);
     if (target.kind === "button") onEditButton?.(target.id);
     if (target.kind === "video") onEditVideo?.(target.id);
+    if (target.kind === "icon") onEditIcon?.(target.id);
   };
 
   return (

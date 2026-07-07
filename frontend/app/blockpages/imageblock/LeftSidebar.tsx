@@ -14,7 +14,12 @@ import {
 } from "react-icons/fa";
 export type BlockPageType = 'image' | 'button' | 'text' | 'video' | 'divider' | 'icons';
 
-import type { TextBlockState, TextSectionProps } from "../textblock/types";
+import type { TextBlockState, TextSectionProps, TextTemplateType } from "../textblock/types";
+import {
+  dispatchBlockpagesScrollToSection,
+  getBlockpagesDefaultSectionId,
+  getBlockpagesTemplateSections,
+} from "@/lib/blockpagesTemplateSections";
 
 
 type LeftSidebarProps = {
@@ -36,6 +41,7 @@ type LeftSidebarProps = {
   onUpdateTextSection?: (props: Record<string, string | boolean>) => void;
   textBlockState?: TextBlockState;
   onUpdateTextBlockState?: (state: TextBlockState) => void;
+  textTemplate?: TextTemplateType;
 };
 const styleColors = [
   { class: 'bg-gradient-to-r from-[#22C55E] to-[#EF4444]', value: 'linear-gradient(90deg, #22C55E, #EF4444)' },
@@ -95,8 +101,12 @@ export default function LeftSidebar({
   onUpdateTextStyles,
   onUpdateTextSection,
   textBlockState,
-  onUpdateTextBlockState
+  onUpdateTextBlockState,
+  textTemplate = "portfolio",
 }: LeftSidebarProps) {
+  const templateSections = getBlockpagesTemplateSections(textTemplate);
+  const defaultSectionId = getBlockpagesDefaultSectionId(textTemplate);
+  const activeSectionId = textBlockState?.activeSectionId ?? defaultSectionId;
   const [activeTab, setActiveTab] = useState('Blocks');
   const [openCategories, setOpenCategories] = useState<number[]>([0, 1, 2]);
   const [subTab, setSubTab] = useState<'all' | 'next'>('all');
@@ -132,9 +142,7 @@ export default function LeftSidebar({
 
   const handlePageClick = (pageName: string, id: string) => {
     setActiveMobilePage(pageName);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('scrollToSectionEvent', { detail: id }));
-    }
+    dispatchBlockpagesScrollToSection(id);
   };
 
   // Builder Context for Image Block
@@ -761,31 +769,28 @@ export default function LeftSidebar({
                     <div>
                       <h4 className="mb-2 text-[14px] font-bold text-white">Select Section</h4>
                       <select
-                        value={textBlockState.activeSectionId || "home"}
+                        value={activeSectionId}
                         onChange={(e) => {
                           const targetId = e.target.value;
-                          onUpdateTextBlockState({ ...textBlockState, activeSectionId: targetId });
-                          if (typeof window !== "undefined") {
-                            window.dispatchEvent(new CustomEvent('scrollToSectionEvent', { detail: targetId }));
-                          }
+                          onUpdateTextBlockState?.({ ...textBlockState, activeSectionId: targetId });
+                          dispatchBlockpagesScrollToSection(targetId);
                         }}
                         className="w-full rounded-xl border border-[#203354] bg-[#11213A] px-3 py-2.5 text-[14px] font-bold text-white outline-none mb-4 focus:border-[#517AA5]"
                       >
-                        <option value="home">Home</option>
-                        <option value="about">About Me</option>
-                        <option value="projects">Projects</option>
-                        <option value="video">Video Block</option>
-                        <option value="contact">Contact</option>
-                        <option value="footer">Footer</option>
+                        {templateSections.map((sectionOption) => (
+                          <option key={sectionOption.id} value={sectionOption.id}>
+                            {sectionOption.label}
+                          </option>
+                        ))}
                       </select>
 
                       <h4 className="mb-2 text-[14px] font-bold text-white">Background Color</h4>
                       <div className="flex items-center gap-2 mb-4">
                         <input
                           type="color"
-                          value={textBlockState.sectionStyles?.[textBlockState.activeSectionId || "home"]?.backgroundColor || "#ffffff"}
+                          value={textBlockState.sectionStyles?.[activeSectionId]?.backgroundColor || "#ffffff"}
                           onChange={(e) => {
-                            const currentId = textBlockState.activeSectionId || "home";
+                            const currentId = activeSectionId;
                             const currentStyles = textBlockState.sectionStyles || {};
                             onUpdateTextBlockState({
                               ...textBlockState,
@@ -797,16 +802,16 @@ export default function LeftSidebar({
                           }}
                           className="h-10 w-10 cursor-pointer border-0 bg-transparent p-0"
                         />
-                        <span className="font-mono text-xs text-[#8495A5]">{textBlockState.sectionStyles?.[textBlockState.activeSectionId || "home"]?.backgroundColor || "#ffffff"}</span>
+                        <span className="font-mono text-xs text-[#8495A5]">{textBlockState.sectionStyles?.[activeSectionId]?.backgroundColor || "#ffffff"}</span>
                       </div>
 
                       <h4 className="mb-2 text-[14px] font-bold text-white">Gradient Background</h4>
                       <input
                         type="text"
                         placeholder="e.g. linear-gradient(to right, red, blue)"
-                        value={textBlockState.sectionStyles?.[textBlockState.activeSectionId || "home"]?.gradientBackground || ""}
+                        value={textBlockState.sectionStyles?.[activeSectionId]?.gradientBackground || ""}
                         onChange={(e) => {
-                          const currentId = textBlockState.activeSectionId || "home";
+                          const currentId = activeSectionId;
                           const currentStyles = textBlockState.sectionStyles || {};
                           onUpdateTextBlockState({
                             ...textBlockState,
@@ -1121,26 +1126,15 @@ export default function LeftSidebar({
               <div className="p-5 min-h-[250px] animate-in slide-in-from-right-8 duration-300">
                 {/* Pages Content for Mobile */}
                 <div className="flex flex-col gap-3">
-                  <div
-                    onClick={() => handlePageClick('Home Page', 'home')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Home Page' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                    <span className={`text-sm font-medium ${activeMobilePage === 'Home Page' ? 'text-white' : 'text-[#8495A5]'}`}>Home Page</span>
-                  </div>
-                  <div
-                    onClick={() => handlePageClick('About Us', 'about')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'About Us' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                    <span className={`text-sm font-medium ${activeMobilePage === 'About Us' ? 'text-white' : 'text-[#8495A5]'}`}>About Us</span>
-                  </div>
-                  <div
-                    onClick={() => handlePageClick('Projects', 'projects')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Projects' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                    <span className={`text-sm font-medium ${activeMobilePage === 'Projects' ? 'text-white' : 'text-[#8495A5]'}`}>Projects</span>
-                  </div>
-                  <div
-                    onClick={() => handlePageClick('Contact', 'contact')}
-                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Contact' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                    <span className={`text-sm font-medium ${activeMobilePage === 'Contact' ? 'text-white' : 'text-[#8495A5]'}`}>Contact</span>
-                  </div>
+                  {templateSections.map((sectionOption) => (
+                    <div
+                      key={sectionOption.id}
+                      onClick={() => handlePageClick(sectionOption.label, sectionOption.id)}
+                      className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === sectionOption.label ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}
+                    >
+                      <span className={`text-sm font-medium ${activeMobilePage === sectionOption.label ? 'text-white' : 'text-[#8495A5]'}`}>{sectionOption.label}</span>
+                    </div>
+                  ))}
 
                   {/* <button
                     onClick={() => console.log('Add New Page')}
@@ -1376,26 +1370,15 @@ export default function LeftSidebar({
             ) : (
               /* Pages Content */
               <div className="flex flex-col gap-3">
-                <div
-                  onClick={() => handlePageClick('Home Page', 'home')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Home Page' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                  <span className={`text-sm font-medium ${activeMobilePage === 'Home Page' ? 'text-white' : 'text-[#8495A5]'}`}>Home Page</span>
-                </div>
-                <div
-                  onClick={() => handlePageClick('About Us', 'about')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'About Us' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                  <span className={`text-sm font-medium ${activeMobilePage === 'About Us' ? 'text-white' : 'text-[#8495A5]'}`}>About Us</span>
-                </div>
-                <div
-                  onClick={() => handlePageClick('Projects', 'projects')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Projects' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                  <span className={`text-sm font-medium ${activeMobilePage === 'Projects' ? 'text-white' : 'text-[#8495A5]'}`}>Projects</span>
-                </div>
-                <div
-                  onClick={() => handlePageClick('Contact', 'contact')}
-                  className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === 'Contact' ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}>
-                  <span className={`text-sm font-medium ${activeMobilePage === 'Contact' ? 'text-white' : 'text-[#8495A5]'}`}>Contact</span>
-                </div>
+                {templateSections.map((sectionOption) => (
+                  <div
+                    key={sectionOption.id}
+                    onClick={() => handlePageClick(sectionOption.label, sectionOption.id)}
+                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === sectionOption.label ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}
+                  >
+                    <span className={`text-sm font-medium ${activeMobilePage === sectionOption.label ? 'text-white' : 'text-[#8495A5]'}`}>{sectionOption.label}</span>
+                  </div>
+                ))}
                 {/* <button className="text-sm font-semibold text-[#517AA5] border border-dashed border-[#517AA5] rounded-lg py-2 mt-4 hover:bg-[#517AA5]/10 hover:shadow-sm active:scale-95 transition-all duration-300">
                   + Add New Page
                 </button> */}
