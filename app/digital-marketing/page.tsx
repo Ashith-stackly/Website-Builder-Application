@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect, FormEvent } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence, useMotionValueEvent, useReducedMotion, useScroll, animate, useMotionValue, useTransform, useInView } from "framer-motion";
 import {
@@ -534,13 +533,12 @@ export default function DigitalMarketingPreviewPage() {
                         href="/landing"
                         className="flex h-7 w-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[50%] bg-white px-1 @sm:h-8 @sm:w-[72px]"
                       >
-                        <Image
+                        <img
                           src={assetPath("/stackly-logo.webp")}
                           alt="Stackly logo"
                           width={80}
                           height={24}
-                          className="h-[10px] object-contain @sm:h-[12px]"
-                          unoptimized
+                          className="h-[10px] w-auto object-contain @sm:h-[12px]"
                         />
                       </Link>
                       <span className="break-words text-[clamp(0.75rem,2.5vw,0.875rem)] font-semibold text-white @sm:text-sm">
@@ -559,7 +557,7 @@ export default function DigitalMarketingPreviewPage() {
                   <div className="relative hidden w-full items-center justify-between @3xl:flex">
                     <div className="z-10 flex shrink-0 items-center justify-start">
                       <Link href="/landing" className="flex h-10 min-w-[92px] items-center justify-center rounded-[50%] bg-white px-3">
-                        <Image src={assetPath("/stackly-logo.webp")} alt="Stackly logo" width={92} height={28} className="h-[18px] w-auto" unoptimized />
+                        <img src={assetPath("/stackly-logo.webp")} alt="Stackly logo" width={92} height={28} className="h-[18px] w-auto object-contain" />
                       </Link>
                     </div>
                     <span className="pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-lg font-semibold text-white">
@@ -610,7 +608,7 @@ export default function DigitalMarketingPreviewPage() {
                       whileInView={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 1 }}
                       viewport={{ once: true }}
-                      src={dmAsset("/Digital marketing.webp")}
+                      src={dmAsset("/Digital Marketing.webp")}
                       alt="Precision Marketing"
                       className="h-full w-full object-cover"
                     />
