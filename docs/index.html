@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Stackly · Codebase Analysis &amp; Sprint Status</title>
+  <meta name="description" content="A living, module-by-module analysis of the Stackly Website Builder — done / partial / pending across the frontend and the new test/ backends, with real file paths and API endpoints." />
+  <meta name="theme-color" content="#0b1220" />
+
+  <!-- Bootstrap 5 grid (utilities only; visuals are token-driven) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap-grid.min.css" rel="stylesheet" crossorigin="anonymous" />
+  <!-- Fonts: display + body + mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/analysis.css" />
+</head>
+<body>
+  <!-- ============ SVG ICON SPRITE (line icons, 24×24, stroke=currentColor) ============ -->
+  <svg width="0" height="0" class="visually-hidden" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+      <symbol id="i-template" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="9" height="7" rx="1.5"/><rect x="16" y="14" width="5" height="7" rx="1.5"/></symbol>
+      <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+      <symbol id="i-smartphone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></symbol>
+      <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></symbol>
+      <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L21 7H5.5"/></symbol>
+      <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15v3"/><path d="M12 9v9"/><path d="M17 6v12"/></symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+      <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></symbol>
+    </defs>
+  </svg>
+
+  <a class="skip-link" href="#modules">Skip to modules</a>
+
+  <div class="layout">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar" aria-label="Section navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">S</div>
+        <div class="brand-txt">
+          <div class="brand-name">Stackly</div>
+          <div class="brand-sub">Codebase Analysis</div>
+        </div>
+      </div>
+
+      <p class="nav-label">Modules</p>
+      <nav id="moduleNav" aria-label="Modules"><!-- injected --></nav>
+
+      <div class="legend" aria-hidden="true">
+        <p class="nav-label">Legend</p>
+        <div class="legend-row"><span class="lg-dot st-done"></span> Done — shipped &amp; working</div>
+        <div class="legend-row"><span class="lg-dot st-partial"></span> Partial — exists, not fully wired</div>
+        <div class="legend-row"><span class="lg-dot st-pending"></span> Pending — not started</div>
+      </div>
+
+      <div class="side-foot">
+        Sources: <code>implementation_plan.md</code>,
+        <code>stackly_project_context.md</code>, the <code>test/</code> backends
+        &amp; the live source tree.
+      </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main class="main">
+      <header class="topbar">
+        <button id="navToggle" class="icon-btn only-mobile" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+          <svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg>
+        </button>
+        <span class="gen-date" id="genDate"></span>
+        <div class="topbar-actions">
+          <button id="themeToggle" class="icon-btn" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle theme (T)">
+            <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+            <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Hero (typographic) -->
+      <section class="hero" aria-labelledby="projName">
+        <p class="eyebrow">Website Builder Application</p>
+        <h1 id="projName" class="hero-title">Stackly</h1>
+        <p class="hero-tag" id="projTagline"></p>
+        <div class="hero-bar-head">
+          <span>Overall delivery <span class="muted">(done 100% · partial 50%)</span></span>
+          <span id="deltaPill" class="delta-pill"></span>
+        </div>
+        <div id="overallBar" class="reveal"><!-- injected --></div>
+        <div id="overallLegend" class="overall-legend"><!-- injected --></div>
+      </section>
+
+      <!-- What's new -->
+      <section id="whatsNew" class="whats-new reveal" aria-label="What changed this pass"><!-- injected --></section>
+
+      <!-- KPI cards -->
+      <div class="row g-3 kpi-row reveal" id="kpiRow"><!-- injected --></div>
+
+      <!-- Meta panels -->
+      <div class="panel-grid">
+        <section class="panel reveal" aria-labelledby="stackHead">
+          <h2 id="stackHead" class="panel-head"><svg class="ico" aria-hidden="true"><use href="#i-bolt"/></svg> Tech Stack</h2>
+          <ul id="stackList" class="meta-list"><!-- injected --></ul>
+        </section>
+        <section class="panel reveal" aria-labelledby="entryHead">
+          <h2 id="entryHead" class="panel-head"><svg class="ico" aria-hidden="true"><use href="#i-external"/></svg> Where to start reading</h2>
+          <ul id="entryList" class="meta-list"><!-- injected --></ul>
+        </section>
+        <section class="panel panel-wide reveal" aria-labelledby="beHead">
+          <h2 id="beHead" class="panel-head"><svg class="ico" aria-hidden="true"><use href="#i-server"/></svg> Backend map <span class="tag-new">new</span></h2>
+          <div id="backendMap" class="backend-map"><!-- injected --></div>
+        </section>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls" role="region" aria-label="Filter and search">
+        <div class="filters" role="group" aria-label="Filter by status">
+          <button class="filter-btn active" data-filter="all" aria-pressed="true">All <span class="fcount" data-count="all"></span></button>
+          <button class="filter-btn" data-filter="done" aria-pressed="false"><span class="fdot st-done"></span> Done <span class="fcount" data-count="done"></span></button>
+          <button class="filter-btn" data-filter="partial" aria-pressed="false"><span class="fdot st-partial"></span> Partial <span class="fcount" data-count="partial"></span></button>
+          <button class="filter-btn" data-filter="pending" aria-pressed="false"><span class="fdot st-pending"></span> Pending <span class="fcount" data-count="pending"></span></button>
+        </div>
+        <div class="search-wrap">
+          <label class="search-box">
+            <svg class="ico search-ico" aria-hidden="true"><use href="#i-search"/></svg>
+            <input id="searchInput" type="search" placeholder="Search tasks, notes, paths…" aria-label="Search tasks, notes, and file paths" autocomplete="off" />
+            <kbd class="search-kbd" aria-hidden="true">/</kbd>
+          </label>
+          <span id="searchCount" class="search-count" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <!-- Modules -->
+      <div id="modules"><!-- injected --></div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="empty" hidden>
+        <svg class="ico empty-ico" aria-hidden="true"><use href="#i-search"/></svg>
+        <p>No tasks match your filter or search.</p>
+        <button id="clearFilters" class="btn-ghost">Clear filters</button>
+      </div>
+
+      <footer class="page-foot">
+        Generated from the live Stackly source tree. Statuses reflect the current frontend and the
+        <code>test/</code> backends (items marked <em>partial</em> exist server-side but are not yet
+        consolidated into the live backend or wired to the UI).
+      </footer>
+    </main>
+  </div>
+
+  <button id="backToTop" class="fab" aria-label="Back to top" hidden>
+    <svg class="ico" aria-hidden="true"><use href="#i-arrow-up"/></svg>
+  </button>
+
+  <div id="liveRegion" class="visually-hidden" role="status" aria-live="polite"></div>
+
+  <script src="assets/analysis.js"></script>
+</body>
+</html>
