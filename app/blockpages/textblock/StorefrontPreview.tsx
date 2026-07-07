@@ -1518,7 +1518,7 @@ export default function StorefrontPreview() {
           </nav>
 
           <div className="space-y-10 px-4 py-8 sm:space-y-12 sm:px-8 sm:py-10 lg:py-12">
-            <section className="buyscreen-hero relative flex min-h-[400px] sm:min-h-[500px] lg:min-h-0 lg:aspect-[16/8] items-center overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] py-12 px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] sm:p-8 lg:p-12">
+            <section id="buyscreen-home" className="buyscreen-hero relative flex min-h-[400px] sm:min-h-[500px] lg:min-h-0 lg:aspect-[16/8] items-center overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] py-12 px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] sm:p-8 lg:p-12">
               <picture className="absolute inset-0 block h-full w-full">
                 <source media="(max-width: 767px)" srcSet={assetPath("/mobilebackground.png")} />
                 <img src={assetPath("/background.webp")} alt="Electronics hero background" className="h-full w-full object-cover object-center" loading="eager" fetchPriority="high" decoding="async" />
@@ -1551,7 +1551,7 @@ export default function StorefrontPreview() {
               </p>
             ) : null}
 
-            <section className="buyscreen-features grid gap-4 border-b border-[#e7edf5] pb-10 text-sm text-[#4b5563] sm:grid-cols-2 lg:grid-cols-4">
+            <section id="buyscreen-about" className="buyscreen-features grid gap-4 border-b border-[#e7edf5] pb-10 text-sm text-[#4b5563] sm:grid-cols-2 lg:grid-cols-4">
               {buyFeatures.map((feature) => (
                 <div key={feature.title} className="buyscreen-feature-card flex items-start gap-4 rounded-2xl border border-[#e7edf5] bg-[#f8fafc] p-4 transition duration-300">
                   <span aria-hidden className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0f3b89] shadow-sm">
@@ -1565,7 +1565,7 @@ export default function StorefrontPreview() {
               ))}
             </section>
 
-            <section className="buyscreen-section-reveal">
+            <section id="buyscreen-categories" className="buyscreen-section-reveal">
               <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">Popular departments</p>
@@ -1617,7 +1617,7 @@ export default function StorefrontPreview() {
               </div>
             </section>
 
-            <section className="buyscreen-deal-banner buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] bg-[#06224C] p-5 text-white shadow-[0_24px_70px_rgba(6,34,76,0.22)] sm:p-7 lg:p-8">
+            <section id="buyscreen-video" className="buyscreen-deal-banner buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] bg-[#06224C] p-5 text-white shadow-[0_24px_70px_rgba(6,34,76,0.22)] sm:p-7 lg:p-8">
               <div className="grid gap-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] lg:items-center">
                 <div className="min-w-0">
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-[#93c5fd]">Weekend tech event</p>
@@ -1658,7 +1658,7 @@ export default function StorefrontPreview() {
               </div>
             </section>
 
-            <section ref={featuredProductsRef}>
+            <section id="buyscreen-products" ref={featuredProductsRef}>
               <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">Curated collection</p>
@@ -1882,7 +1882,7 @@ export default function StorefrontPreview() {
               </div>
             </section>
 
-            <section className="buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#bfdbfe] bg-white p-5 shadow-[0_20px_60px_rgba(37,99,235,0.12)] sm:p-7">
+            <section id="buyscreen-contact" className="buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#bfdbfe] bg-white p-5 shadow-[0_20px_60px_rgba(37,99,235,0.12)] sm:p-7">
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.85fr)] lg:items-center">
                 <div className="min-w-0">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eff6ff] text-[#2563eb]">

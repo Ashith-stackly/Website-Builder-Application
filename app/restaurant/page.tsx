@@ -757,7 +757,7 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
-            <footer className={`@container bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <footer id="restaurant-footer" className={`@container bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="mx-auto max-w-7xl w-full">
                 <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   <div>

@@ -17,6 +17,21 @@ import {
   isTextEditorTemplate,
   parseBlockpagesTemplate,
 } from "@/lib/blockpagesTemplates";
+import {
+  dispatchBlockpagesScrollToSection,
+  getBlockpagesDefaultSectionId,
+  getBlockpagesFooterScrollId,
+  getBlockpagesHeaderScrollId,
+  getBlockpagesVideoScrollId,
+  getBlockpagesAboutScrollId,
+} from "@/lib/blockpagesTemplateSections";
+import {
+  getBlockpagesCanvasElement,
+  scanCanvasForIconTargets,
+  scanCanvasForVideoTargets,
+  templateHasBuiltInIconSlots,
+  templateHasBuiltInVideoSlots,
+} from "@/lib/blockpagesEditTargets";
 import VideoCanvas from "./videoblock/Canvas";
 import VideoRightSidebar from "./videoblock/RightSidebar";
 import type { VideoBlockData } from "./videoblock/types";
@@ -105,6 +120,10 @@ export default function BlockPagesClient() {
     if (isTextEditorTemplate(parsed)) {
       setActiveBlockPage("text");
     }
+    setTextBlockState((current) => ({
+      ...current,
+      activeSectionId: getBlockpagesDefaultSectionId(parsed),
+    }));
   }, [searchParams]);
 
   const [buttonBlocks, setButtonBlocks] = useState<BlockData[]>([initialButtonBlock]);
@@ -147,6 +166,20 @@ export default function BlockPagesClient() {
   const [appliedDividers, setAppliedDividers] = useState<{ id: string, props: DividerBlockProps, position?: { x: number, y: number }, scale?: number }[]>([]);
   const [appliedIcons, setAppliedIcons] = useState<{ id: string, props: IconBlockProps, position?: { x: number, y: number }, scale?: number }[]>([]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
+  const verifyCanvasHasVideoTargets = (template: TextTemplateType) => {
+    if (templateHasBuiltInVideoSlots(template)) return true;
+    const canvas = getBlockpagesCanvasElement();
+    if (!canvas) return false;
+    return scanCanvasForVideoTargets(canvas);
+  };
+
+  const verifyCanvasHasIconTargets = (template: TextTemplateType) => {
+    if (templateHasBuiltInIconSlots(template)) return true;
+    const canvas = getBlockpagesCanvasElement();
+    if (!canvas) return false;
+    return scanCanvasForIconTargets(canvas) > 0;
+  };
  
   useEffect(() => {
     try {
@@ -475,6 +508,7 @@ export default function BlockPagesClient() {
         <div className="contents xl:block xl:overflow-hidden xl:rounded-xl xl:shadow-[0_18px_45px_rgba(11,29,64,0.12)]">
           <LeftSidebar
             activeBlockPage={activeBlockPage}
+            textTemplate={textTemplate}
             isImageEditingMode={isImageEditingMode}
             editingImageId={editingImageId}
             isButtonEditingMode={isButtonEditingMode}
@@ -512,11 +546,11 @@ export default function BlockPagesClient() {
               if (typeof window !== "undefined") {
                 if (target === "footer") {
                   setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent("scrollToSectionEvent", { detail: "footer" }));
+                    dispatchBlockpagesScrollToSection(getBlockpagesFooterScrollId(textTemplate));
                   }, 50);
                 } else if (target === "header") {
                   setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent("scrollToSectionEvent", { detail: "home" }));
+                    dispatchBlockpagesScrollToSection(getBlockpagesHeaderScrollId(textTemplate));
                   }, 50);
                 }
               }
@@ -557,14 +591,20 @@ export default function BlockPagesClient() {
                 return;
               }
               if (page === "video" && activeBlockPage === "text") {
-                setIsVideoEditingMode((prev) => !prev);
+                const turningOn = !isVideoEditingMode;
+                setIsVideoEditingMode(turningOn);
                 setIsImageEditingMode(false);
                 setIsButtonEditingMode(false);
                 pushTextState({ ...textBlockState, isTextEditable: false });
-                if (typeof window !== "undefined") {
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent("scrollToSectionEvent", { detail: "video" }));
-                  }, 50);
+                if (turningOn && typeof window !== "undefined") {
+                  window.setTimeout(() => {
+                    if (!verifyCanvasHasVideoTargets(textTemplate)) {
+                      setIsVideoEditingMode(false);
+                      window.alert("There is no video on this page to edit.");
+                      return;
+                    }
+                    dispatchBlockpagesScrollToSection(getBlockpagesVideoScrollId(textTemplate));
+                  }, 450);
                 }
                 return;
               }
@@ -579,15 +619,21 @@ export default function BlockPagesClient() {
               }
  
               if (page === "icons" && activeBlockPage === "text") {
-                setIsIconEditingMode((prev) => !prev);
+                const turningOn = !isIconEditingMode;
+                setIsIconEditingMode(turningOn);
                 setIsImageEditingMode(false);
                 setIsButtonEditingMode(false);
                 setIsVideoEditingMode(false);
                 pushTextState({ ...textBlockState, isTextEditable: false });
-                if (typeof window !== "undefined") {
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent("scrollToSectionEvent", { detail: "about" }));
-                  }, 50);
+                if (turningOn && typeof window !== "undefined") {
+                  window.setTimeout(() => {
+                    if (!verifyCanvasHasIconTargets(textTemplate)) {
+                      setIsIconEditingMode(false);
+                      window.alert("There is no icon on this page to edit.");
+                      return;
+                    }
+                    dispatchBlockpagesScrollToSection(getBlockpagesAboutScrollId(textTemplate));
+                  }, 450);
                 }
                 return;
               }
@@ -758,7 +804,7 @@ export default function BlockPagesClient() {
               }}
             />
             <div className="hidden w-[210px] shrink-0 xl:block">
-              <TextRightSidebar state={textBlockState} onStateChange={pushTextState} />
+              <TextRightSidebar state={textBlockState} onStateChange={pushTextState} template={textTemplate} />
             </div>
           </div>
         ) : activeBlockPage === "image" ? (

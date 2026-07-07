@@ -73,7 +73,7 @@ export default function TextBlockPage() {
           template={template}
         />
         <div className="hidden xl:block">
-          <TextRightSidebar state={textBlockState} onStateChange={pushState} />
+          <TextRightSidebar state={textBlockState} onStateChange={pushState} template={template} />
         </div>
       </section>
       <Footer />

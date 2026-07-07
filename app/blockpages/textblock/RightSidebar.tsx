@@ -2,12 +2,18 @@
  
 import { ChevronDown, ChevronLeft, X } from "lucide-react";
 import { useState } from "react";
-import type { SectionStyleConfig, TextBlockState, TextEditorTarget } from "./types";
+import type { SectionStyleConfig, TextBlockState, TextEditorTarget, TextTemplateType } from "./types";
+import {
+  dispatchBlockpagesScrollToSection,
+  getBlockpagesDefaultSectionId,
+  getBlockpagesTemplateSections,
+} from "@/lib/blockpagesTemplateSections";
  
 type TextRightSidebarProps = {
   state: TextBlockState;
   onStateChange: (nextState: TextBlockState) => void;
   onClose?: () => void;
+  template?: TextTemplateType;
 };
  
 const targetLabels: Record<TextEditorTarget, string> = {
@@ -17,10 +23,12 @@ const targetLabels: Record<TextEditorTarget, string> = {
   footer: "Footer",
 };
  
-export default function TextRightSidebar({ state, onStateChange, onClose }: TextRightSidebarProps) {
+export default function TextRightSidebar({ state, onStateChange, onClose, template = "portfolio" }: TextRightSidebarProps) {
   const [activeTab, setActiveTab] = useState<"properties" | "styles">("styles");
   const [showSection, setShowSection] = useState(true);
-  const { section, textStyles, selectedTarget, activeSectionId = "home", sectionStyles = {} } = state;
+  const { section, textStyles, selectedTarget, sectionStyles = {} } = state;
+  const templateSections = getBlockpagesTemplateSections(template);
+  const activeSectionId = state.activeSectionId ?? getBlockpagesDefaultSectionId(template);
  
   const setTarget = (selectedTarget: TextEditorTarget) => onStateChange({ ...state, selectedTarget });
   const updateSection = (props: Partial<typeof section>) => onStateChange({ ...state, section: { ...section, ...props } });
@@ -111,18 +119,15 @@ export default function TextRightSidebar({ state, onStateChange, onClose }: Text
                       onChange={(e) => {
                         const targetId = e.target.value;
                         onStateChange({ ...state, activeSectionId: targetId });
-                        if (typeof window !== "undefined") {
-                          window.dispatchEvent(new CustomEvent('scrollToSectionEvent', { detail: targetId }));
-                        }
+                        dispatchBlockpagesScrollToSection(targetId);
                       }}
                       className="w-full rounded-xl border border-[#0B1D40] bg-transparent px-3 py-2.5 text-[14px] font-bold text-[#0B1D40] outline-none mb-4"
                     >
-                      <option value="home">Home</option>
-                      <option value="about">About Me</option>
-                      <option value="projects">Projects</option>
-                      <option value="video">Video Block</option>
-                      <option value="contact">Contact</option>
-                      <option value="footer">Footer</option>
+                      {templateSections.map((sectionOption) => (
+                        <option key={sectionOption.id} value={sectionOption.id}>
+                          {sectionOption.label}
+                        </option>
+                      ))}
                     </select>
  
                     <h5 className="mb-2 text-[13px] font-bold text-[#0B1D40]">Background</h5>
