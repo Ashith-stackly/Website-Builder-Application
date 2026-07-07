@@ -1,41 +1,46 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ============================================================
+#  Stackly — Website Builder Application (monorepo root)
+# ============================================================
 
-# dependencies
-/node_modules
-/.pnp
+# ---- dependencies (frontend & backend) ----
+node_modules/
+**/node_modules/
+.pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-# testing
-/coverage
+# ---- environment files (never commit real secrets) ----
+.env
+.env.*
+!.env.example
+!**/.env.example
 
-# next.js
-/.next/
-/out/
+# ---- frontend build output (Next.js) ----
+frontend/.next/
+frontend/out/
+frontend/build/
+*.tsbuildinfo
+frontend/next-env.d.ts
 
-# production
-/build
+# ---- backend runtime artifacts ----
+backend/uploads/
+backend/storage/
+backend/logs/
+backend/*.log
 
-# misc
+# ---- testing / coverage ----
+coverage/
+
+# ---- editor / OS ----
 .DS_Store
+Thumbs.db
 *.pem
+.idea/
 
-# debug
+# ---- debug logs ----
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
+# ---- misc ----
 .vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
