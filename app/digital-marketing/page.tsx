@@ -176,7 +176,7 @@ function TemplateFooter() {
   };
 
   return (
-    <footer id="footer" className="bg-[#0A1E3D] text-white">
+    <footer className="bg-[#0A1E3D] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 @md:px-8 @md:py-16">
         <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
           <div>
@@ -413,8 +413,7 @@ function CountUp({ targetValue, suffix = "", prefix = "", decimals = 0 }: { targ
 export default function DigitalMarketingPreviewPage() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
-  const [previewMode, setPreviewMode] = useState("preview");
-  const activePreviewMode = isBlockpages ? "desktop" : previewMode;
+  const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
   const [innerNavHidden, setInnerNavHidden] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(1);
@@ -473,60 +472,43 @@ export default function DigitalMarketingPreviewPage() {
   ];
 
   return (
-    <main className={`${isBlockpages ? "@container w-full max-w-full min-w-0 overflow-x-hidden" : "site-page flex min-h-screen w-full max-w-full flex-col overflow-x-hidden"} bg-white`}>
-      <div className={`flex w-full max-w-full ${isBlockpages ? "min-w-0" : "flex-1 overflow-x-hidden"}`}>
-        <div className={`flex min-w-0 ${isBlockpages ? "w-full" : "flex-1 justify-center overflow-x-hidden bg-white p-4 @md:p-7"}`}>
-          <div className={`relative flex w-full min-w-0 flex-col overflow-x-hidden ${isBlockpages ? "" : "max-w-[1200px]"}`}>
-            {!isBlockpages ? (
-            <div className="fixed bottom-6 left-1/2 z-[100] hidden -translate-x-1/2 @lg:bottom-auto @lg:top-[50%] @lg:-translate-y-1/2 md:block" data-template-chrome="true" data-device-preview-toolbar="true">
-              <div className="flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] @sm:gap-2">
-                {[
-                  { mode: "preview", icon: FaEye, title: "Preview" },
-                  { mode: "desktop", icon: FaLaptop, title: "Desktop View" },
-                  { mode: "tablet", icon: FaTabletAlt, title: "Tablet View" },
-                  { mode: "mobile", icon: FaMobileAlt, title: "Mobile View" },
-                ].map(({ mode, icon: Icon, title }) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setPreviewMode(mode)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow-sm transition @sm:h-9 @sm:w-9 ${previewMode === mode
-                      ? "border-[#06224C] bg-gray-50 font-bold text-[#06224C] ring-2 ring-[#06224C]"
-                      : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                      }`}
-                    title={title}
-                  >
-                    <Icon size={14} />
-                    <span className="sr-only">{title}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            ) : null}
+    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
+      {!isBlockpages && (
+        <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+          <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
+            <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
+              <FaEye size={16} />
+            </Link>
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <button onClick={() => setDeviceMode("desktop")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "desktop" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Desktop View">
+              <FaLaptop size={16} />
+            </button>
+            <button onClick={() => setDeviceMode("tablet")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "tablet" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Tablet View">
+              <FaTabletAlt size={16} />
+            </button>
+            <button onClick={() => setDeviceMode("mobile")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "mobile" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Mobile View">
+              <FaMobileAlt size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
-            <div
-              ref={isBlockpages ? undefined : canvasScrollRef}
-              className={`relative z-0 min-w-0 ${isBlockpages ? "w-full" : "flex-1 overflow-visible transition-colors duration-300"} ${!isBlockpages && (activePreviewMode === "tablet" || activePreviewMode === "mobile") ? "rounded-xl bg-gray-200/50 p-2 @sm:p-4" : ""
-                }`}
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+        {/* RESPONSIVE CANVAS FRAME */}
+        <div
+          ref={isBlockpages ? undefined : canvasScrollRef}
+          className={isBlockpages ? "@container w-full min-w-0" : `@container bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "desktop" ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
+            : "w-full min-h-screen"
+            }`}
+        >
+          <div className="w-full max-w-full overflow-x-hidden min-w-0">
+            <motion.div
+              className="sticky top-0 z-50 flex w-full flex-wrap items-center justify-between gap-2 border-b border-gray-300 bg-[#06224C]/95 px-3 py-2 backdrop-blur-md @sm:gap-4 @sm:px-4 @sm:py-3 @md:px-8 @xl:flex-nowrap"
+              animate={{ y: previewNavHidden ? -96 : 0, opacity: previewNavHidden ? 0 : 1 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-              <div
-                className={`dm-shell @container break-words min-w-0 relative mx-auto flex min-h-[33rem] flex-col overflow-hidden bg-[#FFF5F5] transition-all duration-500 ease-in-out ${isBlockpages
-                  ? "w-full max-w-full"
-                  : activePreviewMode === "mobile"
-                  ? "w-full max-w-[375px] rounded-xl border-2 border-gray-300 shadow-2xl"
-                  : activePreviewMode === "tablet"
-                    ? "w-full max-w-[768px] rounded-xl border-2 border-gray-300 shadow-2xl"
-                    : activePreviewMode === "desktop"
-                      ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
-                      : "w-full max-w-full"
-                  }`}
-              >
-                {/* Stackly preview chrome — matches portfolio */}
-                <motion.div
-                  className="sticky top-0 z-50 flex w-full flex-wrap items-center justify-between gap-2 rounded-t-xl border-b border-gray-300 bg-[#06224C]/95 px-3 py-2 backdrop-blur-md @sm:gap-4 @sm:px-4 @sm:py-3 @md:px-8 @xl:flex-nowrap"
-                  animate={{ y: previewNavHidden ? -96 : 0, opacity: previewNavHidden ? 0 : 1 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                >
                   <div className="relative flex w-full items-center justify-between px-1 @3xl:hidden">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                       <Link
@@ -1083,10 +1065,8 @@ export default function DigitalMarketingPreviewPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {!isBlockpages && <Footer />}
+      {(deviceMode === "desktop" || deviceMode === "preview") && <Footer />}
     </main>
   );
 }

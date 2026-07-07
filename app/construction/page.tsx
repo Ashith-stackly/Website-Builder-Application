@@ -439,8 +439,8 @@ const infiniteTestimonials = Array(50).fill(testimonialsData).flat();
 export default function ConstructionTemplatePage() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
-  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
-  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : deviceMode;
+  const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
+  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : (deviceMode === "preview" ? "desktop" : deviceMode);
   const [email, setEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -647,14 +647,16 @@ export default function ConstructionTemplatePage() {
         </div>
       )}
 
-      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         <div
           ref={isBlockpages ? undefined : canvasScrollRef}
-          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto ${deviceMode === "mobile"
+          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile"
             ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
             : deviceMode === "tablet"
               ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
-              : "w-full min-h-screen"
+              : deviceMode === "desktop"
+                ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
+                : "w-full min-h-screen"
             }`}
         >
           <div className="w-full overflow-x-hidden bg-[#FDF8F5]">

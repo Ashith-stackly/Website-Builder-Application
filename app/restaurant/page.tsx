@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, FormEvent } from "react";
+import { useState, useRef, useCallback, useEffect, FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Footer from "../../components/Footer";
@@ -307,8 +307,8 @@ export default function RestaurantTemplatesPage() {
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [openFaq, setOpenFaq] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
-  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : deviceMode;
+  const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
+  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : (deviceMode === "preview" ? "desktop" : deviceMode);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [email, setEmail] = useState("");
@@ -325,7 +325,12 @@ export default function RestaurantTemplatesPage() {
       setNewsletterStatus("success");
       setEmail("");
       setTimeout(() => setNewsletterStatus("idle"), 5000);
-    }, 1500);
+    }, 1200);
+  };
+
+  const handleNewsletterChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (newsletterStatus !== "idle") setNewsletterStatus("idle");
   };
 
   const r = useCallback((classes: string) => getModeClasses(classes, activeDeviceMode), [activeDeviceMode]);
@@ -333,10 +338,10 @@ export default function RestaurantTemplatesPage() {
 
 
   return (
-    <main className={isBlockpages ? "@container restaurant-shell w-full min-w-0 max-w-full overflow-x-hidden bg-white font-sans text-gray-900 box-border" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6"}>
+    <main className={isBlockpages ? "@container w-full min-w-0 max-w-full overflow-x-hidden bg-[#FFF5F5] font-serif text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-serif text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer"}>
 
       {!isBlockpages && (
-      <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+        <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
           <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
             <FaEye size={16} />
@@ -355,13 +360,15 @@ export default function RestaurantTemplatesPage() {
       </div>
       )}
 
-      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         {/* RESPONSIVE CANVAS FRAME */}
         <div
           ref={isBlockpages ? undefined : canvasScrollRef}
-          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${
+            deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
             : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
-              : "w-full min-h-screen"
+            : deviceMode === "desktop" ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
+            : "w-full min-h-screen"
             }`}
         >
           <div className="w-full max-w-full overflow-x-hidden min-w-0">
@@ -757,7 +764,7 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
-            <footer id="restaurant-footer" className={`@container bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <footer className={`@container bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="mx-auto max-w-7xl w-full">
                 <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   <div>
