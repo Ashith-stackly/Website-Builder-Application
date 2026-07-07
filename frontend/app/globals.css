@@ -1,8 +1,75 @@
 @import "tailwindcss";
 
+/* Manual dark mode, scoped to the authenticated App Shell (data-theme="dark").
+   The marketing site never sets data-theme, so it stays light. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+/* ─── App Shell design tokens (premium SaaS surfaces) ─────────────────────
+   Semantic variables consumed by the authenticated app. Light values live on
+   any [data-theme] wrapper; dark values override under [data-theme="dark"]. */
+[data-theme] {
+  --app-bg: #f6f8fc;
+  --app-bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(59, 130, 246, 0.08), transparent 55%),
+    radial-gradient(900px 500px at -10% 0%, rgba(139, 92, 246, 0.06), transparent 48%);
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #eef2f8;
+  --border: #e6ecf5;
+  --border-strong: #d6deec;
+  --text: #0b1b3b;
+  --text-muted: #5b6b86;
+  --text-faint: #8493ab;
+  --accent: #4f6bed;
+  --accent-strong: #3b52d6;
+  --accent-soft: #eef1fe;
+  --ring: rgba(79, 107, 237, 0.45);
+  --shadow-sm: 0 1px 2px rgba(15, 30, 65, 0.05), 0 6px 18px rgba(15, 30, 65, 0.05);
+  --shadow-md: 0 16px 44px rgba(15, 30, 65, 0.12);
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] {
+  --app-bg: #0a0e1a;
+  --app-bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(79, 107, 237, 0.16), transparent 55%),
+    radial-gradient(900px 500px at -10% 0%, rgba(139, 92, 246, 0.12), transparent 48%);
+  --surface: #121826;
+  --surface-2: #161d2e;
+  --surface-3: #1c2438;
+  --border: #232c40;
+  --border-strong: #303b54;
+  --text: #eef2fb;
+  --text-muted: #9aa8c4;
+  --text-faint: #6b7893;
+  --accent: #7d93f7;
+  --accent-strong: #93a5f9;
+  --accent-soft: #1e2745;
+  --ring: rgba(125, 147, 247, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 20px 55px rgba(0, 0, 0, 0.55);
+  --glass: rgba(18, 24, 38, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+}
+
+/* Themed scrollbars inside the app shell. */
+[data-theme] .app-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+[data-theme] .app-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong); border-radius: 9px; border: 3px solid transparent; background-clip: padding-box;
+}
+[data-theme] .app-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-faint); background-clip: padding-box; }
+
+/* Respect reduced-motion for any CSS transitions/animations in the app shell. */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme] *, [data-theme] *::before, [data-theme] *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @theme inline {

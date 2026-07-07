@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import AppShell from "@/components/app-shell/AppShell";
 
 export const metadata: Metadata = {
   title: "Dashboard | Stackly",
@@ -6,8 +7,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Dashboard layout — hides the global NavBar and Footer for dashboard pages.
- * The dashboard has its own header (DashboardHeader).
+ * Dashboard layout — wraps every authenticated dashboard route in the unified
+ * App Shell (animated sidebar + glass topbar + command palette), and hides the
+ * marketing NavBar/Footer so the app feels like one product.
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,12 +21,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .stackly-site-layout > header:not(.stackly-dashboard-layout *) {
           display: none !important;
         }
-        /* Let NavBarShell know we're in dashboard mode */
         body:has(.stackly-dashboard-layout) .stackly-global-nav {
           display: none !important;
         }
       `}</style>
-      {children}
+      <AppShell>{children}</AppShell>
     </div>
   );
 }

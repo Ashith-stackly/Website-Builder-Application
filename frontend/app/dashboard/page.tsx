@@ -1,239 +1,572 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight,
+  ArrowUpRight,
   Blocks,
-  Compass,
-  LayoutTemplate,
-  MousePointerClick,
-  Plus,
   Rocket,
+  LayoutTemplate,
+  Plus,
+  FolderKanban,
+  Globe,
+  Users,
+  HardDrive,
+  Clock,
+  MoreHorizontal,
+  Pencil,
+  Copy,
+  Trash2,
+  ExternalLink,
   Sparkles,
-  WandSparkles,
+  TrendingUp,
+  CheckCircle2,
+  Lightbulb,
 } from "lucide-react";
-import { staggerContainer, staggerChild } from "@/lib/motion";
+import {
+  gridContainer,
+  cardItem,
+  staggerContainer,
+  staggerChild,
+  revealSection,
+  spring,
+  hoverLift,
+} from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { trackPageView, trackVisitor } from "@/lib/analytics";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import StatsCards from "@/components/dashboard/StatsCards";
-import ProjectGrid from "@/components/dashboard/ProjectGrid";
-import EmptyProjects from "@/components/dashboard/EmptyProjects";
+import { useCountUp, useClickOutside } from "@/lib/hooks";
 import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
+import EmptyProjects from "@/components/dashboard/EmptyProjects";
+import type { Project } from "@/types/project";
 
-function DashboardContent() {
+/* ─── helpers ──────────────────────────────────────────────────────────── */
+
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function relTime(iso?: string): string {
+  if (!iso) return "just now";
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const hr = Math.floor(m / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.floor(hr / 24);
+  return d < 7 ? `${d}d ago` : `${Math.floor(d / 7)}w ago`;
+}
+
+const TILE_TONES = ["#4f6bed", "#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#f43f5e"];
+
+/* ─── page ─────────────────────────────────────────────────────────────── */
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     projects,
-    searchQuery,
-    sort,
     isLoading,
     error,
     loadProjects,
-    setSort,
     renameProject,
     deleteProject,
     duplicateProject,
-    getFilteredProjects,
   } = useProjectStore();
 
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [name, setName] = useState("there");
 
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
     trackVisitor();
     trackPageView("/dashboard");
+    try {
+      const raw = window.localStorage.getItem("stacklyUserSettings");
+      if (raw) {
+        const parsed = JSON.parse(raw) as { name?: string };
+        if (parsed.name) setName(parsed.name.split(" ")[0]);
+      }
+    } catch {
+      /* ignore */
+    }
     return () => controller.abort();
   }, [loadProjects]);
 
-  const filteredProjects = getFilteredProjects();
+  // Open the create flow from the sidebar / command palette (?new=1).
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setCreateOpen(true);
+      router.replace("/dashboard");
+    }
+  }, [searchParams, router]);
+
   const hasProjects = projects.length > 0;
-  const quickActions = [
-    {
-      title: "Template Studio",
-      description: "Start faster with page layouts tuned for your website type.",
-      icon: LayoutTemplate,
-      tone: "from-sky-500 to-blue-600",
-    },
-    {
-      title: "Drag Builder",
-      description: "Open a flexible canvas with sections, blocks, and style tools.",
-      icon: MousePointerClick,
-      tone: "from-emerald-500 to-teal-600",
-    },
-    {
-      title: "Smart Blocks",
-      description: "Assemble hero, features, gallery, and contact sections quickly.",
-      icon: Blocks,
-      tone: "from-violet-500 to-fuchsia-600",
-    },
-  ];
+
+  const stats = useMemo(() => {
+    const published = projects.filter((p) => p.status === "published").length;
+    const blocks = projects.reduce((acc, p) => acc + (p.components?.length ?? 0), 0);
+    let visitors = 0;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mod = require("@/lib/analytics");
+      visitors = mod.getAnalyticsData?.()?.uniqueVisitors ?? 0;
+    } catch {
+      /* ignore */
+    }
+    return [
+      { label: "Projects", value: projects.length, icon: FolderKanban, tone: TILE_TONES[0], sub: "in this workspace" },
+      { label: "Published", value: published, icon: Globe, tone: TILE_TONES[3], sub: "live sites" },
+      { label: "Visitors", value: visitors, icon: Users, tone: TILE_TONES[1], sub: "last 30 days" },
+      { label: "Blocks built", value: blocks, icon: Blocks, tone: TILE_TONES[2], sub: "across projects" },
+    ];
+  }, [projects]);
+
+  const progress = Math.min(100, 20 + projects.length * 12);
 
   return (
-    <main className="dashboard-page min-h-screen bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_45%,#ecfeff_100%)]">
-      <DashboardHeader />
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6 lg:space-y-8">
+        {/* ── Hero ── */}
+        <motion.section
+          variants={staggerChild}
+          className="relative overflow-hidden rounded-3xl border p-6 sm:p-8"
+          style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+        >
+          <div
+            className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full opacity-60 blur-3xl"
+            style={{ background: "radial-gradient(circle, rgba(79,107,237,0.28), transparent 70%)" }}
+          />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl">
+              <motion.span
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wide"
+                style={{ borderColor: "var(--border)", background: "var(--accent-soft)", color: "var(--accent-strong)" }}
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Workspace overview
+              </motion.span>
+              <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl" style={{ color: "var(--text)" }}>
+                {greeting()}, {name} 👋
+              </h1>
+              <p className="mt-2 text-sm leading-6" style={{ color: "var(--text-muted)" }}>
+                {hasProjects
+                  ? `You have ${projects.length} project${projects.length === 1 ? "" : "s"}. Pick up where you left off or start something new.`
+                  : "Let's build your first website. Choose a template or start from a blank canvas."}
+              </p>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
-        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6 sm:space-y-8">
-          <motion.section
-            variants={staggerChild}
-            className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/70 bg-white/85 px-5 py-6 shadow-sm backdrop-blur sm:px-7 sm:py-8"
-          >
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500" />
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.12, duration: 0.25 }}
-                  className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-blue-700"
-                >
-                  <Rocket className="h-3.5 w-3.5" />
-                  Website workspace
-                </motion.div>
-                <h1 className="text-2xl font-black text-[#06224C] sm:text-3xl">
-                  Welcome back to your dashboard
-                </h1>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  {hasProjects
-                    ? `You have ${projects.length} project${projects.length === 1 ? "" : "s"} ready to refine, publish, or remix.`
-                    : "Create your first project and start building with guided sections, templates, and animations."}
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-                <motion.button
-                  onClick={() => setCreateModalOpen(true)}
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#06224C] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#06224C]/20 transition-all hover:bg-blue-900 hover:shadow-xl"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Project
-                </motion.button>
-                <motion.a
-                  href="/dashboard/analytics"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-[#06224C] shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50"
-                >
-                  <Compass className="h-4 w-4" />
-                  Analytics
-                </motion.a>
+              {/* Today's progress */}
+              <div className="mt-5 max-w-sm">
+                <div className="mb-1.5 flex items-center justify-between text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+                  <span className="flex items-center gap-1.5"><TrendingUp className="h-3.5 w-3.5" /> Setup progress</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                    className="h-full rounded-full bg-gradient-to-r from-[#4f6bed] to-[#8b5cf6]"
+                  />
+                </div>
               </div>
             </div>
-          </motion.section>
 
-          {hasProjects && (
-            <motion.div variants={staggerChild}>
-              <StatsCards projects={projects} />
-            </motion.div>
-          )}
+            <div className="flex flex-col gap-2.5 sm:flex-row lg:flex-col xl:flex-row">
+              <motion.button
+                {...hoverLift}
+                onClick={() => setCreateOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25"
+              >
+                <Plus className="h-4 w-4" /> Create Website
+              </motion.button>
+              <motion.button
+                {...hoverLift}
+                onClick={() => router.push("/builder")}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold"
+                style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}
+              >
+                <Rocket className="h-4 w-4" /> Open Builder
+              </motion.button>
+            </div>
+          </div>
+        </motion.section>
 
-          <motion.div variants={staggerChild}>
+        {/* ── Stat row ── */}
+        <motion.section variants={gridContainer} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {stats.map((s) => (
+            <StatTile key={s.label} {...s} loading={isLoading} />
+          ))}
+        </motion.section>
+
+        {/* ── Quick actions ── */}
+        <motion.section variants={staggerChild}>
+          <SectionHeader title="Quick actions" subtitle="Jump straight into your most-used workflows." />
+          <motion.div variants={gridContainer} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              { title: "Create Website", desc: "Start from a guided setup flow.", icon: Plus, tone: TILE_TONES[0], onClick: () => setCreateOpen(true) },
+              { title: "Browse Templates", desc: "Pick a professionally designed layout.", icon: LayoutTemplate, tone: TILE_TONES[2], onClick: () => router.push("/templates") },
+              { title: "Open Builder", desc: "Drag, drop and design visually.", icon: Blocks, tone: TILE_TONES[1], onClick: () => router.push("/builder") },
+              { title: "View Analytics", desc: "Track traffic and performance.", icon: TrendingUp, tone: TILE_TONES[3], onClick: () => router.push("/dashboard/analytics") },
+            ].map((a) => (
+              <motion.button
+                key={a.title}
+                variants={cardItem}
+                whileHover={{ y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                transition={spring.snappy}
+                onClick={a.onClick}
+                className="group flex flex-col items-start gap-3 rounded-2xl border p-4 text-left"
+                style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+              >
+                <span className="grid h-11 w-11 place-items-center rounded-xl text-white shadow-md" style={{ background: a.tone }}>
+                  <a.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                </span>
+                <span>
+                  <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "var(--text)" }}>
+                    {a.title}
+                    <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-5" style={{ color: "var(--text-faint)" }}>{a.desc}</span>
+                </span>
+              </motion.button>
+            ))}
+          </motion.div>
+        </motion.section>
+
+        {/* ── Main + aside ── */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Recent projects */}
+          <motion.section variants={staggerChild} className="lg:col-span-2">
+            <SectionHeader
+              title="Recent projects"
+              subtitle="Continue editing where you left off."
+              action={hasProjects ? { label: "New", onClick: () => setCreateOpen(true) } : undefined}
+            />
             {isLoading ? (
-              <div className="rounded-3xl border border-slate-200 bg-white/80 px-6 py-16 text-center text-sm font-bold text-slate-500 shadow-sm">
-                Loading projects...
+              <div className="grid gap-3 sm:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, i) => <ProjectSkeleton key={i} />)}
               </div>
             ) : error ? (
-              <div className="rounded-3xl border border-red-100 bg-white/80 px-6 py-16 text-center shadow-sm">
-                <p className="text-sm font-bold text-red-600">{error}</p>
-                <button
-                  type="button"
-                  onClick={() => { void loadProjects(); }}
-                  className="mt-4 rounded-xl border border-red-100 bg-red-50 px-5 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100"
-                >
-                  Retry
-                </button>
-              </div>
+              <ErrorState message={error} onRetry={() => void loadProjects()} />
             ) : hasProjects ? (
-              filteredProjects.length > 0 ? (
-                <ProjectGrid
-                  projects={filteredProjects}
-                  sort={sort}
-                  onSortChange={setSort}
-                  onRename={renameProject}
-                  onDelete={deleteProject}
-                  onDuplicate={duplicateProject}
-                />
-              ) : (
-                <EmptyProjects onCreateProject={() => setCreateModalOpen(true)} searchQuery={searchQuery} />
-              )
+              <motion.div variants={gridContainer} initial="hidden" animate="visible" className="grid gap-3 sm:grid-cols-2">
+                {projects.slice(0, 6).map((p, i) => (
+                  <ProjectTile
+                    key={p.id}
+                    project={p}
+                    tone={TILE_TONES[i % TILE_TONES.length]}
+                    onOpen={() => router.push(`/builder?projectId=${p.id}`)}
+                    onRename={renameProject}
+                    onDelete={deleteProject}
+                    onDuplicate={duplicateProject}
+                  />
+                ))}
+              </motion.div>
             ) : (
-              <EmptyProjects onCreateProject={() => setCreateModalOpen(true)} />
-            )}
-          </motion.div>
-
-          {hasProjects && (
-            <motion.div variants={staggerChild}>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-base font-black text-[#06224C] sm:text-lg">Quick Actions</h2>
-                    <p className="mt-1 text-sm text-slate-500">Jump into the workflows you use most.</p>
-                  </div>
-                  <motion.button
-                    onClick={() => setCreateModalOpen(true)}
-                    whileHover={{ x: 2 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="hidden items-center gap-2 rounded-xl border border-[#06224C] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#06224C] transition-all hover:bg-[#06224C] hover:text-white sm:inline-flex"
-                  >
-                    Create
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </motion.button>
-                </div>
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-80px" }}
-                  className="grid gap-4 md:grid-cols-3"
-                >
-                  {quickActions.map((action) => (
-                    <motion.button
-                      key={action.title}
-                      variants={staggerChild}
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setCreateModalOpen(true)}
-                      className="group flex min-h-36 flex-col items-start justify-between rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:border-blue-200 hover:shadow-lg"
-                    >
-                      <span className={`inline-flex rounded-xl bg-gradient-to-br ${action.tone} p-3 text-white shadow-lg shadow-slate-900/10`}>
-                        <action.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-                      </span>
-                      <span>
-                        <span className="block text-sm font-black text-[#06224C]">{action.title}</span>
-                        <span className="mt-1 block text-xs leading-5 text-slate-500">{action.description}</span>
-                      </span>
-                    </motion.button>
-                  ))}
-                </motion.div>
-                <motion.div
-                  whileHover={{ y: -2 }}
-                  className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-[#06224C] p-5 text-center shadow-lg shadow-[#06224C]/10 sm:flex-row sm:text-left"
-                >
-                  <div className="rounded-2xl bg-white/10 p-3 text-cyan-200 ring-1 ring-white/15">
-                    <WandSparkles className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-base font-bold text-white">Need inspiration?</h3>
-                    <p className="mt-0.5 text-sm text-blue-100">
-                      Create a new project and let the setup flow suggest the right sections.
-                    </p>
-                  </div>
-                  <Sparkles className="hidden h-5 w-5 text-cyan-200 sm:block" />
-                </motion.div>
+              <div className="rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+                <EmptyProjects onCreateProject={() => setCreateOpen(true)} />
               </div>
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
+            )}
+          </motion.section>
 
-      <CreateProjectModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} />
-    </main>
+          {/* Aside */}
+          <motion.aside variants={staggerChild} className="space-y-6">
+            <ActivityTimeline projects={projects} />
+            <TipCard />
+          </motion.aside>
+        </div>
+      </motion.div>
+
+      <CreateProjectModal isOpen={createOpen} onClose={() => setCreateOpen(false)} />
+    </div>
   );
 }
 
-export default function DashboardPage() {
-  return <DashboardContent />;
+/* ─── sub-components ───────────────────────────────────────────────────── */
+
+function SectionHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="mb-4 flex items-end justify-between gap-3">
+      <div>
+        <h2 className="text-lg font-black tracking-tight" style={{ color: "var(--text)" }}>{title}</h2>
+        {subtitle && <p className="mt-0.5 text-sm" style={{ color: "var(--text-faint)" }}>{subtitle}</p>}
+      </div>
+      {action && (
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          onClick={action.onClick}
+          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold"
+          style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
+        >
+          <Plus className="h-3.5 w-3.5" /> {action.label}
+        </motion.button>
+      )}
+    </div>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  icon: Icon,
+  tone,
+  sub,
+  loading,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: string;
+  sub: string;
+  loading?: boolean;
+}) {
+  const animated = useCountUp(value, 900);
+  const display = loading ? 0 : Math.round(animated);
+  return (
+    <motion.div
+      variants={cardItem}
+      whileHover={{ y: -3 }}
+      transition={spring.snappy}
+      className="relative overflow-hidden rounded-2xl border p-4"
+      style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ background: `${tone}1a`, color: tone }}>
+          <Icon className="h-4.5 w-4.5" />
+        </span>
+      </div>
+      <div className="mt-3 text-2xl font-black tabular-nums" style={{ color: "var(--text)" }}>
+        {loading ? <span className="inline-block h-7 w-12 animate-pulse rounded-md" style={{ background: "var(--surface-3)" }} /> : display.toLocaleString()}
+      </div>
+      <div className="mt-0.5 text-[13px] font-semibold" style={{ color: "var(--text-muted)" }}>{label}</div>
+      <div className="text-[11px]" style={{ color: "var(--text-faint)" }}>{sub}</div>
+    </motion.div>
+  );
+}
+
+function ProjectTile({
+  project,
+  tone,
+  onOpen,
+  onRename,
+  onDelete,
+  onDuplicate,
+}: {
+  project: Project;
+  tone: string;
+  onOpen: () => void;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useClickOutside<HTMLDivElement>(() => setMenuOpen(false), menuOpen);
+
+  const doRename = () => {
+    setMenuOpen(false);
+    const next = window.prompt("Rename project", project.name);
+    if (next && next.trim() && next.trim() !== project.name) onRename(project.id, next.trim());
+  };
+  const doDelete = () => {
+    setMenuOpen(false);
+    if (window.confirm(`Delete “${project.name}”? This cannot be undone.`)) onDelete(project.id);
+  };
+
+  return (
+    <motion.div
+      variants={cardItem}
+      layout
+      whileHover={{ y: -4 }}
+      transition={spring.snappy}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border"
+      style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+    >
+      {/* Thumbnail */}
+      <button onClick={onOpen} className="relative h-28 w-full overflow-hidden" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
+        <div className="absolute inset-0 grid place-items-center">
+          <span className="grid h-11 w-11 place-items-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ background: tone }}>
+            <Blocks className="h-5 w-5" />
+          </span>
+        </div>
+        <span className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur" style={{ background: "var(--glass)", color: "var(--text-muted)" }}>
+          {project.status || "draft"}
+        </span>
+      </button>
+
+      {/* Meta */}
+      <div className="flex items-center gap-2 p-3">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</div>
+          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
+            <span className="truncate">{project.category || "Website"}</span>
+            <span>·</span>
+            <span className="flex items-center gap-0.5 whitespace-nowrap"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
+          </div>
+        </div>
+        <div ref={menuRef} className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="grid h-8 w-8 place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]"
+            style={{ color: "var(--text-faint)" }}
+            aria-label="Project actions"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                transition={{ duration: 0.14 }}
+                className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border p-1 shadow-xl"
+                style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}
+              >
+                <MenuItem icon={ExternalLink} label="Open" onClick={() => { setMenuOpen(false); onOpen(); }} />
+                <MenuItem icon={Pencil} label="Rename" onClick={doRename} />
+                <MenuItem icon={Copy} label="Duplicate" onClick={() => { setMenuOpen(false); onDuplicate(project.id); }} />
+                <MenuItem icon={Trash2} label="Delete" danger onClick={doDelete} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function MenuItem({
+  icon: Icon,
+  label,
+  onClick,
+  danger,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+      style={{ color: danger ? "#f43f5e" : "var(--text)" }}
+    >
+      <Icon className="h-4 w-4" /> {label}
+    </button>
+  );
+}
+
+function ActivityTimeline({ projects }: { projects: Project[] }) {
+  const items = useMemo(() => {
+    const base = projects.slice(0, 4).map((p) => ({
+      icon: Pencil,
+      tone: "#4f6bed",
+      title: `Edited ${p.name}`,
+      time: relTime(p.updatedAt),
+    }));
+    return base.length
+      ? base
+      : [{ icon: CheckCircle2, tone: "#10b981", title: "Welcome to Stackly", time: "now" }];
+  }, [projects]);
+
+  return (
+    <motion.div
+      variants={revealSection}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-40px" }}
+      className="rounded-2xl border p-5"
+      style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+    >
+      <div className="mb-4 flex items-center gap-2">
+        <Clock className="h-4 w-4" style={{ color: "var(--accent)" }} />
+        <h3 className="text-sm font-black" style={{ color: "var(--text)" }}>Recent activity</h3>
+      </div>
+      <motion.ul variants={staggerContainer} initial="hidden" animate="visible" className="relative space-y-4">
+        <span className="absolute bottom-2 left-[15px] top-2 w-px" style={{ background: "var(--border)" }} />
+        {items.map((it, i) => (
+          <motion.li key={i} variants={staggerChild} className="relative flex items-start gap-3">
+            <span className="relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full ring-4" style={{ background: `${it.tone}1a`, color: it.tone, ["--tw-ring-color" as string]: "var(--surface)" }}>
+              <it.icon className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1 pt-1">
+              <p className="truncate text-[13px] font-semibold" style={{ color: "var(--text)" }}>{it.title}</p>
+              <p className="text-[11px]" style={{ color: "var(--text-faint)" }}>{it.time}</p>
+            </div>
+          </motion.li>
+        ))}
+      </motion.ul>
+    </motion.div>
+  );
+}
+
+function TipCard() {
+  return (
+    <motion.div
+      variants={revealSection}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-40px" }}
+      className="relative overflow-hidden rounded-2xl border p-5"
+      style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, var(--accent-soft), var(--surface))" }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
+          <Lightbulb className="h-4 w-4" />
+        </span>
+        <h3 className="text-sm font-black" style={{ color: "var(--text)" }}>Pro tip</h3>
+      </div>
+      <p className="mt-3 text-[13px] leading-6" style={{ color: "var(--text-muted)" }}>
+        Press <Kbd>⌘</Kbd> <Kbd>K</Kbd> anywhere to open the command palette — jump to any page, project, or action instantly.
+      </p>
+    </motion.div>
+  );
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="inline-grid h-5 min-w-5 place-items-center rounded border px-1 font-sans text-[11px] font-bold" style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}>
+      {children}
+    </kbd>
+  );
+}
+
+function ProjectSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+      <div className="h-28 w-full animate-pulse" style={{ background: "var(--surface-3)" }} />
+      <div className="space-y-2 p-3">
+        <div className="h-3.5 w-2/3 animate-pulse rounded" style={{ background: "var(--surface-3)" }} />
+        <div className="h-2.5 w-1/2 animate-pulse rounded" style={{ background: "var(--surface-3)" }} />
+      </div>
+    </div>
+  );
+}
+
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="rounded-2xl border p-10 text-center" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+      <p className="text-sm font-semibold text-rose-500">{message}</p>
+      <button onClick={onRetry} className="mt-4 rounded-xl border px-5 py-2 text-xs font-bold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
+        Retry
+      </button>
+    </div>
+  );
 }
