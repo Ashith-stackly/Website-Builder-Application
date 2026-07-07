@@ -612,39 +612,39 @@ export default function ConstructionTemplatePage() {
   return (
     <main className={isBlockpages ? "@container construction-shell w-full min-w-0 max-w-full overflow-x-hidden bg-[#FDF8F5] font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer"}>
       {!isBlockpages && (
-      <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
-        <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
-          <Link
-            href="/landing#templates"
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white hover:bg-gray-50 text-[#0A1E3D] transition"
-            title="Back to Landing"
-          >
-            <FaEye size={16} />
-          </Link>
-          <div className="w-px h-6 bg-gray-300 mx-1" />
-          <button
-            aria-label="Desktop View"
-            onClick={() => setDeviceMode("desktop")}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "desktop" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
-          >
-            <FaLaptop size={16} />
-          </button>
-          <button
-            aria-label="Tablet View"
-            onClick={() => setDeviceMode("tablet")}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "tablet" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
-          >
-            <FaTabletAlt size={16} />
-          </button>
-          <button
-            aria-label="Mobile View"
-            onClick={() => setDeviceMode("mobile")}
-            className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "mobile" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
-          >
-            <FaMobileAlt size={16} />
-          </button>
+        <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+          <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
+            <Link
+              href="/landing#templates"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white hover:bg-gray-50 text-[#0A1E3D] transition"
+              title="Back to Landing"
+            >
+              <FaEye size={16} />
+            </Link>
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+            <button
+              aria-label="Desktop View"
+              onClick={() => setDeviceMode("desktop")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "desktop" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
+            >
+              <FaLaptop size={16} />
+            </button>
+            <button
+              aria-label="Tablet View"
+              onClick={() => setDeviceMode("tablet")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "tablet" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
+            >
+              <FaTabletAlt size={16} />
+            </button>
+            <button
+              aria-label="Mobile View"
+              onClick={() => setDeviceMode("mobile")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition ${deviceMode === "mobile" ? "bg-gray-100 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "text-gray-500"}`}
+            >
+              <FaMobileAlt size={16} />
+            </button>
+          </div>
         </div>
-      </div>
       )}
 
       <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
@@ -1005,9 +1005,9 @@ export default function ConstructionTemplatePage() {
                     >
                       <img src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E3D] via-[#0A1E3D]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 sm:p-8">
-                        <span className="text-blue-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{project.category}</span>
-                        <h3 className="text-white font-black text-xl sm:text-3xl mb-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">{project.title}</h3>
-                        <p className="text-white/80 text-sm leading-relaxed line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150">{project.desc}</p>
+                        <span className={r("text-blue-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500")}>{project.category}</span>
+                        <h3 className={r("text-white font-black text-xl sm:text-3xl mb-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75")}>{project.title}</h3>
+                        <p className={r("text-white/80 text-xs sm:text-sm leading-relaxed line-clamp-none sm:line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150")}>{project.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -1189,7 +1189,7 @@ export default function ConstructionTemplatePage() {
             ================================================================= */}
             <section className={r("w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-24 sm:px-6 lg:px-8")}>
               <div className={r("max-w-7xl mx-auto bg-[#EAF2FA] rounded-3xl p-6 flex flex-col gap-8 overflow-hidden shadow-sm border border-white sm:rounded-[2.5rem] sm:p-10 md:p-16 md:flex-row md:items-center md:gap-12")}>
-                <div className="w-full md:w-1/2 relative z-30">
+                <div className={r("w-full md:w-1/2 relative z-30")}>
                   <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight mb-4 sm:text-3xl md:text-5xl sm:mb-6")}>
                     Let&apos;s Build Together with Expert Construction Services
                   </h2>
@@ -1225,7 +1225,7 @@ export default function ConstructionTemplatePage() {
             ================================================================= */}
             <section id="const-contact" className={r("w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-24 sm:px-6 lg:px-8")}>
               <div className={r("max-w-7xl mx-auto flex flex-col gap-10 md:flex-row md:gap-16 lg:gap-24")}>
-                <div className="w-full md:w-1/2">
+                <div className={r("w-full md:w-1/2")}>
                   <p className={r("text-gray-900 font-medium uppercase tracking-widest text-xs sm:text-sm flex items-center gap-3 mb-3 sm:gap-4 sm:mb-4")}>
                     <span className={r("w-8 h-px bg-gray-400 block shrink-0 sm:w-12")} /> Contact Us
                   </p>
@@ -1544,9 +1544,9 @@ export default function ConstructionTemplatePage() {
       </div>
 
       {!isBlockpages && (
-      <div className="mt-4 md:mt-8 w-full">
-        <Footer />
-      </div>
+        <div className="mt-4 md:mt-8 w-full">
+          <Footer />
+        </div>
       )}
     </main>
   );
