@@ -720,7 +720,7 @@ export default function BlockPagesClient() {
             </div>
           </div>
         ) : activeBlockPage === "text" ? (
-          <div className="flex min-w-0 flex-1 gap-4">
+          <div className="flex min-h-0 min-w-0 flex-1 gap-4 overflow-hidden">
             <TextCanvas
               state={textBlockState}
               onStateChange={pushTextState}

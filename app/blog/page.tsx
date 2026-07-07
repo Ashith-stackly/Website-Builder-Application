@@ -674,7 +674,13 @@ export default function BlogPage() {
       : blogCategories.filter((blog) => blog.id === selectedCategory);
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
+    <main
+      className={
+        isBlockpages
+          ? "@container blog-blockpages-root w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible bg-[var(--blog-white)] font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer"
+          : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6"
+      }
+    >
       {!isBlockpages && (
         <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
           <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
@@ -1174,7 +1180,7 @@ export default function BlogPage() {
             </div>
           </div>
 
-      {(deviceMode === "desktop" || deviceMode === "preview") && <Footer />}
+      {!isBlockpages && (deviceMode === "desktop" || deviceMode === "preview") && <Footer />}
 
       <style jsx={false}>{`
         .blog-page {

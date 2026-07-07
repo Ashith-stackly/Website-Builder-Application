@@ -414,12 +414,21 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     [data-textblock-canvas] .restaurant-shell,
                     [data-textblock-canvas] .construction-shell,
                     [data-textblock-canvas] .blog-page,
+                    [data-textblock-canvas] .blog-blockpages-root,
                     [data-textblock-canvas] .dm-shell {
                       max-width: 100%;
                       min-width: 0;
                       overflow-x: hidden;
                       overflow-y: visible;
                       box-sizing: border-box;
+                    }
+                    [data-textblock-canvas] .blog-blockpages-root,
+                    [data-textblock-canvas] .blog-blockpages-root > div,
+                    [data-textblock-canvas] .dm-shell,
+                    [data-textblock-canvas] .dm-shell > div {
+                      min-height: auto !important;
+                      max-height: none !important;
+                      overflow-y: visible !important;
                     }
                     [data-textblock-canvas] h1,
                     [data-textblock-canvas] h2,
