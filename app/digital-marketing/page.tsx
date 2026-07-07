@@ -30,6 +30,10 @@ import { assetPath } from "@/lib/paths";
 import Footer from "@/components/Footer";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
+function dmAsset(path: string) {
+  return encodeURI(assetPath(path));
+}
+
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -134,21 +138,21 @@ const testimonials = [
     name: "Michael Anderson",
     role: "CEO, Anderson Realty Group",
     text: "BuildNest Construction exceeded our expectations from start to finish. Their team was professional, transparent, and delivered our project on time with exceptional quality. We couldn't be happier with the results.",
-    img: "/Michael Anderson.webp",
+    img: dmAsset("/Michael Anderson.webp"),
     isDark: false,
   },
   {
     name: "Sarah Thompson",
     role: "",
     text: "Working with BuildNest Construction was a fantastic experience. Their attention to detail, craftsmanship, and commitment to customer satisfaction made our renovation project stress-free and successful",
-    img: "/Sarah Thompson.webp",
+    img: dmAsset("/Sarah Thompson.webp"),
     isDark: true,
   },
   {
     name: "David Wilson",
     role: "",
     text: "The team demonstrated outstanding expertise and professionalism throughout the entire construction process. They kept us informed at every stage and delivered exactly what they promised.",
-    img: "/David Wilson.webp",
+    img: dmAsset("/David Wilson.webp"),
     isDark: false,
   },
 ];
@@ -606,7 +610,7 @@ export default function DigitalMarketingPreviewPage() {
                       whileInView={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 1 }}
                       viewport={{ once: true }}
-                      src="/Digital marketing.webp"
+                      src={dmAsset("/Digital marketing.webp")}
                       alt="Precision Marketing"
                       className="h-full w-full object-cover"
                     />
@@ -665,13 +669,13 @@ export default function DigitalMarketingPreviewPage() {
                         {
                           badge: "Mission",
                           text: "Our mission is to help businesses grow through innovative digital marketing strategies that increase visibility, engagement, and measurable results.",
-                          img: "/Digital marketing mission.webp",
+                          img: dmAsset("/Digital marketing mission.webp"),
                           reverse: false,
                         },
                         {
                           badge: "Vision",
                           text: "To empower businesses with innovative digital marketing solutions that drive growth, enhance brand visibility, and create lasting success in the digital world.",
-                          img: "/Digital marketing vision.webp",
+                          img: dmAsset("/Digital marketing vision.webp"),
                           reverse: true,
                         },
                       ].map((card) => (
@@ -762,7 +766,7 @@ export default function DigitalMarketingPreviewPage() {
                     </motion.div>
                     <motion.div variants={slideInRight} className="min-w-0 w-full overflow-hidden rounded-2xl shadow-xl">
                       <img
-                        src="/Business planning.webp"
+                        src={dmAsset("/Business planning.webp")}
                         alt="Business planning"
                         className="w-full h-auto object-cover"
                         loading="lazy"
@@ -788,7 +792,7 @@ export default function DigitalMarketingPreviewPage() {
                             <div className="relative w-fit max-w-full">
                               <div className="w-full max-w-md border-2 border-[#1E56E5] p-1">
                                 <img
-                                  src="/Organic traffic.webp"
+                                  src={dmAsset("/Organic traffic.webp")}
                                   alt="Analytics dashboard"
                                   className="w-auto h-auto max-w-full max-h-[45vh] object-contain"
                                   loading="lazy"

@@ -276,8 +276,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         </div>
       </div>
  
-      <div className="flex-1 overflow-y-auto p-0">
-        <div className="mx-auto w-full max-w-none overflow-hidden rounded-none sm:rounded-xl border-0 sm:border border-[#dbe3ef] bg-white shadow-[0_18px_45px_rgba(15,35,75,0.08)]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+        <div className="mx-auto flex min-h-0 w-full max-w-none flex-1 flex-col overflow-hidden rounded-none sm:rounded-xl border-0 sm:border border-[#dbe3ef] bg-white shadow-[0_18px_45px_rgba(15,35,75,0.08)]">
           <div data-builder-chrome="true" className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6edf5] px-4 py-3 sm:px-6 sm:py-4">
             <h2 className="text-[18px] font-bold text-[#0B1D40]">
               {getBlockpagesTemplateLabel(template)} Text Blocks
@@ -302,7 +302,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
  
           <div
             ref={canvasRef}
-            className={`relative min-h-[640px]`}
+            className="relative flex min-h-0 flex-1 flex-col"
             style={{ backgroundColor: section.backgroundColor, textAlign: section.alignment }}
           >
             {isTextEditable && !isPreviewMode ? (
@@ -397,13 +397,13 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                 }
               `}
             `}</style>
-            <div className="relative">
+            <div className="relative flex min-h-0 flex-1 flex-col">
               <div
-                className="mx-auto w-full min-w-0 transition-all duration-500 ease-in-out max-w-full"
+                className="mx-auto w-full min-w-0 flex-1 transition-all duration-500 ease-in-out max-w-full"
               >
                 <div
                   data-textblock-canvas
-                  className="@container h-[calc(100vh-160px)] min-h-[560px] w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto custom-scrollbar [overflow-wrap:break-word] [word-wrap:break-word]"
+                  className="@container min-h-[560px] h-[calc(100vh-220px)] w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar [overflow-wrap:break-word] [word-wrap:break-word]"
                 >
                   <style>{`
                     [data-textblock-canvas] .portfolio-shell,
@@ -415,6 +415,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                       max-width: 100%;
                       min-width: 0;
                       overflow-x: hidden;
+                      overflow-y: visible;
                       box-sizing: border-box;
                     }
                     [data-textblock-canvas] h1,

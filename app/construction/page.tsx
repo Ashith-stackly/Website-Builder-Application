@@ -28,6 +28,7 @@ import {
 } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { assetPath } from "@/lib/paths";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BUILDING_HREF = "/signup";
 
@@ -436,7 +437,10 @@ const infiniteTestimonials = Array(50).fill(testimonialsData).flat();
 // MAIN TEMPLATE
 // =========================================================================
 export default function ConstructionTemplatePage() {
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : deviceMode;
   const [email, setEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -453,7 +457,7 @@ export default function ConstructionTemplatePage() {
       setTimeout(() => setNewsletterStatus("idle"), 5000);
     }, 1500);
   };
-  const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
+  const r = useCallback((classes: string) => getModeClasses(classes, activeDeviceMode), [activeDeviceMode]);
   const [activeTab, setActiveTab] = useState("All Projects");
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
@@ -606,9 +610,9 @@ export default function ConstructionTemplatePage() {
     activeTab === "All Projects" ? allProjectsData : allProjectsData.filter((p) => p.category === activeTab);
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer">
-      {/* FLOATING DEVICE TOOLBAR */}
-      <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
+    <main className={isBlockpages ? "@container construction-shell w-full min-w-0 max-w-full overflow-x-hidden bg-[#FDF8F5] font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer"}>
+      {!isBlockpages && (
+      <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
           <Link
             href="/landing#templates"
@@ -641,11 +645,12 @@ export default function ConstructionTemplatePage() {
           </button>
         </div>
       </div>
+      )}
 
-      <div className={`flex-1 flex justify-center w-full ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         <div
-          ref={canvasScrollRef}
-          className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto ${deviceMode === "mobile"
+          ref={isBlockpages ? undefined : canvasScrollRef}
+          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto ${deviceMode === "mobile"
             ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
             : deviceMode === "tablet"
               ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
@@ -653,7 +658,7 @@ export default function ConstructionTemplatePage() {
             }`}
         >
           <div className="w-full overflow-x-hidden bg-[#FDF8F5]">
-            <ConstructionHeader deviceMode={deviceMode} />
+            <ConstructionHeader deviceMode={activeDeviceMode} />
 
             {/* =================================================================
                 1. HERO
@@ -1538,9 +1543,11 @@ export default function ConstructionTemplatePage() {
         </div>
       </div>
 
+      {!isBlockpages && (
       <div className="mt-4 md:mt-8 w-full">
         <Footer />
       </div>
+      )}
     </main>
   );
 }
