@@ -172,7 +172,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
   const showDesktopNav = deviceMode === "desktop";
 
   return (
-    <header ref={headerRef} className="bg-[#06224C] text-white w-full relative z-50">
+    <header ref={headerRef} data-blockpages-template-header="true" className="bg-[#06224C] text-white w-full relative z-50">
       <div className="w-full mx-auto flex items-center justify-between gap-3 py-4 px-4 sm:px-6 lg:px-8 max-w-7xl">
         <button
           type="button"
@@ -198,12 +198,15 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                       <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
                     </button>
                     {/* Invisible hover bridge & dropdown box */}
-                    <div className="absolute top-full left-0 pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="absolute top-full left-0 pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50" data-blockpages-dropdown-panel="true">
                       <div className="bg-white rounded-xl shadow-xl border border-gray-100 flex flex-col py-2">
                         {["All Projects", "Construction", "Architecture", "Renovation"].map(item => (
                           <button
                             key={item}
-                            onClick={() => scrollToSection("const-projects")}
+                            onClick={(event) => {
+                              if (event.currentTarget.isContentEditable) return;
+                              scrollToSection("const-projects");
+                            }}
                             className="px-4 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                           >
                             {item}
@@ -253,7 +256,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                   <FaUser size={14} />
                 </button>
                 {profileOpen && (
-                  <div className="absolute top-12 right-0 w-40 py-2 bg-white rounded-lg shadow-xl border border-gray-100 z-[60]">
+                  <div className="absolute top-12 right-0 w-40 py-2 bg-white rounded-lg shadow-xl border border-gray-100 z-[60]" data-blockpages-dropdown-panel="true">
                     <button
                       type="button"
                       className="flex items-center gap-3 w-full py-2.5 px-4 text-left text-sm font-bold text-red-600 hover:bg-red-50"
@@ -691,7 +694,7 @@ export default function ConstructionTemplatePage() {
 
                     <div className={r("grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-4 mb-7 sm:gap-x-4 sm:gap-y-5 sm:mb-10 w-full")}>
                       <div className={r("flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug")}>
-                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")}>
+                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")} data-blockpages-icon-slot="true" data-blockpages-icon-id="const-hero-hammer">
                           <FaHammer size={12} />
                         </div>
                         <span>
@@ -700,7 +703,7 @@ export default function ConstructionTemplatePage() {
                         </span>
                       </div>
                       <div className={r("flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug")}>
-                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")}>
+                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")} data-blockpages-icon-slot="true" data-blockpages-icon-id="const-hero-leaf">
                           <FaLeaf size={12} />
                         </div>
                         <span>
@@ -709,7 +712,7 @@ export default function ConstructionTemplatePage() {
                         </span>
                       </div>
                       <div className={r("flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug")}>
-                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")}>
+                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")} data-blockpages-icon-slot="true" data-blockpages-icon-id="const-hero-building">
                           <FaBuilding size={12} />
                         </div>
                         <span>
@@ -718,7 +721,7 @@ export default function ConstructionTemplatePage() {
                         </span>
                       </div>
                       <div className={r("flex items-center sm:items-start gap-3 sm:gap-2.5 text-xs font-bold text-[#0A1E3D] leading-snug")}>
-                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")}>
+                        <div className={r("shrink-0 w-8 h-8 rounded-full bg-[#0A1E3D] flex items-center justify-center text-white sm:mt-0.5")} data-blockpages-icon-slot="true" data-blockpages-icon-id="const-hero-ruler">
                           <FaPenRuler size={12} />
                         </div>
                         <span>Architectural Design</span>
@@ -783,7 +786,7 @@ export default function ConstructionTemplatePage() {
                       return (
                         <div
                           key={p.id}
-                          className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col border border-gray-100"
+                          className="blockpages-card group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col border border-gray-100"
                         >
                           <div className="relative h-44 sm:h-56 overflow-hidden bg-gray-100">
                             <img
@@ -837,13 +840,15 @@ export default function ConstructionTemplatePage() {
               <div className="max-w-7xl mx-auto">
                 <div className={r("bg-[#0A1E3D] text-white py-7 px-5 grid grid-cols-2 gap-4 rounded-t-2xl sm:py-8 sm:px-12 sm:gap-8 lg:grid-cols-4 sm:rounded-t-3xl")}>
                   {[
-                    { icon: FaClipboardList, num: "27+", label: "Years Industry Experience" },
-                    { icon: FaUserGroup, num: "2000+", label: "Happy Customers" },
-                    { icon: FaHelmetSafety, num: "150+", label: "Certified Projects" },
-                    { icon: FaCertificate, num: "100%", label: "Client Satisfaction Rating" },
-                  ].map((s, i) => (
-                    <div key={i} className={r("flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3")}>
-                      <s.icon className={r("text-3xl text-[#FBBF24] shrink-0 sm:text-4xl sm:mt-1")} />
+                    { icon: FaClipboardList, num: "27+", label: "Years Industry Experience", id: "const-stat-0" },
+                    { icon: FaUserGroup, num: "2000+", label: "Happy Customers", id: "const-stat-1" },
+                    { icon: FaHelmetSafety, num: "150+", label: "Certified Projects", id: "const-stat-2" },
+                    { icon: FaCertificate, num: "100%", label: "Client Satisfaction Rating", id: "const-stat-3" },
+                  ].map((s) => (
+                    <div key={s.id} className={r("flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3")}>
+                      <div data-blockpages-icon-slot="true" data-blockpages-icon-id={s.id} className="shrink-0">
+                        <s.icon className={r("text-3xl text-[#FBBF24] shrink-0 sm:text-4xl sm:mt-1")} />
+                      </div>
                       <div className="flex flex-col">
                         <span className={r("text-xl font-black leading-tight sm:text-2xl")}>{s.num}</span>
                         <span className={r("text-xs font-bold text-gray-300 leading-snug sm:text-xs mt-1 sm:mt-0")}>{s.label}</span>
@@ -881,7 +886,7 @@ export default function ConstructionTemplatePage() {
                     {services.map((s, i) => (
                       <div
                         key={i}
-                        className={r("group flex flex-col p-6 rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-2 sm:p-8 lg:p-10 lg:min-h-[400px] bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white")}
+                        className={r("blockpages-card group flex flex-col p-6 rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-2 sm:p-8 lg:p-10 lg:min-h-[400px] bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white")}
                       >
                         <h3 className={r("text-lg font-black mb-4 leading-snug whitespace-pre-line sm:text-xl sm:mb-6 lg:text-2xl")}>{s.title}</h3>
                         <p className={r("text-sm mb-7 leading-relaxed flex-1 sm:mb-10 text-gray-600 group-hover:text-gray-300 transition-colors duration-300")}>{s.desc}</p>
@@ -1003,7 +1008,7 @@ export default function ConstructionTemplatePage() {
                   {recentProjects.map((project, i) => (
                     <div
                       key={i}
-                      className={r("group shrink-0 snap-center w-[85%] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-[450px] sm:rounded-[2rem] relative")}
+                      className={r("blockpages-card group shrink-0 snap-center w-[85%] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-[450px] sm:rounded-[2rem] relative")}
                     >
                       <img src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E3D] via-[#0A1E3D]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 sm:p-8">
@@ -1060,7 +1065,7 @@ export default function ConstructionTemplatePage() {
                       return (
                         <div
                           key={i}
-                          className={`rounded-xl shadow-sm overflow-hidden h-fit flex flex-col transition-colors duration-300 ${isActive ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
+                          className={`blockpages-card rounded-xl shadow-sm overflow-hidden h-fit flex flex-col transition-colors duration-300 ${isActive ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
                             }`}
                         >
                           <button
@@ -1090,7 +1095,7 @@ export default function ConstructionTemplatePage() {
                       return (
                         <div
                           key={i}
-                          className={`rounded-xl shadow-sm overflow-hidden h-fit flex flex-col transition-colors duration-300 ${isActive ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
+                          className={`blockpages-card rounded-xl shadow-sm overflow-hidden h-fit flex flex-col transition-colors duration-300 ${isActive ? "bg-[#0A1E3D] text-white" : "bg-white text-[#0A1E3D] hover:bg-gray-50"
                             }`}
                         >
                           <button
@@ -1144,7 +1149,7 @@ export default function ConstructionTemplatePage() {
                     return (
                       <div
                         key={`${i}-${t.name}`}
-                        className={r("group shrink-0 snap-center w-[85%] sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-21px)] p-6 rounded-2xl shadow-xl border relative flex flex-col justify-between sm:p-8 transition-all duration-500 bg-[#F4FAFF] border-white/50 text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white hover:border-[#0A1E3D] hover:-translate-y-2")}
+                        className={r("blockpages-card group shrink-0 snap-center w-[85%] sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-21px)] p-6 rounded-2xl shadow-xl border relative flex flex-col justify-between sm:p-8 transition-all duration-500 bg-[#F4FAFF] border-white/50 text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white hover:border-[#0A1E3D] hover:-translate-y-2")}
                       >
                         <div className="flex flex-col flex-1">
                           <div className={r("flex gap-1 text-yellow-400 mb-5 sm:mb-6")}>
@@ -1351,7 +1356,7 @@ export default function ConstructionTemplatePage() {
             </section>
 
             {/* Construction Template Footer (Matched to Digital Marketing Layout) */}
-            <footer id="const-footer" className="@container bg-[#0A1E3D] text-white relative z-20">
+            <footer id="const-footer" data-blockpages-template-footer="true" className="@container bg-[#0A1E3D] text-white relative z-20">
               <div className="mx-auto max-w-7xl px-4 py-12 @md:px-8 @md:py-16">
                 <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   {/* Column 1: Brand */}

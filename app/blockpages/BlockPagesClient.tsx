@@ -13,6 +13,11 @@ import TextCanvas from "./textblock/Canvas";
 import TextRightSidebar from "./textblock/RightSidebar";
 import type { TextBlockState, TextTemplateType } from "./textblock/types";
 import {
+  isBlockpagesVideoApplied,
+  loadBlockpagesVideoProps,
+  saveBlockpagesVideoProps,
+} from "@/lib/blockpagesVideoStorage";
+import {
   getBlockpagesTemplateLabel,
   isTextEditorTemplate,
   parseBlockpagesTemplate,
@@ -24,11 +29,12 @@ import {
   getBlockpagesHeaderScrollId,
   getBlockpagesVideoScrollId,
   getBlockpagesAboutScrollId,
+  getBlockpagesIconScrollId,
 } from "@/lib/blockpagesTemplateSections";
 import {
   getBlockpagesCanvasElement,
   scanCanvasForIconTargets,
-  scanCanvasForVideoTargets,
+  scrollToFirstIconTarget,
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
 } from "@/lib/blockpagesEditTargets";
@@ -167,18 +173,41 @@ export default function BlockPagesClient() {
   const [appliedIcons, setAppliedIcons] = useState<{ id: string, props: IconBlockProps, position?: { x: number, y: number }, scale?: number }[]>([]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
-  const verifyCanvasHasVideoTargets = (template: TextTemplateType) => {
-    if (templateHasBuiltInVideoSlots(template)) return true;
-    const canvas = getBlockpagesCanvasElement();
-    if (!canvas) return false;
-    return scanCanvasForVideoTargets(canvas);
-  };
-
   const verifyCanvasHasIconTargets = (template: TextTemplateType) => {
     if (templateHasBuiltInIconSlots(template)) return true;
     const canvas = getBlockpagesCanvasElement();
     if (!canvas) return false;
     return scanCanvasForIconTargets(canvas) > 0;
+  };
+
+  const showNoVideoAlert = () => {
+    window.alert("There is no video on this page to edit.");
+  };
+
+  const showNoIconAlert = () => {
+    window.alert("There are no icons to edit on this page.");
+  };
+
+  const activateInlineIconEditing = () => {
+    if (!verifyCanvasHasIconTargets(textTemplate)) {
+      showNoIconAlert();
+      return;
+    }
+
+    setActiveBlockPage("text");
+    setIsIconEditingMode(true);
+    setIsImageEditingMode(false);
+    setIsButtonEditingMode(false);
+    setIsVideoEditingMode(false);
+    pushTextState({ ...textBlockState, isTextEditable: false });
+
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => {
+        if (!scrollToFirstIconTarget()) {
+          dispatchBlockpagesScrollToSection(getBlockpagesIconScrollId(textTemplate));
+        }
+      }, 450);
+    }
   };
  
   useEffect(() => {
@@ -251,23 +280,30 @@ export default function BlockPagesClient() {
     } catch (e) {
       console.error("Failed to load custom static icons", e);
     }
- 
-    try {
-      const storedVideo = localStorage.getItem("portfolioVideoData");
-      if (storedVideo) {
-        window.setTimeout(() => {
-          const parsed = JSON.parse(storedVideo);
-          setVideoBlocks([{ id: 'video-default', type: 'video', props: parsed }]);
-        }, 0);
-      }
-    } catch (e) {
-      console.error("Failed to load video data", e);
-    }
   }, []);
+
+  useEffect(() => {
+    if (isBlockpagesVideoApplied(textTemplate)) {
+      const storedProps = loadBlockpagesVideoProps(textTemplate);
+      if (storedProps) {
+        setVideoBlocks([{ id: "video-default", type: "video", props: storedProps }]);
+        setSelectedVideoBlockId("video-default");
+        return;
+      }
+    }
+    setVideoBlocks([initialVideoBlock]);
+    setSelectedVideoBlockId(initialVideoBlock.id);
+  }, [textTemplate]);
  
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [activeBlockPage]);
+
+  useEffect(() => {
+    if (activeBlockPage === "video" && !templateHasBuiltInVideoSlots(textTemplate)) {
+      setActiveBlockPage("text");
+    }
+  }, [activeBlockPage, textTemplate]);
  
   const pushButtonState = (nextBlocks: BlockData[]) => {
     setPastButtonStates((current) => [...current, buttonBlocks]);
@@ -516,6 +552,10 @@ export default function BlockPagesClient() {
             isVideoEditingMode={isVideoEditingMode}
             isIconEditingMode={isIconEditingMode}
             onUpdateVideoStyle={(props) => {
+              if (!templateHasBuiltInVideoSlots(textTemplate)) {
+                showNoVideoAlert();
+                return;
+              }
               if (selectedVideoBlockId) {
                 updateVideoBlock(selectedVideoBlockId, props);
               } else if (videoBlocks.length > 0) {
@@ -591,6 +631,10 @@ export default function BlockPagesClient() {
                 return;
               }
               if (page === "video" && activeBlockPage === "text") {
+                if (!templateHasBuiltInVideoSlots(textTemplate)) {
+                  showNoVideoAlert();
+                  return;
+                }
                 const turningOn = !isVideoEditingMode;
                 setIsVideoEditingMode(turningOn);
                 setIsImageEditingMode(false);
@@ -598,15 +642,17 @@ export default function BlockPagesClient() {
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 if (turningOn && typeof window !== "undefined") {
                   window.setTimeout(() => {
-                    if (!verifyCanvasHasVideoTargets(textTemplate)) {
-                      setIsVideoEditingMode(false);
-                      window.alert("There is no video on this page to edit.");
-                      return;
-                    }
                     dispatchBlockpagesScrollToSection(getBlockpagesVideoScrollId(textTemplate));
                   }, 450);
                 }
                 return;
+              }
+
+              if (page === "video") {
+                if (!templateHasBuiltInVideoSlots(textTemplate)) {
+                  showNoVideoAlert();
+                  return;
+                }
               }
  
               if (page === "divider") {
@@ -618,33 +664,17 @@ export default function BlockPagesClient() {
                 return;
               }
  
-              if (page === "icons" && activeBlockPage === "text") {
-                const turningOn = !isIconEditingMode;
-                setIsIconEditingMode(turningOn);
-                setIsImageEditingMode(false);
-                setIsButtonEditingMode(false);
-                setIsVideoEditingMode(false);
-                pushTextState({ ...textBlockState, isTextEditable: false });
-                if (turningOn && typeof window !== "undefined") {
-                  window.setTimeout(() => {
-                    if (!verifyCanvasHasIconTargets(textTemplate)) {
-                      setIsIconEditingMode(false);
-                      window.alert("There is no icon on this page to edit.");
-                      return;
-                    }
-                    dispatchBlockpagesScrollToSection(getBlockpagesAboutScrollId(textTemplate));
-                  }, 450);
-                }
-                return;
-              }
- 
               if (page === "icons") {
-                setIsIconEditingMode(false);
-                setIsImageEditingMode(false);
-                setIsButtonEditingMode(false);
-                setIsVideoEditingMode(false);
-                pushTextState({ ...textBlockState, isTextEditable: false });
-                setActiveBlockPage("icons");
+                if (activeBlockPage === "text" && isIconEditingMode) {
+                  setIsIconEditingMode(false);
+                  setIsImageEditingMode(false);
+                  setIsButtonEditingMode(false);
+                  setIsVideoEditingMode(false);
+                  pushTextState({ ...textBlockState, isTextEditable: false });
+                  return;
+                }
+
+                activateInlineIconEditing();
                 return;
               }
  
@@ -748,6 +778,10 @@ export default function BlockPagesClient() {
               videoBlocks={videoBlocks}
               isVideoEditingMode={isVideoEditingMode}
               onEditVideo={(videoId) => {
+                if (!templateHasBuiltInVideoSlots(textTemplate)) {
+                  showNoVideoAlert();
+                  return;
+                }
                 setEditingVideoId(videoId);
                 setActiveBlockPage("video");
               }}
@@ -756,7 +790,9 @@ export default function BlockPagesClient() {
               customIcons={customIcons}
               onEditIcon={(iconId) => {
                 setEditingIconId(iconId);
-                setActiveBlockPage("icons");
+                if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+                  setActiveBlockPage("icons");
+                }
               }}
               appliedDividers={appliedDividers}
               onRemoveDivider={(id) => {
@@ -832,6 +868,7 @@ export default function BlockPagesClient() {
           <div className="flex min-w-0 flex-1 gap-4 relative">
             <div className="flex-1 min-w-0">
               <VideoCanvas
+                template={textTemplate}
                 blocks={videoBlocks}
                 selectedBlockId={selectedVideoBlockId}
                 onSelectBlock={setSelectedVideoBlockId}
@@ -845,10 +882,11 @@ export default function BlockPagesClient() {
                   setActiveBlockPage("text");
                   setIsVideoEditingMode(false);
                   setEditingVideoId(null);
-                 
-                  const appliedBlock = videoBlocks.find(b => b.id === blockId);
+
+                  const appliedBlock = videoBlocks.find((b) => b.id === blockId);
                   if (appliedBlock) {
-                    const otherBlocks = videoBlocks.filter(b => b.id !== blockId);
+                    saveBlockpagesVideoProps(textTemplate, appliedBlock.props);
+                    const otherBlocks = videoBlocks.filter((b) => b.id !== blockId);
                     pushVideoState([appliedBlock, ...otherBlocks]);
                     setSelectedVideoBlockId(blockId);
                   }

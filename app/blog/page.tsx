@@ -10,6 +10,7 @@ import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
 
 const START_BLOGGING_HREF = "/blog/manage/create";
 
@@ -64,7 +65,6 @@ function BlogHeader({
 }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -72,25 +72,47 @@ function BlogHeader({
   const categoriesTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileCategoriesTriggerRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const mobileCategoriesCloseTimerRef = useRef<number | null>(null);
+
+  const clearMobileCategoriesCloseTimer = useCallback(() => {
+    if (mobileCategoriesCloseTimerRef.current !== null) {
+      window.clearTimeout(mobileCategoriesCloseTimerRef.current);
+      mobileCategoriesCloseTimerRef.current = null;
+    }
+  }, []);
+
+  const openMobileCategoriesMenu = useCallback(() => {
+    clearMobileCategoriesCloseTimer();
+    setMobileCategoriesOpen(true);
+  }, [clearMobileCategoriesCloseTimer]);
+
+  const scheduleCloseMobileCategoriesMenu = useCallback(() => {
+    if (isBlockpagesTextEditingActive()) return;
+    clearMobileCategoriesCloseTimer();
+    mobileCategoriesCloseTimerRef.current = window.setTimeout(() => {
+      setMobileCategoriesOpen(false);
+    }, 220);
+  }, [clearMobileCategoriesCloseTimer]);
+
+  useEffect(() => {
+    return () => {
+      clearMobileCategoriesCloseTimer();
+    };
+  }, [clearMobileCategoriesCloseTimer]);
 
   const isCategoriesLink = (
     link: (typeof navLinks)[number]
   ): link is (typeof navLinks)[number] & { hasDropdown: true } =>
     "hasDropdown" in link && link.hasDropdown === true;
 
-  const handleCategoriesBlurCapture = useCallback(
-    (event: React.FocusEvent<HTMLElement>) => {
-      const next = event.relatedTarget as Node | null;
-      if (event.currentTarget.contains(next)) return;
-      setCategoriesOpen(false);
-    },
-    []
-  );
-
   const handleMobileCategoriesBlurCapture = useCallback(
     (event: React.FocusEvent<HTMLElement>) => {
       const next = event.relatedTarget as Node | null;
       if (event.currentTarget.contains(next)) return;
+      if (isBlockpagesTextEditingActive() && next && (next as HTMLElement).closest?.('[data-blockpages-dropdown-panel="true"]')) {
+        return;
+      }
+      if (isBlockpagesTextEditingActive()) return;
       setMobileCategoriesOpen(false);
     },
     []
@@ -110,7 +132,6 @@ function BlogHeader({
       scrollToBlogSection(cleanId);
     }
     setMobileOpen(false);
-    setCategoriesOpen(false);
     setMobileCategoriesOpen(false);
     setProfileOpen(false);
   }, []);
@@ -123,17 +144,20 @@ function BlogHeader({
   }, [router]);
 
   useEffect(() => {
-    if (!categoriesOpen && !profileOpen && !mobileOpen) return;
+    if (!profileOpen && !mobileOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
+      const targetElement = target as HTMLElement;
 
-      if (
-        categoriesOpen &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target)
-      ) {
-        setCategoriesOpen(false);
+      if (isBlockpagesTextEditingActive()) {
+        if (targetElement.closest?.('[data-blockpages-dropdown-panel="true"], [data-blockpages-dropdown-id="blog-categories"], [data-blockpages-dropdown-id="blog-mobile-categories"]')) {
+          return;
+        }
+      }
+
+      if (isBlockpagesTextEditingActive() && targetElement.closest?.('[contenteditable="true"]')) {
+        return;
       }
 
       if (
@@ -154,7 +178,7 @@ function BlogHeader({
     };
 
     const handleScroll = () => {
-      setCategoriesOpen(false);
+      if (isBlockpagesTextEditingActive()) return;
       setProfileOpen(false);
     };
 
@@ -165,7 +189,7 @@ function BlogHeader({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("scroll", handleScroll, { capture: true });
     };
-  }, [categoriesOpen, profileOpen, mobileOpen]);
+  }, [profileOpen, mobileOpen]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -206,7 +230,7 @@ function BlogHeader({
   }, []);
 
   return (
-    <header ref={headerRef} className="bg-[var(--blog-navy)] text-[var(--blog-white)] w-full max-w-full box-border my-0 mx-0 px-0 relative z-40 min-w-0">
+    <header ref={headerRef} data-blockpages-template-header="true" className="bg-[var(--blog-navy)] text-[var(--blog-white)] w-full max-w-full box-border my-0 mx-0 px-0 relative z-40 min-w-0">
       <div className="bg-[var(--blog-navy)] rounded-0 w-full max-w-full mx-0 py-[0.85rem] px-[clamp(1rem,4cqw,2.5rem)] flex items-center justify-between gap-[0.75rem] min-w-0 @max-[340px]:py-[0.6rem] @max-[340px]:px-[0.5rem] @max-[340px]:gap-[0.4rem]">
         <button
           type="button"
@@ -222,60 +246,52 @@ function BlogHeader({
               <div
                 key={link.label}
                 ref={dropdownRef}
-                className="relative"
-                onBlurCapture={handleCategoriesBlurCapture}
+                className="relative group"
+                data-blockpages-dropdown-id="blog-categories"
               >
                 <button
                   ref={categoriesTriggerRef}
                   type="button"
-                  className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none aria-expanded:bg-[rgba(43,127,255,0.35)] aria-expanded:text-white aria-expanded:shadow-[0_0_0_1px_rgba(43,127,255,0.55)] @@max-[850px]:py-[0.4rem] @@max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCategoriesOpen((open) => !open);
-                    setProfileOpen(false);
+                  className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none @@max-[850px]:py-[0.4rem] @@max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
+                  onClick={(event) => {
+                    if (event.currentTarget.isContentEditable) return;
+                    scrollToSection(link.hash);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
-                      setCategoriesOpen(true);
                       requestAnimationFrame(() =>
                         focusFirstCategoryItem("blog-categories-menu")
                       );
                     }
-                    if (event.key === "Escape") {
-                      setCategoriesOpen(false);
-                      categoriesTriggerRef.current?.focus();
-                    }
                   }}
-                  aria-expanded={categoriesOpen}
-                  aria-haspopup="true"
                   aria-controls="blog-categories-menu"
                 >
                   {link.label}
                   <FaChevronDown
-                    className={`w-[0.55rem] h-[0.55rem] transition-transform duration-200 ease ${categoriesOpen ? "rotate-180" : ""}`}
+                    className="w-[0.55rem] h-[0.55rem] transition-transform duration-200 ease group-hover:rotate-180"
                     aria-hidden
                   />
                 </button>
-                {categoriesOpen && (
-                  <div
-                    id="blog-categories-menu"
-                    className="absolute top-[calc(100%+0.5rem)] left-0 min-w-[11rem] py-[0.5rem] px-0 bg-[var(--blog-white)] rounded-[0.5rem] shadow-[0_12px_32px_rgba(0,31,63,0.18)] z-60"
-                    role="menu"
-                  >
+                <div
+                  id="blog-categories-menu"
+                  className="absolute top-full left-0 pt-2 min-w-[11rem] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-60"
+                  data-blockpages-dropdown-panel="true"
+                  data-blockpages-dropdown-theme="light"
+                >
+                  <div className="blog-blockpages-dropdown-panel py-[0.5rem] px-0 bg-[var(--blog-white)] rounded-[0.5rem] shadow-[0_12px_32px_rgba(0,31,63,0.18)] flex flex-col">
                     <p className="m-0 pt-[0.35rem] pb-[0.5rem] px-[1rem] text-[0.7rem] font-bold uppercase tracking-[0.06em] text-[#6b7280]">Blog categories</p>
                     {blogCategories.map((item) => (
                       <button
                         key={item.id}
                         type="button"
-                        role="menuitem"
                         className={`block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] ${selectedCategory === item.id
                             ? "bg-[var(--blog-blue-bg)] text-[var(--blog-accent)]"
                             : "bg-none text-[var(--blog-navy)]"
                           }`}
-                        onClick={() => {
+                        onClick={(event) => {
+                          if (event.currentTarget.isContentEditable) return;
                           onCategoryChange(item.id);
-                          setCategoriesOpen(false);
                         }}
                       >
                         {item.label}
@@ -283,20 +299,19 @@ function BlogHeader({
                     ))}
                     <button
                       type="button"
-                      role="menuitem"
                       className={`block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] border-t border-[#e5e7eb] mt-[0.25rem] pt-[0.65rem] ${selectedCategory === "All"
                           ? "bg-[var(--blog-blue-bg)] text-[var(--blog-accent)]"
                           : "bg-none text-[var(--blog-accent)]"
                         }`}
-                      onClick={() => {
+                      onClick={(event) => {
+                        if (event.currentTarget.isContentEditable) return;
                         onCategoryChange("All");
-                        setCategoriesOpen(false);
                       }}
                     >
                       View all categories
                     </button>
                   </div>
-                )}
+                </div>
               </div>
             ) : (
               <button
@@ -329,14 +344,18 @@ function BlogHeader({
               aria-haspopup="true"
               onClick={() => {
                 setProfileOpen((open) => !open);
-                setCategoriesOpen(false);
                 setMobileOpen(false);
               }}
             >
               <FaUser aria-hidden />
             </button>
             {profileOpen && (
-              <div className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 min-w-[9rem] max-w-[min(12rem,calc(100cqw-2*var(--blog-nav-gap)-1rem))] py-[0.35rem] px-0 bg-[var(--blog-white)] rounded-[0.5rem] shadow-[0_12px_32px_rgba(0,31,63,0.18)] z-60" role="menu">
+              <div
+                className="blog-blockpages-dropdown-panel absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 min-w-[9rem] max-w-[min(12rem,calc(100cqw-2*var(--blog-nav-gap)-1rem))] py-[0.35rem] px-0 bg-[var(--blog-white)] rounded-[0.5rem] shadow-[0_12px_32px_rgba(0,31,63,0.18)] z-60"
+                role="menu"
+                data-blockpages-dropdown-panel="true"
+                data-blockpages-dropdown-theme="light"
+              >
                 <button
                   type="button"
                   role="menuitem"
@@ -357,7 +376,6 @@ function BlogHeader({
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             onClick={() => {
               setMobileOpen((open) => !open);
-              setCategoriesOpen(false);
               setProfileOpen(false);
             }}
           >
@@ -381,14 +399,17 @@ function BlogHeader({
               <div
                 key={link.label}
                 className="w-full"
+                data-blockpages-dropdown-id="blog-mobile-categories"
+                onMouseEnter={openMobileCategoriesMenu}
+                onMouseLeave={scheduleCloseMobileCategoriesMenu}
                 onBlurCapture={handleMobileCategoriesBlurCapture}
               >
                 <button
                   ref={mobileCategoriesTriggerRef}
                   type="button"
                   className="py-[0.65rem] px-0 rounded-[0.4rem] text-[var(--blog-white)] text-[0.9rem] font-medium bg-none border-none cursor-pointer text-left w-full max-w-full font-inherit transition-[background,color] duration-150 ease hover:bg-[rgba(255,255,255,0.15)] hover:text-white focus-visible:bg-[rgba(255,255,255,0.15)] focus-visible:text-white focus-visible:outline-none flex items-center justify-between"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={(event) => {
+                    if (event.currentTarget.isContentEditable) return;
                     setMobileCategoriesOpen((open) => !open);
                   }}
                   onKeyDown={(event) => {
@@ -416,8 +437,10 @@ function BlogHeader({
                 {mobileCategoriesOpen && (
                   <div
                     id="blog-mobile-categories-menu"
-                    className="mt-[0.5rem] pt-[0.75rem] border-t border-[rgba(255,255,255,0.15)]"
+                    className="blog-blockpages-dropdown-panel mt-[0.5rem] pt-[0.75rem] border-t border-[rgba(255,255,255,0.15)]"
                     role="menu"
+                    data-blockpages-dropdown-panel="true"
+                    data-blockpages-dropdown-theme="dark"
                   >
                     {blogCategories.map((item) => (
                       <button
@@ -428,7 +451,8 @@ function BlogHeader({
                             ? "bg-[rgba(255,255,255,0.2)] text-[var(--blog-white)] font-bold"
                             : "text-[var(--blog-white)] bg-none hover:bg-[rgba(255,255,255,0.12)]"
                           }`}
-                        onClick={() => {
+                        onClick={(event) => {
+                          if (event.currentTarget.isContentEditable) return;
                           onCategoryChange(item.id);
                           setMobileCategoriesOpen(false);
                           setMobileOpen(false);
@@ -444,7 +468,8 @@ function BlogHeader({
                           ? "bg-[rgba(255,255,255,0.2)] text-[var(--blog-white)]"
                           : "text-[var(--blog-accent)] bg-none hover:bg-[rgba(255,255,255,0.12)]"
                         }`}
-                      onClick={() => {
+                      onClick={(event) => {
+                        if (event.currentTarget.isContentEditable) return;
                         onCategoryChange("All");
                         setMobileCategoriesOpen(false);
                         setMobileOpen(false);
@@ -712,7 +737,7 @@ export default function BlogPage() {
             }`}
         >
           <div className="w-full max-w-full overflow-x-hidden min-w-0">
-            <div className={`blog-page w-full max-w-full overflow-x-hidden min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%] ${isBlockpages ? "" : "overflow-visible"}`}>
+            <div className="blog-page w-full max-w-full overflow-x-hidden overflow-y-visible min-w-0 font-inherit text-[var(--blog-navy)] bg-[var(--blog-white)] [overflow-wrap:break-word] [word-wrap:break-word] [text-size-adjust:100%]">
               <BlogHeader selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
 
                   {/* Top — continuous hero + image + templates (matches screenshot flow) */}
@@ -828,7 +853,7 @@ export default function BlogPage() {
                   {/* Infrastructure */}
                   <section className="bg-[var(--blog-pink-bg)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border py-[var(--blog-section-y)] @min-[1280px]:py-[5.5rem]">
                     <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
-                      <article className="bg-[var(--blog-white)] rounded-[var(--blog-radius-sm)] p-[clamp(2.25rem,5cqw,3.5rem)] px-[clamp(1.75rem,4cqw,3rem)] @max-[899px]:p-[clamp(1.75rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] min-w-0">
+                      <article className="blockpages-card bg-[var(--blog-white)] rounded-[var(--blog-radius-sm)] p-[clamp(2.25rem,5cqw,3.5rem)] px-[clamp(1.75rem,4cqw,3rem)] @max-[899px]:p-[clamp(1.75rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] min-w-0">
                         <h2 className="text-[clamp(1.75rem,4.5cqw,2.75rem)] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--blog-navy)] [text-wrap:balance] @min-[1280px]:text-[2.75rem] text-left max-w-[28rem] @min-[1024px]:max-w-[36rem] @min-[900px]:text-left @max-[899px]:max-w-full @max-[899px]:text-center break-words [overflow-wrap:anywhere]">
                           The powerful infrastructure behind your blog
                         </h2>
@@ -879,7 +904,7 @@ export default function BlogPage() {
                   {/* Analytics */}
                   <section className="bg-[var(--blog-pink-bg)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border py-[var(--blog-section-y)] @min-[1280px]:py-[5.5rem]">
                     <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
-                      <article className="bg-[var(--blog-white)] rounded-[var(--blog-radius-lg)] overflow-hidden min-w-0 shadow-[0_4px_24px_rgba(0,31,63,0.06)]">
+                      <article className="blockpages-card bg-[var(--blog-white)] rounded-[var(--blog-radius-lg)] overflow-hidden min-w-0 shadow-[0_4px_24px_rgba(0,31,63,0.06)]">
                         <div className="grid grid-cols-1 gap-[clamp(2rem,4cqw,3rem)] p-[clamp(2rem,5cqw,3.5rem)] px-[clamp(1.75rem,4cqw,3rem)] items-center @min-[900px]:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] @min-[900px]:p-14 @max-[899px]:p-[clamp(1.5rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[480px]:p-6 @max-[480px]:px-5 @max-[340px]:p-4 @max-[340px]:px-3">
                           <div className="min-w-0">
                             <h2 className="text-[clamp(1.75rem,4.5cqw,2.75rem)] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--blog-navy)] [text-wrap:balance] @min-[1280px]:text-[2.75rem] break-words [overflow-wrap:anywhere]">
@@ -915,7 +940,7 @@ export default function BlogPage() {
                   {/* Support */}
                   <section className="bg-[var(--blog-pink-bg)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border py-[var(--blog-section-y)] @min-[1280px]:py-[5.5rem]">
                     <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0 grid grid-cols-1 gap-[clamp(1.25rem,3cqw,2rem)] @min-[900px]:grid-cols-2 @min-[900px]:gap-8">
-                      <article className="group/card bg-[var(--blog-white)] rounded-[var(--blog-radius-lg)] p-[clamp(2.5rem,5cqw,3.5rem)] px-[clamp(2rem,4cqw,2.75rem)] text-center min-w-0 min-h-[clamp(16rem,35cqw,18rem)] flex flex-col items-center justify-center border-2 border-transparent shadow-[0_4px_20px_rgba(0,31,63,0.06)] transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[3px] focus-within:border-[var(--blog-accent)] focus-within:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-within:outline-none @max-[899px]:p-[clamp(1.75rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[899px]:min-h-auto @max-[899px]:hover:translate-y-0 @max-[480px]:p-6 @max-[480px]:px-5 @max-[340px]:p-5 @max-[340px]:px-3">
+                      <article className="blockpages-card group/card bg-[var(--blog-white)] rounded-[var(--blog-radius-lg)] p-[clamp(2.5rem,5cqw,3.5rem)] px-[clamp(2rem,4cqw,2.75rem)] text-center min-w-0 min-h-[clamp(16rem,35cqw,18rem)] flex flex-col items-center justify-center border-2 border-transparent shadow-[0_4px_20px_rgba(0,31,63,0.06)] transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[3px] focus-within:border-[var(--blog-accent)] focus-within:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-within:outline-none @max-[899px]:p-[clamp(1.75rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[899px]:min-h-auto @max-[899px]:hover:translate-y-0 @max-[480px]:p-6 @max-[480px]:px-5 @max-[340px]:p-5 @max-[340px]:px-3">
                         <h3 className="text-[clamp(1.125rem,2.5cqw,1.375rem)] font-bold text-[var(--blog-navy)]">24/7 support</h3>
                         <p className="mt-[1rem] max-w-[22rem] text-[clamp(0.9rem,1.8cqw,1rem)] leading-[1.7] text-[#4b5563]">
                           Find answers to all your questions in our Help Center or request a
@@ -933,7 +958,7 @@ export default function BlogPage() {
                         </Link>
                       </article>
                       <article
-                        className={`group/card bg-[var(--blog-white)] rounded-[var(--blog-radius-lg)] p-[clamp(2.5rem,5cqw,3.5rem)] px-[clamp(2rem,4cqw,2.75rem)] text-center min-w-0 min-h-[clamp(16rem,35cqw,18rem)] flex flex-col items-center justify-center border-2 border-transparent shadow-[0_4px_20px_rgba(0,31,63,0.06)] transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[3px] focus-within:border-[var(--blog-accent)] focus-within:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-within:outline-none @max-[899px]:p-[clamp(1.75rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[899px]:min-h-auto @max-[899px]:hover:translate-y-0 @max-[480px]:p-6 @max-[480px]:px-5 @max-[340px]:p-5 @max-[340px]:px-3 ${hireMoreOpen ? "justify-start min-h-auto items-stretch text-left" : ""}`}
+                        className={`blockpages-card group/card bg-[var(--blog-white)] rounded-[var(--blog-radius-lg)] p-[clamp(2.5rem,5cqw,3.5rem)] px-[clamp(2rem,4cqw,2.75rem)] text-center min-w-0 min-h-[clamp(16rem,35cqw,18rem)] flex flex-col items-center justify-center border-2 border-transparent shadow-[0_4px_20px_rgba(0,31,63,0.06)] transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[3px] focus-within:border-[var(--blog-accent)] focus-within:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-within:outline-none @max-[899px]:p-[clamp(1.75rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[899px]:min-h-auto @max-[899px]:hover:translate-y-0 @max-[480px]:p-6 @max-[480px]:px-5 @max-[340px]:p-5 @max-[340px]:px-3 ${hireMoreOpen ? "justify-start min-h-auto items-stretch text-left" : ""}`}
                       >
                         <h3 className={`text-[clamp(1.125rem,2.5cqw,1.375rem)] font-bold text-[var(--blog-navy)] ${hireMoreOpen ? "text-center self-center" : ""}`}>Hire a professional</h3>
                         <p className={`mt-[1rem] max-w-[22rem] text-[clamp(0.9rem,1.8cqw,1rem)] leading-[1.7] text-[#4b5563] ${hireMoreOpen ? "text-center self-center" : ""}`}>
@@ -1005,7 +1030,7 @@ export default function BlogPage() {
                             id={category.id}
                             type="button"
                             onClick={openCategoryPage}
-                            className="group/card w-full flex flex-col h-full p-0 bg-[var(--blog-white)] rounded-[var(--blog-radius-md)] overflow-hidden shadow-[0_4px_20px_rgba(0,31,63,0.08)] text-left [scroll-margin-top:var(--blog-scroll-offset)] border-2 border-transparent cursor-pointer transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[4px] @max-[899px]:hover:translate-y-0 target:border-[var(--blog-accent)] target:outline-2 target:outline-[var(--blog-accent)] target:outline-offset-4 @max-[899px]:target:outline-offset-2 target:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                            className="blockpages-card group/card w-full flex flex-col h-full p-0 bg-[var(--blog-white)] rounded-[var(--blog-radius-md)] overflow-hidden shadow-[0_4px_20px_rgba(0,31,63,0.08)] text-left [scroll-margin-top:var(--blog-scroll-offset)] border-2 border-transparent cursor-pointer transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[4px] @max-[899px]:hover:translate-y-0 target:border-[var(--blog-accent)] target:outline-2 target:outline-[var(--blog-accent)] target:outline-offset-4 @max-[899px]:target:outline-offset-2 target:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           >
                             <div className="blog-category-card-image aspect-[16/10] w-full overflow-hidden rounded-t-[var(--blog-radius-md)] shrink-0">
                               <img
@@ -1064,6 +1089,29 @@ export default function BlogPage() {
                     <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
                       <div className="max-w-[40rem] mx-auto text-center">
                         <h2 className="text-[clamp(1.75rem,4.5cqw,2.75rem)] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--blog-navy)] [text-wrap:balance] @min-[1280px]:text-[2.75rem] break-words [overflow-wrap:anywhere]">About Blogify</h2>
+                      </div>
+                      <div className="mt-8 grid grid-cols-2 gap-4 max-w-[36rem] mx-auto sm:grid-cols-4">
+                        {[
+                          { id: "blog-about-icon-1", label: "Design" },
+                          { id: "blog-about-icon-2", label: "SEO" },
+                          { id: "blog-about-icon-3", label: "Analytics" },
+                          { id: "blog-about-icon-4", label: "Publish" },
+                        ].map((item) => (
+                          <div key={item.id} className="flex flex-col items-center gap-2 text-center">
+                            <span
+                              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[var(--blog-navy)] shadow-sm"
+                              data-blockpages-icon-slot="true"
+                              data-blockpages-icon-id={item.id}
+                              aria-hidden
+                            >
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                <path d="M12 3 4 7v6c0 4.4 3.6 8 8 8s8-3.6 8-8V7l-8-4Z" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M9.5 12.5 11 14l3.5-3.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </span>
+                            <span className="text-xs font-semibold text-[var(--blog-navy-muted)]">{item.label}</span>
+                          </div>
+                        ))}
                       </div>
                       <div className="max-w-[42rem] mt-8 mx-auto text-left @max-[639px]:px-0 break-words [overflow-wrap:anywhere]">
                         <p className="text-[clamp(0.9rem,1.8cqw,1rem)] leading-[1.7] text-[var(--blog-navy-muted)] break-words [overflow-wrap:anywhere]">

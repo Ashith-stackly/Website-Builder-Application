@@ -2,14 +2,18 @@ import type { BlockpagesTemplateId } from "./blockpagesTemplates";
 
 const TEMPLATE_HEADER_SELECTORS = [
   "header",
+  "[data-blockpages-template-header='true']",
   ".buyscreen-header",
   ".buyscreen-categories",
   ".portfolio-shell > .sticky",
   ".portfolio-mobile-menu",
   ".restaurant-shell > header",
+  ".restaurant-shell header",
   ".construction-shell header",
   ".blog-page header",
-  ".dm-shell > .sticky",
+  ".blog-blockpages-root header",
+  ".dm-shell .sticky",
+  ".dm-shell [data-blockpages-template-header='true']",
   "[data-template-header='true']",
 ].join(", ");
 
@@ -169,7 +173,21 @@ export function isEditableTemplateIcon(svg: SVGElement): boolean {
   return true;
 }
 
+export function collectMarkedIconSlots(container: Element): HTMLElement[] {
+  return Array.from(container.querySelectorAll('[data-blockpages-icon-slot="true"]')).filter((node) => {
+    const element = node as HTMLElement;
+    if (isInsideBuilderChrome(element)) return false;
+    if (isInsideTemplateHeader(element)) return false;
+    return true;
+  }) as HTMLElement[];
+}
+
 export function collectEditableIconAnchors(container: Element): HTMLElement[] {
+  const marked = collectMarkedIconSlots(container);
+  if (marked.length > 0) {
+    return marked;
+  }
+
   const seen = new Set<HTMLElement>();
   const anchors: HTMLElement[] = [];
 
@@ -191,22 +209,25 @@ export function scanCanvasForVideoTargets(container: Element): boolean {
   const videos = Array.from(container.querySelectorAll("video")).filter((video) => !isInsideBuilderChrome(video));
   if (videos.length > 0) return true;
 
-  const embedFrames = Array.from(container.querySelectorAll("iframe")).filter((frame) => {
+  return Array.from(container.querySelectorAll("iframe")).some((frame) => {
     const src = frame.getAttribute("src") ?? "";
     return src.includes("youtube") || src.includes("vimeo") || src.includes("player.");
-  });
-  if (embedFrames.length > 0) return true;
-
-  const images = Array.from(container.querySelectorAll("img")).filter((img) => !isInsideBuilderChrome(img));
-  return images.some((img) => {
-    if (isInsideTemplateHeader(img)) return false;
-    const rect = img.getBoundingClientRect();
-    return rect.width >= 200;
   });
 }
 
 export function scanCanvasForIconTargets(container: Element): number {
   return collectEditableIconAnchors(container).length;
+}
+
+export function scrollToFirstIconTarget(container?: Element | null): boolean {
+  const canvas = container ?? getBlockpagesCanvasElement();
+  if (!canvas) return false;
+
+  const first = collectEditableIconAnchors(canvas)[0];
+  if (!first) return false;
+
+  first.scrollIntoView({ behavior: "smooth", block: "center" });
+  return true;
 }
 
 export function findCanvasVideoSlot(container: Element): HTMLElement | null {

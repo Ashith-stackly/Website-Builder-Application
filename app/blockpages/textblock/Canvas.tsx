@@ -6,6 +6,13 @@ import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import { routePath } from "@/lib/paths";
 import { getBlockpagesTemplateLabel } from "@/lib/blockpagesTemplates";
 import { buildBlockpagesSectionStylesCss } from "@/lib/blockpagesTemplateSections";
+import {
+  buildBlockpagesDropdownStylesCss,
+  nodeIsInBlockpagesHeaderChrome,
+  nodeIsInBlockpagesHeaderDropdown,
+} from "@/lib/blockpagesDropdownStyles";
+import { buildBlockpagesCardShadowCss } from "@/lib/blockpagesCardShadow";
+import { buildBlockpagesTemplateChromeCss } from "@/lib/blockpagesTemplateChrome";
 import PortfolioPreview from "./PortfolioPreview";
 import StorefrontPreview from "./StorefrontPreview";
 import TemplatePreviewRouter from "./TemplatePreviewRouter";
@@ -15,7 +22,7 @@ import type { VideoBlockData } from "../videoblock/types";
 import type { DividerBlockProps } from "../dividerblock/types";
 import type { IconBlockProps } from "../iconsblock/types";
 import type { TextBlockState, TextEditorTarget, TextStyles, TextTemplateType } from "./types";
-import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
+import { sanitizeBlockpagesPreviewClone } from "@/lib/blockpagesPreviewSanitize";
  
 const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
  
@@ -63,6 +70,26 @@ const rgbToHex = (rgb: string) => {
     .map((value) => parseInt(value, 10).toString(16).padStart(2, "0"))
     .join("")}`;
 };
+
+function isLightTextColor(color: string) {
+  const hex = rgbToHex(color).replace("#", "");
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.72;
+}
+
+function resolveEditableColor(element: HTMLElement, color: string) {
+  const dropdown = element.closest('[data-blockpages-dropdown-panel="true"]');
+  if (dropdown?.getAttribute("data-blockpages-dropdown-theme") === "dark") {
+    return isLightTextColor(color) ? "#ffffff" : color;
+  }
+  if (dropdown && isLightTextColor(color)) {
+    return dropdown.classList.contains("blog-blockpages-dropdown-panel") ? "#001f3f" : "#1f2937";
+  }
+  return color;
+}
  
 export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onUndo, onRedo, template = "ecommerce", isImageEditingMode = false, customImages = {}, onEditImage, editingImageId, isButtonEditingMode = false, customButtons = {},
   onEditButton,
@@ -98,8 +125,13 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     const activeText = canvasRef.current?.querySelector(".editable-text-active") as HTMLElement | null;
     if (!activeText || state.selectedTarget !== "text") return;
  
-    if (state.textStyles.color) activeText.style.setProperty("color", state.textStyles.color, "important");
-    else activeText.style.removeProperty("color");
+    if (state.textStyles.color) {
+      activeText.style.setProperty(
+        "color",
+        resolveEditableColor(activeText, state.textStyles.color),
+        "important"
+      );
+    } else activeText.style.removeProperty("color");
  
     if (state.textStyles.fontSize) activeText.style.setProperty("font-size", `${state.textStyles.fontSize}px`, "important");
     else activeText.style.removeProperty("font-size");
@@ -123,52 +155,85 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
- 
+
     const textTags = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "LI", "LABEL", "A", "BUTTON"];
- 
+
+    const handleEditableMouseDown = (event: Event) => {
+      if (!isTextEditable || isPreviewMode) return;
+
+      const target = event.target as HTMLElement;
+      const editableNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
+      if (!editableNode || editableNode.tagName !== "BUTTON") return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      editableNode.focus();
+    };
+
     const handleTextClick = (event: Event) => {
       if (!isTextEditable || isPreviewMode) return;
-      event.stopPropagation();
- 
+
       const target = event.target as HTMLElement;
-      activeEditableRef.current = target;
+
+      const editableNode =
+        (target.closest(
+          '[data-blockpages-dropdown-panel="true"] button, button.buyscreen-all-categories-item, button.buyscreen-user-menu-item, [contenteditable="true"]'
+        ) as HTMLElement | null) ?? target;
+
+      if (!editableNode.isContentEditable && !editableNode.closest('[contenteditable="true"]')) return;
+
+      const resolvedNode = editableNode.closest('[contenteditable="true"]') as HTMLElement ?? editableNode;
+      if (!resolvedNode.isContentEditable) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      activeEditableRef.current = resolvedNode;
       canvas.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
-      target.classList.add("editable-text-active");
- 
-      const computedStyle = window.getComputedStyle(target);
+      resolvedNode.classList.add("editable-text-active");
+      resolvedNode.focus();
+
+      const computedStyle = window.getComputedStyle(resolvedNode);
       const nextTextStyles: TextStyles = {
-        color: rgbToHex(target.style.color || computedStyle.color),
-        fontSize: target.style.fontSize.replace("px", "") || computedStyle.fontSize.replace("px", ""),
-        fontFamily: target.style.fontFamily || computedStyle.fontFamily,
+        color: rgbToHex(resolvedNode.style.color || computedStyle.color),
+        fontSize: resolvedNode.style.fontSize.replace("px", "") || computedStyle.fontSize.replace("px", ""),
+        fontFamily: resolvedNode.style.fontFamily || computedStyle.fontFamily,
       };
- 
+
       onStateChange({ ...state, selectedTarget: "text", textStyles: nextTextStyles });
     };
  
     const makeEditable = (node: Element) => {
       if (node.closest("[data-builder-chrome='true']")) return;
- 
-      const isHeader = node.closest(
-        ".buyscreen-header, .buyscreen-categories, .portfolio-shell > .sticky, .portfolio-mobile-menu, .restaurant-shell header, .construction-shell header, .blog-page header, .dm-shell > .sticky, .dm-shell header"
-      ) !== null;
+
+      const isInDropdown = node.closest('[data-blockpages-dropdown-panel="true"]') !== null;
+      const isHeader = !isInDropdown && nodeIsInBlockpagesHeaderChrome(node);
+      const isDropdownHeader = isInDropdown && nodeIsInBlockpagesHeaderDropdown(node);
       const isFooter = node.closest("footer, .stackly-footer, .restaurant-shell footer, .construction-shell footer, .blog-page footer, .dm-shell footer") !== null;
-      const isMain = !isHeader && !isFooter;
+      const isMain = !isHeader && !isDropdownHeader && !isFooter;
  
       let shouldBeEditable = false;
       if (isTextEditable && !isPreviewMode) {
-        if (state.selectedTarget === "header" && isHeader) shouldBeEditable = true;
+        if (state.selectedTarget === "header" && (isHeader || isDropdownHeader)) shouldBeEditable = true;
         else if (state.selectedTarget === "footer" && isFooter) shouldBeEditable = true;
         else if (state.selectedTarget === "main" && isMain) shouldBeEditable = true;
         else if (state.selectedTarget === "text") shouldBeEditable = true;
       }
- 
+
       if (textTags.includes(node.tagName)) {
         if (shouldBeEditable) {
+          const htmlNode = node as HTMLElement;
           node.setAttribute("contenteditable", "true");
-          (node as HTMLElement).addEventListener("click", handleTextClick);
+          htmlNode.addEventListener("click", handleTextClick, true);
+          if (node.tagName === "BUTTON") {
+            htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
+          }
         } else {
+          const htmlNode = node as HTMLElement;
           node.removeAttribute("contenteditable");
-          (node as HTMLElement).removeEventListener("click", handleTextClick);
+          htmlNode.removeEventListener("click", handleTextClick, true);
+          htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
           node.classList.remove("editable-text-active");
         }
       }
@@ -181,7 +246,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     return () => {
       const removeListeners = (node: Element) => {
         if (textTags.includes(node.tagName)) {
-          (node as HTMLElement).removeEventListener("click", handleTextClick);
+          const htmlNode = node as HTMLElement;
+          htmlNode.removeEventListener("click", handleTextClick, true);
+          htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
         }
         Array.from(node.children).forEach(removeListeners);
       };
@@ -213,17 +280,11 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
  
   const openPreviewPage = () => {
     const previewClone = canvasRef.current?.cloneNode(true) as HTMLDivElement | undefined;
-    previewClone?.querySelectorAll("[contenteditable]").forEach((element) => element.removeAttribute("contenteditable"));
-    previewClone?.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
-    previewClone?.querySelectorAll("[data-builder-chrome='true']").forEach((element) => element.remove());
-    previewClone?.querySelectorAll("[data-draggable-chrome='true']").forEach((element) => {
-      element.removeAttribute("title");
-      element.classList.remove("cursor-move", "active:cursor-grabbing", "hover:outline", "hover:outline-2", "hover:outline-blue-400", "hover:outline-dashed", "group");
-    });
-    previewClone?.querySelector("[data-textblock-canvas]")?.removeAttribute("class");
-    if (previewClone) injectPortfolioProjectsSliderNavAttributes(previewClone);
- 
-    window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewClone?.innerHTML ?? "");
+    if (!previewClone) return;
+
+    sanitizeBlockpagesPreviewClone(previewClone);
+
+    window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewClone.innerHTML);
     window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
   };
  
@@ -321,83 +382,12 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
             ) : null}
             <style>{`
               ${buildBlockpagesSectionStylesCss(state.sectionStyles)}
- 
-              [data-textblock-canvas] .buyscreen-header,
-              [data-textblock-canvas] .buyscreen-categories,
-              [data-textblock-canvas] .portfolio-shell > .sticky,
-              [data-textblock-canvas] .portfolio-mobile-menu > div,
-              [data-textblock-canvas] .restaurant-shell header,
-              [data-textblock-canvas] .construction-shell header,
-              [data-textblock-canvas] .blog-page header,
-              [data-textblock-canvas] .dm-shell > .sticky {
-                ${section.headerBg ? `background-color: ${section.headerBg} !important;` : ''}
-                ${section.headerText ? `color: ${section.headerText} !important;` : ''}
-              }
-              [data-textblock-canvas] .buyscreen-header *,
-              [data-textblock-canvas] .buyscreen-categories *,
-              [data-textblock-canvas] .portfolio-shell > .sticky *,
-              [data-textblock-canvas] .portfolio-mobile-menu *,
-              [data-textblock-canvas] .restaurant-shell header *,
-              [data-textblock-canvas] .construction-shell header *,
-              [data-textblock-canvas] .blog-page header *,
-              [data-textblock-canvas] .dm-shell > .sticky * {
-                ${section.headerText ? `color: inherit !important; border-color: ${section.headerText}66 !important;` : ''}
-                ${section.headerFontSize ? `font-size: ${section.headerFontSize}px !important;` : ''}
-                ${section.headerFontFamily ? `font-family: ${section.headerFontFamily} !important;` : ''}
-                ${section.headerFontWeight ? `font-weight: ${section.headerFontWeight} !important;` : ''}
-                ${section.headerLineHeight ? `line-height: ${section.headerLineHeight} !important;` : ''}
-                ${section.headerLetterSpacing ? `letter-spacing: ${section.headerLetterSpacing} !important;` : ''}
-              }
-              [data-textblock-canvas] .portfolio-shell > .sticky span.bg-white {
-                ${section.headerText ? `background-color: ${section.headerText} !important;` : ''}
-              }
-              [data-textblock-canvas] footer,
-              [data-textblock-canvas] .stackly-footer,
-              [data-textblock-canvas] .restaurant-shell footer,
-              [data-textblock-canvas] .construction-shell footer,
-              [data-textblock-canvas] .blog-page footer,
-              [data-textblock-canvas] .dm-shell footer {
-                ${section.footerText ? `color: ${section.footerText} !important;` : ''}
-              }
-              [data-textblock-canvas] footer *,
-              [data-textblock-canvas] .stackly-footer *,
-              [data-textblock-canvas] .restaurant-shell footer *,
-              [data-textblock-canvas] .construction-shell footer *,
-              [data-textblock-canvas] .blog-page footer *,
-              [data-textblock-canvas] .dm-shell footer * {
-                ${section.footerText ? `color: inherit !important; border-color: ${section.footerText}33 !important;` : ''}
-              }
- 
-              ${section.shadow ? `
-                [data-textblock-canvas] .portfolio-stat-card,
-                [data-textblock-canvas] .portfolio-mini-card,
-                [data-textblock-canvas] .portfolio-process-card,
-                [data-textblock-canvas] .portfolio-service-card,
-                [data-textblock-canvas] .portfolio-reveal.bg-white.p-6,
-                [data-textblock-canvas] .buyscreen-product-card,
-                [data-textblock-canvas] .buyscreen-category-card {
-                  box-shadow: 0 15px 35px -5px color-mix(in srgb, currentColor 15%, transparent), 0 5px 15px -5px color-mix(in srgb, currentColor 10%, transparent) !important;
-                }
-                [data-textblock-canvas] .portfolio-stat-card:hover,
-                [data-textblock-canvas] .portfolio-mini-card:hover,
-                [data-textblock-canvas] .portfolio-process-card:hover,
-                [data-textblock-canvas] .portfolio-service-card:hover,
-                [data-textblock-canvas] .portfolio-reveal.bg-white.p-6:hover,
-                [data-textblock-canvas] .buyscreen-product-card:hover,
-                [data-textblock-canvas] .buyscreen-category-card:hover {
-                  box-shadow: 0 25px 50px -12px color-mix(in srgb, currentColor 25%, transparent) !important;
-                }
-              ` : `
-                [data-textblock-canvas] .portfolio-stat-card,
-                [data-textblock-canvas] .portfolio-mini-card,
-                [data-textblock-canvas] .portfolio-process-card,
-                [data-textblock-canvas] .portfolio-service-card,
-                [data-textblock-canvas] .portfolio-reveal.bg-white.p-6,
-                [data-textblock-canvas] .buyscreen-product-card,
-                [data-textblock-canvas] .buyscreen-category-card {
-                  box-shadow: none !important;
-                }
-              `}
+
+              ${buildBlockpagesTemplateChromeCss(section)}
+
+              ${buildBlockpagesDropdownStylesCss()}
+
+              ${buildBlockpagesCardShadowCss(section.shadow)}
             `}</style>
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div
@@ -406,6 +396,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                 <div
                   data-textblock-canvas
                   data-blockpages-scroll-root
+                  data-blockpages-text-editing={isTextEditable ? "true" : undefined}
                   className="@container min-h-[560px] h-[calc(100vh-220px)] w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar [overflow-wrap:break-word] [word-wrap:break-word]"
                 >
                   <style>{`
@@ -413,6 +404,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     [data-textblock-canvas] .buyscreen-page,
                     [data-textblock-canvas] .restaurant-shell,
                     [data-textblock-canvas] .construction-shell,
+                    [data-textblock-canvas] .restaurant-shell,
                     [data-textblock-canvas] .blog-page,
                     [data-textblock-canvas] .blog-blockpages-root,
                     [data-textblock-canvas] .dm-shell {
@@ -424,11 +416,26 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     }
                     [data-textblock-canvas] .blog-blockpages-root,
                     [data-textblock-canvas] .blog-blockpages-root > div,
+                    [data-textblock-canvas] .restaurant-shell,
+                    [data-textblock-canvas] .restaurant-shell > div,
                     [data-textblock-canvas] .dm-shell,
                     [data-textblock-canvas] .dm-shell > div {
                       min-height: auto !important;
                       max-height: none !important;
                       overflow-y: visible !important;
+                    }
+                    [data-textblock-canvas] .buyscreen-header,
+                    [data-textblock-canvas] .buyscreen-categories,
+                    [data-textblock-canvas] .buyscreen-all-categories-wrap,
+                    [data-textblock-canvas] .buyscreen-categories-list,
+                    [data-textblock-canvas] .blog-page header,
+                    [data-textblock-canvas] .blog-page header nav .relative,
+                    [data-textblock-canvas] .restaurant-shell header,
+                    [data-textblock-canvas] .restaurant-shell header > div {
+                      overflow: visible !important;
+                    }
+                    [data-textblock-canvas] .restaurant-shell header nav {
+                      -webkit-overflow-scrolling: touch;
                     }
                     [data-textblock-canvas] h1,
                     [data-textblock-canvas] h2,
@@ -504,6 +511,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                       />
                     ) : (
                       <BlockpagesCanvasEnhancer
+                        template={template}
                         isImageEditingMode={isImageEditingMode}
                         customImages={customImages}
                         onEditImage={onEditImage}

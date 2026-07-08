@@ -1,6 +1,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Edit, Copy, Trash2, Play } from 'lucide-react';
+import type { BlockpagesTemplateId } from '@/lib/blockpagesTemplates';
+import { saveBlockpagesVideoProps } from '@/lib/blockpagesVideoStorage';
 import { VideoBlockData } from './types';
  
 const UploadedVideoPlayer = ({ block, uploadUrl, posterImage, autoplay, loop, muted, showControls }: any) => {
@@ -71,6 +73,7 @@ interface CanvasProps {
   onDuplicateBlock?: (id: string) => void;
   onCloseBlock?: () => void;
   onUpdateBlock?: (id: string, props: Partial<VideoBlockData['props']>) => void;
+  template?: BlockpagesTemplateId;
 }
  
 export default function Canvas({
@@ -86,13 +89,14 @@ export default function Canvas({
   onApplyVideo,
   onDuplicateBlock,
   onCloseBlock,
-  onUpdateBlock
+  onUpdateBlock,
+  template = "portfolio",
 }: CanvasProps) {
   const router = useRouter();
  
   const handleApply = (e: React.MouseEvent, block: VideoBlockData) => {
     e.stopPropagation();
-    localStorage.setItem('portfolioVideoData', JSON.stringify(block.props));
+    saveBlockpagesVideoProps(template, block.props);
     if (onApplyVideo) {
       onApplyVideo(block.id);
     } else {

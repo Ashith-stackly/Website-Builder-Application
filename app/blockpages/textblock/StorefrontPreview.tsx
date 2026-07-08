@@ -33,11 +33,11 @@ const buyAllSubCategorySets = new Map(
 
 type BuyFeatureIconType = "responsive" | "secure" | "shipping" | "transparent";
 
-const buyFeatures: Array<{ icon: BuyFeatureIconType; title: string; subtitle: string }> = [
-  { icon: "responsive", title: "Responsive", subtitle: "Customer service available 24/7" },
-  { icon: "secure", title: "Secure", subtitle: "Certified marketplace since 2017" },
-  { icon: "shipping", title: "Shipping", subtitle: "Fast, safe, and reliable worldwide" },
-  { icon: "transparent", title: "Transparent", subtitle: "Hassle-free return policy" },
+const buyFeatures: Array<{ icon: BuyFeatureIconType; title: string; subtitle: string; iconId: string }> = [
+  { icon: "responsive", title: "Responsive", subtitle: "Customer service available 24/7", iconId: "buy-feature-responsive" },
+  { icon: "secure", title: "Secure", subtitle: "Certified marketplace since 2017", iconId: "buy-feature-secure" },
+  { icon: "shipping", title: "Shipping", subtitle: "Fast, safe, and reliable worldwide", iconId: "buy-feature-shipping" },
+  { icon: "transparent", title: "Transparent", subtitle: "Hassle-free return policy", iconId: "buy-feature-transparent" },
 ];
 
 type BuyProduct = {
@@ -319,27 +319,7 @@ export default function StorefrontPreview() {
   const toastTimerRef = useRef<number | null>(null);
   const contentStartRef = useRef<HTMLDivElement | null>(null);
   const allCategoriesWrapRef = useRef<HTMLDivElement | null>(null);
-  const allCategoriesCloseTimerRef = useRef<number | null>(null);
   const userMenuWrapRef = useRef<HTMLDivElement | null>(null);
-
-  const clearAllCategoriesCloseTimer = () => {
-    if (allCategoriesCloseTimerRef.current !== null) {
-      window.clearTimeout(allCategoriesCloseTimerRef.current);
-      allCategoriesCloseTimerRef.current = null;
-    }
-  };
-
-  const handleAllCategoriesMouseEnter = () => {
-    clearAllCategoriesCloseTimer();
-    setIsAllCategoriesDropdownOpen(true);
-  };
-
-  const handleAllCategoriesMouseLeave = () => {
-    clearAllCategoriesCloseTimer();
-    allCategoriesCloseTimerRef.current = window.setTimeout(() => {
-      setIsAllCategoriesDropdownOpen(false);
-    }, 200);
-  };
   const featuredProductsRef = useRef<HTMLElement | null>(null);
   const heroContentRef = useRef<HTMLDivElement | null>(null);
   const topHeaderBarRef = useRef<HTMLDivElement | null>(null);
@@ -550,7 +530,6 @@ export default function StorefrontPreview() {
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
       }
-      clearAllCategoriesCloseTimer();
     };
   }, []);
 
@@ -815,10 +794,15 @@ export default function StorefrontPreview() {
             }
 
             /* 5. Flexbox Wrapping for general sections, protect header icons */
-            .buyscreen-page header, .buyscreen-page section {
+            .buyscreen-page section {
               min-width: 0 !important;
               max-width: 100% !important;
               overflow: hidden !important;
+            }
+            .buyscreen-page header.buyscreen-header {
+              min-width: 0 !important;
+              max-width: 100% !important;
+              overflow: visible !important;
             }
             .buyscreen-page .flex {
               min-width: 0 !important;
@@ -886,6 +870,14 @@ export default function StorefrontPreview() {
              .buyscreen-page .gap-6 { gap: 0.75rem !important; }
              .buyscreen-page .p-8 { padding: 1rem !important; }
              .buyscreen-page .p-6 { padding: 0.75rem !important; }
+          }
+
+          .buyscreen-page .buyscreen-header,
+          .buyscreen-page nav.buyscreen-categories,
+          .buyscreen-page .buyscreen-all-categories-wrap {
+            overflow: visible !important;
+            position: relative;
+            z-index: 50;
           }
         `
       }} />
@@ -1127,6 +1119,7 @@ export default function StorefrontPreview() {
                   </button>
                   <div
                     className={`buyscreen-user-menu-dropdown ${isTopHeaderProfileMenuOpen ? "buyscreen-user-menu-dropdown--open" : ""}`}
+                    data-blockpages-dropdown-panel="true"
                     role="menu"
                     aria-hidden={!isTopHeaderProfileMenuOpen}
                   >
@@ -1241,6 +1234,7 @@ export default function StorefrontPreview() {
                     </button>
                     <div
                       className={`buyscreen-user-menu-dropdown ${isTopHeaderProfileMenuOpen ? "buyscreen-user-menu-dropdown--open" : ""}`}
+                    data-blockpages-dropdown-panel="true"
                       role="menu"
                       aria-hidden={!isTopHeaderProfileMenuOpen}
                     >
@@ -1328,7 +1322,7 @@ export default function StorefrontPreview() {
         </div>
 
         <section className="buyscreen-shell rounded-[2rem] border border-white/80 bg-white shadow-[0_28px_90px_rgba(15,35,75,0.13)]">
-          <header className="buyscreen-header flex flex-col gap-4 border-b border-[#e7edf5] bg-white/95 px-4 py-4 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4">
+          <header data-blockpages-template-header="true" className="buyscreen-header flex flex-col gap-4 border-b border-[#e7edf5] bg-white/95 px-4 py-4 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4">
             <div className="flex shrink-0 items-center justify-between lg:justify-start">
               <span className="inline-flex items-center gap-2 text-base font-black tracking-tight text-[#06224C] sm:text-lg">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_5px_rgba(34,197,94,0.14)]" aria-hidden />
@@ -1417,6 +1411,7 @@ export default function StorefrontPreview() {
                   </button>
                   <div
                     className={`buyscreen-user-menu-dropdown ${isUserMenuOpen ? "buyscreen-user-menu-dropdown--open" : ""}`}
+                    data-blockpages-dropdown-panel="true"
                     role="menu"
                     aria-hidden={!isUserMenuOpen}
                   >
@@ -1461,42 +1456,36 @@ export default function StorefrontPreview() {
                   <div
                     key={item.label}
                     ref={allCategoriesWrapRef}
-                    className="buyscreen-all-categories-wrap relative shrink-0"
-                    onMouseEnter={handleAllCategoriesMouseEnter}
-                    onMouseLeave={handleAllCategoriesMouseLeave}
-                    onFocus={() => setIsAllCategoriesDropdownOpen(true)}
-                    onBlur={(e) => {
-                      if (!e.currentTarget.contains(e.relatedTarget)) {
-                        setIsAllCategoriesDropdownOpen(false);
-                      }
-                    }}
+                    className="buyscreen-all-categories-wrap group relative shrink-0"
                   >
                     <button
                       type="button"
-                      aria-expanded={isAllCategoriesDropdownOpen}
                       aria-controls="buyscreen-all-categories-menu"
-                      aria-haspopup="menu"
-                      className="buyscreen-all-categories-toggle inline-flex items-center gap-1 rounded-md px-2 py-1 text-left text-[10px] font-semibold transition-colors duration-150 bg-transparent text-white hover:bg-transparent hover:!text-white focus:bg-transparent focus:!text-white active:bg-transparent active:!text-white focus-visible:outline-none focus-visible:bg-transparent focus-visible:!text-white focus-visible:ring-2 focus-visible:ring-white/50 sm:text-xs"
-                      onClick={() => setIsAllCategoriesDropdownOpen((prev) => !prev)}
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-left text-[10px] font-semibold transition-colors duration-150 bg-transparent text-white hover:bg-transparent hover:!text-white focus:bg-transparent focus:!text-white active:bg-transparent active:!text-white focus-visible:outline-none focus-visible:bg-transparent focus-visible:!text-white focus-visible:ring-2 focus-visible:ring-white/50 sm:text-xs"
+                      onClick={(event) => {
+                        if (event.currentTarget.isContentEditable) return;
+                        setIsAllCategoriesDropdownOpen((prev) => !prev);
+                      }}
                     >
                       All Categories
-                      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" aria-hidden>
+                      <svg width="12" height="12" viewBox="0 0 20 20" fill="none" aria-hidden className="transition-transform duration-200 group-hover:rotate-180">
                         <path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </button>
                     <div
                       id="buyscreen-all-categories-menu"
-                      role="menu"
-                      className={`buyscreen-all-categories-dropdown ${isAllCategoriesDropdownOpen ? "buyscreen-all-categories-dropdown--open" : ""}`}
+                      className={`buyscreen-all-categories-dropdown opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ${isAllCategoriesDropdownOpen ? "buyscreen-all-categories-dropdown--open" : ""}`}
+                      data-blockpages-dropdown-panel="true"
                     >
                       {buyAllSubCategories.map((subCategory) => (
                         <button
                           key={subCategory.key}
                           type="button"
-                          role="menuitem"
-                          tabIndex={isAllCategoriesDropdownOpen ? 0 : -1}
-                          className="buyscreen-all-categories-item focus-visible:outline-none focus-visible:bg-[#f1f5f9] focus-visible:text-[#06224C]"
-                          onClick={() => handleSubCategoryClick(subCategory.key)}
+                          className="buyscreen-all-categories-item !text-[#1f2937] focus-visible:outline-none focus-visible:bg-[#f1f5f9] focus-visible:!text-[#06224C]"
+                          onClick={(event) => {
+                            if (event.currentTarget.isContentEditable) return;
+                            handleSubCategoryClick(subCategory.key);
+                          }}
                         >
                           {subCategory.label}
                         </button>
@@ -1554,7 +1543,7 @@ export default function StorefrontPreview() {
             <section id="buyscreen-about" className="buyscreen-features grid gap-4 border-b border-[#e7edf5] pb-10 text-sm text-[#4b5563] sm:grid-cols-2 lg:grid-cols-4">
               {buyFeatures.map((feature) => (
                 <div key={feature.title} className="buyscreen-feature-card flex items-start gap-4 rounded-2xl border border-[#e7edf5] bg-[#f8fafc] p-4 transition duration-300">
-                  <span aria-hidden className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0f3b89] shadow-sm">
+                  <span aria-hidden className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0f3b89] shadow-sm" data-blockpages-icon-slot="true" data-blockpages-icon-id={feature.iconId}>
                     <BuyFeatureIcon type={feature.icon} />
                   </span>
                   <div className="min-w-0">

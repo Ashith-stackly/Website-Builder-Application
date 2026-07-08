@@ -28,6 +28,11 @@ import {
 import { assetPath } from "@/lib/paths";
 import Footer from "@/components/Footer";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import {
+  animateStatCounterElement,
+  formatStatCounterValue,
+  syncStatCounterDatasetFromText,
+} from "@/lib/blockpagesStatCounter";
 
 function dmAsset(path: string) {
   return encodeURI(assetPath(path));
@@ -126,10 +131,10 @@ const whyChooseItems = [
 ];
 
 const statsBar = [
-  { icon: FaClipboardList, targetValue: 250, suffix: "+", label: "Projects Completed" },
-  { icon: FaUsers, targetValue: 150, suffix: "+", label: "Happy Customers" },
-  { icon: FaClock, targetValue: 10, suffix: "+", label: "Years of Experience" },
-  { icon: FaCircleCheck, targetValue: 98, suffix: "%", label: "Client Satisfaction Rating" },
+  { icon: FaClipboardList, targetValue: 250, suffix: "+", label: "Projects Completed", id: "dm-stat-0" },
+  { icon: FaUsers, targetValue: 150, suffix: "+", label: "Happy Customers", id: "dm-stat-1" },
+  { icon: FaClock, targetValue: 10, suffix: "+", label: "Years of Experience", id: "dm-stat-2" },
+  { icon: FaCircleCheck, targetValue: 98, suffix: "%", label: "Client Satisfaction Rating", id: "dm-stat-3" },
 ];
 
 const testimonials = [
@@ -176,7 +181,7 @@ function TemplateFooter() {
   };
 
   return (
-    <footer className="bg-[#0A1E3D] text-white">
+    <footer id="footer" data-blockpages-template-footer="true" className="bg-[#0A1E3D] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 @md:px-8 @md:py-16">
         <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
           <div>
@@ -410,6 +415,32 @@ function CountUp({ targetValue, suffix = "", prefix = "", decimals = 0 }: { targ
   );
 }
 
+function EditableAnimatedStat({
+  targetValue,
+  suffix = "",
+  prefix = "",
+  decimals = 0,
+}: {
+  targetValue: number;
+  suffix?: string;
+  prefix?: string;
+  decimals?: number;
+}) {
+  return (
+    <span
+      className="stat-animate-count"
+      suppressContentEditableWarning
+      data-target={String(targetValue)}
+      data-suffix={suffix}
+      data-prefix={prefix}
+      data-decimals={String(decimals)}
+      onInput={(event) => syncStatCounterDatasetFromText(event.currentTarget)}
+    >
+      {formatStatCounterValue(targetValue, { decimals, prefix, suffix })}
+    </span>
+  );
+}
+
 export default function DigitalMarketingPreviewPage() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
@@ -420,6 +451,8 @@ export default function DigitalMarketingPreviewPage() {
   const [slideDirection, setSlideDirection] = useState(1);
   const [isHoveredTestimonials, setIsHoveredTestimonials] = useState(false);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
+  const statsRef = useRef<HTMLDivElement | null>(null);
+  const [statsInView, setStatsInView] = useState(false);
   const { scrollY: canvasScrollY } = useScroll();
   const prefersReducedMotion = useReducedMotion();
 
@@ -441,6 +474,29 @@ export default function DigitalMarketingPreviewPage() {
       setTimeout(() => setContactStatus("idle"), 5000);
     }, 1500);
   };
+
+  useEffect(() => {
+    if (!isBlockpages || !statsRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setStatsInView(entry?.isIntersecting ?? false),
+      { threshold: 0.2 }
+    );
+
+    observer.observe(statsRef.current);
+    return () => observer.disconnect();
+  }, [isBlockpages]);
+
+  useEffect(() => {
+    if (!isBlockpages || !statsInView) return;
+
+    const frameIds: number[] = [];
+    document.querySelectorAll("#dm-why-choose .stat-animate-count").forEach((el) => {
+      animateStatCounterElement(el as HTMLElement, frameIds);
+    });
+
+    return () => frameIds.forEach(cancelAnimationFrame);
+  }, [isBlockpages, statsInView]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -512,6 +568,7 @@ export default function DigitalMarketingPreviewPage() {
         >
           <div className="w-full max-w-full overflow-x-hidden min-w-0">
             <motion.div
+              data-blockpages-template-header="true"
               className="sticky top-0 z-50 flex w-full flex-wrap items-center justify-between gap-2 border-b border-gray-300 bg-[#06224C]/95 px-3 py-2 backdrop-blur-md @sm:gap-4 @sm:px-4 @sm:py-3 @md:px-8 @xl:flex-nowrap"
               animate={{ y: previewNavHidden ? -96 : 0, opacity: previewNavHidden ? 0 : 1 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -669,7 +726,7 @@ export default function DigitalMarketingPreviewPage() {
                         <motion.div
                           variants={fadeInUp}
                           key={card.badge}
-                          className="min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm @sm:p-6 @md:p-10"
+                          className="blockpages-card min-w-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm @sm:p-6 @md:p-10"
                         >
                           <div className={`grid items-center gap-10 @2xl:grid-cols-2 ${card.reverse ? "@2xl:[&>*:first-child]:order-2" : ""}`}>
                             <div className="flex min-w-0 flex-col items-start text-left">
@@ -712,7 +769,7 @@ export default function DigitalMarketingPreviewPage() {
                           whileFocus={{ y: -5 }}
                           key={service.title}
                           tabIndex={0}
-                          className="group min-w-0 rounded-xl bg-[#123163] p-6 shadow-sm transition-colors hover:bg-[#163a75] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0A1E3D] @md:p-8"
+                          className="blockpages-card group min-w-0 rounded-xl bg-[#123163] p-6 shadow-sm transition-colors hover:bg-[#163a75] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0A1E3D] @md:p-8"
                         >
                           <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
                             <h3 className="w-full min-w-0 break-words text-base font-semibold text-white @md:text-lg">{service.title}</h3>
@@ -741,7 +798,7 @@ export default function DigitalMarketingPreviewPage() {
                       </p>
                       <div className="grid grid-cols-1 gap-5 @md:grid-cols-2">
                         {planningCards.map((card) => (
-                          <div key={card.title} className="min-w-0 rounded-xl bg-white p-6 shadow-sm">
+                          <div key={card.title} className="blockpages-card min-w-0 rounded-xl bg-white p-6 shadow-sm">
                             <div className="mb-3 flex min-w-0 items-center gap-2">
                               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1E56E5]" />
                               <h3 className="min-w-0 break-words text-sm font-bold text-[#0A1E3D]">{card.title}</h3>
@@ -763,7 +820,7 @@ export default function DigitalMarketingPreviewPage() {
                 </section>
 
                 {/* Why Choose Us */}
-                <section className="bg-[#FFF0F0] px-4 pb-12 @md:px-8 @md:pb-20">
+                <section id="dm-why-choose" ref={isBlockpages ? statsRef : undefined} className="bg-[#FFF0F0] px-4 pb-12 @md:px-8 @md:pb-20">
                   <motion.div
                     initial="hidden"
                     whileInView="show"
@@ -785,13 +842,30 @@ export default function DigitalMarketingPreviewPage() {
                                   loading="lazy"
                                 />
                               </div>
-                              <motion.div variants={fadeInUp} className="absolute right-0 bottom-0 translate-x-2 translate-y-2 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl scale-75 origin-bottom-right @sm:translate-x-[10%] @sm:translate-y-[10%] @md:translate-x-[20%] @md:translate-y-[20%] @sm:scale-90 @md:scale-100">
-                                <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Organic Traffic</p>
-                                <div className="flex items-baseline gap-2">
-                                  <p className="text-2xl font-black leading-none text-[#0A1E3D]"><CountUp targetValue={18.2} decimals={1} suffix="K" /></p>
-                                  <span className="text-sm font-bold leading-none text-green-700"><CountUp targetValue={14.8} decimals={1} prefix="+" suffix="%" /></span>
+                              {isBlockpages ? (
+                                <div
+                                  id="dm-organic-traffic-card"
+                                  className="blockpages-card absolute right-0 bottom-0 translate-x-2 translate-y-2 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl scale-75 origin-bottom-right @sm:translate-x-[10%] @sm:translate-y-[10%] @md:translate-x-[20%] @md:translate-y-[20%] @sm:scale-90 @md:scale-100"
+                                >
+                                  <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Organic Traffic</p>
+                                  <div className="flex items-baseline gap-2">
+                                    <p className="text-2xl font-black leading-none text-[#0A1E3D]">
+                                      <EditableAnimatedStat targetValue={18.2} decimals={1} suffix="K" />
+                                    </p>
+                                    <span className="text-sm font-bold leading-none text-green-700">
+                                      <EditableAnimatedStat targetValue={14.8} decimals={1} prefix="+" suffix="%" />
+                                    </span>
+                                  </div>
                                 </div>
-                              </motion.div>
+                              ) : (
+                                <motion.div variants={fadeInUp} className="absolute right-0 bottom-0 translate-x-2 translate-y-2 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl scale-75 origin-bottom-right @sm:translate-x-[10%] @sm:translate-y-[10%] @md:translate-x-[20%] @md:translate-y-[20%] @sm:scale-90 @md:scale-100">
+                                  <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Organic Traffic</p>
+                                  <div className="flex items-baseline gap-2">
+                                    <p className="text-2xl font-black leading-none text-[#0A1E3D]"><CountUp targetValue={18.2} decimals={1} suffix="K" /></p>
+                                    <span className="text-sm font-bold leading-none text-green-700"><CountUp targetValue={14.8} decimals={1} prefix="+" suffix="%" /></span>
+                                  </div>
+                                </motion.div>
+                              )}
                             </div>
                           </motion.div>
                           <motion.div variants={slideInRight} className="min-w-0">
@@ -809,18 +883,43 @@ export default function DigitalMarketingPreviewPage() {
                           </motion.div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 @xs:grid-cols-2 @2xl:grid-cols-4 gap-4 @md:gap-6 bg-[#0A1E3D] px-4 py-6 @md:px-6 @md:py-8 @2xl:px-10 @2xl:py-8">
-                        {statsBar.map((stat) => (
-                          <motion.div variants={fadeInUp} key={stat.label} className="flex min-w-0 items-center gap-3 @md:gap-4">
-                            <stat.icon className="shrink-0 text-[clamp(24px,6cqw,32px)] text-[#FBBF24] @md:text-[40px]" />
-                            <div className="min-w-0">
-                              <p className="min-w-0 break-words text-[clamp(16px,4cqw,18px)] font-bold text-[#FBBF24] @md:text-[clamp(1rem,4.5cqw,1.25rem)]">
-                                <CountUp targetValue={stat.targetValue} suffix={stat.suffix} />
-                              </p>
-                              <p className="min-w-0 break-words text-[clamp(9px,2.5cqw,11px)] font-medium leading-tight text-white/90 @md:text-xs">{stat.label}</p>
-                            </div>
-                          </motion.div>
-                        ))}
+                      <div
+                        id="dm-stats"
+                        className="grid grid-cols-1 @xs:grid-cols-2 @2xl:grid-cols-4 gap-4 @md:gap-6 bg-[#0A1E3D] px-4 py-6 @md:px-6 @md:py-8 @2xl:px-10 @2xl:py-8"
+                      >
+                        {statsBar.map((stat) => {
+                          const statContent = (
+                            <>
+                              <div data-blockpages-icon-slot="true" data-blockpages-icon-id={stat.id} className="shrink-0">
+                                <stat.icon className="shrink-0 text-[clamp(24px,6cqw,32px)] text-[#FBBF24] @md:text-[40px]" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="min-w-0 break-words text-[clamp(16px,4cqw,18px)] font-bold text-[#FBBF24] @md:text-[clamp(1rem,4.5cqw,1.25rem)]">
+                                  {isBlockpages ? (
+                                    <EditableAnimatedStat targetValue={stat.targetValue} suffix={stat.suffix} />
+                                  ) : (
+                                    <CountUp targetValue={stat.targetValue} suffix={stat.suffix} />
+                                  )}
+                                </p>
+                                <p className="min-w-0 break-words text-[clamp(9px,2.5cqw,11px)] font-medium leading-tight text-white/90 @md:text-xs">{stat.label}</p>
+                              </div>
+                            </>
+                          );
+
+                          if (isBlockpages) {
+                            return (
+                              <div key={stat.id} className="flex min-w-0 items-center gap-3 @md:gap-4">
+                                {statContent}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <motion.div variants={fadeInUp} key={stat.id} className="flex min-w-0 items-center gap-3 @md:gap-4">
+                              {statContent}
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     </div>
                   </motion.div>
@@ -860,7 +959,7 @@ export default function DigitalMarketingPreviewPage() {
                           {visibleTestimonials.map((t, i) => (
                             <motion.div
                               key={`${t.name}-${i}`}
-                              className={`group flex w-full min-w-0 flex-col rounded-2xl p-6 shadow-sm @md:p-8 transition-colors duration-500 bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white ${i === 1 ? "flex" : "hidden @3xl:flex"
+                              className={`blockpages-card group flex w-full min-w-0 flex-col rounded-2xl p-6 shadow-sm @md:p-8 transition-colors duration-500 bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white ${i === 1 ? "flex" : "hidden @3xl:flex"
                                 }`}
                             >
                               <img src={t.img} alt={t.name} className="mx-auto mb-4 h-16 w-16 rounded-full object-cover" />
@@ -992,7 +1091,7 @@ export default function DigitalMarketingPreviewPage() {
 
                     </motion.div>
 
-                    <motion.div variants={slideInRight} className="w-full min-w-0 rounded-2xl border-2 border-[#2196F3] bg-white p-4 shadow-sm @sm:p-6 @md:w-1/2 @md:p-10">
+                    <motion.div variants={slideInRight} className="blockpages-card w-full min-w-0 rounded-2xl border-2 border-[#2196F3] bg-white p-4 shadow-sm @sm:p-6 @md:w-1/2 @md:p-10">
                       <form className="flex flex-col gap-4 @md:gap-6" onSubmit={handleContactSubmit}>
                         <div className="grid min-w-0 grid-cols-1 gap-6 @md:grid-cols-2">
                           <label className="flex min-w-0 flex-col">

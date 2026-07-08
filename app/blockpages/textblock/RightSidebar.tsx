@@ -215,6 +215,7 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
  
             {selectedTarget === "footer" && (
               <>
+                <ColorInput label="Footer Background" value={section.footerBg} onChange={(footerBg) => updateSection({ footerBg })} />
                 <ColorInput label="Footer Text Color" value={section.footerText} onChange={(footerText) => updateSection({ footerText })} />
               </>
             )}

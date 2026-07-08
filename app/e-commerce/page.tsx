@@ -1798,9 +1798,9 @@ export default function ECommercePage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
-                    {formatUsd(lineTotalCents)}
-                  </p>
+                <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
+                  {formatUsd(lineTotalCents)}
+                </p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1874,7 +1874,7 @@ export default function ECommercePage() {
                   Your cart
                 </h2>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
+                <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1949,7 +1949,7 @@ export default function ECommercePage() {
                   Your favorites
                 </h2>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
+                <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1988,13 +1988,13 @@ export default function ECommercePage() {
                         >
                           Add to Cart
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => removeFavoriteProduct(product.id)}
-                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
-                        >
-                          Remove
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFavoriteProduct(product.id)}
+                        className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                      >
+                        Remove
+                      </button>
                       </div>
                     </div>
                   ))}

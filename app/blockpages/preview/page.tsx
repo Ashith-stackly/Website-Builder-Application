@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import Footer from "@/components/Footer";
 import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProjectsSlider";
+import { animateStatCounterElement } from "@/lib/blockpagesStatCounter";
+import { sanitizeBlockpagesPreviewHtml } from "@/lib/blockpagesPreviewSanitize";
 import { routePath } from "@/lib/paths";
 
 const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
@@ -20,7 +22,8 @@ export default function BlockPreviewPage() {
  
   useEffect(() => {
     const loadPreview = () => {
-      setPreviewHtml(window.localStorage.getItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "");
+      const rawHtml = window.localStorage.getItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "";
+      setPreviewHtml(sanitizeBlockpagesPreviewHtml(rawHtml));
     };
  
     const frameId = window.requestAnimationFrame(() => {
@@ -29,7 +32,7 @@ export default function BlockPreviewPage() {
  
     const handleStorage = (event: StorageEvent) => {
       if (event.key === TEXTBLOCK_PREVIEW_STORAGE_KEY) {
-        setPreviewHtml(event.newValue ?? "");
+        setPreviewHtml(sanitizeBlockpagesPreviewHtml(event.newValue ?? ""));
       }
     };
  
@@ -59,18 +62,7 @@ export default function BlockPreviewPage() {
               }
  
               if (entry.target.classList.contains("stat-animate-count")) {
-                const el = entry.target as HTMLElement;
-                const target = parseInt(el.dataset.target || "0", 10);
-                const suffix = el.dataset.suffix || "";
-                const duration = 2000;
-                const start = performance.now();
-                const step = (now: number) => {
-                  const progress = Math.min((now - start) / duration, 1);
-                  el.textContent = Math.round(progress * target).toString();
-                  if (progress < 1) requestAnimationFrame(step);
-                  else el.textContent = target.toString() + suffix;
-                };
-                requestAnimationFrame(step);
+                animateStatCounterElement(entry.target as HTMLElement);
               }
  
               observer.unobserve(entry.target);
