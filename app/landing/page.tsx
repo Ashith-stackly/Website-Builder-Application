@@ -1006,21 +1006,23 @@ export default function Home() {
                 <div className="mb-5 h-52 overflow-hidden rounded-[1.5rem] bg-gray-50">
                   <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                 </div>
-                <div className="flex flex-1 flex-col px-2 relative">
-                  <div className="mb-1 pr-10">
-                    <h3 className="text-lg font-bold text-[#06224C] sm:text-xl truncate" title={product.title}>
-                      {product.title}
-                    </h3>
+                <div className="flex flex-1 flex-col px-2">
+                  <div className="flex items-center justify-between gap-3 mb-1 w-full min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-bold text-[#06224C] sm:text-xl truncate" title={product.title}>
+                        {product.title}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleWishlistItem(product)}
+                      aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
+                      aria-pressed={isWishlisted}
+                      className={`p-1 transition hover:text-red-500 shrink-0 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
+                    >
+                      <FaHeart className="text-xl" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleWishlistItem(product)}
-                    aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
-                    aria-pressed={isWishlisted}
-                    className={`absolute right-2 top-0.5 p-1 transition hover:text-red-500 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
-                  >
-                    <FaHeart className="text-xl" />
-                  </button>
                   <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
                   <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -1373,3 +1375,5 @@ export default function Home() {
     </main>
   );
 }
+
+
