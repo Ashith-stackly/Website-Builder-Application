@@ -231,7 +231,7 @@ function BlogHeader({
 
   return (
     <header ref={headerRef} data-blockpages-template-header="true" className="bg-[var(--blog-navy)] text-[var(--blog-white)] w-full max-w-full box-border my-0 mx-0 px-0 relative z-40 min-w-0">
-      <div className="bg-[var(--blog-navy)] rounded-0 w-full max-w-full mx-0 py-[0.85rem] px-[clamp(1rem,4cqw,2.5rem)] flex items-center justify-between gap-[0.75rem] min-w-0 @max-[340px]:py-[0.6rem] @max-[340px]:px-[0.5rem] @max-[340px]:gap-[0.4rem]">
+      <div className="bg-transparent rounded-0 w-full max-w-full mx-0 py-[0.85rem] px-[clamp(1rem,4cqw,2.5rem)] flex items-center justify-between gap-[0.75rem] min-w-0 @max-[340px]:py-[0.6rem] @max-[340px]:px-[0.5rem] @max-[340px]:gap-[0.4rem]">
         <button
           type="button"
           className="text-[clamp(1.2rem,2.5cqw,1.4rem)] font-extrabold text-[var(--blog-white)] no-underline shrink-0 bg-none border-none cursor-pointer p-0 font-inherit hover:opacity-90 @max-[340px]:text-[1.1rem]"

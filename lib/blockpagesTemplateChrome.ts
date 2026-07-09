@@ -11,6 +11,10 @@ export const BLOCKPAGES_TEMPLATE_HEADER_SELECTOR = `[data-textblock-canvas] [dat
 [data-textblock-canvas] .dm-shell [data-blockpages-template-header="true"],
 [data-textblock-canvas] .dm-shell .sticky`;
 
+export const BLOCKPAGES_TEMPLATE_HEADER_BAR_SELECTOR = `[data-textblock-canvas] [data-blockpages-template-header="true"] > div:first-child,
+[data-textblock-canvas] .blog-page header > div:first-child,
+[data-textblock-canvas] .blog-blockpages-root header > div:first-child`;
+
 export const BLOCKPAGES_TEMPLATE_HEADER_CHILD_SELECTOR = `[data-textblock-canvas] [data-blockpages-template-header="true"] *${BLOCKPAGES_DROPDOWN_EXCLUDE},
 [data-textblock-canvas] .portfolio-shell > .sticky *${BLOCKPAGES_DROPDOWN_EXCLUDE},
 [data-textblock-canvas] .buyscreen-header *${BLOCKPAGES_DROPDOWN_EXCLUDE},
@@ -44,6 +48,9 @@ export function buildBlockpagesTemplateChromeCss(section: TextSectionProps) {
     ${BLOCKPAGES_TEMPLATE_HEADER_SELECTOR} {
       ${section.headerBg ? `background: ${section.headerBg} !important; background-color: ${section.headerBg} !important;` : ""}
       ${section.headerText ? `color: ${section.headerText} !important;` : ""}
+    }
+    ${BLOCKPAGES_TEMPLATE_HEADER_BAR_SELECTOR} {
+      ${section.headerBg ? `background: transparent !important; background-color: transparent !important;` : ""}
     }
     ${BLOCKPAGES_TEMPLATE_HEADER_CHILD_SELECTOR} {
       ${section.headerText ? `color: inherit !important;` : ""}
