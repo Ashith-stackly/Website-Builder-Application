@@ -657,6 +657,7 @@ export default function DigitalMarketingPreviewPage() {
                       src={dmAsset("/Digital Marketing.webp")}
                       alt="Precision Marketing"
                       className="h-full w-full object-cover"
+                      data-blockpages-image-id="dm-hero-banner"
                     />
                     <div className="absolute inset-0 bg-black/60" />
                   </div>

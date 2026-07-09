@@ -65,12 +65,14 @@ const OVERLAY_BUTTON_CLASS: Record<OverlayKind, string> = {
     "bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform border border-gray-200",
 };
 
-const OVERLAY_OFFSET: Record<OverlayKind, { top: number; left: number }> = {
-  image: { top: -8, left: -8 },
-  button: { top: -12, left: -12 },
-  video: { top: 16, left: -8 },
-  icon: { top: -8, left: -8 },
+const OVERLAY_DIMENSION: Record<OverlayKind, { width: number; height: number }> = {
+  image: { width: 36, height: 36 },
+  button: { width: 28, height: 28 },
+  video: { width: 36, height: 36 },
+  icon: { width: 36, height: 36 },
 };
+
+const OVERLAY_EDGE_PADDING = 4;
 
 function isInsideBuilderChrome(node: Element | null) {
   return Boolean(node?.closest("[data-builder-chrome='true']"));
@@ -270,12 +272,24 @@ function getOverlayPosition(
 
   if (elementRect.width < 1 || elementRect.height < 1) return null;
 
-  const offset = OVERLAY_OFFSET[kind];
-  const top =
+  const { width: overlayWidth, height: overlayHeight } = OVERLAY_DIMENSION[kind];
+  const pad = OVERLAY_EDGE_PADDING;
+
+  let top =
     kind === "video"
       ? elementRect.top - containerRect.top + 16
-      : elementRect.top - containerRect.top + offset.top;
-  const left = elementRect.right - containerRect.left + offset.left;
+      : elementRect.top - containerRect.top + pad;
+
+  // Place inside the top-right corner so overflow-x-hidden on the canvas does not clip the icon.
+  let left = elementRect.right - containerRect.left - overlayWidth - pad;
+
+  const containerWidth = containerRect.width;
+  const containerHeight = containerRect.height;
+
+  left = Math.min(left, containerWidth - overlayWidth - pad);
+  left = Math.max(pad, left);
+  top = Math.min(top, containerHeight - overlayHeight - pad);
+  top = Math.max(pad, top);
 
   return { top, left };
 }
