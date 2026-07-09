@@ -231,7 +231,7 @@ function BlogHeader({
 
   return (
     <header ref={headerRef} data-blockpages-template-header="true" className="bg-[var(--blog-navy)] text-[var(--blog-white)] w-full max-w-full box-border my-0 mx-0 px-0 relative z-40 min-w-0">
-      <div className="bg-transparent rounded-0 w-full max-w-full mx-0 py-[0.85rem] px-[clamp(1rem,4cqw,2.5rem)] flex items-center justify-between gap-[0.75rem] min-w-0 @max-[340px]:py-[0.6rem] @max-[340px]:px-[0.5rem] @max-[340px]:gap-[0.4rem]">
+      <div className="bg-[var(--blog-navy)] rounded-0 w-full max-w-full mx-0 py-[0.85rem] px-[clamp(1rem,4cqw,2.5rem)] flex items-center justify-between gap-[0.75rem] min-w-0 @max-[340px]:py-[0.6rem] @max-[340px]:px-[0.5rem] @max-[340px]:gap-[0.4rem]">
         <button
           type="button"
           className="text-[clamp(1.2rem,2.5cqw,1.4rem)] font-extrabold text-[var(--blog-white)] no-underline shrink-0 bg-none border-none cursor-pointer p-0 font-inherit hover:opacity-90 @max-[340px]:text-[1.1rem]"
@@ -327,47 +327,7 @@ function BlogHeader({
         </nav>
 
         <div className="flex items-center gap-[0.75rem] shrink-0 @@max-[759px]:gap-[0.5rem] @max-[340px]:gap-[0.4rem]">
-          <div
-            ref={profileRef}
-            className="relative"
-            onBlurCapture={(e) => {
-              const next = e.relatedTarget as Node | null;
-              if (e.currentTarget.contains(next)) return;
-              setProfileOpen(false);
-            }}
-          >
-            <button
-              type="button"
-              className="inline-flex items-center justify-center w-[2.25rem] h-[2.25rem] rounded-full border border-[rgba(255,255,255,0.85)] text-[var(--blog-white)] text-[0.95rem] bg-none p-0 cursor-pointer transition-[background,border-color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:border-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:border-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none aria-expanded:bg-[rgba(255,255,255,0.18)] aria-expanded:border-white aria-expanded:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] @max-[340px]:w-[2rem] @max-[340px]:h-[2rem]"
-              aria-label="Account menu"
-              aria-expanded={profileOpen}
-              aria-haspopup="true"
-              onClick={() => {
-                setProfileOpen((open) => !open);
-                setMobileOpen(false);
-              }}
-            >
-              <FaUser aria-hidden />
-            </button>
-            {profileOpen && (
-              <div
-                className="blog-blockpages-dropdown-panel absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 min-w-[9rem] max-w-[min(12rem,calc(100cqw-2*var(--blog-nav-gap)-1rem))] py-[0.35rem] px-0 bg-[var(--blog-white)] rounded-[0.5rem] shadow-[0_12px_32px_rgba(0,31,63,0.18)] z-60"
-                role="menu"
-                data-blockpages-dropdown-panel="true"
-                data-blockpages-dropdown-theme="light"
-              >
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="flex items-center gap-[0.5rem] w-full py-[0.6rem] px-[1rem] text-left text-[0.875rem] font-semibold text-[var(--blog-navy)] bg-none border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] focus-visible:bg-[var(--blog-blue-bg)] focus-visible:outline-none text-[#dc2626] hover:bg-[#fef2f2] hover:text-[#b91c1c] focus-visible:bg-[#fef2f2] focus-visible:text-[#b91c1c]"
-                  onClick={handleLogout}
-                >
-                  <FaRightFromBracket className="w-4 h-4 shrink-0 flex-shrink-0" aria-hidden />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+
           <button
             type="button"
             className={`inline-flex items-center justify-center shrink-0 w-[2.5rem] h-[2.5rem] p-0 border rounded-[0.4rem] text-[var(--blog-white)] cursor-pointer transition-[background,border-color,color] duration-150 ease hover:bg-[rgba(255,255,255,0.22)] hover:border-white focus-visible:bg-[rgba(255,255,255,0.22)] focus-visible:border-white focus-visible:outline-none @[760px]:hidden @max-[340px]:w-[2.2rem] @max-[340px]:h-[2.2rem] ${mobileOpen ? "bg-[rgba(43,127,255,0.35)] border-[rgba(255,255,255,0.9)]" : "bg-[rgba(255,255,255,0.12)] border-[rgba(255,255,255,0.65)]"}`}
@@ -491,28 +451,7 @@ function BlogHeader({
               </button>
             )
           )}
-          <div className="mt-[0.5rem] pt-[0.85rem] border-t border-[rgba(255,255,255,0.15)]">
-            <p className="m-0 mb-[0.5rem] text-[0.7rem] font-bold uppercase tracking-[0.06em] text-[rgba(255,255,255,0.6)]">Account</p>
-            <button
-              type="button"
-              className="py-[0.65rem] px-0 rounded-[0.4rem] text-[var(--blog-white)] text-[0.9rem] font-medium bg-none border-none cursor-pointer text-left w-full max-w-full font-inherit transition-[background,color] duration-150 ease hover:bg-[rgba(255,255,255,0.15)] hover:text-white focus-visible:bg-[rgba(255,255,255,0.15)] focus-visible:text-white focus-visible:outline-none flex items-center gap-[0.5rem]"
-              onClick={() => {
-                setMobileOpen(false);
-                router.push("/login");
-              }}
-            >
-              <FaUser aria-hidden />
-              My account
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-[0.5rem] mt-[0.35rem] py-[0.65rem] px-0 w-full max-w-full rounded-[0.4rem] border-none bg-none text-[#fca5a5] text-[0.9rem] font-semibold cursor-pointer font-inherit text-left hover:bg-[rgba(255,255,255,0.1)] hover:text-[#fecaca] focus-visible:bg-[rgba(255,255,255,0.1)] focus-visible:text-[#fecaca] focus-visible:outline-none"
-              onClick={handleLogout}
-            >
-              <FaRightFromBracket className="shrink-0" aria-hidden />
-              Logout
-            </button>
-          </div>
+
         </nav>
       )}
     </header>

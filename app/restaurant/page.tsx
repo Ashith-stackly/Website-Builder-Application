@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useRef, useCallback, useEffect, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Footer from "../../components/Footer";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane, FaUtensils, FaUsers, FaCouch, FaLeaf, FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
-import { FaBars, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
+import { FaBars, FaXmark } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { assetPath } from "@/lib/paths";
-import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BUILDING_HREF = "/signup";
+
+function restaurantAsset(path: string) {
+  return encodeURI(assetPath(path));
+}
 
 function scrollToSection(sectionId: string) {
   const target = document.getElementById(sectionId);
@@ -26,7 +28,7 @@ function getModeClasses(classesStr: string, deviceMode: "desktop" | "tablet" | "
   if (deviceMode === "desktop") return classesStr;
 
   const classes = classesStr.split(/\s+/).filter(Boolean);
-  
+
   if (deviceMode === "mobile") {
     return classes
       .filter(cls => !/^(sm|md|lg|xl|2xl):/.test(cls))
@@ -35,7 +37,7 @@ function getModeClasses(classesStr: string, deviceMode: "desktop" | "tablet" | "
 
   if (deviceMode === "tablet") {
     const baseMap = new Map<string, string>();
-    
+
     const getBaseKey = (cls: string) => {
       if (cls.startsWith("p-") || cls.startsWith("pt-") || cls.startsWith("pb-") || cls.startsWith("pl-") || cls.startsWith("pr-") || cls.startsWith("px-") || cls.startsWith("py-")) {
         return cls.split("-")[0];
@@ -110,28 +112,15 @@ interface RestaurantHeaderProps {
 }
 
 function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
 
-  const handleLogout = useCallback(() => {
-    window.localStorage.removeItem("stackly-auth-token");
-    setProfileOpen(false);
-    setMobileOpen(false);
-    router.push("/login");
-  }, [router]);
-
   useEffect(() => {
-    if (!profileOpen && !mobileOpen) return;
+    if (!mobileOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (profileOpen && profileRef.current && !profileRef.current.contains(target)) {
-        setProfileOpen(false);
-      }
       if (mobileOpen && headerRef.current && !headerRef.current.contains(target)) {
         setMobileOpen(false);
       }
@@ -139,64 +128,40 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [profileOpen, mobileOpen]);
-
-  const showDesktopNav = deviceMode === "desktop";
+  }, [mobileOpen]);
 
   return (
-    <header ref={headerRef} data-blockpages-template-header="true" className={r("bg-[#0A1E3D] text-white w-full max-w-full sticky top-0 z-50 shadow-md overflow-visible")}>
-      <div className={r(`w-full mx-auto py-3 @md:py-4 flex items-center justify-between gap-2 @md:gap-3 min-w-0 px-3 @md:px-6 @xl:px-8 ${deviceMode === "desktop" ? "max-w-7xl" : ""}`)}>
+    <header ref={headerRef} className={r("bg-[#0A1E3D] text-white w-full max-w-full sticky top-0 z-50 shadow-md")}>
+      <div className={r(`w-full mx-auto py-4 flex items-center justify-between px-4 sm:px-6 lg:px-8 ${deviceMode === "desktop" ? "max-w-7xl" : ""
+        }`)}>
         <button
           type="button"
-          className="text-sm @md:text-base @xl:text-xl font-black text-white no-underline bg-none border-none cursor-pointer p-0 hover:opacity-90 focus-visible:outline-none whitespace-nowrap text-left shrink-0"
+          className="text-sm sm:text-lg md:text-xl font-black text-white no-underline bg-none border-none cursor-pointer p-0 hover:opacity-90 focus-visible:outline-none min-w-0 break-words text-left"
           onClick={() => scrollToSection("restaurant-home")}
         >
           Stackly Restaurant
         </button>
 
-        {showDesktopNav && (
-          <nav className="hidden @md:flex flex-1 min-w-0 items-center justify-center gap-1 @lg:gap-3 @xl:gap-5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {navLinks.map((link) => (
-              <button
-                key={link.label}
-                type="button"
-                className="shrink-0 bg-transparent border-none cursor-pointer py-1.5 px-2 @lg:px-3 rounded-lg transition-all duration-300 hover:bg-white/20 hover:text-white hover:shadow-sm hover:-translate-y-0.5 text-xs @md:text-sm font-bold text-white/90 whitespace-nowrap"
-                onClick={() => scrollToSection(link.hash.replace("#", ""))}
-              >
-                {link.label}
-              </button>
-            ))}
-          </nav>
-        )}
+        {/* DESKTOP NAV WITH HIGHLIGHTS AND GAPS */}
+        <nav className={r(`${deviceMode === "desktop" ? "hidden md:flex" : "hidden"} items-center gap-6 lg:gap-8`)}>
+          {navLinks.map((link) => (
+            <button
+              key={link.label}
+              type="button"
+              className="bg-transparent border border-transparent cursor-pointer py-2 px-4 rounded-lg transition-all duration-300 hover:bg-white/20 hover:text-white hover:border-white/30 hover:shadow-sm hover:-translate-y-0.5 text-sm font-bold text-white/90"
+              onClick={() => scrollToSection(link.hash.replace("#", ""))}
+            >
+              {link.label}
+            </button>
+          ))}
+        </nav>
 
-        <div className="flex items-center gap-1.5 @md:gap-2 shrink-0">
-          {showDesktopNav && (
-            <div ref={profileRef} className="relative hidden @sm:block">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center w-9 h-9 @md:w-10 @md:h-10 rounded-full border border-white/80 text-white bg-transparent transition-all hover:bg-white/20 hover:scale-105 cursor-pointer shrink-0"
-                onClick={() => { setProfileOpen((open) => !open); setMobileOpen(false); }}
-              >
-                <FaUser size={14} aria-hidden />
-              </button>
-              {profileOpen && (
-                <div className="absolute top-12 right-0 w-40 py-2 bg-white rounded-lg shadow-xl border border-gray-100 z-60" data-blockpages-dropdown-panel="true">
-                  <button
-                    type="button"
-                    className="flex items-center gap-3 w-full py-2.5 px-4 text-left text-sm font-bold text-red-600 hover:bg-red-50 cursor-pointer"
-                    onClick={handleLogout}
-                  >
-                    <FaRightFromBracket size={14} /> Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
           <button
             type="button"
-            className={r(`${showDesktopNav ? "@md:hidden flex" : "flex"} inline-flex items-center justify-center w-9 h-9 @md:w-10 @md:h-10 rounded-md border text-white transition-colors shrink-0 ${mobileOpen ? "bg-white/20 border-white" : "border-white/60 hover:bg-white/20"}`)}
-            onClick={() => { setMobileOpen((open) => !open); setProfileOpen(false); }}
+            className={r(`${deviceMode === "desktop" ? "md:hidden" : "flex"} inline-flex items-center justify-center w-10 h-10 rounded-md border text-white transition-colors ${mobileOpen ? "bg-white/20 border-white" : "border-white/60 hover:bg-white/20"
+              }`)}
+            onClick={() => { setMobileOpen((open) => !open); }}
           >
             {mobileOpen ? <FaXmark size={18} /> : <FaBars size={18} />}
           </button>
@@ -216,15 +181,6 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
               {link.label}
             </button>
           ))}
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <button
-              type="button"
-              className="flex items-center gap-3 py-3 px-4 w-full text-left text-red-400 text-base font-bold hover:bg-white/10 transition-colors rounded-md cursor-pointer"
-              onClick={handleLogout}
-            >
-              <FaRightFromBracket size={16} /> Logout
-            </button>
-          </div>
         </nav>
       )}
     </header>
@@ -236,32 +192,32 @@ const foodItems = [
   {
     title: "Premium Ribeye Steak",
     price: "₹450",
-    image: assetPath("/premium-ribeye-steak.webp"),
+    image: restaurantAsset("/premium-ribeye-steak.webp"),
   },
   {
     title: "Artisan Cafe Pastries",
     price: "₹120",
-    image: assetPath("/artisan-cafe-pastries.webp"),
+    image: restaurantAsset("/artisan-cafe-pastries.webp"),
   },
   {
     title: "Authentic Wood-Fired Pizza",
     price: "₹180",
-    image: assetPath("/authentic-wood-fired-pizza.webp"),
+    image: restaurantAsset("/authentic-wood-fired-pizza.webp"),
   },
   {
     title: "Avocado Brunch Toast",
     price: "₹140",
-    image: assetPath("/avocado-brunch-toast.webp"),
+    image: restaurantAsset("/avocado-brunch-toast.webp"),
   },
   {
     title: "Gourmet Street Tacos",
     price: "₹160",
-    image: assetPath("/gourmet-street-tacos.webp"),
+    image: restaurantAsset("/gourmet-street-tacos.webp"),
   },
   {
     title: "Classic Cheeseburger",
     price: "₹150",
-    image: assetPath("/classic-cheeseburger.webp"),
+    image: restaurantAsset("/classic-cheeseburger.webp"),
   },
 ];
 
@@ -303,12 +259,9 @@ const testimonials = [
 ];
 
 export default function RestaurantTemplatesPage() {
-  const blockpagesEditor = useBlockpagesEditor();
-  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [openFaq, setOpenFaq] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
-  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : (deviceMode === "preview" ? "desktop" : deviceMode);
+  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [email, setEmail] = useState("");
@@ -325,23 +278,18 @@ export default function RestaurantTemplatesPage() {
       setNewsletterStatus("success");
       setEmail("");
       setTimeout(() => setNewsletterStatus("idle"), 5000);
-    }, 1200);
+    }, 1500);
   };
 
-  const handleNewsletterChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (newsletterStatus !== "idle") setNewsletterStatus("idle");
-  };
-
-  const r = useCallback((classes: string) => getModeClasses(classes, activeDeviceMode), [activeDeviceMode]);
+  const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
 
 
 
   return (
-    <main className={isBlockpages ? "@container restaurant-shell w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible bg-[#FFF5F5] font-serif text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-serif text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer"}>
-      
-      {!isBlockpages && (
-        <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
+
+      {/* FLOATING DEVICE TOOLBAR */}
+      <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
           <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
             <FaEye size={16} />
@@ -358,34 +306,31 @@ export default function RestaurantTemplatesPage() {
           </button>
         </div>
       </div>
-      )}
 
-      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+      <div className={`flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         {/* RESPONSIVE CANVAS FRAME */}
-        <div 
-          ref={isBlockpages ? undefined : canvasScrollRef}
-          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${
-            deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl" 
-            : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl" 
-            : deviceMode === "desktop" ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
-            : "w-full min-h-screen"
-          }`}
+        <div
+          ref={canvasScrollRef}
+          className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+            : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+              : "w-full min-h-screen"
+            }`}
         >
-          <div className={isBlockpages ? "w-full min-w-0 max-w-full" : "w-full max-w-full overflow-x-hidden min-w-0"}>
+          <div className="w-full max-w-full overflow-x-hidden min-w-0">
             <RestaurantHeader
-              deviceMode={activeDeviceMode}
+              deviceMode={deviceMode}
             />
 
             {/* 1. HERO SECTION */}
-            <div id="restaurant-home" className={`w-full bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-            }`}>
-              <div className={`mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 ${activeDeviceMode === "desktop" ? "max-w-7xl w-full" : "max-w-3xl"
+            <div id="restaurant-home" className={`w-full bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+              }`}>
+              <div className={`mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 ${deviceMode === "desktop" ? "max-w-7xl w-full" : "max-w-3xl"
                 }`}>
                 {/* Left side: Text content */}
                 <div className="flex-1 text-left break-words w-full max-w-xl min-w-0">
                   <h1 className={r("font-black text-balance leading-[1.15] text-[#0A1E3D] mb-6 text-2xl sm:text-3xl md:text-5xl lg:text-6xl break-words")}>
                     We Serve The Taste You Love
-                </h1>
+                  </h1>
                   <div className="text-sm sm:text-base text-gray-600 mb-8 space-y-2 leading-relaxed break-words">
                     <p>Welcome to a place where every meal tells a story.</p>
                     <p>We serve handcrafted dishes made from premium, locally sourced ingredients.</p>
@@ -415,7 +360,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Base / Right Image */}
                   <div className="w-[60%] h-[90%] absolute right-0 top-[5%] rounded-3xl overflow-hidden shadow-lg z-10">
                     <img
-                      src={encodeURI(assetPath("/Image - 2.webp"))}
+                      src={restaurantAsset("/Image - 2.webp")}
                       alt="Chef plating food in kitchen"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -424,7 +369,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Overlapping / Left Image */}
                   <div className="w-[55%] aspect-[1.3] absolute left-0 bottom-[5%] rounded-3xl overflow-hidden shadow-2xl z-20 border-[4px] sm:border-[6px] border-[#FFF5F5]">
                     <img
-                      src={encodeURI(assetPath("/Image -1.webp"))}
+                      src={restaurantAsset("/Image -1.webp")}
                       alt="Drinks and gourmet dishes"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -435,8 +380,8 @@ export default function RestaurantTemplatesPage() {
             </div>
 
             {/* 2. MENU GRID (Changed from Templates to Foods) */}
-            <section id="restaurant-menu" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-            }`}>
+            <section id="restaurant-menu" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+              }`}>
               <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-10 break-words">
                   <h2 className={r("font-black text-[#0A1E3D] mb-4 text-balance text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Our Signature Menu</h2>
@@ -447,7 +392,7 @@ export default function RestaurantTemplatesPage() {
                   {foodItems.map((item) => (
                     <article
                       key={item.title}
-                      className="blockpages-card group flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-red-100 min-w-0"
+                      className="group flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-red-100 min-w-0"
                     >
                       <div className="overflow-hidden rounded-xl bg-gray-100 aspect-[4/3] mb-5">
                         <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
@@ -465,13 +410,13 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 3. ABOUT US SECTION */}
-            <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
                 <div className="rounded-[2rem] overflow-hidden shadow-xl w-full min-w-0">
-                  <img 
-                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop" 
-                    alt="Restaurant Interior" 
+                  <img
+                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop"
+                    alt="Restaurant Interior"
                     className="w-full h-auto aspect-[4/3] object-cover max-w-full"
                   />
                 </div>
@@ -480,7 +425,7 @@ export default function RestaurantTemplatesPage() {
                   <h3 className={r("font-black text-[#0A1E3D] text-balance leading-tight mb-6 text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Tradition meets modern flavor.</h3>
                   <p className="text-base text-gray-600 leading-relaxed mb-6">Founded with a passion for exceptional food, we started as a small family kitchen dedicated to bringing authentic, vibrant flavors to our neighborhood.</p>
                   <p className="text-base text-gray-600 leading-relaxed mb-8">Today, we continue that tradition by sourcing the freshest local ingredients and applying modern culinary techniques to classic recipes. Every bite is crafted to make your dining experience memorable.</p>
-                  
+
                   <div className="flex gap-8 border-t border-gray-200 pt-6">
                     <div>
                       <p className="text-3xl font-black text-[#0A1E3D]">10+</p>
@@ -496,7 +441,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 3.5 WHY CHOOSE US SECTION */}
-            <section id="restaurant-why-choose-us" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <section id="restaurant-why-choose-us" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-10 break-words">
                   <span className="text-[#0F2D5C] uppercase tracking-[0.2em] text-xs sm:text-sm font-black">Why Choose Us</span>
@@ -514,9 +459,9 @@ export default function RestaurantTemplatesPage() {
 
                   <div className={r("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6")}>
                     {/* Card 1 */}
-                    <div className="blockpages-card bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
                       <div className="min-w-0 break-words">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0" data-blockpages-icon-slot="true" data-blockpages-icon-id="restaurant-icon-1">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
                           <FaUtensils size={28} className="sm:hidden" />
                           <FaUtensils size={32} className="hidden sm:block" />
                         </div>
@@ -528,9 +473,9 @@ export default function RestaurantTemplatesPage() {
                     </div>
 
                     {/* Card 2 */}
-                    <div className="blockpages-card bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
                       <div className="min-w-0 break-words">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0" data-blockpages-icon-slot="true" data-blockpages-icon-id="restaurant-icon-2">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
                           <FaUsers size={28} className="sm:hidden" />
                           <FaUsers size={32} className="hidden sm:block" />
                         </div>
@@ -542,9 +487,9 @@ export default function RestaurantTemplatesPage() {
                     </div>
 
                     {/* Card 3 */}
-                    <div className="blockpages-card bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
                       <div className="min-w-0 break-words">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0" data-blockpages-icon-slot="true" data-blockpages-icon-id="restaurant-icon-3">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
                           <FaCouch size={28} className="sm:hidden" />
                           <FaCouch size={32} className="hidden sm:block" />
                         </div>
@@ -556,9 +501,9 @@ export default function RestaurantTemplatesPage() {
                     </div>
 
                     {/* Card 4 */}
-                    <div className="blockpages-card bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-w-0 w-full max-w-none">
                       <div className="min-w-0 break-words">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0" data-blockpages-icon-slot="true" data-blockpages-icon-id="restaurant-icon-4">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-dashed border-gray-300 rounded-2xl mb-6 text-[#0A1E3D] mx-auto shrink-0">
                           <FaLeaf size={28} className="sm:hidden" />
                           <FaLeaf size={32} className="hidden sm:block" />
                         </div>
@@ -574,7 +519,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 4. BUILD YOUR WAY (FEATURES) */}
-            <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
                 <div className="break-words order-2 lg:order-1 min-w-0">
@@ -592,9 +537,9 @@ export default function RestaurantTemplatesPage() {
                   </Link>
                 </div>
                 <div className="rounded-[2rem] overflow-hidden shadow-2xl order-1 lg:order-2 w-full min-w-0">
-                  <img 
-                    src="https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?q=80&w=800&auto=format&fit=crop" 
-                    alt="Chef plating food" 
+                  <img
+                    src="https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?q=80&w=800&auto=format&fit=crop"
+                    alt="Chef plating food"
                     className="w-full h-auto aspect-[4/3] object-cover max-w-full"
                   />
                 </div>
@@ -603,8 +548,8 @@ export default function RestaurantTemplatesPage() {
 
 
             {/* 5. INFRASTRUCTURE */}
-            <section className={`bg-[#0A1E3D] text-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-            }`}>
+            <section className={`bg-[#0A1E3D] text-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+              }`}>
               <div className="max-w-7xl mx-auto">
                 <div className={r("bg-white/5 rounded-3xl border border-white/10 p-6 sm:p-10 lg:p-16")}>
                   <h2 className={r("font-black mb-10 max-w-2xl text-balance leading-tight text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>The powerful infrastructure behind your restaurant.</h2>
@@ -621,8 +566,8 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 6. FAQ */}
-            <section id="restaurant-faq" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-            }`}>
+            <section id="restaurant-faq" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+              }`}>
               <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-12 break-words">
                   <h2 className={r("font-black text-[#0A1E3D] mb-4 text-balance text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Frequently Asked Questions</h2>
@@ -655,7 +600,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 6.5 GUEST EXPERIENCES (TESTIMONIALS) */}
-            <section id="restaurant-testimonials" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <section id="restaurant-testimonials" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="max-w-7xl mx-auto">
                 <div className={r("w-full bg-[#0F2D5C] rounded-[2rem] sm:rounded-[2.5rem] shadow-xl p-6 sm:p-12 lg:p-16")}>
                   <div className="text-center mb-8 break-words" style={{ overflowWrap: "anywhere" }}>
@@ -667,7 +612,7 @@ export default function RestaurantTemplatesPage() {
                     <div className={r("flex-1 max-w-[200px] sm:max-w-[240px] w-full flex justify-center min-w-0")}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src={assetPath("/testimonial-1.webp")}
+                          src={restaurantAsset("/testimonial-1.webp")}
                           alt="Guest Experience 1"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"
@@ -690,7 +635,7 @@ export default function RestaurantTemplatesPage() {
                             className="flex flex-col items-center w-full max-w-full min-w-0"
                           >
                             <p className="text-[white] text-base sm:text-lg lg:text-xl font-bold leading-relaxed mb-6 italic break-words whitespace-normal text-center w-full max-w-full" style={{ overflowWrap: "anywhere" }}>
-                              "{testimonials[activeTestimonial].quote}"
+                              &quot;{testimonials[activeTestimonial].quote}&quot;
                             </p>
                             <h4 className="text-[white] text-sm sm:text-base font-black tracking-wide uppercase break-words" style={{ overflowWrap: "anywhere" }}>
                               {testimonials[activeTestimonial].name}
@@ -724,10 +669,10 @@ export default function RestaurantTemplatesPage() {
                     </div>
 
                     {/* Right Image */}
-                    <div className={r(`flex-1 max-w-[200px] sm:max-w-[240px] w-full justify-center min-w-0 ${activeDeviceMode === "desktop" ? "lg:flex hidden" : "hidden"}`)}>
+                    <div className={r(`flex-1 max-w-[200px] sm:max-w-[240px] w-full justify-center min-w-0 ${deviceMode === "desktop" ? "lg:flex hidden" : "hidden"}`)}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src={assetPath("/testimonial-2.webp")}
+                          src={restaurantAsset("/testimonial-2.webp")}
                           alt="Guest Experience 2"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"
@@ -741,22 +686,22 @@ export default function RestaurantTemplatesPage() {
 
 
             {/* 7. CONTACT SECTION */}
-            <section id="restaurant-contact" className={`bg-gray-50 min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-            }`}>
+            <section id="restaurant-contact" className={`bg-gray-50 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+              }`}>
               <div className="max-w-5xl mx-auto text-center break-words">
                 <h2 className="text-[#0A1E3D] font-black uppercase tracking-[0.2em] text-xs sm:text-sm mb-3">Get in Touch</h2>
                 <h3 className={r("font-black text-[#0A1E3D] text-balance leading-tight mb-10 text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Visit Us or Reach Out</h3>
 
                 <div className={r("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8")}>
-                  <div className="blockpages-card bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
                     <h4 className="font-bold text-[#0A1E3D] mb-3 text-base sm:text-lg">Location</h4>
                     <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">770 Marthalli<br />Food District, 560037</p>
                   </div>
-                  <div className="blockpages-card bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
                     <h4 className="font-bold text-[#0A1E3D] mb-3 text-base sm:text-lg">Hours</h4>
                     <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">Mon - Fri: 11AM - 10PM<br />Sat - Sun: 10AM - 11PM</p>
                   </div>
-                  <div className="blockpages-card bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0 w-full break-words">
                     <h4 className="font-bold text-[#0A1E3D] mb-3 text-base sm:text-lg">Contact</h4>
                     <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">info@stacklyfood.com<br />+91 9745684731 </p>
                   </div>
@@ -764,7 +709,7 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
-            <footer id="restaurant-footer" data-blockpages-template-footer="true" className={`@container bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <footer className={`@container bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="mx-auto max-w-7xl w-full">
                 <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   <div>
@@ -846,8 +791,8 @@ export default function RestaurantTemplatesPage() {
                             placeholder="Your email"
                             className="min-w-0 w-full rounded-full bg-transparent py-3.5 pl-11 pr-4 sm:pr-14 text-sm text-[#0A1E3D] placeholder-[#0A1E3D]/60 outline-none transition-colors duration-300 hover:text-[#0A1E3D] hover:placeholder-[#0A1E3D]/40 focus:text-[#0A1E3D] focus:placeholder-[#0A1E3D]/40"
                           />
-                </div>
-                      <button 
+                        </div>
+                        <button
                           type="submit"
                           aria-label="Subscribe"
                           disabled={!isEmailValid || newsletterStatus === "loading" || email.length === 0}
@@ -861,7 +806,7 @@ export default function RestaurantTemplatesPage() {
                               <FaPaperPlane size={14} />
                             </span>
                           )}
-                      </button>
+                        </button>
                       </div>
                       {!isEmailValid && email.length > 0 && <span className="text-xs text-red-400">Please enter a valid email address.</span>}
                       {newsletterStatus === "success" && (
@@ -879,7 +824,7 @@ export default function RestaurantTemplatesPage() {
                   <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-600 w-full sm:w-auto">
                     <button type="button" onClick={() => setIsTermsModalOpen(true)} className="transition hover:text-[#0A1E3D] cursor-pointer">Terms of Use</button>
                     <button type="button" onClick={() => setIsPrivacyModalOpen(true)} className="transition hover:text-[#0A1E3D] cursor-pointer">Privacy Policy</button>
-                </div>
+                  </div>
                 </div>
               </div>
 
@@ -998,11 +943,9 @@ export default function RestaurantTemplatesPage() {
         </div>
       </div>
 
-      {!isBlockpages && (
       <div className="mt-4 md:mt-8 w-full">
         <Footer />
       </div>
-      )}
 
     </main>
   );
