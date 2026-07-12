@@ -1,22 +1,12 @@
 import type { ReactNode } from "react";
-import { getBlogs } from "@/lib/blogApi";
 import "../blog.css";
 
 export const dynamicParams = false;
 const BUILD_FALLBACK_SLUG = "__build-fallback__";
 
 export async function generateStaticParams() {
-  try {
-    const blogs = await getBlogs();
-    const params = blogs
-      .filter((blog) => blog.status === "published")
-      .map((blog) => ({ slug: blog.slug }));
-
-    return params.length > 0 ? params : [{ slug: BUILD_FALLBACK_SLUG }];
-  } catch (error) {
-    console.warn("Unable to load blog slugs during static export:", error);
-    return [{ slug: BUILD_FALLBACK_SLUG }];
-  }
+  // Public posts are workspace-scoped and load client-side in the static export.
+  return [{ slug: BUILD_FALLBACK_SLUG }];
 }
 
 /**

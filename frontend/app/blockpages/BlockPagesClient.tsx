@@ -1,7 +1,17 @@
 "use client";
  
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import { flushSync } from "react-dom";
+import {
+  createBlockPagesDraft,
+  saveBlockPagesDraft,
+  loadBlockPagesDraft,
+  isProjectConnectionError,
+  type BlockPagesDraftPayload,
+} from "@/lib/blockPagesDraftApi";
+import { routePath } from "@/lib/paths";
+import { Loader2 } from "lucide-react";
 import ButtonCanvas from "./buttonblock/Canvas";
 import ButtonRightSidebar from "./buttonblock/RightSidebar";
 import type { BlockData } from "./buttonblock/types";
@@ -32,6 +42,7 @@ import {
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
 } from "@/lib/blockpagesEditTargets";
+import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
 import VideoCanvas from "./videoblock/Canvas";
 import VideoRightSidebar from "./videoblock/RightSidebar";
 import type { VideoBlockData } from "./videoblock/types";
@@ -106,6 +117,10 @@ const initialTextBlockState: TextBlockState = {
   },
 };
  
+export type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
+
+const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
+
 export default function BlockPagesClient() {
   const searchParams = useSearchParams();
   const requestedTemplate = searchParams.get("template");
@@ -113,6 +128,15 @@ export default function BlockPagesClient() {
   const shouldOpenTextEditor = isTextEditorTemplate(initialTemplate);
   const [activeBlockPage, setActiveBlockPage] = useState<BlockPageType>(shouldOpenTextEditor ? "text" : "image");
   const [textTemplate, setTextTemplate] = useState<TextTemplateType>(initialTemplate);
+
+  // ── Draft persistence state ──────────────────────────────────────────
+  const [draftProjectId, setDraftProjectId] = useState<string | null>(
+    searchParams.get("projectId") ?? null,
+  );
+  const [saveStatus, setSaveStatus] = useState<DraftSaveStatus>("idle");
+  const [isDraftLoading, setIsDraftLoading] = useState(!!searchParams.get("projectId"));
+  const isSavingRef = useRef(false);
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const parsed = parseBlockpagesTemplate(searchParams.get("template"));
@@ -166,6 +190,167 @@ export default function BlockPagesClient() {
   const [appliedDividers, setAppliedDividers] = useState<{ id: string, props: DividerBlockProps, position?: { x: number, y: number }, scale?: number }[]>([]);
   const [appliedIcons, setAppliedIcons] = useState<{ id: string, props: IconBlockProps, position?: { x: number, y: number }, scale?: number }[]>([]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
+  // ── Load saved draft on mount ──────────────────────────────────────────
+  useEffect(() => {
+    const projectId = searchParams.get("projectId");
+    if (!projectId) {
+      setIsDraftLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const { draft } = await loadBlockPagesDraft(projectId, controller.signal);
+        if (cancelled || !draft) {
+          setIsDraftLoading(false);
+          return;
+        }
+
+        // Hydrate all editor state from the saved draft
+        if (draft.template) setTextTemplate(draft.template);
+        if (draft.textBlockState) setTextBlockState(draft.textBlockState);
+        if (draft.buttonBlocks?.length) {
+          setButtonBlocks(draft.buttonBlocks);
+          setSelectedButtonBlockId(draft.buttonBlocks[0]?.id ?? null);
+        }
+        if (draft.videoBlocks?.length) {
+          setVideoBlocks(draft.videoBlocks);
+          setSelectedVideoBlockId(draft.videoBlocks[0]?.id ?? null);
+        }
+        if (draft.dividerBlocks?.length) {
+          setDividerBlocks(draft.dividerBlocks);
+          setSelectedDividerBlockId(draft.dividerBlocks[0]?.id ?? null);
+        }
+        if (draft.iconBlocks?.length) {
+          setIconBlocks(draft.iconBlocks);
+          setSelectedIconBlockId(draft.iconBlocks[0]?.id ?? null);
+        }
+        if (draft.customImages) setCustomImages(draft.customImages);
+        if (draft.customButtons) setCustomButtons(draft.customButtons as Record<string, ButtonProps>);
+        if (draft.customIcons) setCustomIcons(draft.customIcons);
+        if (draft.appliedDividers) setAppliedDividers(draft.appliedDividers);
+        if (draft.appliedIcons) setAppliedIcons(draft.appliedIcons);
+
+        setDraftProjectId(projectId);
+
+        // Clear undo/redo history when loading a saved draft
+        setPastButtonStates([]);
+        setFutureButtonStates([]);
+        setPastTextStates([]);
+        setFutureTextStates([]);
+        setPastVideoStates([]);
+        setFutureVideoStates([]);
+        setPastDividerStates([]);
+        setFutureDividerStates([]);
+        setPastIconStates([]);
+        setFutureIconStates([]);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load block pages draft:", err);
+        }
+      } finally {
+        if (!cancelled) setIsDraftLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const buildPreviewHtml = useCallback((ensureTextCanvas = false) => {
+    let canvas = getBlockpagesCanvasElement();
+    if (!canvas && ensureTextCanvas) {
+      flushSync(() => setActiveBlockPage("text"));
+      canvas = getBlockpagesCanvasElement();
+    }
+
+    const previewClone = canvas?.cloneNode(true) as HTMLDivElement | undefined;
+
+    previewClone?.querySelectorAll("[contenteditable]").forEach((element) => element.removeAttribute("contenteditable"));
+    previewClone?.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
+    previewClone?.querySelectorAll("[data-builder-chrome='true']").forEach((element) => element.remove());
+    previewClone?.querySelectorAll("[data-draggable-chrome='true']").forEach((element) => {
+      element.removeAttribute("title");
+      element.classList.remove("cursor-move", "active:cursor-grabbing", "hover:outline", "hover:outline-2", "hover:outline-blue-400", "hover:outline-dashed", "group");
+    });
+    previewClone?.querySelector("[data-textblock-canvas]")?.removeAttribute("class");
+    if (previewClone) injectPortfolioProjectsSliderNavAttributes(previewClone);
+
+    return previewClone?.innerHTML ?? "";
+  }, []);
+
+  // ── Save Draft handler ─────────────────────────────────────────────────
+  const handleSaveDraft = useCallback(async () => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+    setSaveStatus("saving");
+
+    // Clear any lingering status timer
+    if (saveStatusTimerRef.current) {
+      clearTimeout(saveStatusTimerRef.current);
+      saveStatusTimerRef.current = null;
+    }
+
+    const payload: BlockPagesDraftPayload = {
+      template: textTemplate,
+      textBlockState,
+      buttonBlocks,
+      videoBlocks,
+      dividerBlocks,
+      iconBlocks,
+      customImages,
+      customButtons,
+      customIcons,
+      appliedDividers,
+      appliedIcons,
+    };
+
+    try {
+      let currentProjectId = draftProjectId;
+
+      // First save: create a new project
+      if (!currentProjectId) {
+        const created = await createBlockPagesDraft(textTemplate);
+        currentProjectId = created._id;
+        setDraftProjectId(currentProjectId);
+
+        // Update URL with projectId without full page reload
+        const url = new URL(window.location.href);
+        url.searchParams.set("projectId", currentProjectId);
+        window.history.replaceState({}, "", url.toString());
+      }
+
+      // Save structured draft data, plus rendered HTML if the website canvas is mounted.
+      const htmlContent = buildPreviewHtml(false);
+      await saveBlockPagesDraft(currentProjectId, payload, undefined, htmlContent || undefined);
+
+      setSaveStatus("saved");
+      saveStatusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2500);
+    } catch (err) {
+      console.error("Save draft failed:", err);
+      setSaveStatus("error");
+      saveStatusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 4000);
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [
+    draftProjectId, textTemplate, textBlockState, buttonBlocks, videoBlocks,
+    dividerBlocks, iconBlocks, customImages, customButtons, customIcons,
+    appliedDividers, appliedIcons, buildPreviewHtml,
+  ]);
+
+  const handlePreview = useCallback(() => {
+    const previewHtml = buildPreviewHtml(true);
+    window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
+    window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
+  }, [buildPreviewHtml]);
 
   const verifyCanvasHasVideoTargets = (template: TextTemplateType) => {
     if (templateHasBuiltInVideoSlots(template)) return true;
@@ -502,6 +687,18 @@ export default function BlockPagesClient() {
     });
   };
  
+  if (isDraftLoading) {
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center bg-[#f0f2f5] text-[#0B1D40]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-[#0B1D40]" />
+          <h2 className="text-xl font-bold tracking-tight">Loading Saved Draft...</h2>
+          <p className="text-sm text-slate-500">Retrieving template & styles from database</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <BuilderProvider>
       <section className="flex min-h-[calc(100vh-64px)] flex-1 gap-4 overflow-hidden bg-[#e9eef6] p-4">
@@ -694,6 +891,9 @@ export default function BlockPagesClient() {
                   setIsButtonEditingMode(false);
                 }}
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
+                onSaveDraft={handleSaveDraft}
+                onPreview={handlePreview}
+                saveStatus={saveStatus}
               />
             </div>
  
@@ -724,6 +924,9 @@ export default function BlockPagesClient() {
             <TextCanvas
               state={textBlockState}
               onStateChange={pushTextState}
+              onSaveDraft={handleSaveDraft}
+              onPreview={handlePreview}
+              saveStatus={saveStatus}
               canUndo={pastTextStates.length > 0}
               canRedo={futureTextStates.length > 0}
               onUndo={undoText}
@@ -823,6 +1026,9 @@ export default function BlockPagesClient() {
                 setEditingImageId(null);
                 setIsImageEditingMode(false);
               }}
+              onSaveDraft={handleSaveDraft}
+              onPreview={handlePreview}
+              saveStatus={saveStatus}
             />
             <div className="hidden w-[210px] shrink-0 xl:block">
               <ImageRightSidebar />
@@ -868,6 +1074,9 @@ export default function BlockPagesClient() {
                   setIsVideoEditingMode(false);
                   setEditingVideoId(null);
                 }}
+                onSaveDraft={handleSaveDraft}
+                onPreview={handlePreview}
+                saveStatus={saveStatus}
               />
             </div>
             {showMobileSidebar && (
@@ -915,6 +1124,9 @@ export default function BlockPagesClient() {
                   }
                   setActiveBlockPage("text");
                 }}
+                onSaveDraft={handleSaveDraft}
+                onPreview={handlePreview}
+                saveStatus={saveStatus}
               />
             </div>
             {showMobileSidebar && (
@@ -980,6 +1192,9 @@ export default function BlockPagesClient() {
                   }
                 }}
                 onUpdateBlock={updateIconBlock}
+                onSaveDraft={handleSaveDraft}
+                onPreview={handlePreview}
+                saveStatus={saveStatus}
               />
             </div>
             {showMobileSidebar && (

@@ -480,6 +480,34 @@ export function EffectsTab({
           })}
         </div>
       </Section>
+
+      {/* ── Reset effects ── */}
+      <div className="border-t border-[#f0eae6] px-5 py-4">
+        <button
+          type="button"
+          onClick={() => {
+            const effectKeys: Array<keyof ComponentStyles> = [
+              "boxShadow", "opacity", "borderRadius", "border", "transform", "transition",
+            ];
+            if (isResponsive) {
+              const current = component.responsiveStyles?.[viewport] ?? {};
+              const next = { ...current };
+              for (const key of effectKeys) delete next[key];
+              onUpdate(component.id, {
+                responsiveStyles: { ...component.responsiveStyles, [viewport]: next },
+              });
+            } else {
+              const next = { ...component.styles };
+              for (const key of effectKeys) delete next[key];
+              onUpdate(component.id, { styles: next });
+            }
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#dbe3ef] bg-white px-3 py-2 text-[11px] font-bold text-[#566583] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Reset effects
+        </button>
+      </div>
     </div>
   );
 }

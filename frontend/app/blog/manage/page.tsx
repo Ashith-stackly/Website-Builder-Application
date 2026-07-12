@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { BlogListItem } from "@/types/blog";
 import { getBlogs, deleteBlog, isBlogConnectionError } from "@/lib/blogApi";
+import { getProjects, type ProjectApiProject } from "@/lib/projectApi";
 import BlogDeleteDialog from "@/components/blog/BlogDeleteDialog";
 import BlogToast from "@/components/blog/BlogToast";
 
@@ -12,7 +13,10 @@ import BlogToast from "@/components/blog/BlogToast";
 
 export default function BlogManagePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const workspaceId = searchParams.get("workspaceId") || "";
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
+  const [projects, setProjects] = useState<ProjectApiProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +32,26 @@ export default function BlogManagePage() {
 
   const abortRef = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void getProjects(controller.signal).then((items) => {
+      setProjects(items);
+      if (!workspaceId && items[0]) {
+        router.replace(`/blog/manage?workspaceId=${encodeURIComponent(items[0]._id)}`);
+      }
+    }).catch((err) => {
+      setError(err instanceof Error ? err.message : "Unable to load projects.");
+      setLoading(false);
+    });
+    return () => controller.abort();
+  }, [router, workspaceId]);
+
   const fetchBlogs = useCallback(async () => {
+    if (!workspaceId) {
+      setBlogs([]);
+      setLoading(false);
+      return;
+    }
     // Cancel any in-flight request
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -38,7 +61,7 @@ export default function BlogManagePage() {
     setError(null);
 
     try {
-      const data = await getBlogs(controller.signal);
+      const data = await getBlogs(workspaceId, controller.signal);
       setBlogs(data);
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
@@ -54,7 +77,7 @@ export default function BlogManagePage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     fetchBlogs();
@@ -113,9 +136,19 @@ export default function BlogManagePage() {
             <h1 className="text-xl font-bold text-slate-900 m-0">
               Blog Management
             </h1>
+            {projects.length > 0 && (
+              <select
+                aria-label="Select project"
+                value={workspaceId}
+                onChange={(event) => router.replace(`/blog/manage?workspaceId=${encodeURIComponent(event.target.value)}`)}
+                className="max-w-[180px] rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600"
+              >
+                {projects.map((project) => <option key={project._id} value={project._id}>{project.projectName}</option>)}
+              </select>
+            )}
           </div>
           <Link
-            href="/blog/manage/create"
+            href={workspaceId ? `/blog/manage/create?workspaceId=${encodeURIComponent(workspaceId)}` : "/blog/manage"}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all no-underline cursor-pointer"
           >
             <span aria-hidden>+</span>
@@ -174,7 +207,7 @@ export default function BlogManagePage() {
               and publish when you&apos;re ready.
             </p>
             <Link
-              href="/blog/manage/create"
+              href={workspaceId ? `/blog/manage/create?workspaceId=${encodeURIComponent(workspaceId)}` : "/blog/manage"}
               className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition-all no-underline cursor-pointer"
             >
               Create Your First Blog Post
@@ -219,7 +252,7 @@ export default function BlogManagePage() {
                   <div className="flex items-center gap-2 shrink-0">
                     {blog.status === "published" && (
                       <Link
-                        href={`/blog/post?slug=${encodeURIComponent(blog.slug)}`}
+                      href={`/blog/post?workspaceId=${encodeURIComponent(workspaceId)}&slug=${encodeURIComponent(blog.slug)}`}
                         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors no-underline cursor-pointer"
                         target="_blank"
                       >
@@ -229,7 +262,7 @@ export default function BlogManagePage() {
                     <button
                       type="button"
                       onClick={() =>
-                        router.push(`/blog/manage/edit/${blog.slug}`)
+                        router.push(`/blog/manage/edit/${blog.slug}?workspaceId=${encodeURIComponent(workspaceId)}`)
                       }
                       className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
                     >

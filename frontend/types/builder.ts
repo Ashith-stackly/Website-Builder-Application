@@ -59,6 +59,7 @@ export interface ComponentStyles {
   minHeight?: string;
   display?: string;
   gap?: string;
+  flexWrap?: string;
 }
 
 /**
@@ -408,6 +409,8 @@ export interface BuilderComponent {
   order: number;
   /** Whether the element is locked from editing/moving. */
   locked?: boolean;
+  /** Whether the element is hidden on the canvas (still exports). */
+  hidden?: boolean;
   /**
    * Freeform canvas position (x, y in pixels from canvas top-left).
    * Only used when canvasMode === "freeform".
@@ -526,4 +529,17 @@ export interface BuilderState {
   resizeComponent: (id: string, width: number, height: number) => void;
   /** Toggle the locked state of a component. */
   toggleLock: (id: string) => void;
+
+  /* ── Module 4: additional management actions ─────────────────────── */
+
+  /** Move a component one position up among its siblings. */
+  moveComponentUp: (id: string) => void;
+  /** Move a component one position down among its siblings. */
+  moveComponentDown: (id: string) => void;
+  /** Toggle the hidden state of a component. */
+  hideComponent: (id: string) => void;
+  /** Export the full project state as a JSON string. */
+  exportJSON: () => string;
+  /** Import a JSON string, validate, and load. Returns error message or null. */
+  importJSON: (json: string) => string | null;
 }

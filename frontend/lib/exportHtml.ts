@@ -92,6 +92,8 @@ const renderIconSvg = (name: string, styles: ComponentStyles) => {
 };
 
 const renderComponent = (component: BuilderComponent): string => {
+  // Skip hidden components in export
+  if (component.hidden) return "";
   const styleAttr = componentAttr(component);
   const content = escapeHtml(component.content);
   const children = component.children.map(renderComponent).join("\n");
@@ -110,7 +112,7 @@ const renderComponent = (component: BuilderComponent): string => {
   }
 
   if (component.type === "columns") {
-    return `<div${componentAttr(component, { display: "flex", gap: "16px", ...component.styles })}>${children}</div>`;
+    return `<div${componentAttr(component, { display: "flex", gap: "16px", flexWrap: "wrap", ...component.styles })}>${children}</div>`;
   }
 
   if (component.type === "row") {

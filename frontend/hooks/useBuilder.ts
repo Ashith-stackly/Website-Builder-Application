@@ -34,5 +34,11 @@ export const useBuilderActions = () =>
       moveComponent: s.moveComponent,
       resizeComponent: s.resizeComponent,
       toggleLock: s.toggleLock,
+      /* Module 4: additional actions */
+      moveComponentUp: s.moveComponentUp,
+      moveComponentDown: s.moveComponentDown,
+      hideComponent: s.hideComponent,
+      exportJSON: s.exportJSON,
+      importJSON: s.importJSON,
     })),
   );

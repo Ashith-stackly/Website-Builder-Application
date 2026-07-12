@@ -424,6 +424,26 @@ export function StyleTab({
           </p>
         </div>
       </Section>
+
+      {/* ── Reset all styles ── */}
+      <div className="border-t border-[#f0eae6] px-5 py-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (isResponsive) {
+              onUpdate(component.id, {
+                responsiveStyles: { ...component.responsiveStyles, [viewport]: {} },
+              });
+            } else {
+              onUpdate(component.id, { styles: {} });
+            }
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#dbe3ef] bg-white px-3 py-2 text-[11px] font-bold text-[#566583] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+        >
+          <RotateCcw className="h-3 w-3" />
+          {isResponsive ? `Reset ${viewport} overrides` : "Reset all styles"}
+        </button>
+      </div>
     </div>
   );
 }

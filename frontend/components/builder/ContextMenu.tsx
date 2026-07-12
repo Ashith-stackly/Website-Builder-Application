@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Clipboard, ClipboardCopy, ClipboardPaste,
-  Copy, FileText, Paintbrush, Scissors, Sparkles, SquareStack, Trash2,
+  ArrowDown, ArrowUp, Clipboard, ClipboardCopy, ClipboardPaste,
+  Copy, Eye, EyeOff, FileText, Lock, Paintbrush, Scissors, Sparkles, SquareStack, Trash2, Unlock,
 } from "lucide-react";
 import { useBuilderStore } from "@/store/builderStore";
 import type { BuilderComponent, ComponentStyles } from "@/types/builder";
@@ -38,6 +38,10 @@ export default function ContextMenu({ x, y, componentId, onClose }: ContextMenuP
   const pasteComponents = useBuilderStore((s) => s.pasteComponents);
   const updateComponent = useBuilderStore((s) => s.updateComponent);
   const selectComponent = useBuilderStore((s) => s.selectComponent);
+  const moveComponentUp = useBuilderStore((s) => s.moveComponentUp);
+  const moveComponentDown = useBuilderStore((s) => s.moveComponentDown);
+  const hideComponent = useBuilderStore((s) => s.hideComponent);
+  const toggleLock = useBuilderStore((s) => s.toggleLock);
   const components = useBuilderStore((s) => s.components);
   const clipboard = useBuilderStore((s) => s.clipboard);
 
@@ -180,6 +184,40 @@ export default function ContextMenu({ x, y, componentId, onClose }: ContextMenuP
         onClose();
       },
       disabled: !hasStyleClipboard,
+      dividerAfter: true,
+    },
+    {
+      label: "Move Up",
+      icon: ArrowUp,
+      action: () => {
+        moveComponentUp(componentId);
+        onClose();
+      },
+    },
+    {
+      label: "Move Down",
+      icon: ArrowDown,
+      action: () => {
+        moveComponentDown(componentId);
+        onClose();
+      },
+      dividerAfter: true,
+    },
+    {
+      label: comp?.hidden ? "Show" : "Hide",
+      icon: comp?.hidden ? Eye : EyeOff,
+      action: () => {
+        hideComponent(componentId);
+        onClose();
+      },
+    },
+    {
+      label: comp?.locked ? "Unlock" : "Lock",
+      icon: comp?.locked ? Unlock : Lock,
+      action: () => {
+        toggleLock(componentId);
+        onClose();
+      },
       dividerAfter: true,
     },
     {

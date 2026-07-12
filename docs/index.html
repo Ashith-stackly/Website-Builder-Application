@@ -71,7 +71,7 @@
       <div class="side-foot">
         Sources: <code>implementation_plan.md</code>,
         <code>stackly_project_context.md</code>, the <code>test/</code> backends
-        &amp; the live source tree.
+        &amp; the live source tree. Updated 11 Jul 2026.
       </div>
     </aside>
 
@@ -83,6 +83,7 @@
         </button>
         <span class="gen-date" id="genDate"></span>
         <div class="topbar-actions">
+          <a class="doc-link" href="manager_project_overview.docx" download>Manager brief <span aria-hidden="true">↓</span></a>
           <button id="themeToggle" class="icon-btn" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle theme (T)">
             <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun"/></svg>
             <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon"/></svg>
@@ -101,6 +102,15 @@
         </div>
         <div id="overallBar" class="reveal"><!-- injected --></div>
         <div id="overallLegend" class="overall-legend"><!-- injected --></div>
+      </section>
+
+      <section class="manager-brief reveal" aria-labelledby="managerBriefHead">
+        <div>
+          <p class="eyebrow">For management</p>
+          <h2 id="managerBriefHead">Project setup and module delivery overview</h2>
+          <p>A concise, shareable explanation of the product, working model, delivery status, and next priorities.</p>
+        </div>
+        <a class="brief-cta" href="manager_project_overview.docx" download>Download Word brief <span aria-hidden="true">→</span></a>
       </section>
 
       <!-- What's new -->
@@ -154,9 +164,8 @@
       </div>
 
       <footer class="page-foot">
-        Generated from the live Stackly source tree. Statuses reflect the current frontend and the
-        <code>test/</code> backends (items marked <em>partial</em> exist server-side but are not yet
-        consolidated into the live backend or wired to the UI).
+        Generated from the live Stackly source tree. “Done” means implemented and verified in the active module;
+        “partial” means the capability exists but still needs consolidation, API wiring, or a user-facing surface.
       </footer>
     </main>
   </div>

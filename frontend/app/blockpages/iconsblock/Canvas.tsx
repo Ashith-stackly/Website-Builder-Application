@@ -1,7 +1,8 @@
 import React from "react";
-import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Copy, Trash2 } from "lucide-react";
+import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Copy, Trash2, Check, AlertTriangle, Loader2 } from "lucide-react";
 import IconPreview from "./IconPreview";
 import type { IconBlockData } from "./types";
+import type { DraftSaveStatus } from "../BlockPagesClient";
  
 interface CanvasProps {
   blocks: IconBlockData[];
@@ -16,6 +17,9 @@ interface CanvasProps {
   onApplyIcon?: () => void;
   onDuplicateBlock?: (id: string) => void;
   onUpdateBlock?: (id: string, props: Partial<IconBlockData['props']>) => void;
+  onSaveDraft?: () => void;
+  onPreview?: () => void;
+  saveStatus?: DraftSaveStatus;
 }
  
 export default function Canvas({
@@ -31,6 +35,9 @@ export default function Canvas({
   onApplyIcon,
   onDuplicateBlock,
   onUpdateBlock,
+  onSaveDraft,
+  onPreview,
+  saveStatus = "idle",
 }: CanvasProps) {
   const handleApply = (e: React.MouseEvent, block: IconBlockData) => {
     e.stopPropagation();
@@ -80,16 +87,27 @@ export default function Canvas({
           </div>
  
           <button
-            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50"
-            onClick={() => alert("Draft saved locally!")}
+            className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50 ${saveStatus === "saving" ? "opacity-70 cursor-not-allowed" : ""}`}
+            onClick={() => onSaveDraft?.()}
+            disabled={saveStatus === "saving"}
             title="Save Draft"
           >
-            <Save className="h-4 w-4 text-gray-600 xl:hidden" />
-            <span className="hidden xl:inline">Save Draft</span>
+            {saveStatus === "saving" ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+            ) : saveStatus === "saved" ? (
+              <Check className="h-4 w-4 text-green-600" />
+            ) : saveStatus === "error" ? (
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            ) : (
+              <Save className="h-4 w-4 text-gray-600 xl:hidden" />
+            )}
+            <span className="hidden xl:inline">
+              {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Save Failed" : "Save Draft"}
+            </span>
           </button>
           <button
             className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm hover:bg-gray-50"
-            onClick={() => alert("Preview mode not yet implemented.")}
+            onClick={() => onPreview?.()}
             title="Preview"
           >
             <Eye className="h-4 w-4 text-gray-600" />

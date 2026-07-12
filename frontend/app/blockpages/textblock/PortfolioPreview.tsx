@@ -111,6 +111,7 @@ type PortfolioPreviewProps = {
   customIcons?: Record<string, IconBlockProps>;
   onEditIcon?: (iconId: string) => void;
   editingIconId?: string | null;
+  onSaveDraft?: () => void;
 };
 
 function useLocalInView<T extends HTMLElement>({
@@ -204,6 +205,7 @@ export default function PortfolioPreview({
   customIcons = {},
   onEditIcon,
   editingIconId,
+  onSaveDraft,
 }: PortfolioPreviewProps) {
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
@@ -513,7 +515,7 @@ export default function PortfolioPreview({
                       <div className="flex flex-wrap justify-center gap-1 sm:gap-2 w-full">
 
                         {/* Save Draft */}
-                        <button onClick={() => alert("Working on it - In progress!")} className="relative group px-2 sm:px-3 py-1 border border-gray-300/40 rounded-md overflow-hidden shadow-sm">
+                        <button onClick={() => onSaveDraft?.()} className="relative group px-2 sm:px-3 py-1 border border-gray-300/40 rounded-md overflow-hidden shadow-sm">
                           <span className="absolute inset-0 bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
                           <span className="relative z-10 text-[10px] sm:text-xs font-semibold text-white inline-block transition-transform duration-300 group-hover:scale-105">Save Draft</span>
                         </button>
@@ -574,7 +576,7 @@ export default function PortfolioPreview({
                       {/* ACTION BUTTONS ✅ */}
                       <div className="flex border border-gray-300/40 rounded-md overflow-hidden text-xs font-bold whitespace-nowrap bg-white/5 shadow-sm" data-builder-chrome="true">
 
-                        <button onClick={() => alert("Working on it - In progress!")} className="relative group px-3 py-1.5 overflow-hidden">
+                        <button onClick={() => onSaveDraft?.()} className="relative group px-3 py-1.5 overflow-hidden">
                           <span className="absolute inset-0 bg-white/20 scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300 ease-out"></span>
                           <span className="relative z-10 text-white transition-transform duration-300 group-hover:-translate-y-0.5 inline-block">Save Draft</span>
                         </button>

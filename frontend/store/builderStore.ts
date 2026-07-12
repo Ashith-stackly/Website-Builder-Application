@@ -21,6 +21,18 @@ import { accordionDefaults } from "@/components/draggable/AccordionComponent";
 import { tabsDefaults } from "@/components/draggable/TabsComponent";
 import { mapDefaults } from "@/components/draggable/MapComponent";
 import { rowDefaults } from "@/components/draggable/RowComponent";
+import {
+  findComponentById,
+  updateNodeById,
+  deleteNodeById,
+  insertAfterNodeById,
+  deepCloneComponent,
+  cloneComponentTree,
+  orderComponents,
+  moveInSiblings,
+  reorderTreeComponents,
+} from "@/lib/treeHelpers";
+import { buildProjectJSON, downloadProjectJSON, parseProjectJSON } from "@/lib/jsonExportImport";
 import type { BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
 import { useDesignStore } from "@/store/designStore";
 import type { DesignTokens } from "@/store/designStore";
@@ -189,113 +201,6 @@ const defaults: Record<ComponentType, ComponentDefault> = {
   },
 };
 
-const orderComponents = (components: BuilderComponent[]) =>
-  components.map((component, index) => ({ ...component, order: index }));
-
-// --- Recursive tree helpers ---
-
-const findComponentById = (components: BuilderComponent[], id: string): BuilderComponent | null => {
-  for (const c of components) {
-    if (c.id === id) return c;
-    const found = findComponentById(c.children, id);
-    if (found) return found;
-  }
-  return null;
-};
-
-const updateNodeById = (
-  components: BuilderComponent[],
-  id: string,
-  updater: (c: BuilderComponent) => BuilderComponent,
-): BuilderComponent[] => {
-  let mutated = false;
-  const result = components.map((c) => {
-    if (c.id === id) {
-      mutated = true;
-      return updater(c);
-    }
-    if (c.children.length === 0) return c;
-    const newChildren = updateNodeById(c.children, id, updater);
-    if (newChildren === c.children) return c;
-    mutated = true;
-    return { ...c, children: newChildren };
-  });
-  return mutated ? result : components;
-};
-
-const deleteNodeById = (components: BuilderComponent[], id: string): BuilderComponent[] => {
-  const topIdx = components.findIndex((c) => c.id === id);
-
-  if (topIdx >= 0) {
-    return [...components.slice(0, topIdx), ...components.slice(topIdx + 1)];
-  }
-
-  let mutated = false;
-  const result = components.map((c) => {
-    if (c.children.length === 0) return c;
-    const newChildren = deleteNodeById(c.children, id);
-    if (newChildren === c.children) return c;
-    mutated = true;
-    return { ...c, children: newChildren };
-  });
-  return mutated ? result : components;
-};
-
-const insertAfterNodeById = (
-  components: BuilderComponent[],
-  id: string,
-  newNode: BuilderComponent,
-): BuilderComponent[] | null => {
-  const index = components.findIndex((c) => c.id === id);
-
-  if (index >= 0) {
-    return [...components.slice(0, index + 1), newNode, ...components.slice(index + 1)];
-  }
-
-  for (let i = 0; i < components.length; i++) {
-    const newChildren = insertAfterNodeById(components[i].children, id, newNode);
-
-    if (newChildren !== null) {
-      return [
-        ...components.slice(0, i),
-        { ...components[i], children: newChildren },
-        ...components.slice(i + 1),
-      ];
-    }
-  }
-
-  return null;
-};
-
-const deepCloneComponent = (component: BuilderComponent): BuilderComponent => ({
-  ...component,
-  id: uuidv4(),
-  styles: { ...component.styles },
-  textStyles: component.textStyles ? { ...component.textStyles } : undefined,
-  props: component.props ? { ...component.props } : undefined,
-  responsiveStyles: component.responsiveStyles
-    ? {
-        tablet: component.responsiveStyles.tablet ? { ...component.responsiveStyles.tablet } : undefined,
-        mobile: component.responsiveStyles.mobile ? { ...component.responsiveStyles.mobile } : undefined,
-      }
-    : undefined,
-  children: component.children.map(deepCloneComponent),
-});
-
-const cloneComponentTree = (components: BuilderComponent[]): BuilderComponent[] =>
-  components.map((component) => ({
-    ...component,
-    styles: { ...component.styles },
-    textStyles: component.textStyles ? { ...component.textStyles } : undefined,
-    props: component.props ? { ...component.props } : undefined,
-    responsiveStyles: component.responsiveStyles
-      ? {
-          tablet: component.responsiveStyles.tablet ? { ...component.responsiveStyles.tablet } : undefined,
-          mobile: component.responsiveStyles.mobile ? { ...component.responsiveStyles.mobile } : undefined,
-        }
-      : undefined,
-    children: cloneComponentTree(component.children ?? []),
-  }));
 
 const applyTokensToComponent = (component: BuilderComponent, tokens: DesignTokens): BuilderComponent => {
   const nextStyles = { ...component.styles, fontFamily: tokens.typography.fontFamily };
@@ -793,12 +698,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   }),
   reorderComponents: (activeId, overId) =>
     set((state) => {
-      const oldIndex = state.components.findIndex((component) => component.id === activeId);
-      const newIndex = state.components.findIndex((component) => component.id === overId);
-
-      if (oldIndex < 0 || newIndex < 0) return state;
-
-      return { ...captureHistory(state), components: orderComponents(arrayMove(state.components, oldIndex, newIndex)) };
+      const result = reorderTreeComponents(state.components, activeId, overId);
+      return { ...captureHistory(state), components: orderComponents(result) };
     }),
   loadStarterWebsite: () =>
     set((state) => {
@@ -1140,4 +1041,75 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         locked: !c.locked,
       })),
     })),
+
+  /* ── Module 4: additional management actions ──────────────────────── */
+
+  moveComponentUp: (id) =>
+    set((state) => {
+      const result = moveInSiblings(state.components, id, "up");
+      if (!result) return state;
+      return { ...captureHistory(state), components: orderComponents(result) };
+    }),
+
+  moveComponentDown: (id) =>
+    set((state) => {
+      const result = moveInSiblings(state.components, id, "down");
+      if (!result) return state;
+      return { ...captureHistory(state), components: orderComponents(result) };
+    }),
+
+  hideComponent: (id) =>
+    set((state) => ({
+      ...captureHistory(state),
+      components: updateNodeById(state.components, id, (c) => ({
+        ...c,
+        hidden: !c.hidden,
+      })),
+    })),
+
+  exportJSON: () => {
+    const state = get();
+    const designStore = useDesignStore.getState();
+    const data = buildProjectJSON(
+      state.components,
+      designStore.tokens,
+      designStore.seo,
+      state.canvasMode,
+      state.currentProjectName ?? undefined,
+    );
+    downloadProjectJSON(data);
+    return JSON.stringify(data, null, 2);
+  },
+
+  importJSON: (json) => {
+    try {
+      const result = parseProjectJSON(json);
+
+      if (!result.components || result.components.length === 0) {
+        return "The imported file contains no components.";
+      }
+
+      // Apply design tokens and SEO if present
+      if (result.designTokens) {
+        useDesignStore.getState().setTokens(result.designTokens);
+      }
+      if (result.seo) {
+        useDesignStore.getState().setSEO(result.seo);
+      }
+
+      set((state) => ({
+        ...captureHistory(state),
+        components: orderComponents(cloneComponentTree(result.components)),
+        selectedComponentId: null,
+        selectedComponentIds: [],
+        canvasMode: result.canvasMode ?? state.canvasMode,
+        currentProjectName: result.projectName ?? state.currentProjectName,
+      }));
+
+      return null; // success
+    } catch (error) {
+      return error instanceof Error ? error.message : "Failed to import JSON.";
+    }
+  },
 }));
+

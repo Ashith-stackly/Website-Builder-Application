@@ -1,7 +1,8 @@
 import React from 'react';
 import Link from "next/link";
-import { ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon, ChevronRight, Download, ShoppingBag } from 'lucide-react';
+import { ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon, ChevronRight, Download, ShoppingBag, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { BlockData } from './types';
+import type { DraftSaveStatus } from '../BlockPagesClient';
  
 const renderIcon = (type: string) => {
   switch (type) {
@@ -27,6 +28,9 @@ interface CanvasProps {
   editingButtonId?: string | null;
   onButtonSelected?: (props: BlockData["props"]) => void;
   onOpenMobileSidebar?: () => void;
+  onSaveDraft?: () => void;
+  onPreview?: () => void;
+  saveStatus?: DraftSaveStatus;
 }
  
 export default function Canvas({
@@ -40,7 +44,10 @@ export default function Canvas({
   onRedo,
   editingButtonId,
   onButtonSelected,
-  onOpenMobileSidebar
+  onOpenMobileSidebar,
+  onSaveDraft,
+  onPreview,
+  saveStatus = "idle",
 }: CanvasProps) {
   const renderBlockContent = (block: BlockData) => {
     switch (block.type) {
@@ -277,13 +284,23 @@ export default function Canvas({
             </button>
           </div>
  
-          <button className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50" title="Save Draft" onClick={() => alert("Draft saved locally!")}>
-            <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
-            <span className="hidden xl:inline group-hover:inline">Save Draft</span>
+          <button className={`group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50 ${saveStatus === "saving" ? "opacity-70 cursor-not-allowed" : ""}`} title="Save Draft" onClick={() => onSaveDraft?.()} disabled={saveStatus === "saving"}>
+            {saveStatus === "saving" ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+            ) : saveStatus === "saved" ? (
+              <Check className="h-4 w-4 text-green-600" />
+            ) : saveStatus === "error" ? (
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            ) : (
+              <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
+            )}
+            <span className="hidden xl:inline group-hover:inline">
+              {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Save Failed" : "Save Draft"}
+            </span>
           </button>
           <button
             className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50"
-            onClick={() => alert("Preview mode not yet implemented.")}
+            onClick={() => onPreview?.()}
             title="Preview"
           >
             <Eye className="h-4 w-4 xl:hidden group-hover:hidden" />

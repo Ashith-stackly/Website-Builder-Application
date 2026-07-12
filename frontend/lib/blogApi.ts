@@ -15,6 +15,52 @@ type ApiErrorBody = {
   errors?: string[];
 };
 
+type ApiBlog = {
+  _id: string;
+  workspaceId: string;
+  title: string;
+  slug: string;
+  content?: string;
+  status: "draft" | "published" | "archived";
+  coverImage?: string;
+  seo?: { title?: string; description?: string; keywords?: string | string[] };
+  createdAt: string;
+  updatedAt: string;
+};
+
+function mapBlog(blog: ApiBlog): Blog {
+  const keywords = Array.isArray(blog.seo?.keywords)
+    ? blog.seo.keywords
+    : blog.seo?.keywords?.split(",").map((keyword) => keyword.trim()).filter(Boolean);
+  return {
+    _id: blog._id,
+    workspaceId: blog.workspaceId,
+    title: blog.title,
+    slug: blog.slug,
+    content: blog.content ?? "",
+    status: blog.status === "archived" ? "draft" : blog.status,
+    featuredImage: blog.coverImage || undefined,
+    seoTitle: blog.seo?.title || undefined,
+    seoDescription: blog.seo?.description || undefined,
+    seoKeywords: keywords?.length ? keywords : undefined,
+    createdAt: blog.createdAt,
+    updatedAt: blog.updatedAt,
+  };
+}
+
+function toApiBody(body: CreateBlogBody | UpdateBlogBody) {
+  const { featuredImage, seoTitle, seoDescription, seoKeywords, ...rest } = body;
+  return {
+    ...rest,
+    coverImage: featuredImage,
+    seo: {
+      title: seoTitle,
+      description: seoDescription,
+      keywords: seoKeywords?.join(", "),
+    },
+  };
+}
+
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem("stackly-auth-token");
@@ -79,37 +125,49 @@ export function isBlogConnectionError(error: unknown): boolean {
 
 /* ─── API Functions ────────────────────────────────────────────────────── */
 
-/** POST /api/blog/create */
+/** POST /api/blog/post */
 export async function createBlog(
   body: CreateBlogBody
 ): Promise<{ message?: string; blog?: Blog }> {
-  return blogRequest("/blog/create", {
+  const result = await blogRequest<{ message?: string; post: ApiBlog }>("/blog/post", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify(toApiBody(body)),
   });
+  return { message: result.message, blog: mapBlog(result.post) };
 }
 
-/** GET /api/blog */
+/** GET /api/blog/posts/:workspaceId */
 export async function getBlogs(
+  workspaceId: string,
   signal?: AbortSignal
 ): Promise<BlogListItem[]> {
-  const result = await blogRequest<BlogListItem[] | { blogs: BlogListItem[] }>(
-    "/blog",
+  const result = await blogRequest<{ posts: ApiBlog[] }>(
+    `/blog/posts/${encodeURIComponent(workspaceId)}`,
     { method: "GET", signal }
   );
-  // Handle both array response and { blogs: [...] } wrapper
-  return Array.isArray(result) ? result : (result as { blogs: BlogListItem[] }).blogs ?? [];
+  return (result.posts ?? []).map(mapBlog);
 }
 
-/** GET /api/blog/:slug */
+/** Authenticated CMS lookup by workspace + slug. */
 export async function getBlogBySlug(
+  workspaceId: string,
   slug: string,
   signal?: AbortSignal
 ): Promise<Blog> {
-  return blogRequest<Blog>(`/blog/${encodeURIComponent(slug)}`, {
+  const result = await blogRequest<{ post: ApiBlog }>(`/blog/posts/${encodeURIComponent(workspaceId)}/slug/${encodeURIComponent(slug)}`, {
     method: "GET",
     signal,
   });
+  return mapBlog(result.post);
+}
+
+/** Public published post lookup for the slug URL. */
+export async function getPublishedBlog(workspaceId: string, slug: string, signal?: AbortSignal): Promise<Blog> {
+  const result = await blogRequest<{ post: ApiBlog }>(`/blog/public/${encodeURIComponent(workspaceId)}/${encodeURIComponent(slug)}`, {
+    method: "GET",
+    signal,
+  });
+  return mapBlog(result.post);
 }
 
 /** PUT /api/blog/:id */
@@ -117,17 +175,18 @@ export async function updateBlog(
   id: string,
   body: UpdateBlogBody
 ): Promise<{ message?: string; blog?: Blog }> {
-  return blogRequest(`/blog/${encodeURIComponent(id)}`, {
+  const result = await blogRequest<{ message?: string; post: ApiBlog }>(`/blog/post/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: JSON.stringify(body),
+    body: JSON.stringify(toApiBody(body)),
   });
+  return { message: result.message, blog: mapBlog(result.post) };
 }
 
 /** DELETE /api/blog/:id */
 export async function deleteBlog(
   id: string
 ): Promise<{ message?: string }> {
-  return blogRequest(`/blog/${encodeURIComponent(id)}`, {
+  return blogRequest(`/blog/post/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }

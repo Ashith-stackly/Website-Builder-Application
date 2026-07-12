@@ -1,7 +1,7 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { Check, ChevronDown, CloudOff, Eye, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState, useMemo, type ReactNode } from "react";
+import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { AssetManager } from "@/components/assets/AssetManager";
@@ -14,6 +14,7 @@ import ButtonComponent from "@/components/draggable/ButtonComponent";
 import IconComponent from "@/components/draggable/IconComponent";
 import { useBuilderStore } from "@/store/builderStore";
 import { useDesignStore } from "@/store/designStore";
+import { useBuilderUiStore } from "@/store/builderUiStore";
 import type { BuilderComponent, ComponentType, Viewport } from "@/types/builder";
 import { VIEWPORT_WIDTHS } from "@/types/builder";
 
@@ -25,6 +26,7 @@ function Canvas({
   onLoadStarter,
   onClear,
   onPreview,
+  selectionToolbar,
 }: {
   components: BuilderComponent[];
   onSelect: (id: string | null) => void;
@@ -33,6 +35,8 @@ function Canvas({
   onLoadStarter: () => void;
   onClear: () => void;
   onPreview: () => void;
+  /** Context actions supplied by BuilderLayout for the current selection. */
+  selectionToolbar?: ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: "builder-canvas" });
   const flowComponents = useMemo(
@@ -68,8 +72,14 @@ function Canvas({
   const toggleGlobalStyles = useDesignStore((s) => s.toggleGlobalStyles);
   const storeAddComponent = useBuilderStore((s) => s.addComponent);
   const insertComponentBefore = useBuilderStore((s) => s.insertComponentBefore);
+  const exportJSON = useBuilderStore((s) => s.exportJSON);
+  const importJSON = useBuilderStore((s) => s.importJSON);
   const viewport = useBuilderStore((s) => s.viewport);
   const setViewport = useBuilderStore((s) => s.setViewport);
+  const zoom = useDesignStore((s) => s.zoom);
+  const showGrid = useBuilderUiStore((s) => s.showGrid);
+  const gridSize = useBuilderUiStore((s) => s.gridSize);
+  const canvasBackground = useBuilderUiStore((s) => s.canvasBackground);
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
 
@@ -194,6 +204,16 @@ function Canvas({
     setToolsOpen(false);
   };
 
+  const handleImportJSON = async () => {
+    const { openJSONFile } = await import("@/lib/jsonExportImport");
+    const content = await openJSONFile();
+    if (!content) return;
+    const error = importJSON(content);
+    if (error) {
+      alert(`Import failed: ${error}`);
+    }
+  };
+
   return (
     <main
       className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#dbe3ef] bg-[#f7f9fc] shadow-sm"
@@ -278,6 +298,9 @@ function Canvas({
                   <ToolMenuButton label="Load" Icon={FolderOpen} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(handleLoad)} />
                   <ToolMenuButton label={isSaving ? "Saving" : saved || saveStatus === "saved" ? "Saved" : "Save"} Icon={saved || saveStatus === "saved" ? Check : Save} tone={saved || saveStatus === "saved" ? "text-green-700 bg-green-50 border-green-100" : "text-slate-700 bg-slate-50 border-slate-100"} onClick={() => runTool(() => { void handleSave(); })} />
                   <ToolMenuButton label="Clear" Icon={Trash2} tone="text-red-700 bg-red-50 border-red-100" onClick={() => runTool(onClear)} />
+                  <div className="mx-1.5 my-1 h-px bg-gray-100" />
+                  <ToolMenuButton label="Export JSON" Icon={Download} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(() => { exportJSON(); })} />
+                  <ToolMenuButton label="Import JSON" Icon={FileUp} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(handleImportJSON)} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -374,11 +397,33 @@ function Canvas({
           color: tokens.colors.text,
           fontFamily: tokens.typography.fontFamily,
           fontSize: tokens.typography.baseFontSize,
+          // Canvas grid / dots overlay (builderUiStore) — purely visual guide.
+          ...(showGrid && canvasBackground !== "plain"
+            ? canvasBackground === "dots"
+              ? {
+                  backgroundImage: "radial-gradient(rgba(15,35,75,0.12) 1px, transparent 1px)",
+                  backgroundSize: `${gridSize}px ${gridSize}px`,
+                }
+              : {
+                  backgroundImage:
+                    "linear-gradient(rgba(15,35,75,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,35,75,0.06) 1px, transparent 1px)",
+                  backgroundSize: `${gridSize}px ${gridSize}px`,
+                }
+            : {}),
         }}
       >
+        {selectionToolbar && (
+          <div className="sticky top-0 z-50 flex justify-center pb-2 pointer-events-none">
+            {selectionToolbar}
+          </div>
+        )}
         <div
           className="relative flex min-h-[680px] w-full flex-col gap-3 transition-all duration-300"
-          style={viewport !== "desktop" ? { maxWidth: VIEWPORT_WIDTHS[viewport], margin: "0 auto" } : undefined}
+          style={{
+            // CSS `zoom` (not transform) keeps @dnd-kit hit-testing correct.
+            ...(zoom !== 100 ? { zoom: zoom / 100 } : {}),
+            ...(viewport !== "desktop" ? { maxWidth: VIEWPORT_WIDTHS[viewport], margin: "0 auto" } : {}),
+          }}
         >
           {flowComponents.length === 0 && floatingComponents.length === 0 ? (
             <div className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#dbe3ef] bg-white px-6 text-center shadow-[0_18px_45px_rgba(15,35,75,0.08)] transition">

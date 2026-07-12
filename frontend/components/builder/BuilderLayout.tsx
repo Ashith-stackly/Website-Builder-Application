@@ -9,6 +9,9 @@ import { useSearchParams } from "next/navigation";
 import Canvas from "./Canvas";
 import ComponentPalette from "./ComponentPalette";
 import PropertyEditor from "./PropertyEditor";
+import BuilderStatusBar from "./BuilderStatusBar";
+import FloatingSelectionToolbar from "./FloatingSelectionToolbar";
+import { useBuilderUiStore } from "@/store/builderUiStore";
 import GlobalStylesPanel from "./GlobalStylesPanel";
 import SEOPanel from "./SEOPanel";
 import SectionTemplates from "./SectionTemplates";
@@ -37,7 +40,7 @@ const collisionDetectionStrategy: CollisionDetection = (args) => {
 };
 
 export default function BuilderLayout() {
-  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveHtml, copyComponents, pasteComponents } = useBuilder();
+  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveHtml, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock } = useBuilder();
   const [activePaletteType, setActivePaletteType] = useState<ComponentType | null>(null);
   const [activeCanvasType, setActiveCanvasType] = useState<ComponentType | null>(null);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
@@ -48,6 +51,7 @@ export default function BuilderLayout() {
   const showSEOPanel = useDesignStore((s) => s.showSEOPanel);
   const toggleSEOPanel = useDesignStore((s) => s.toggleSEOPanel);
   const [showTemplates, setShowTemplates] = useState(false);
+  const showStatusBar = useBuilderUiStore((s) => s.showStatusBar);
   const searchParams = useSearchParams();
   const hasLoadedRequirements = useRef(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 3 } }));
@@ -71,6 +75,14 @@ export default function BuilderLayout() {
         if (e.key === "x" && !inInput && selectedComponentId) {
           e.preventDefault(); copyComponents(); deleteComponent(selectedComponentId); return;
         }
+        /* Ctrl+Shift+L → Toggle lock */
+        if (e.key === "L" && e.shiftKey && selectedComponentId) {
+          e.preventDefault(); toggleLock(selectedComponentId); return;
+        }
+        /* Ctrl+H → Toggle hide */
+        if (e.key === "h" && selectedComponentId) {
+          e.preventDefault(); hideComponent(selectedComponentId); return;
+        }
       }
 
       if (!inInput) {
@@ -80,11 +92,31 @@ export default function BuilderLayout() {
         if (e.key === "Escape" && selectedComponentId) {
           selectComponent(null);
         }
+        /* Arrow Up → select previous sibling */
+        if (e.key === "ArrowUp" && !ctrl) {
+          e.preventDefault();
+          if (selectedComponentId) {
+            const idx = components.findIndex((c) => c.id === selectedComponentId);
+            if (idx > 0) selectComponent(components[idx - 1].id);
+          } else if (components.length > 0) {
+            selectComponent(components[components.length - 1].id);
+          }
+        }
+        /* Arrow Down → select next sibling */
+        if (e.key === "ArrowDown" && !ctrl) {
+          e.preventDefault();
+          if (selectedComponentId) {
+            const idx = components.findIndex((c) => c.id === selectedComponentId);
+            if (idx >= 0 && idx < components.length - 1) selectComponent(components[idx + 1].id);
+          } else if (components.length > 0) {
+            selectComponent(components[0].id);
+          }
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isInlineEditing, selectedComponentId, undo, redo, saveHtml, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents]);
+  }, [isInlineEditing, selectedComponentId, components, undo, redo, saveHtml, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock]);
   const selectedComponent = selectedComponentId ? findByIdDeep(components, selectedComponentId) : null;
 
   useEffect(() => {
@@ -119,7 +151,7 @@ export default function BuilderLayout() {
       return;
     }
 
-    const dragged = components.find((c) => c.id === String(event.active.id));
+    const dragged = findByIdDeep(components, String(event.active.id));
     setActiveCanvasType(dragged?.type ?? null);
   };
 
@@ -142,7 +174,7 @@ export default function BuilderLayout() {
       if (isOverCanvas) {
         addComponent(type);
       } else if (isOverItem) {
-        const overComponent = components.find((c) => c.id === overId);
+        const overComponent = findByIdDeep(components, overId);
 
         if (overComponent?.type === "container" || overComponent?.type === "columns" || overComponent?.type === "row") {
           addComponent(type, overId);
@@ -169,8 +201,8 @@ export default function BuilderLayout() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={collisionDetectionStrategy} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-      <div className="flex min-h-screen flex-col overflow-x-hidden bg-[#e9eef6] font-sans">
-        <div className="relative flex min-h-screen w-full flex-1 flex-shrink-0 gap-4 overflow-hidden p-4">
+      <div className="flex h-dvh min-h-[640px] flex-col overflow-x-hidden bg-[radial-gradient(1100px_560px_at_100%_-10%,rgba(79,107,237,0.10),transparent_55%),radial-gradient(820px_460px_at_-8%_2%,rgba(139,92,246,0.08),transparent_48%),#eaeef6] font-sans">
+        <div className="relative flex min-h-0 w-full flex-1 gap-4 overflow-hidden p-4">
           <button
             aria-label="Open left sidebar"
             className="absolute left-0 top-5 z-40 flex h-11 w-8 items-center justify-center rounded-r-md border border-l-0 border-[#152B52] bg-[#0B1D40] text-white shadow-lg transition-all duration-300 hover:bg-[#152B52] active:scale-95 lg:hidden"
@@ -217,6 +249,11 @@ export default function BuilderLayout() {
             onLoadStarter={loadStarterWebsite}
             onSelect={selectComponent}
             onPreview={() => setIsPreviewOpen(true)}
+            selectionToolbar={selectedComponent ? (
+              <AnimatePresence>
+                <FloatingSelectionToolbar key={selectedComponent.id} component={selectedComponent} />
+              </AnimatePresence>
+            ) : undefined}
           />
 
           <PropertyEditor component={selectedComponent} onUpdate={updateComponent} />
@@ -274,6 +311,7 @@ export default function BuilderLayout() {
             )}
           </AnimatePresence>
         </div>
+        {showStatusBar && <BuilderStatusBar />}
       </div>
 
       {/* ── Global Styles Panel overlay ── */}
@@ -303,8 +341,11 @@ export default function BuilderLayout() {
 
       <DragOverlay dropAnimation={null}>
         {(activePaletteType ?? activeCanvasType) ? (
-          <div
-            className={`flex min-w-[140px] rotate-[1.5deg] items-center gap-2.5 rounded-lg border bg-white px-4 py-2.5 text-sm font-semibold capitalize shadow-[0_12px_32px_rgba(15,35,75,0.22)] ring-1 ${
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0.6 }}
+            animate={{ scale: 1.02, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className={`flex min-w-[140px] rotate-[1.5deg] items-center gap-2.5 rounded-xl border bg-white/95 px-4 py-2.5 text-sm font-semibold capitalize shadow-[0_18px_44px_rgba(15,35,75,0.28)] ring-1 backdrop-blur ${
               activeCanvasType
                 ? "border-blue-300 text-blue-700 ring-blue-200/50"
                 : "border-[#dbe3ef] text-[#0B1D40] ring-black/5"
@@ -312,7 +353,13 @@ export default function BuilderLayout() {
           >
             <GripVertical className="h-4 w-4 shrink-0 text-gray-400" />
             <span>{activePaletteType ?? activeCanvasType}</span>
-          </div>
+            <motion.span
+              aria-hidden
+              className="ml-1 h-1.5 w-1.5 rounded-full bg-blue-500"
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            />
+          </motion.div>
         ) : null}
       </DragOverlay>
     </DndContext>

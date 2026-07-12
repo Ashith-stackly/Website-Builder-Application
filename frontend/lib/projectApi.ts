@@ -163,7 +163,7 @@ export async function deleteProject(id: string, signal?: AbortSignal): Promise<{
 
 export async function autosaveProject(
   id: string,
-  data: { builderData: ProjectBuilderData; htmlContent: string },
+  data: { builderData: ProjectBuilderData | Record<string, unknown>; htmlContent?: string },
   signal?: AbortSignal,
 ): Promise<{ success: boolean; savedAt?: string }> {
   return projectRequest(`/projects/${encodeURIComponent(id)}/autosave`, {

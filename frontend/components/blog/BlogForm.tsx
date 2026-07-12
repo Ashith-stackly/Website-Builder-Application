@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useCallback, useRef, type FormEvent } from "react";
-import type { Blog, CreateBlogBody } from "@/types/blog";
+import type { Blog, BlogFormData } from "@/types/blog";
 
 interface BlogFormProps {
   /** Pre-filled data for edit mode. Omit for create mode. */
   initialData?: Blog;
   /** Called with validated form data when submitted. */
-  onSubmit: (data: CreateBlogBody) => Promise<void>;
+  onSubmit: (data: BlogFormData) => Promise<void>;
   /** True while the parent is processing the submission. */
   isSubmitting: boolean;
   /** Label for the submit button (e.g. "Create Blog" / "Save Changes"). */

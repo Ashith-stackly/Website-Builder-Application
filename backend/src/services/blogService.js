@@ -93,6 +93,19 @@ async function getPost(userId, postId) {
   return post;
 }
 
+async function getPostBySlug(userId, workspaceId, slug) {
+  await verifyWorkspaceOwnership(userId, workspaceId);
+  const post = await BlogPost.findOne({ workspaceId, slug }).lean();
+  if (!post) throw ApiError.notFound('Post not found');
+  return post;
+}
+
+async function getPublishedPost(workspaceId, slug) {
+  const post = await BlogPost.findOne({ workspaceId, slug, status: 'published' }).lean();
+  if (!post) throw ApiError.notFound('Published post not found');
+  return post;
+}
+
 async function updatePost(userId, postId, body) {
   const post = await BlogPost.findById(postId);
   if (!post) throw ApiError.notFound('Post not found');
@@ -157,6 +170,8 @@ module.exports = {
   createPost,
   listPosts,
   getPost,
+  getPostBySlug,
+  getPublishedPost,
   updatePost,
   deletePost,
   generateSitemap,

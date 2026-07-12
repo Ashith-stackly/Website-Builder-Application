@@ -5,6 +5,7 @@
 
 export interface Blog {
   _id: string;
+  workspaceId: string;
   title: string;
   slug: string;
   content: string;
@@ -20,6 +21,7 @@ export interface Blog {
 /** Shape returned by GET /api/blog (list endpoint). */
 export interface BlogListItem {
   _id: string;
+  workspaceId: string;
   title: string;
   slug: string;
   status: "draft" | "published";
@@ -28,6 +30,7 @@ export interface BlogListItem {
 
 /** Body for POST /api/blog/create */
 export interface CreateBlogBody {
+  workspaceId: string;
   title: string;
   content: string;
   seoTitle?: string;
@@ -36,6 +39,9 @@ export interface CreateBlogBody {
   status?: "draft" | "published";
   featuredImage?: string;
 }
+
+/** Fields entered in the blog form; the page supplies the workspace context. */
+export type BlogFormData = Omit<CreateBlogBody, "workspaceId">;
 
 /** Body for PUT /api/blog/:id */
 export interface UpdateBlogBody {

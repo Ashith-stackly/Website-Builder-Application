@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
-import type { Blog, CreateBlogBody } from "@/types/blog";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
+import type { Blog, BlogFormData } from "@/types/blog";
 import {
   getBlogBySlug,
   updateBlog,
@@ -15,7 +15,9 @@ import BlogToast from "@/components/blog/BlogToast";
 export default function EditBlogPage() {
   const router = useRouter();
   const params = useParams<{ slug: string }>();
+  const searchParams = useSearchParams();
   const slug = params.slug;
+  const workspaceId = searchParams.get("workspaceId") || "";
 
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,16 +31,15 @@ export default function EditBlogPage() {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || !workspaceId) {
+      return;
+    }
 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setLoading(true);
-    setFetchError(null);
-
-    getBlogBySlug(slug, controller.signal)
+    getBlogBySlug(workspaceId, slug, controller.signal)
       .then((data) => {
         setBlog(data);
       })
@@ -59,10 +60,10 @@ export default function EditBlogPage() {
     return () => {
       controller.abort();
     };
-  }, [slug]);
+  }, [slug, workspaceId]);
 
   const handleSubmit = useCallback(
-    async (data: CreateBlogBody) => {
+    async (data: BlogFormData) => {
       if (!blog) return;
       setIsSubmitting(true);
 
@@ -74,7 +75,7 @@ export default function EditBlogPage() {
         });
         // Redirect after a brief delay so the user sees the toast
         window.setTimeout(() => {
-          router.push("/blog/manage");
+          router.push(`/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}`);
         }, 1200);
       } catch (err) {
         setIsSubmitting(false);
@@ -86,7 +87,7 @@ export default function EditBlogPage() {
         throw err;
       }
     },
-    [blog, router]
+    [blog, router, workspaceId]
   );
 
   return (
@@ -95,7 +96,7 @@ export default function EditBlogPage() {
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/60">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3">
           <Link
-            href="/blog/manage"
+            href={workspaceId ? `/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}` : "/blog/manage"}
             className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors no-underline"
           >
             ← Blog Management
@@ -108,8 +109,14 @@ export default function EditBlogPage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
+        {!workspaceId && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
+            <p className="text-red-700 font-semibold text-base">Select a project before editing a blog post.</p>
+            <Link href="/blog/manage" className="mt-4 inline-flex rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white no-underline">Back to Blog Management</Link>
+          </div>
+        )}
         {/* Loading State */}
-        {loading && (
+        {workspaceId && loading && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6 animate-pulse">
             <div className="h-5 w-1/3 bg-slate-200 rounded" />
             <div className="h-10 w-full bg-slate-100 rounded-lg" />
@@ -121,11 +128,11 @@ export default function EditBlogPage() {
         )}
 
         {/* Error State */}
-        {!loading && fetchError && (
+        {workspaceId && !loading && fetchError && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
             <p className="text-red-700 font-semibold text-base">{fetchError}</p>
             <Link
-              href="/blog/manage"
+              href={workspaceId ? `/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}` : "/blog/manage"}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700 transition-colors no-underline cursor-pointer"
             >
               Back to Blog Management
@@ -134,7 +141,7 @@ export default function EditBlogPage() {
         )}
 
         {/* Form */}
-        {!loading && !fetchError && blog && (
+        {workspaceId && !loading && !fetchError && blog && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
             <BlogForm
               initialData={blog}

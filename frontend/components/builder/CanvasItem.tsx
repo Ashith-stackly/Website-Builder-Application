@@ -2,13 +2,15 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Copy, Lock, Trash2 } from "lucide-react";
+import { Copy, EyeOff, Lock, Trash2 } from "lucide-react";
 import { componentRegistry } from "@/lib/componentRegistry";
 import { useBuilderStore } from "@/store/builderStore";
 import { canvasItem, floatUp } from "@/lib/motion";
 import type { BuilderComponent, Viewport } from "@/types/builder";
 import ResizeHandles from "./ResizeHandles";
 import ContextMenu from "./ContextMenu";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import SortableItem from "./SortableItem";
 
 function CanvasItem({
   component,
@@ -34,6 +36,7 @@ function CanvasItem({
   const isInlineEditable = component.type === "heading" || component.type === "text" || component.type === "button";
   const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery" || component.type === "pricing-table" || component.type === "testimonial" || component.type === "footer" || component.type === "accordion" || component.type === "tabs" || component.type === "form" || component.type === "row";
   const isLocked = component.locked ?? false;
+  const isHidden = component.hidden ?? false;
 
   /* ── Resize handle ref ── */
   const containerRef = useRef<HTMLDivElement>(null);
@@ -138,15 +141,19 @@ function CanvasItem({
   const nestedChildren = useMemo(
     () =>
       component.children.length > 0
-        ? component.children.map((child) => (
-            <CanvasItem
-              key={child.id}
-              component={child}
-              onDelete={onDelete}
-              onDuplicate={onDuplicate}
-              onSelect={onSelect}
-            />
-          ))
+        ? (
+            <SortableContext items={component.children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+              {component.children.map((child) => (
+                <SortableItem
+                  key={child.id}
+                  component={child}
+                  onDelete={onDelete}
+                  onDuplicate={onDuplicate}
+                  onSelect={onSelect}
+                />
+              ))}
+            </SortableContext>
+          )
         : null,
     [component.children, onDelete, onDuplicate, onSelect],
   );
@@ -179,7 +186,10 @@ function CanvasItem({
               : isHovered
                 ? "border-blue-300 shadow-[0_8px_24px_rgba(15,35,75,0.10)]"
                 : "border-[#e6edf5] shadow-[0_2px_12px_rgba(15,35,75,0.05)]"
-        } ${isLocked ? "opacity-80" : ""}`}
+        } ${isLocked ? "opacity-80" : ""} ${isHidden ? "opacity-40" : ""}`}
+        role="listitem"
+        aria-selected={isSelected}
+        aria-label={`${component.type} component${isLocked ? " (locked)" : ""}${isHidden ? " (hidden)" : ""}`}
         onClick={isEditing ? undefined : handleClick}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
@@ -202,6 +212,7 @@ function CanvasItem({
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
                 {typeLabel}
                 {isLocked && <Lock className="ml-1 h-3 w-3 text-yellow-400" />}
+                {isHidden && <EyeOff className="ml-1 h-3 w-3 text-gray-400" />}
               </span>
 
               {!isLocked && (

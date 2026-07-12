@@ -26,6 +26,24 @@ async function getPost(req, res, next) {
   }
 }
 
+async function getPostBySlug(req, res, next) {
+  try {
+    const post = await blogService.getPostBySlug(req.user._id, req.params.workspaceId, req.params.slug);
+    res.json({ post });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getPublicPost(req, res, next) {
+  try {
+    const post = await blogService.getPublishedPost(req.params.workspaceId, req.params.slug);
+    res.json({ post });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updatePost(req, res, next) {
   try {
     const post = await blogService.updatePost(req.user._id, req.params.id, req.body);
@@ -54,4 +72,4 @@ async function generateSitemap(req, res, next) {
   }
 }
 
-module.exports = { createPost, listPosts, getPost, updatePost, deletePost, generateSitemap };
+module.exports = { createPost, listPosts, getPost, getPostBySlug, getPublicPost, updatePost, deletePost, generateSitemap };

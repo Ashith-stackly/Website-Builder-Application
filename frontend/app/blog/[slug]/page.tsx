@@ -2,15 +2,17 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import type { Blog } from "@/types/blog";
-import { getBlogBySlug, isBlogConnectionError } from "@/lib/blogApi";
+import { getPublishedBlog, isBlogConnectionError } from "@/lib/blogApi";
 import BlogSeoHead from "@/components/blog/BlogSeoHead";
 import Footer from "@/components/Footer";
 
-export function BlogViewPage({ slugOverride }: { slugOverride?: string } = {}) {
+export function BlogViewPage({ slugOverride, workspaceIdOverride }: { slugOverride?: string; workspaceIdOverride?: string } = {}) {
   const params = useParams<{ slug: string }>();
+  const searchParams = useSearchParams();
   const slug = slugOverride || params.slug;
+  const workspaceId = workspaceIdOverride || searchParams.get("workspaceId") || "";
 
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,13 +22,15 @@ export function BlogViewPage({ slugOverride }: { slugOverride?: string } = {}) {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || !workspaceId) {
+      return;
+    }
 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
-    getBlogBySlug(slug, controller.signal)
+    getPublishedBlog(workspaceId, slug, controller.signal)
       .then((data) => {
         if (data.status !== "published") {
           setNotPublished(true);
@@ -51,7 +55,7 @@ export function BlogViewPage({ slugOverride }: { slugOverride?: string } = {}) {
     return () => {
       controller.abort();
     };
-  }, [slug]);
+  }, [slug, workspaceId]);
 
   const formatDate = (dateStr: string): string => {
     try {
@@ -66,6 +70,18 @@ export function BlogViewPage({ slugOverride }: { slugOverride?: string } = {}) {
   };
 
   // Loading State
+  if (!slug || !workspaceId) {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center px-4">
+          <h1 className="text-2xl font-bold text-slate-900">Blog Post Not Found</h1>
+          <p className="mt-2 text-slate-500">This post link is missing its project context.</p>
+          <Link href="/blog" className="mt-6 inline-flex rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white no-underline">Back to Blog</Link>
+        </div>
+      </main>
+    );
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-white">

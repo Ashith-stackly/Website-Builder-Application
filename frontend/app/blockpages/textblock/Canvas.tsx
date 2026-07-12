@@ -1,7 +1,7 @@
 "use client";
  
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Eye, Redo2, Save, Send, Undo2 } from "lucide-react";
+import { ChevronDown, Eye, Redo2, Save, Send, Undo2, Check, AlertTriangle, Loader2 } from "lucide-react";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import { routePath } from "@/lib/paths";
 import { getBlockpagesTemplateLabel } from "@/lib/blockpagesTemplates";
@@ -15,6 +15,7 @@ import type { VideoBlockData } from "../videoblock/types";
 import type { DividerBlockProps } from "../dividerblock/types";
 import type { IconBlockProps } from "../iconsblock/types";
 import type { TextBlockState, TextEditorTarget, TextStyles, TextTemplateType } from "./types";
+import type { DraftSaveStatus } from "../BlockPagesClient";
 import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
  
 const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
@@ -52,6 +53,9 @@ type TextCanvasProps = {
   customIcons?: Record<string, IconBlockProps>;
   onEditIcon?: (iconId: string) => void;
   editingIconId?: string | null;
+  onSaveDraft?: () => void;
+  onPreview?: () => void;
+  saveStatus?: DraftSaveStatus;
 };
  
 const rgbToHex = (rgb: string) => {
@@ -82,6 +86,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   onRemoveIcon,
   onUpdateIconPosition,
   onUpdateIconScale,
+  onSaveDraft,
+  onPreview,
+  saveStatus = "idle",
 }: TextCanvasProps) {
   const isPreviewMode = false;
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
@@ -226,6 +233,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewClone?.innerHTML ?? "");
     window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
   };
+  const previewHandler = onPreview ?? openPreviewPage;
  
   return (
     <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#dbe3ef] bg-[#f7f9fc] shadow-sm">
@@ -249,17 +257,28 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
           </div>
           <button
             type="button"
-            onClick={() => alert("Working on it - In progress!")}
-            className="group flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all duration-200 hover:border-[#0B1D40]/35 hover:bg-[#f7f9fc] hover:shadow-md"
+            onClick={() => onSaveDraft?.()}
+            disabled={saveStatus === "saving"}
+            className={`group flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all duration-200 hover:border-[#0B1D40]/35 hover:bg-[#f7f9fc] hover:shadow-md ${saveStatus === "saving" ? "opacity-70 cursor-not-allowed" : ""}`}
             title="Save Draft"
           >
-            <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
-            <span className="hidden xl:inline group-hover:inline">Save Draft</span>
+            {saveStatus === "saving" ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+            ) : saveStatus === "saved" ? (
+              <Check className="h-4 w-4 text-green-600" />
+            ) : saveStatus === "error" ? (
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            ) : (
+              <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
+            )}
+            <span className="hidden xl:inline group-hover:inline">
+              {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Save Failed" : "Save Draft"}
+            </span>
           </button>
           <button
             type="button"
             className="group flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all duration-200 hover:border-[#0B1D40]/35 hover:bg-[#f7f9fc] hover:shadow-md"
-            onClick={openPreviewPage}
+            onClick={previewHandler}
             title="Preview"
           >
             <Eye className="h-4 w-4 xl:hidden group-hover:hidden" />
@@ -488,7 +507,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         isVideoEditingMode={isVideoEditingMode}
                         onEditVideo={onEditVideo}
                         sectionStyles={state.sectionStyles}
-                        onPreview={openPreviewPage}
+                        onPreview={previewHandler}
                         appliedDividers={appliedDividers}
                         onRemoveDivider={onRemoveDivider}
                         onUpdateDividerPosition={onUpdateDividerPosition}
@@ -501,6 +520,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         customIcons={customIcons}
                         onEditIcon={onEditIcon}
                         editingIconId={editingIconId}
+                        onSaveDraft={onSaveDraft}
                       />
                     ) : (
                       <BlockpagesCanvasEnhancer
@@ -531,7 +551,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         {template === "ecommerce" ? (
                           <StorefrontPreview />
                         ) : (
-                          <TemplatePreviewRouter template={template} onPreview={openPreviewPage} />
+                          <TemplatePreviewRouter template={template} onPreview={previewHandler} />
                         )}
                       </BlockpagesCanvasEnhancer>
                     )}

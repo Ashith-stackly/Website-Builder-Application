@@ -1,15 +1,22 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { ChevronDown, Undo2, Redo2, Eye, Send, X, Image as ImageIcon, Save } from "lucide-react";
+import { ChevronDown, Undo2, Redo2, Eye, Send, X, Image as ImageIcon, Save, Check, AlertTriangle, Loader2 } from "lucide-react";
 import { useBuilder, BuilderElement } from "./BuilderContext";
+import type { DraftSaveStatus } from "../BlockPagesClient";
  
 export default function MainCanvas({
   editingImageId,
-  onImageSelected
+  onImageSelected,
+  onSaveDraft,
+  onPreview,
+  saveStatus = "idle",
 }: {
   editingImageId?: string | null;
   onImageSelected?: (url: string) => void;
+  onSaveDraft?: () => void;
+  onPreview?: () => void;
+  saveStatus?: DraftSaveStatus;
 } = {}) {
   const { elements, activeElementId, setActiveElementId, undo, redo, historyStack, futureStack, imageAdjustments, activeFilter, activeCrop } = useBuilder();
  
@@ -36,7 +43,13 @@ export default function MainCanvas({
   };
  
   const handleAction = (action: string) => {
-    alert(`${action} functionality triggered successfully!`);
+    if (action === "Save Draft") {
+      onSaveDraft?.();
+    } else if (action === "Preview") {
+      onPreview?.();
+    } else {
+      alert(`${action} functionality triggered successfully!`);
+    }
   };
  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,9 +236,19 @@ export default function MainCanvas({
             </button>
           </div>
  
-          <button onClick={() => handleAction("Save Draft")} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50" title="Save Draft">
-            <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
-            <span className="hidden xl:inline group-hover:inline">Save Draft</span>
+          <button onClick={() => handleAction("Save Draft")} disabled={saveStatus === "saving"} className={`group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50 ${saveStatus === "saving" ? "opacity-70 cursor-not-allowed" : ""}`} title="Save Draft">
+            {saveStatus === "saving" ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+            ) : saveStatus === "saved" ? (
+              <Check className="h-4 w-4 text-green-600" />
+            ) : saveStatus === "error" ? (
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            ) : (
+              <Save className="h-4 w-4 text-gray-600 xl:hidden group-hover:hidden" />
+            )}
+            <span className="hidden xl:inline group-hover:inline">
+              {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Save Failed" : "Save Draft"}
+            </span>
           </button>
           <button onClick={() => handleAction("Preview")} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition-all hover:bg-gray-50" title="Preview">
             <Eye className="h-4 w-4 xl:hidden group-hover:hidden" />

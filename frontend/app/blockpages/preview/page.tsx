@@ -2,23 +2,141 @@
  
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import Footer from "@/components/Footer";
 import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProjectsSlider";
 import { routePath } from "@/lib/paths";
+import { loadBlockPagesDraft, type BlockPagesDraftPayload } from "@/lib/blockPagesDraftApi";
 
 const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
 const PREVIEW_IFRAME_SRC = routePath("/blockpages/preview?mode=iframe");
+
+/**
+ * Render a simple HTML summary for a saved draft.
+ * Since saved drafts store structured JSON (not rendered HTML),
+ * we generate a basic readable preview showing what was saved.
+ */
+function renderDraftPreviewHtml(draft: BlockPagesDraftPayload): string {
+  const sections: string[] = [];
+
+  sections.push(`
+    <div style="max-width:720px;margin:48px auto;font-family:system-ui,-apple-system,sans-serif;color:#0B1D40">
+      <div style="text-align:center;margin-bottom:32px">
+        <h1 style="font-size:28px;font-weight:800;margin:0 0 8px">Saved Draft Preview</h1>
+        <p style="color:#64748b;font-size:14px">Template: <strong>${draft.template}</strong></p>
+      </div>
+  `);
+
+  // Text block section info
+  if (draft.textBlockState?.section) {
+    const s = draft.textBlockState.section;
+    sections.push(`
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:#334155">Text Block</h2>
+        <p style="margin:4px 0;font-size:13px;color:#64748b">Header: ${s.headerText || '(empty)'}</p>
+        <p style="margin:4px 0;font-size:13px;color:#64748b">Footer: ${s.footerText || '(empty)'}</p>
+        <p style="margin:4px 0;font-size:13px;color:#64748b">Alignment: ${s.alignment}</p>
+      </div>
+    `);
+  }
+
+  // Button blocks
+  if (draft.buttonBlocks?.length) {
+    sections.push(`
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:#334155">Button Blocks (${draft.buttonBlocks.length})</h2>
+        ${draft.buttonBlocks.map(b => `<p style="margin:4px 0;font-size:13px;color:#64748b">• ${b.props.content || b.type} (${b.id})</p>`).join("")}
+      </div>
+    `);
+  }
+
+  // Video blocks
+  if (draft.videoBlocks?.length) {
+    sections.push(`
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:#334155">Video Blocks (${draft.videoBlocks.length})</h2>
+        ${draft.videoBlocks.map(b => `<p style="margin:4px 0;font-size:13px;color:#64748b">• ${b.props.sourceType} (${b.id})</p>`).join("")}
+      </div>
+    `);
+  }
+
+  // Divider blocks
+  if (draft.dividerBlocks?.length) {
+    sections.push(`
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:#334155">Divider Blocks (${draft.dividerBlocks.length})</h2>
+        ${draft.dividerBlocks.map(b => `<p style="margin:4px 0;font-size:13px;color:#64748b">• ${b.props.variant} — ${b.props.lineStyle} (${b.props.color})</p>`).join("")}
+      </div>
+    `);
+  }
+
+  // Icon blocks
+  if (draft.iconBlocks?.length) {
+    sections.push(`
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;margin:0 0 12px;color:#334155">Icon Blocks (${draft.iconBlocks.length})</h2>
+        ${draft.iconBlocks.map(b => `<p style="margin:4px 0;font-size:13px;color:#64748b">• ${b.props.iconType} — ${b.props.color} (${b.props.size}px)</p>`).join("")}
+      </div>
+    `);
+  }
+
+  sections.push(`</div>`);
+  return sections.join("\n");
+}
  
 export default function BlockPreviewPage() {
+  const searchParams = useSearchParams();
+  const projectIdParam = searchParams.get("projectId");
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [draftError, setDraftError] = useState<string | null>(null);
  
   const isIframeMode = typeof window !== "undefined" && window.location.search.includes("mode=iframe");
  
   useEffect(() => bindPortfolioProjectsSliderNavDelegation(), []);
  
+  // Load preview from backend if projectId is present, otherwise from localStorage
   useEffect(() => {
+    if (projectIdParam) {
+      // MODE 2: Saved draft preview
+      let cancelled = false;
+      const controller = new AbortController();
+
+      (async () => {
+        try {
+          const { project, draft } = await loadBlockPagesDraft(projectIdParam, controller.signal);
+          if (cancelled) return;
+          if (project.htmlContent?.trim()) {
+            setPreviewHtml(project.htmlContent);
+            return;
+          }
+
+          if (draft) {
+            // For saved draft preview, we render a JSON-based summary
+            // since we only have structured data, not HTML
+            const summaryHtml = renderDraftPreviewHtml(draft);
+            setPreviewHtml(summaryHtml);
+          } else {
+            setDraftError("No saved content found for this draft.");
+            setPreviewHtml("");
+          }
+        } catch (err) {
+          if (!cancelled) {
+            console.error("Failed to load draft preview:", err);
+            setDraftError("Failed to load saved draft.");
+            setPreviewHtml("");
+          }
+        }
+      })();
+
+      return () => {
+        cancelled = true;
+        controller.abort();
+      };
+    }
+
+    // MODE 1: Current editor state preview (localStorage)
     const loadPreview = () => {
       setPreviewHtml(window.localStorage.getItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "");
     };
@@ -39,7 +157,7 @@ export default function BlockPreviewPage() {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("storage", handleStorage);
     };
-  }, []);
+  }, [projectIdParam]);
  
   useEffect(() => {
     if (!previewHtml) return;

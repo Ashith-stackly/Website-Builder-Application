@@ -2,14 +2,16 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { CreateBlogBody } from "@/types/blog";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { BlogFormData } from "@/types/blog";
 import { createBlog, isBlogConnectionError } from "@/lib/blogApi";
 import BlogForm from "@/components/blog/BlogForm";
 import BlogToast from "@/components/blog/BlogToast";
 
 export default function CreateBlogPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const workspaceId = searchParams.get("workspaceId") || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -17,15 +19,16 @@ export default function CreateBlogPage() {
   } | null>(null);
 
   const handleSubmit = useCallback(
-    async (data: CreateBlogBody) => {
+    async (data: BlogFormData) => {
       setIsSubmitting(true);
 
       try {
-        await createBlog(data);
+        if (!workspaceId) throw new Error("Select a project before creating a blog post.");
+        await createBlog({ ...data, workspaceId });
         setToast({ message: "Blog post created successfully!", type: "success" });
         // Redirect after a brief delay so the user sees the toast
         window.setTimeout(() => {
-          router.push("/blog/manage");
+          router.push(`/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}`);
         }, 1200);
       } catch (err) {
         setIsSubmitting(false);
@@ -37,7 +40,7 @@ export default function CreateBlogPage() {
         throw err;
       }
     },
-    [router]
+    [router, workspaceId]
   );
 
   return (
@@ -46,7 +49,7 @@ export default function CreateBlogPage() {
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/60">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-3">
           <Link
-            href="/blog/manage"
+            href={workspaceId ? `/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}` : "/blog/manage"}
             className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors no-underline"
           >
             ← Blog Management
