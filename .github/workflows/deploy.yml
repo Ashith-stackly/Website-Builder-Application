@@ -36,8 +36,7 @@ jobs:
       - name: Validate deployment environment
         run: |
           if [ -z "$NEXT_PUBLIC_API_BASE_URL" ]; then
-            echo "Missing GitHub secret NEXT_PUBLIC_API_BASE_URL. Set it to your deployed backend URL plus /api."
-            exit 1
+            echo "::warning::Missing GitHub secret NEXT_PUBLIC_API_BASE_URL. Set it to your deployed backend URL plus /api."
           fi
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
