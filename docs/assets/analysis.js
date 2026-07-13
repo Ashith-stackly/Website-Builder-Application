@@ -1,8 +1,8 @@
 /* ============================================================================
    Stackly · Codebase Analysis Dashboard  —  data + rendering engine
    ----------------------------------------------------------------------------
-   Paths verified against the live source tree on 2026-07-06 (re-audited after
-   the backend landed in test/). Design follows ui-ux-pro-max (a11y, SVG icons,
+   Paths verified against the live source tree on 2026-07-11. Design follows
+   ui-ux-pro-max (a11y, SVG icons,
    motion budget, tabular figures) + hallmark (locked tokens, 8 states, honest
    copy, no fake chrome).
    Status: done = shipped & working · partial = exists/not wired · pending = not started
@@ -10,15 +10,10 @@
 
 /* ---- 0. What changed this pass ------------------------------------------ */
 const WHATSNEW = {
-  title: "Major update — a real backend has landed",
+  title: "Builder Phase 1 completed and management brief added",
   body:
-    "The repo now ships a full Node.js / Express / MongoDB backend under test/. " +
-    "Two implementations exist: <b>test/WBA_BACKEND/</b> (“Backend B” — the team backend the frontend " +
-    "actually calls at :5000/api: auth, projects, blog, templates, payments, categories, sitemap) and " +
-    "<b>test/backend/</b> (“Backend A” — a comprehensive service-layer backend covering every module " +
-    "incl. e-commerce, domain, publish and analytics). Per <code>implementation_plan.md</code> the two are " +
-    "being consolidated (discovery stage — no merge yet). Statuses below now reflect endpoints that exist " +
-    "on a backend, and flag whether they are <i>connected</i> vs. <i>scaffolded but unconsolidated</i>.",
+    "Module 4 now includes persisted canvas preferences, a selection toolbar connected to existing builder actions, and a live status bar for save state, block count, viewport, zoom, and grid controls. " +
+    "The delivery dashboard now also links to a manager-friendly Word brief covering the project structure, working model, delivery status, and next priorities.",
 };
 
 /* ---- 1. Project meta ----------------------------------------------------- */
@@ -42,6 +37,8 @@ const PROJECT = {
     ["State stores", "store/*.ts (Zustand)"],
     ["Builder UI", "components/builder/*"],
     ["Canvas blocks", "components/draggable/* (27 types)"],
+    ["Tree Helpers", "lib/treeHelpers.ts · jsonExportImport.ts"],
+    ["Manager brief", "docs/manager_project_overview.docx"],
     ["API clients", "lib/api.ts · projectApi · templateApi · blogApi"],
     ["Backend (live)", "test/WBA_BACKEND/ — server.js :5000/api"],
     ["Backend (full)", "test/backend/src/ — 16 models, service layer"],
@@ -161,12 +158,12 @@ const MODULES = [
   /* ---------------------------------------------------------------- M4 --- */
   {
     id: "m4", num: 4, name: "Drag-and-Drop Builder", icon: "🧩",
-    blurb: "The most mature module. A full @dnd-kit canvas with flow + freeform modes, 27 block types, undo/redo, layers, snap guides, zoom, global design tokens and server autosave.",
+    blurb: "Fully complete for the current delivery scope. The @dnd-kit canvas supports flow + freeform modes, 27 block types, nested reordering, undo/redo, selection actions, persisted canvas preferences, responsive viewports, autosave, and JSON import/export.",
     tasks: [
       { t: "Build editor canvas UI", s: "done",
-        p: ["components/builder/BuilderLayout.tsx", "components/builder/Canvas.tsx", "components/builder/CanvasItem.tsx"], note: "21 KB Canvas with toolbar + viewport switcher." },
+        p: ["components/builder/BuilderLayout.tsx", "components/builder/Canvas.tsx", "components/builder/BuilderStatusBar.tsx", "components/builder/FloatingSelectionToolbar.tsx", "store/builderUiStore.ts"], note: "Canvas with device viewports, CSS zoom, functional grid/dot background, persisted canvas chrome preferences, selected-block actions, and a status bar." },
       { t: "Implement drag-and-drop system", s: "done",
-        p: ["components/builder/SortableItem.tsx", "components/draggable/", "hooks/useBuilder.ts"], note: "@dnd-kit palette→canvas + reorder." },
+        p: ["components/builder/SortableItem.tsx", "components/builder/CanvasItem.tsx", "components/builder/BuilderLayout.tsx", "lib/treeHelpers.ts"], note: "dnd-kit recursive nested sortable reordering inside containers and cross-container moving." },
       { t: "Text component (add/edit/delete)", s: "done",
         p: ["components/draggable/TextComponent.tsx", "components/draggable/HeadingComponent.tsx", "components/builder/InlineText.tsx"], note: "Click-to-edit inline text." },
       { t: "Image component (upload/select)", s: "done",
@@ -180,20 +177,20 @@ const MODULES = [
       { t: "Layout system (sections/rows/columns)", s: "done",
         p: ["components/draggable/ColumnsComponent.tsx", "components/draggable/ContainerComponent.tsx", "components/blocks/row/", "components/blocks/columns/"], note: "" },
       { t: "Styling controls (font, color, spacing)", s: "done",
-        p: ["components/builder/panel/StyleTab.tsx", "components/builder/panel/controls/"], note: "color, bg, padding, margin, radius, font family/size/weight, align." },
+        p: ["components/builder/panel/StyleTab.tsx", "components/builder/panel/controls/"], note: "color, bg, padding, margin, radius, font family/size/weight, align, with resets." },
       { t: "Component settings panel", s: "done",
-        p: ["components/builder/PropertyEditor.tsx", "components/builder/panel/EffectsTab.tsx"], note: "Content / Style / Effects / Layers tabs." },
+        p: ["components/builder/PropertyEditor.tsx", "components/builder/panel/EffectsTab.tsx"], note: "Content / Style / Effects / Layers tabs with action resets." },
       { t: "Save page structure as JSON", s: "done",
-        p: ["store/builderStore.ts", "lib/projectApi.ts"], note: "saveToLocalStorage() + autosaveProject()/saveHtml() to backend." },
+        p: ["store/builderStore.ts", "lib/projectApi.ts", "lib/jsonExportImport.ts", "components/builder/Canvas.tsx"], note: "autosave/saveHtml to backend + standalone JSON export button to download the schema." },
       { t: "Load saved JSON into editor", s: "done",
-        p: ["store/builderStore.ts"], note: "loadComponents() / getProject() hydrate the canvas." },
+        p: ["store/builderStore.ts", "lib/jsonExportImport.ts", "components/builder/Canvas.tsx"], note: "loadComponents() / getProject() from backend + standalone JSON file import with schema validation." },
       { t: "Undo/redo functionality", s: "done",
         p: ["store/builderStore.ts"], note: "50-step history, Ctrl+Z / Ctrl+Shift+Z." },
       { t: "Cloud asset manager (replace IndexedDB)", s: "partial",
         p: ["test/WBA_BACKEND/services/s3Service.js", "test/WBA_BACKEND/middleware/upload.js", "lib/assetDb.ts", "store/assetStore.ts", "components/assets/AssetManager.tsx"],
         note: "Backend now has S3 upload (multer + sharp→WebP) used for blog/template images. The builder's AssetManager still uses IndexedDB — not yet repointed at a generic /api/assets/upload." },
       { t: "Server auto-save (debounced 30s)", s: "done",
-        p: ["store/builderStore.ts", "lib/projectApi.ts"], note: "autosave() with AbortController sequencing (builderStore.ts:906)." },
+        p: ["store/builderStore.ts", "lib/projectApi.ts"], note: "autosave() with AbortController sequencing." },
     ],
   },
 
@@ -207,9 +204,9 @@ const MODULES = [
       { t: "Desktop preview mode", s: "done", p: ["components/builder/PreviewModal.tsx"], note: "1280px frame." },
       { t: "Mobile preview mode", s: "done", p: ["components/builder/PreviewModal.tsx"], note: "390px frame." },
       { t: "Tablet preview mode", s: "done", p: ["components/builder/PreviewModal.tsx"], note: "768px frame." },
-      { t: "Implement responsive breakpoints", s: "partial",
-        p: ["lib/exportHtml.ts", "store/builderStore.ts"],
-        note: "Viewport widths (1280/768/390) drive compiled media queries; per-breakpoint style overrides are not yet persisted per component." },
+      { t: "Implement responsive breakpoints", s: "done",
+        p: ["lib/exportHtml.ts", "store/builderStore.ts", "components/builder/panel/StyleTab.tsx", "components/builder/panel/EffectsTab.tsx"],
+        note: "Viewport widths (1280/768/390) drive compiled media queries; per-breakpoint style overrides are fully persisted and editable." },
       { t: "Sync editor changes with live preview", s: "done",
         p: ["components/builder/PreviewModal.tsx"], note: "Re-generates HTML from current components on open." },
       { t: "Optimize layout scaling for devices", s: "done",
@@ -301,7 +298,7 @@ const MODULES = [
   /* ---------------------------------------------------------------- M9 --- */
   {
     id: "m9", num: 9, name: "Blog & SEO", icon: "✍️",
-    blurb: "Now essentially complete end-to-end. A full blog CMS (list / create / edit / publish) is wired to a live blog API with S3 cover images, slug generation and a server-generated sitemap.xml. The new BlogForm component consolidates create/edit.",
+    blurb: "The blog UI and workspace-scoped backend services are implemented. Before this module can be called fully live, the frontend blog API contract must be aligned with the active backend routes and workspace context. Open Graph tags are set client-side today; crawler-ready static/server metadata remains a follow-up.",
     tasks: [
       { t: "Create blog post schema", s: "done",
         p: ["test/WBA_BACKEND/models/Blog.js", "types/blog.ts", "lib/blogApi.ts"], note: "Server Blog model (SEO + OG + Twitter + canonical fields) + client types." },
@@ -785,7 +782,7 @@ function wireControls() {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("projName").textContent = "Stackly";
   document.getElementById("projTagline").textContent = PROJECT.tagline;
-  document.getElementById("genDate").textContent = "Re-audited 2026-07-06 · post-backend";
+  document.getElementById("genDate").textContent = "Re-audited 2026-07-11 · Builder Phase 1 Complete";
   const wn = document.getElementById("whatsNew");
   if (wn) wn.innerHTML = `<span class="wn-badge">NEW</span><div class="wn-body"><h3>${WHATSNEW.title}</h3><p>${WHATSNEW.body}</p></div>`;
   renderMeta();

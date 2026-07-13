@@ -1,0 +1,145 @@
+{
+  "info": {
+    "name": "Stackly Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "workspaceId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Stackly User\",\n  \"email\": \"user@example.com\",\n  \"mobile\": \"+911234567890\",\n  \"password\": \"Password@123\",\n  \"confirmPassword\": \"Password@123\"\n}" }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password@123\"\n}" }
+          }
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/user/profile"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/user/profile",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated User\",\n  \"avatar\": \"\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workspace",
+      "item": [
+        {
+          "name": "Create Workspace",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/workspace/create",
+            "body": { "mode": "raw", "raw": "{\n  \"projectName\": \"Demo Site\",\n  \"category\": \"Business\",\n  \"style\": \"Modern\",\n  \"sections\": [\"navigation\", \"hero\", \"contact\"]\n}" }
+          }
+        },
+        {
+          "name": "List Workspaces",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/workspace/list"
+          }
+        },
+        {
+          "name": "Save Workspace State",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}/state",
+            "body": { "mode": "raw", "raw": "{\n  \"builderData\": {\n    \"components\": [],\n    \"designTokens\": {},\n    \"projectName\": \"Demo Site\"\n  }\n}" }
+          }
+        },
+        {
+          "name": "Duplicate Workspace",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}/duplicate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Razorpay",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/razorpay/create-order",
+            "body": { "mode": "raw", "raw": "{\n  \"amountPaise\": 2900,\n  \"planName\": \"Premium\",\n  \"billingPeriod\": \"Monthly\"\n}" }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/razorpay/verify",
+            "body": { "mode": "raw", "raw": "{\n  \"razorpay_payment_id\": \"pay_xxx\",\n  \"razorpay_order_id\": \"order_xxx\",\n  \"razorpay_signature\": \"signature_xxx\",\n  \"amount\": 2900,\n  \"currency\": \"INR\",\n  \"planName\": \"Premium\",\n  \"billingPeriod\": \"Monthly\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}

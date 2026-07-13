@@ -1,0 +1,356 @@
+{
+  "info": {
+    "name": "Stackly API",
+    "description": "Stackly Website Builder Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "resetToken", "value": "" },
+    { "key": "workspaceId", "value": "" },
+    { "key": "templateId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:5000/health",
+            "auth": { "type": "noauth" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"mobile\": \"+919876543210\",\n  \"password\": \"Test1234!\",\n  \"confirmPassword\": \"Test1234!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var data = pm.response.json();",
+                  "if (data.token) pm.collectionVariables.set('token', data.token);",
+                  "if (data.refreshToken) pm.collectionVariables.set('refreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Test1234!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/refresh",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/forgot-password",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": \"test@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Send Email OTP",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/send-email-otp",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Send Mobile OTP",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/send-mobile-otp",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"+919876543210\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify Email OTP",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/verify-email",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"otp\": \"1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/reset-password",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{resetToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"NewPass1!\",\n  \"confirmPassword\": \"NewPass1!\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/user/profile"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/user/profile",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workspace",
+      "item": [
+        {
+          "name": "Create Workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var data = pm.response.json();",
+                  "if (data.workspace) pm.collectionVariables.set('workspaceId', data.workspace._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/workspace/create",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectName\": \"Test Website\",\n  \"category\": \"business\",\n  \"style\": \"Modern\",\n  \"sections\": [\"navigation\", \"hero\", \"features\", \"contact\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "List Workspaces",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/workspace/list"
+          }
+        },
+        {
+          "name": "Get Workspace",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}"
+          }
+        },
+        {
+          "name": "Update Workspace",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectName\": \"Updated Website\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Duplicate Workspace",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}/duplicate"
+          }
+        },
+        {
+          "name": "Save State",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}/state",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pageData\": {},\n  \"builderData\": { \"components\": [] }\n}"
+            }
+          }
+        },
+        {
+          "name": "Load State",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}/state"
+          }
+        },
+        {
+          "name": "Delete Workspace",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/workspace/{{workspaceId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Templates",
+      "item": [
+        {
+          "name": "List Templates",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/template/list",
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Use Template",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/template/{{templateId}}/use"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        {
+          "name": "Create Razorpay Order",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/razorpay/create-order",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountPaise\": 29900,\n  \"planName\": \"Premium\",\n  \"billingPeriod\": \"Monthly\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Subscription",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/payment/subscription"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Ingest Event",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/analytics/event",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workspaceId\": \"{{workspaceId}}\",\n  \"eventType\": \"page_view\",\n  \"path\": \"/\",\n  \"sessionId\": \"test-session-1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Project Analytics",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/analytics/{{workspaceId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Publish",
+      "item": [
+        {
+          "name": "Publish Site",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/publish/{{workspaceId}}"
+          }
+        },
+        {
+          "name": "Get Deployments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/publish/{{workspaceId}}/deployments"
+          }
+        }
+      ]
+    }
+  ]
+}
