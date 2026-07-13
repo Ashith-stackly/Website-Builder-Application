@@ -183,8 +183,11 @@ export const navigationSpec: BlockSpec<NavigationProps> = {
       : "";
     return `<nav${styleAttr}>` +
       `<div class="nav-brand-group">${logo}<strong>${escapeHtml(data.brand)}</strong></div>` +
-      `<div class="nav-links">${navLinks}</div>` +
-      `<a href="${escapeHtml(ctaHref)}" role="button" class="nav-cta">${escapeHtml(data.cta.label)}</a>` +
+      `<div class="nav-links">` +
+        `${navLinks}` +
+        `<a href="${escapeHtml(ctaHref)}" role="button" class="nav-cta mobile-only">${escapeHtml(data.cta.label)}</a>` +
+      `</div>` +
+      `<a href="${escapeHtml(ctaHref)}" role="button" class="nav-cta desktop-only">${escapeHtml(data.cta.label)}</a>` +
       `<button class="nav-hamburger" onclick="_navToggle(this)" aria-label="Toggle menu" aria-expanded="false">` +
       `<span></span><span></span><span></span>` +
       `</button>` +

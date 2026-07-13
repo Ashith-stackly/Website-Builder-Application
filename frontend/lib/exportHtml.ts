@@ -297,20 +297,23 @@ export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata) 
       .hero-text { flex: 1; }
       .hero-media { flex: 1; }
       .hero-media img { width: 100%; border-radius: 12px; }
-      @media (max-width: 640px) { .hero-split { flex-direction: column; } }
+      @media (max-width: 768px) { .hero-split { flex-direction: column; text-align: center; } }
       nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; position: relative; }
       .nav-brand-group { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; min-width: max-content; }
       .nav-logo { display: block; height: 36px; width: auto; max-width: 120px; object-fit: contain; flex-shrink: 0; }
       .nav-links { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
       .nav-cta { white-space: nowrap; }
+      .mobile-only { display: none !important; }
+      .desktop-only { display: inline-flex !important; }
       .nav-hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; background: transparent !important; border: none; cursor: pointer; padding: 6px; color: #0B1D40; }
       .nav-hamburger span { display: block; width: 22px; height: 2px; background: currentColor; border-radius: 2px; transition: transform .2s, opacity .2s; }
       .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
       .nav-hamburger.open span:nth-child(2) { opacity: 0; }
       .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-      @media (max-width: 640px) {
+      @media (max-width: 768px) {
         .nav-hamburger { display: flex; }
-        .nav-cta { display: none; }
+        .mobile-only { display: inline-flex !important; width: 100%; justify-content: center; margin-top: 12px; }
+        .desktop-only { display: none !important; }
         .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: flex-start; background: #fff; border-top: 1px solid rgba(0,0,0,.08); box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 12px 16px; z-index: 200; }
         .nav-links.open { display: flex; }
         .nav-links a { padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,.06); width: 100%; }

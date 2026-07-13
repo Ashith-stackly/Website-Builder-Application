@@ -17,6 +17,7 @@ import { useDesignStore } from "@/store/designStore";
 import { useBuilderUiStore } from "@/store/builderUiStore";
 import type { BuilderComponent, ComponentType, Viewport } from "@/types/builder";
 import { VIEWPORT_WIDTHS } from "@/types/builder";
+import { staggerContainer } from "@/lib/motion";
 
 function Canvas({
   components,
@@ -381,11 +382,19 @@ function Canvas({
             <span className="hidden sm:inline">{label}</span>
           </button>
         ))}
-        {viewport !== "desktop" && (
-          <span className="ml-2 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
-            {VIEWPORT_WIDTHS[viewport]}px
-          </span>
-        )}
+        <AnimatePresence>
+          {viewport !== "desktop" && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              className="ml-2 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200"
+            >
+              {VIEWPORT_WIDTHS[viewport]}px
+            </motion.span>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Canvas drop zone ── */}
@@ -417,8 +426,13 @@ function Canvas({
             {selectionToolbar}
           </div>
         )}
-        <div
-          className="relative flex min-h-[680px] w-full flex-col gap-3 transition-all duration-300"
+        <motion.div
+          layout
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="relative flex min-h-[680px] w-full flex-col gap-3"
           style={{
             // CSS `zoom` (not transform) keeps @dnd-kit hit-testing correct.
             ...(zoom !== 100 ? { zoom: zoom / 100 } : {}),
@@ -480,7 +494,7 @@ function Canvas({
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       <AssetManager open={isAssetsOpen} onClose={() => setIsAssetsOpen(false)} />

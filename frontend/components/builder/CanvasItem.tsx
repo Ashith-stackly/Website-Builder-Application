@@ -175,8 +175,6 @@ function CanvasItem({
       <motion.div
         ref={containerRef}
         variants={canvasItem}
-        initial="hidden"
-        animate="visible"
         exit="exit"
         className={`relative w-full cursor-pointer overflow-visible rounded-xl border bg-white transition-[border-color,box-shadow] duration-200 ${
           isSelected
