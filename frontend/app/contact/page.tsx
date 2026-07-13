@@ -288,25 +288,25 @@ const ContactSection = () => {
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">First Name</label>
+                  <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">First Name <span className="text-red-500 font-bold">*</span></label>
                   <input name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:bg-white outline-none transition-all" />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Last Name</label>
+                  <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Last Name <span className="text-red-500 font-bold">*</span></label>
                   <input name="lastName" type="text" value={formData.lastName} onChange={handleInputChange} placeholder="Last Name" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:bg-white outline-none transition-all" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Email Address</label>
+                <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Email Address <span className="text-red-500 font-bold">*</span></label>
                 <input name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="test@gmail.com" required className={`w-full bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl px-4 py-3 text-sm focus:border-blue-400 focus:bg-white outline-none transition-all`} />
                 {errors.email && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.email}</p>}
               </div>
 
 
               <div className="space-y-2">
-                <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Message</label>
-                <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 text-sm focus:border-blue-400 focus:bg-white outline-none resize-none transition-all"></textarea>
+                <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Message <span className="text-red-500 font-bold">*</span></label>
+                <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 text-sm focus:border-blue-400 focus:bg-white outline-none resize-none transition-all"></textarea>
               </div>
 
               {/* Submit button — shows loading state & is disabled while request is in-flight */}

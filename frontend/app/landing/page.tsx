@@ -400,7 +400,7 @@ function LandingContactSection() {
               <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." required className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white" />
             </label>
 
-            <button type="submit" className="flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98]">
+            <button type="submit" className="cursor-pointer flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98]">
               <span>Send Message</span>
               <FaPaperPlane className="text-[10px] shrink-0" aria-hidden="true" />
             </button>
@@ -627,6 +627,54 @@ export default function Home() {
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [isSearchOpen]);
+
+  useEffect(() => {
+    const processSearchQuery = (query: string) => {
+      const cleanQuery = query.toLowerCase().trim();
+      if (!cleanQuery) return;
+
+      if (cleanQuery.includes("about") || cleanQuery.includes("who we are")) {
+        document.getElementById("about")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (cleanQuery.includes("contact") || cleanQuery.includes("touch") || cleanQuery.includes("message")) {
+        document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (cleanQuery.includes("category") || cleanQuery.includes("categories")) {
+        document.getElementById("categories")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (cleanQuery.includes("top selling") || cleanQuery.includes("top sell") || cleanQuery.includes("selling") || cleanQuery.includes("product") || cleanQuery.includes("sales")) {
+        document.getElementById("top-selling")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (cleanQuery.includes("popular") || cleanQuery.includes("search")) {
+        document.getElementById("popular-searches")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (cleanQuery.includes("template") || cleanQuery.includes("templates")) {
+        document.getElementById("templates")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (cleanQuery.includes("feature") || cleanQuery.includes("features") || cleanQuery.includes("why choose")) {
+        document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        setSubmittedSearch(query);
+        setActiveFilter("all");
+        document.getElementById("categories")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+
+    // Check URL parameters on mount
+    const params = new URLSearchParams(window.location.search);
+    const searchQueryParam = params.get("search");
+    if (searchQueryParam) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState(null, "", newUrl);
+      window.setTimeout(() => processSearchQuery(searchQueryParam), 300);
+    }
+
+    // Listen to custom search event from navbar
+    const handleNavbarSearch = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      processSearchQuery(customEvent.detail);
+    };
+
+    window.addEventListener("stackly-navbar-search", handleNavbarSearch);
+
+    return () => {
+      window.removeEventListener("stackly-navbar-search", handleNavbarSearch);
+    };
+  }, []);
 
   const showWishlistToast = (message: string) => {
     setWishlistToast(message);
@@ -916,7 +964,7 @@ export default function Home() {
 
           <motion.button
             onClick={() => router.push("/aboutus")}
-            className="inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95"
+            className="cursor-pointer inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95"
             variants={fadeUp}
             whileHover={{ scale: 1.04, filter: "brightness(1.08)" }}
             whileTap={{ scale: 0.98 }}
@@ -928,7 +976,7 @@ export default function Home() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* ─────────────────────────────────────────────────────────────────── */}
 
-      <motion.div className="mt-8 text-center md:mt-12 max-w-7xl mx-auto px-4 md:px-8" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+      <motion.div id="popular-searches" className="mt-8 text-center md:mt-12 max-w-7xl mx-auto px-4 md:px-8" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
         <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800">Popular Searches</p>
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
           {popularSearches.map((search) => (
@@ -936,7 +984,7 @@ export default function Home() {
               key={search}
               type="button"
               onClick={() => submitSearch(search)}
-              className="truncate rounded-full border border-gray-100 bg-white px-4 py-2 text-[11px] font-bold text-gray-600 shadow-sm transition hover:border-blue-400 hover:text-blue-600"
+              className="cursor-pointer truncate rounded-full border border-gray-100 bg-white px-4 py-2 text-[11px] font-bold text-gray-600 shadow-sm transition hover:border-blue-400 hover:text-blue-600"
             >
               {search}
             </button>
@@ -993,7 +1041,7 @@ export default function Home() {
         </div>
       </section>
  
-      <section className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
+      <section id="top-selling" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Top Selling This Week</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
         <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -1006,21 +1054,23 @@ export default function Home() {
                 <div className="mb-5 h-52 overflow-hidden rounded-[1.5rem] bg-gray-50">
                   <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                 </div>
-                <div className="flex flex-1 flex-col px-2 relative">
-                  <div className="mb-1 pr-10">
-                    <h3 className="text-lg font-bold text-[#06224C] sm:text-xl truncate" title={product.title}>
-                      {product.title}
-                    </h3>
+                <div className="flex flex-1 flex-col px-2">
+                  <div className="flex items-center justify-between gap-3 mb-1 w-full min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-bold text-[#06224C] sm:text-xl truncate" title={product.title}>
+                        {product.title}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleWishlistItem(product)}
+                      aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
+                      aria-pressed={isWishlisted}
+                      className={`p-1 transition hover:text-red-500 shrink-0 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
+                    >
+                      <FaHeart className="text-xl" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleWishlistItem(product)}
-                    aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
-                    aria-pressed={isWishlisted}
-                    className={`absolute right-2 top-0.5 p-1 transition hover:text-red-500 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
-                  >
-                    <FaHeart className="text-xl" />
-                  </button>
                   <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
                   <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -1039,7 +1089,7 @@ export default function Home() {
                       onClick={() => addToCart(product)}
                       disabled={isInCart}
                       aria-label={isInCart ? `${product.title} is already in cart` : `Add ${product.title} to cart`}
-                      className={`flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition ${isInCart ? "opacity-60 cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
+                      className={`cursor-pointer flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition ${isInCart ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
                     >
                       {isInCart ? <FaCheck className="text-sm" /> : <FaCartShopping />}
                     </button>
@@ -1066,7 +1116,7 @@ export default function Home() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setActiveFilter(filter.value)}
-                  className={`inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${active
+                  className={`cursor-pointer inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${active
                     ? "border-[#06224C] bg-[#06224C] text-white"
                     : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
                     }`}
@@ -1373,3 +1423,5 @@ export default function Home() {
     </main>
   );
 }
+
+

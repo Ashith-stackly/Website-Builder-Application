@@ -113,6 +113,24 @@ export function getBlockpagesVideoScrollId(template: BlockpagesTemplateId): stri
   return videoSection?.id ?? getBlockpagesDefaultSectionId(template);
 }
 
+export function getBlockpagesIconScrollId(template: BlockpagesTemplateId): string {
+  switch (template) {
+    case "construction":
+      return "const-features";
+    case "restaurant":
+      return "restaurant-why-choose-us";
+    case "ecommerce":
+      return "buyscreen-about";
+    case "digital-marketing":
+    case "business":
+      return "dm-stats";
+    case "blog":
+      return "blog-about";
+    default:
+      return getBlockpagesAboutScrollId(template);
+  }
+}
+
 export function dispatchBlockpagesScrollToSection(sectionId: string) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("scrollToSectionEvent", { detail: sectionId }));

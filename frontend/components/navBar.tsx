@@ -601,12 +601,20 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     const query = navbarSearchQuery.trim();
     setIsSearchPanelOpen(false);
     setSearchSelected(false);
+    setNavbarSearchQuery("");
 
     if (!query) {
       return;
     }
 
-    router.push(`/landing?search=${encodeURIComponent(query)}`);
+    const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+    if (currentPath === "/landing") {
+      window.dispatchEvent(new CustomEvent("stackly-navbar-search", { detail: query }));
+      const newUrl = `${window.location.pathname}?search=${encodeURIComponent(query)}`;
+      window.history.pushState(null, "", newUrl);
+    } else {
+      router.push(`/landing?search=${encodeURIComponent(query)}`);
+    }
   };
 
   const handleLogout = useCallback(async () => {

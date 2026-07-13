@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useRef, useCallback, useEffect, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Footer from "../../components/Footer";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane, FaUtensils, FaUsers, FaCouch, FaLeaf, FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
-import { FaBars, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
+import { FaBars, FaXmark } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { assetPath } from "@/lib/paths";
-import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BUILDING_HREF = "/signup";
+
+function restaurantAsset(path: string) {
+  return encodeURI(assetPath(path));
+}
 
 function scrollToSection(sectionId: string) {
   const target = document.getElementById(sectionId);
@@ -110,28 +112,15 @@ interface RestaurantHeaderProps {
 }
 
 function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
 
-  const handleLogout = useCallback(() => {
-    window.localStorage.removeItem("stackly-auth-token");
-    setProfileOpen(false);
-    setMobileOpen(false);
-    router.push("/login");
-  }, [router]);
-
   useEffect(() => {
-    if (!profileOpen && !mobileOpen) return;
+    if (!mobileOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (profileOpen && profileRef.current && !profileRef.current.contains(target)) {
-        setProfileOpen(false);
-      }
       if (mobileOpen && headerRef.current && !headerRef.current.contains(target)) {
         setMobileOpen(false);
       }
@@ -139,9 +128,7 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [profileOpen, mobileOpen]);
-
-  const showDesktopNav = deviceMode === "desktop";
+  }, [mobileOpen]);
 
   return (
     <header ref={headerRef} className={r("bg-[#0A1E3D] text-white w-full max-w-full sticky top-0 z-50 shadow-md")}>
@@ -170,33 +157,11 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
-
-          <div ref={profileRef} className={r("relative hidden sm:block")}>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/80 text-white bg-transparent transition-all hover:bg-white/20 hover:scale-105 cursor-pointer"
-              onClick={() => { setProfileOpen((open) => !open); setMobileOpen(false); }}
-            >
-              <FaUser size={14} aria-hidden />
-            </button>
-            {profileOpen && (
-              <div className="absolute top-12 right-0 w-40 py-2 bg-white rounded-lg shadow-xl border border-gray-100 z-60">
-                <button
-                  type="button"
-                  className="flex items-center gap-3 w-full py-2.5 px-4 text-left text-sm font-bold text-red-600 hover:bg-red-50 cursor-pointer"
-                  onClick={handleLogout}
-                >
-                  <FaRightFromBracket size={14} /> Logout
-                </button>
-              </div>
-            )}
-          </div>
-
           <button
             type="button"
             className={r(`${deviceMode === "desktop" ? "md:hidden" : "flex"} inline-flex items-center justify-center w-10 h-10 rounded-md border text-white transition-colors ${mobileOpen ? "bg-white/20 border-white" : "border-white/60 hover:bg-white/20"
               }`)}
-            onClick={() => { setMobileOpen((open) => !open); setProfileOpen(false); }}
+            onClick={() => { setMobileOpen((open) => !open); }}
           >
             {mobileOpen ? <FaXmark size={18} /> : <FaBars size={18} />}
           </button>
@@ -216,15 +181,6 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
               {link.label}
             </button>
           ))}
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <button
-              type="button"
-              className="flex items-center gap-3 py-3 px-4 w-full text-left text-red-400 text-base font-bold hover:bg-white/10 transition-colors rounded-md cursor-pointer"
-              onClick={handleLogout}
-            >
-              <FaRightFromBracket size={16} /> Logout
-            </button>
-          </div>
         </nav>
       )}
     </header>
@@ -236,32 +192,32 @@ const foodItems = [
   {
     title: "Premium Ribeye Steak",
     price: "₹450",
-    image: assetPath("/premium-ribeye-steak.webp"),
+    image: restaurantAsset("/premium-ribeye-steak.webp"),
   },
   {
     title: "Artisan Cafe Pastries",
     price: "₹120",
-    image: assetPath("/artisan-cafe-pastries.webp"),
+    image: restaurantAsset("/artisan-cafe-pastries.webp"),
   },
   {
     title: "Authentic Wood-Fired Pizza",
     price: "₹180",
-    image: assetPath("/authentic-wood-fired-pizza.webp"),
+    image: restaurantAsset("/authentic-wood-fired-pizza.webp"),
   },
   {
     title: "Avocado Brunch Toast",
     price: "₹140",
-    image: assetPath("/avocado-brunch-toast.webp"),
+    image: restaurantAsset("/avocado-brunch-toast.webp"),
   },
   {
     title: "Gourmet Street Tacos",
     price: "₹160",
-    image: assetPath("/gourmet-street-tacos.webp"),
+    image: restaurantAsset("/gourmet-street-tacos.webp"),
   },
   {
     title: "Classic Cheeseburger",
     price: "₹150",
-    image: assetPath("/classic-cheeseburger.webp"),
+    image: restaurantAsset("/classic-cheeseburger.webp"),
   },
 ];
 
@@ -303,12 +259,9 @@ const testimonials = [
 ];
 
 export default function RestaurantTemplatesPage() {
-  const blockpagesEditor = useBlockpagesEditor();
-  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [openFaq, setOpenFaq] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
-  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : (deviceMode === "preview" ? "desktop" : deviceMode);
+  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [email, setEmail] = useState("");
@@ -325,23 +278,18 @@ export default function RestaurantTemplatesPage() {
       setNewsletterStatus("success");
       setEmail("");
       setTimeout(() => setNewsletterStatus("idle"), 5000);
-    }, 1200);
+    }, 1500);
   };
 
-  const handleNewsletterChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (newsletterStatus !== "idle") setNewsletterStatus("idle");
-  };
-
-  const r = useCallback((classes: string) => getModeClasses(classes, activeDeviceMode), [activeDeviceMode]);
+  const r = useCallback((classes: string) => getModeClasses(classes, deviceMode), [deviceMode]);
 
 
 
   return (
-    <main className={isBlockpages ? "@container w-full min-w-0 max-w-full overflow-x-hidden bg-[#FFF5F5] font-serif text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-serif text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer"}>
+    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
 
-      {!isBlockpages && (
-        <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+      {/* FLOATING DEVICE TOOLBAR */}
+      <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
         <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
           <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
             <FaEye size={16} />
@@ -358,28 +306,25 @@ export default function RestaurantTemplatesPage() {
           </button>
         </div>
       </div>
-      )}
 
-      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
+      <div className={`flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         {/* RESPONSIVE CANVAS FRAME */}
         <div
-          ref={isBlockpages ? undefined : canvasScrollRef}
-          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${
-            deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+          ref={canvasScrollRef}
+          className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
             : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
-            : deviceMode === "desktop" ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
-            : "w-full min-h-screen"
+              : "w-full min-h-screen"
             }`}
         >
           <div className="w-full max-w-full overflow-x-hidden min-w-0">
             <RestaurantHeader
-              deviceMode={activeDeviceMode}
+              deviceMode={deviceMode}
             />
 
             {/* 1. HERO SECTION */}
-            <div id="restaurant-home" className={`w-full bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <div id="restaurant-home" className={`w-full bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
-              <div className={`mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 ${activeDeviceMode === "desktop" ? "max-w-7xl w-full" : "max-w-3xl"
+              <div className={`mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 ${deviceMode === "desktop" ? "max-w-7xl w-full" : "max-w-3xl"
                 }`}>
                 {/* Left side: Text content */}
                 <div className="flex-1 text-left break-words w-full max-w-xl min-w-0">
@@ -415,7 +360,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Base / Right Image */}
                   <div className="w-[60%] h-[90%] absolute right-0 top-[5%] rounded-3xl overflow-hidden shadow-lg z-10">
                     <img
-                      src={encodeURI(assetPath("/Image - 2.webp"))}
+                      src={restaurantAsset("/Image - 2.webp")}
                       alt="Chef plating food in kitchen"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -424,7 +369,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Overlapping / Left Image */}
                   <div className="w-[55%] aspect-[1.3] absolute left-0 bottom-[5%] rounded-3xl overflow-hidden shadow-2xl z-20 border-[4px] sm:border-[6px] border-[#FFF5F5]">
                     <img
-                      src={encodeURI(assetPath("/Image -1.webp"))}
+                      src={restaurantAsset("/Image -1.webp")}
                       alt="Drinks and gourmet dishes"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -435,7 +380,7 @@ export default function RestaurantTemplatesPage() {
             </div>
 
             {/* 2. MENU GRID (Changed from Templates to Foods) */}
-            <section id="restaurant-menu" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-menu" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-10 break-words">
@@ -465,7 +410,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 3. ABOUT US SECTION */}
-            <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
                 <div className="rounded-[2rem] overflow-hidden shadow-xl w-full min-w-0">
@@ -496,7 +441,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 3.5 WHY CHOOSE US SECTION */}
-            <section id="restaurant-why-choose-us" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <section id="restaurant-why-choose-us" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-10 break-words">
                   <span className="text-[#0F2D5C] uppercase tracking-[0.2em] text-xs sm:text-sm font-black">Why Choose Us</span>
@@ -574,7 +519,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 4. BUILD YOUR WAY (FEATURES) */}
-            <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
                 <div className="break-words order-2 lg:order-1 min-w-0">
@@ -603,7 +548,7 @@ export default function RestaurantTemplatesPage() {
 
 
             {/* 5. INFRASTRUCTURE */}
-            <section className={`bg-[#0A1E3D] text-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section className={`bg-[#0A1E3D] text-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className="max-w-7xl mx-auto">
                 <div className={r("bg-white/5 rounded-3xl border border-white/10 p-6 sm:p-10 lg:p-16")}>
@@ -621,7 +566,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 6. FAQ */}
-            <section id="restaurant-faq" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-faq" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-12 break-words">
@@ -655,7 +600,7 @@ export default function RestaurantTemplatesPage() {
             </section>
 
             {/* 6.5 GUEST EXPERIENCES (TESTIMONIALS) */}
-            <section id="restaurant-testimonials" className={`bg-white min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <section id="restaurant-testimonials" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="max-w-7xl mx-auto">
                 <div className={r("w-full bg-[#0F2D5C] rounded-[2rem] sm:rounded-[2.5rem] shadow-xl p-6 sm:p-12 lg:p-16")}>
                   <div className="text-center mb-8 break-words" style={{ overflowWrap: "anywhere" }}>
@@ -667,7 +612,7 @@ export default function RestaurantTemplatesPage() {
                     <div className={r("flex-1 max-w-[200px] sm:max-w-[240px] w-full flex justify-center min-w-0")}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src={assetPath("/testimonial-1.webp")}
+                          src={restaurantAsset("/testimonial-1.webp")}
                           alt="Guest Experience 1"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"
@@ -690,7 +635,7 @@ export default function RestaurantTemplatesPage() {
                             className="flex flex-col items-center w-full max-w-full min-w-0"
                           >
                             <p className="text-[white] text-base sm:text-lg lg:text-xl font-bold leading-relaxed mb-6 italic break-words whitespace-normal text-center w-full max-w-full" style={{ overflowWrap: "anywhere" }}>
-                              "{testimonials[activeTestimonial].quote}"
+                              &quot;{testimonials[activeTestimonial].quote}&quot;
                             </p>
                             <h4 className="text-[white] text-sm sm:text-base font-black tracking-wide uppercase break-words" style={{ overflowWrap: "anywhere" }}>
                               {testimonials[activeTestimonial].name}
@@ -724,10 +669,10 @@ export default function RestaurantTemplatesPage() {
                     </div>
 
                     {/* Right Image */}
-                    <div className={r(`flex-1 max-w-[200px] sm:max-w-[240px] w-full justify-center min-w-0 ${activeDeviceMode === "desktop" ? "lg:flex hidden" : "hidden"}`)}>
+                    <div className={r(`flex-1 max-w-[200px] sm:max-w-[240px] w-full justify-center min-w-0 ${deviceMode === "desktop" ? "lg:flex hidden" : "hidden"}`)}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src={assetPath("/testimonial-2.webp")}
+                          src={restaurantAsset("/testimonial-2.webp")}
                           alt="Guest Experience 2"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"
@@ -741,7 +686,7 @@ export default function RestaurantTemplatesPage() {
 
 
             {/* 7. CONTACT SECTION */}
-            <section id="restaurant-contact" className={`bg-gray-50 min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
+            <section id="restaurant-contact" className={`bg-gray-50 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
               <div className="max-w-5xl mx-auto text-center break-words">
                 <h2 className="text-[#0A1E3D] font-black uppercase tracking-[0.2em] text-xs sm:text-sm mb-3">Get in Touch</h2>
@@ -764,7 +709,7 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
-            <footer className={`@container bg-[#FFF5F5] min-w-0 ${activeDeviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <footer className={`@container bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="mx-auto max-w-7xl w-full">
                 <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   <div>
@@ -998,11 +943,9 @@ export default function RestaurantTemplatesPage() {
         </div>
       </div>
 
-      {!isBlockpages && (
       <div className="mt-4 md:mt-8 w-full">
         <Footer />
       </div>
-      )}
 
     </main>
   );

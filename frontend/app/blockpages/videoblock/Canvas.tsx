@@ -1,6 +1,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Edit, Copy, Trash2, Play, Check, AlertTriangle, Loader2 } from 'lucide-react';
+import type { BlockpagesTemplateId } from '@/lib/blockpagesTemplates';
+import { saveBlockpagesVideoProps } from '@/lib/blockpagesVideoStorage';
 import { VideoBlockData } from './types';
 import type { DraftSaveStatus } from '../BlockPagesClient';
  
@@ -75,6 +77,7 @@ interface CanvasProps {
   onSaveDraft?: () => void;
   onPreview?: () => void;
   saveStatus?: DraftSaveStatus;
+  template?: BlockpagesTemplateId;
 }
  
 export default function Canvas({
@@ -94,12 +97,13 @@ export default function Canvas({
   onSaveDraft,
   onPreview,
   saveStatus = "idle",
+  template = "portfolio",
 }: CanvasProps) {
   const router = useRouter();
  
   const handleApply = (e: React.MouseEvent, block: VideoBlockData) => {
     e.stopPropagation();
-    localStorage.setItem('portfolioVideoData', JSON.stringify(block.props));
+    saveBlockpagesVideoProps(template, block.props);
     if (onApplyVideo) {
       onApplyVideo(block.id);
     } else {

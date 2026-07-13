@@ -1798,9 +1798,9 @@ export default function ECommercePage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
-                    {formatUsd(lineTotalCents)}
-                  </p>
+                <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
+                  {formatUsd(lineTotalCents)}
+                </p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1874,7 +1874,7 @@ export default function ECommercePage() {
                   Your cart
                 </h2>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
+                <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1949,7 +1949,7 @@ export default function ECommercePage() {
                   Your favorites
                 </h2>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
+                <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1988,13 +1988,13 @@ export default function ECommercePage() {
                         >
                           Add to Cart
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => removeFavoriteProduct(product.id)}
-                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
-                        >
-                          Remove
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFavoriteProduct(product.id)}
+                        className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                      >
+                        Remove
+                      </button>
                       </div>
                     </div>
                   ))}
@@ -2111,47 +2111,6 @@ export default function ECommercePage() {
                         <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{favoriteProducts.length ? `${favoriteProducts.length} items` : "Empty"}</span>
                       </span>
                     </button>
-                    <span className="h-6 w-px shrink-0 bg-[#d1d5db]" aria-hidden />
-                    <div
-                      ref={userMenuWrapRef}
-                      className="buyscreen-user-menu-wrap relative shrink-0"
-                      onBlurCapture={handleUserMenuBlurCapture}
-                    >
-                      <button
-                        type="button"
-                        aria-expanded={isUserMenuOpen}
-                        aria-haspopup="menu"
-                        className="buyscreen-user-summary buyscreen-user-trigger flex min-w-0 items-center gap-2 rounded-md border-0 bg-transparent px-2 py-1 text-left text-inherit"
-                        onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="buyscreen-header-action-icon shrink-0" aria-hidden>
-                          <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.8" />
-                          <path d="M5.8 19.2c1.1-2.5 3.3-3.8 6.2-3.8s5.1 1.3 6.2 3.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        </svg>
-                        <span className="min-w-0 leading-tight">
-                          <span className="block text-[11px] font-semibold sm:text-xs">User</span>
-                          <span className="buyscreen-user-secondary block text-[11px] sm:text-xs">Account</span>
-                        </span>
-                      </button>
-                      <div
-                        className={`buyscreen-user-menu-dropdown z-50 ${isUserMenuOpen ? "buyscreen-user-menu-dropdown--open" : ""}`}
-                        role="menu"
-                        aria-hidden={!isUserMenuOpen}
-                      >
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className="buyscreen-user-menu-item"
-                          tabIndex={isUserMenuOpen ? 0 : -1}
-                          onClick={() => {
-                            setIsUserMenuOpen(false);
-                            router.push("/login");
-                          }}
-                        >
-                          Logout
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </header>

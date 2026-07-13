@@ -11,11 +11,10 @@ import type { VideoBlockData } from "../videoblock/types";
 import { applyCustomButtonStyle } from "@/lib/blockpagesButtonStyles";
 import {
   collectEditableIconAnchors,
-  findCanvasVideoSlot,
 } from "@/lib/blockpagesEditTargets";
+import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 import DividerPreview from "../dividerblock/DividerPreview";
 import IconPreview from "../iconsblock/IconPreview";
-import BlockpagesInlineVideo from "../videoblock/BlockpagesInlineVideo";
 
 type OverlayKind = "image" | "button" | "video" | "icon";
 
@@ -44,6 +43,7 @@ type BlockpagesCanvasEnhancerProps = {
   editingIconId?: string | null;
   customIcons?: Record<string, IconBlockProps>;
   videoBlocks?: VideoBlockData[];
+  template?: BlockpagesTemplateId;
   appliedDividers?: { id: string; props: DividerBlockProps; position?: { x: number; y: number }; scale?: number }[];
   onRemoveDivider?: (id: string) => void;
   onUpdateDividerPosition?: (id: string, position: { x: number; y: number }) => void;
@@ -65,12 +65,14 @@ const OVERLAY_BUTTON_CLASS: Record<OverlayKind, string> = {
     "bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform border border-gray-200",
 };
 
-const OVERLAY_OFFSET: Record<OverlayKind, { top: number; left: number }> = {
-  image: { top: -8, left: -8 },
-  button: { top: -12, left: -12 },
-  video: { top: 16, left: -8 },
-  icon: { top: -8, left: -8 },
+const OVERLAY_DIMENSION: Record<OverlayKind, { width: number; height: number }> = {
+  image: { width: 36, height: 36 },
+  button: { width: 28, height: 28 },
+  video: { width: 36, height: 36 },
+  icon: { width: 36, height: 36 },
 };
+
+const OVERLAY_EDGE_PADDING = 4;
 
 function isInsideBuilderChrome(node: Element | null) {
   return Boolean(node?.closest("[data-builder-chrome='true']"));
@@ -270,12 +272,24 @@ function getOverlayPosition(
 
   if (elementRect.width < 1 || elementRect.height < 1) return null;
 
-  const offset = OVERLAY_OFFSET[kind];
-  const top =
+  const { width: overlayWidth, height: overlayHeight } = OVERLAY_DIMENSION[kind];
+  const pad = OVERLAY_EDGE_PADDING;
+
+  let top =
     kind === "video"
       ? elementRect.top - containerRect.top + 16
-      : elementRect.top - containerRect.top + offset.top;
-  const left = elementRect.right - containerRect.left + offset.left;
+      : elementRect.top - containerRect.top + pad;
+
+  // Place inside the top-right corner so overflow-x-hidden on the canvas does not clip the icon.
+  let left = elementRect.right - containerRect.left - overlayWidth - pad;
+
+  const containerWidth = containerRect.width;
+  const containerHeight = containerRect.height;
+
+  left = Math.min(left, containerWidth - overlayWidth - pad);
+  left = Math.max(pad, left);
+  top = Math.min(top, containerHeight - overlayHeight - pad);
+  top = Math.max(pad, top);
 
   return { top, left };
 }
@@ -297,6 +311,7 @@ export default function BlockpagesCanvasEnhancer({
   editingIconId,
   customIcons = {},
   videoBlocks = [],
+  template,
   appliedDividers = [],
   onRemoveDivider,
   onUpdateDividerPosition,
@@ -308,7 +323,6 @@ export default function BlockpagesCanvasEnhancer({
 }: BlockpagesCanvasEnhancerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iconRootsRef = useRef<Map<string, Root>>(new Map());
-  const videoRootRef = useRef<Root | null>(null);
   const [overlayTargets, setOverlayTargets] = useState<EditOverlayTarget[]>([]);
 
   const syncOverlayTargets = useCallback(() => {
@@ -372,50 +386,6 @@ export default function BlockpagesCanvasEnhancer({
         }
       }
     });
-
-    const videos = Array.from(container.querySelectorAll("video")).filter((video) => !isInsideBuilderChrome(video));
-    videos.forEach((video, index) => {
-      const videoId = video.getAttribute("data-blockpages-video-id") || `video_${index}`;
-      video.setAttribute("data-blockpages-video-id", videoId);
-
-      if (isVideoEditingMode && onEditVideo) {
-        const position = getOverlayPosition(container, video as HTMLElement, "video");
-        if (position) {
-          targets.push({
-            id: videoId,
-            kind: "video",
-            top: position.top,
-            left: position.left,
-            title: "Edit Video",
-          });
-        }
-      }
-    });
-
-    if (videos.length === 0 && isVideoEditingMode && onEditVideo) {
-      const heroImage = images.find((img) => {
-        const imageRect = (img as HTMLImageElement).getBoundingClientRect();
-        return imageRect.width >= 200;
-      }) as HTMLImageElement | undefined;
-
-      if (heroImage) {
-        const slot =
-          (heroImage.closest(".relative, .aspect-video, [class*='rounded']") as HTMLElement | null) ??
-          heroImage.parentElement;
-        (slot ?? heroImage).setAttribute("data-blockpages-video-slot", "true");
-
-        const position = getOverlayPosition(container, heroImage, "video");
-        if (position) {
-          targets.push({
-            id: "video_block",
-            kind: "video",
-            top: position.top,
-            left: position.left,
-            title: "Edit Video",
-          });
-        }
-      }
-    }
 
     const iconAnchors = collectEditableIconAnchors(container);
     iconAnchors.forEach((anchor, index) => {
@@ -503,12 +473,37 @@ export default function BlockpagesCanvasEnhancer({
       if (editingIconId === iconId) {
         anchor.style.outline = "2px dashed #63e5ff";
         anchor.style.outlineOffset = "4px";
-      } else if (!isIconEditingMode) {
+      } else if (isIconEditingMode) {
+        anchor.style.outline = "2px dashed #60a5fa";
+        anchor.style.outlineOffset = "4px";
+        anchor.style.cursor = "pointer";
+      } else {
         anchor.style.outline = "";
         anchor.style.outlineOffset = "";
+        anchor.style.cursor = "";
       }
     });
   }, [customImages, customButtons, editingImageId, editingButtonId, editingIconId, isButtonEditingMode, isIconEditingMode]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !isIconEditingMode || !onEditIcon) return;
+
+    const handleClick = (event: MouseEvent) => {
+      const slot = (event.target as Element | null)?.closest('[data-blockpages-icon-slot="true"]');
+      if (!slot || !container.contains(slot)) return;
+
+      const iconId = slot.getAttribute("data-blockpages-icon-id");
+      if (!iconId) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      onEditIcon(iconId);
+    };
+
+    container.addEventListener("click", handleClick, true);
+    return () => container.removeEventListener("click", handleClick, true);
+  }, [isIconEditingMode, onEditIcon]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -558,57 +553,6 @@ export default function BlockpagesCanvasEnhancer({
       }
     });
   }, [customIcons]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const videoProps = videoBlocks[0]?.props;
-    const hasSavedVideo =
-      typeof window !== "undefined" && Boolean(window.localStorage.getItem("portfolioVideoData"));
-    const hasVideoContent =
-      Boolean(videoProps?.sourceType === "upload" && videoProps.uploadUrl) ||
-      Boolean(videoProps?.sourceType === "embed" && videoProps.embedCode?.trim());
-
-    if (!hasSavedVideo || !hasVideoContent || !videoProps) {
-      return;
-    }
-
-    const slot = findCanvasVideoSlot(container);
-    if (!slot) return;
-
-    slot.setAttribute("data-blockpages-video-slot", "true");
-    slot.style.position = slot.style.position || "relative";
-    slot.style.overflow = "hidden";
-
-    const existingMedia = slot.querySelector("video, iframe, [data-blockpages-video-id]");
-    if (existingMedia && existingMedia.parentElement === slot) {
-      existingMedia.remove();
-    } else {
-      slot.querySelectorAll("img").forEach((img) => {
-        img.style.display = "none";
-      });
-    }
-
-    let mountPoint = slot.querySelector("[data-blockpages-video-mount]") as HTMLElement | null;
-    if (!mountPoint) {
-      mountPoint = document.createElement("div");
-      mountPoint.setAttribute("data-blockpages-video-mount", "true");
-      mountPoint.className = "h-full w-full min-h-[220px]";
-      slot.appendChild(mountPoint);
-    }
-
-    if (!videoRootRef.current) {
-      videoRootRef.current = createRoot(mountPoint);
-    }
-
-    videoRootRef.current.render(
-      createElement(BlockpagesInlineVideo, {
-        blockProps: videoProps,
-        posterFallback: customImages["video_block_bg"],
-      })
-    );
-  }, [videoBlocks, customImages]);
 
   useLayoutEffect(() => {
     syncOverlayTargets();

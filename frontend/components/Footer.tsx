@@ -202,14 +202,18 @@ export default function Footer() {
 
   const handleSubscribe = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmed = email.trim().replace(/\s+/g, "");
 
-    if (!trimmed) {
+    if (!email) {
       setFieldMessage({ type: "error", text: EMAIL_REQUIRED_ERROR });
       return;
     }
 
-    const emailError = getSignupEmailValidationError(trimmed.toLowerCase());
+    if (/\s/.test(email)) {
+      setFieldMessage({ type: "error", text: "Email address cannot contain spaces." });
+      return;
+    }
+
+    const emailError = getSignupEmailValidationError(email.toLowerCase());
     if (emailError) {
       setFieldMessage({ type: "error", text: emailError });
       return;
@@ -308,6 +312,11 @@ export default function Footer() {
                     onChange={(event) => {
                       setEmail(event.target.value);
                       if (fieldMessage) setFieldMessage(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === " ") {
+                        event.preventDefault();
+                      }
                     }}
                     placeholder="Your email"
                     className="min-w-0 w-full rounded-full bg-transparent py-3.5 pl-11 pr-14 text-sm text-[#0A1E3D] placeholder-[#0A1E3D] outline-none transition-colors duration-300 hover:text-gray-500 hover:placeholder-gray-400 focus:text-gray-500 focus:placeholder-gray-400"

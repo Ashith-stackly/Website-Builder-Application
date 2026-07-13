@@ -469,7 +469,7 @@ export default function PortfolioPreview({
 
 
                 {/* <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4 py-2 sm:py-3 md:px-8 lg:flex-nowrap border-b border-gray-300 bg-[#06224C] rounded-t-xl"> */}
-                <div className="sticky top-0 z-50 backdrop-blur-md bg-[#06224C]/95 flex w-full flex-wrap items-center justify-between gap-1 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3 md:px-8 border-b border-gray-300 sm:rounded-t-xl">
+                <div data-blockpages-template-header="true" className="sticky top-0 z-50 backdrop-blur-md bg-[#06224C]/95 flex w-full flex-wrap items-center justify-between gap-1 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3 md:px-8 border-b border-gray-300 sm:rounded-t-xl">
 
                   {/* ✅ MOBILE LAYOUT */}
                   <div className="flex flex-col w-full lg:hidden gap-2">
@@ -1748,7 +1748,7 @@ export default function PortfolioPreview({
                 </div>
 
                 {/* FOOTER SECTION */}
-                <footer id="footer" className="stackly-footer w-full px-4 sm:px-6 md:px-12 lg:px-20 py-12 lg:py-20 rounded-b-xl bg-[#06224C]" style={getSpecificSectionStyle('footer')}>
+                <footer id="footer" data-blockpages-template-footer="true" className="stackly-footer w-full px-4 sm:px-6 md:px-12 lg:px-20 py-12 lg:py-20 rounded-b-xl bg-[#06224C]" style={getSpecificSectionStyle('footer')}>
                   <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
                       {/* Brand Column */}
