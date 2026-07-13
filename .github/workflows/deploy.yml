@@ -20,35 +20,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+        working-directory: frontend
+
+      - name: Validate deployment environment
+        run: |
+          if [ -z "$NEXT_PUBLIC_API_BASE_URL" ]; then
+            echo "Missing GitHub secret NEXT_PUBLIC_API_BASE_URL. Set it to your deployed backend URL plus /api."
+            exit 1
+          fi
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
 
       - name: Build static site
         run: npm run build
+        working-directory: frontend
         env:
-          NEXT_PUBLIC_BASE_PATH: /Website-Builder-Application
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          # Must be the deployed backend URL plus /api, for example:
+          # https://stackly-backend.onrender.com/api
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
           # Set in repo secrets when Razorpay API is hosted (see .env.example)
           NEXT_PUBLIC_RAZORPAY_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}
           NEXT_PUBLIC_RAZORPAY_API_BASE: ${{ secrets.NEXT_PUBLIC_RAZORPAY_API_BASE }}
 
       - name: Disable Jekyll processing
-        run: touch out/.nojekyll
+        run: touch frontend/out/.nojekyll
 
       - name: Copy docs to build output
-        run: cp -r docs out/
+        run: cp -r docs frontend/out/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./out
+          path: ./frontend/out
 
   deploy:
     permissions:

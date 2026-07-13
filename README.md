@@ -156,6 +156,21 @@ reachable before starting the backend.
 | Frontend lint | `cd frontend && npm run lint` | ESLint |
 | Backend start | `cd backend && npm start` | Runs the API server |
 
+## Deployment
+
+GitHub Pages hosts the static frontend only. The workflow in `.github/workflows/deploy.yml`
+builds from `frontend/` and uploads `frontend/out/`.
+
+Required GitHub repository secret:
+
+| Secret | Value |
+|--------|-------|
+| `NEXT_PUBLIC_API_BASE_URL` | Your deployed backend URL plus `/api`, for example `https://stackly-backend.onrender.com/api` |
+
+The backend must be deployed separately. A Render blueprint is provided in `render.yaml`;
+when using it, set the prompted backend environment variables such as `MONGODB_URI`,
+`JWT_SECRET`, `JWT_REFRESH_SECRET`, `FRONTEND_URL`, `CORS_ORIGINS`, and `API_BASE_URL`.
+
 ---
 
 ## Development workflow
