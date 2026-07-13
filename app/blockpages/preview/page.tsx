@@ -7,9 +7,9 @@ import Footer from "@/components/Footer";
 import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProjectsSlider";
 import { animateStatCounterElement } from "@/lib/blockpagesStatCounter";
 import { sanitizeBlockpagesPreviewHtml } from "@/lib/blockpagesPreviewSanitize";
+import { TEXTBLOCK_PREVIEW_STORAGE_KEY } from "@/lib/blockpagesEditorPersistence";
 import { routePath } from "@/lib/paths";
 
-const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
 const PREVIEW_IFRAME_SRC = routePath("/blockpages/preview?mode=iframe");
  
 export default function BlockPreviewPage() {

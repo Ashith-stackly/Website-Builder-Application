@@ -38,6 +38,10 @@ import {
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
 } from "@/lib/blockpagesEditTargets";
+import {
+  loadPersistedTextBlockState,
+  persistTextBlockState,
+} from "@/lib/blockpagesEditorPersistence";
 import VideoCanvas from "./videoblock/Canvas";
 import VideoRightSidebar from "./videoblock/RightSidebar";
 import type { VideoBlockData } from "./videoblock/types";
@@ -126,10 +130,19 @@ export default function BlockPagesClient() {
     if (isTextEditorTemplate(parsed)) {
       setActiveBlockPage("text");
     }
-    setTextBlockState((current) => ({
-      ...current,
-      activeSectionId: getBlockpagesDefaultSectionId(parsed),
-    }));
+
+    const persisted = loadPersistedTextBlockState(parsed);
+    if (persisted) {
+      setTextBlockState({
+        ...persisted,
+        activeSectionId: persisted.activeSectionId ?? getBlockpagesDefaultSectionId(parsed),
+      });
+    } else {
+      setTextBlockState((current) => ({
+        ...current,
+        activeSectionId: getBlockpagesDefaultSectionId(parsed),
+      }));
+    }
   }, [searchParams]);
 
   const [buttonBlocks, setButtonBlocks] = useState<BlockData[]>([initialButtonBlock]);
@@ -510,6 +523,7 @@ export default function BlockPagesClient() {
     setPastTextStates((current) => [...current, textBlockState]);
     setFutureTextStates([]);
     setTextBlockState(nextState);
+    persistTextBlockState(textTemplate, nextState);
   };
  
   const undoText = () => {

@@ -291,7 +291,7 @@ function BuyMailIcon() {
 }
 
 
-export default function StorefrontPreview() {
+export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: string[] }) {
   const router = useRouter();
   const [activeProductStart, setActiveProductStart] = useState(0);
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -328,6 +328,7 @@ export default function StorefrontPreview() {
   const productsTouchStartXRef = useRef<number | null>(null);
   const productsTouchStartYRef = useRef<number | null>(null);
   const [carouselCols, setCarouselCols] = useState(3);
+  const isUserAccountHidden = hiddenElementIds.includes("buyscreen-user-account");
 
   useEffect(() => {
     try {
@@ -1103,7 +1104,8 @@ export default function StorefrontPreview() {
                     <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                   </svg>
                 </button>
-                <div data-top-header-profile-wrap className="buyscreen-user-menu-wrap relative shrink-0">
+                {!isUserAccountHidden ? (
+                <div data-top-header-profile-wrap data-blockpages-element-id="buyscreen-user-account" className="buyscreen-user-menu-wrap relative shrink-0">
                   <button
                     type="button"
                     className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/40 transition-colors hover:border-[#fef3c7] hover:bg-white/10 sm:h-8 sm:w-8"
@@ -1136,6 +1138,7 @@ export default function StorefrontPreview() {
                     </button>
                   </div>
                 </div>
+                ) : null}
               </div>
             </div>
 
@@ -1218,7 +1221,8 @@ export default function StorefrontPreview() {
                       <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                     </svg>
                   </button>
-                  <div data-top-header-profile-wrap className="buyscreen-user-menu-wrap relative shrink-0">
+                  {!isUserAccountHidden ? (
+                  <div data-top-header-profile-wrap data-blockpages-element-id="buyscreen-user-account" className="buyscreen-user-menu-wrap relative shrink-0">
                     <button
                       type="button"
                       className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/40 transition-colors hover:border-[#fef3c7] hover:bg-white/10"
@@ -1251,6 +1255,7 @@ export default function StorefrontPreview() {
                       </button>
                     </div>
                   </div>
+                  ) : null}
                 </div>
               </nav>
             </div>
@@ -1391,8 +1396,10 @@ export default function StorefrontPreview() {
                     <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{favoriteProducts.length ? `${favoriteProducts.length} items` : "Empty"}</span>
                   </span>
                 </button>
-                <span className="h-6 w-px shrink-0 bg-[#d1d5db]" aria-hidden />
-                <div ref={userMenuWrapRef} className="buyscreen-user-menu-wrap relative shrink-0">
+                {!isUserAccountHidden ? (
+                  <>
+                <span data-blockpages-user-account-divider className="h-6 w-px shrink-0 bg-[#d1d5db]" aria-hidden />
+                <div ref={userMenuWrapRef} data-blockpages-element-id="buyscreen-user-account" className="buyscreen-user-menu-wrap relative shrink-0">
                   <button
                     type="button"
                     aria-expanded={isUserMenuOpen}
@@ -1428,6 +1435,8 @@ export default function StorefrontPreview() {
                     </button>
                   </div>
                 </div>
+                  </>
+                ) : null}
               </div>
             </div>
           </header>

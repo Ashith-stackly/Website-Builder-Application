@@ -13,6 +13,7 @@ import {
   collectEditableIconAnchors,
 } from "@/lib/blockpagesEditTargets";
 import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
+import { BLOCKPAGES_CANVAS_RESTORED_EVENT } from "@/lib/blockpagesEditorPersistence";
 import DividerPreview from "../dividerblock/DividerPreview";
 import IconPreview from "../iconsblock/IconPreview";
 
@@ -418,7 +419,7 @@ export default function BlockpagesCanvasEnhancer({
     onEditIcon,
   ]);
 
-  useEffect(() => {
+  const applyCanvasCustomizations = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
@@ -483,7 +484,29 @@ export default function BlockpagesCanvasEnhancer({
         anchor.style.cursor = "";
       }
     });
-  }, [customImages, customButtons, editingImageId, editingButtonId, editingIconId, isButtonEditingMode, isIconEditingMode]);
+  }, [
+    customImages,
+    customButtons,
+    editingImageId,
+    editingButtonId,
+    editingIconId,
+    isButtonEditingMode,
+    isIconEditingMode,
+  ]);
+
+  useEffect(() => {
+    applyCanvasCustomizations();
+  }, [applyCanvasCustomizations]);
+
+  useEffect(() => {
+    const handleRestore = () => {
+      applyCanvasCustomizations();
+      syncOverlayTargets();
+    };
+
+    window.addEventListener(BLOCKPAGES_CANVAS_RESTORED_EVENT, handleRestore);
+    return () => window.removeEventListener(BLOCKPAGES_CANVAS_RESTORED_EVENT, handleRestore);
+  }, [applyCanvasCustomizations, syncOverlayTargets]);
 
   useEffect(() => {
     const container = containerRef.current;

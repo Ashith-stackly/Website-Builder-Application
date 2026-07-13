@@ -514,6 +514,8 @@ export default function Portfolioedit() {
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
   const { scrollY: canvasScrollY } = useScroll();
   const prefersReducedMotion = useReducedMotion();
+  const router = useRouter();
+
 
   const [heroImageProps] = useState({
     width: 165,
@@ -613,13 +615,14 @@ export default function Portfolioedit() {
             <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block">
               <div className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
                  <button
-                   onClick={() => setPreviewMode("preview")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "preview"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Preview"
+                    onClick={() => router.push("/landing#categories")}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#06224C] focus-visible:ring-offset-2 ${
+                      previewMode === "preview"
+                        ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
+                        : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
+                    }`}
+                    title="Preview"
+                    aria-label="Open Portfolio Preview"
                  >
                     <FaEye size={14} />
                  </button>
@@ -1362,7 +1365,11 @@ export default function Portfolioedit() {
                       { id: "07", title: "App Development", desc: "Mobile-first screens, component states, and interaction patterns for product teams." },
                       { id: "08", title: "Marketing", desc: "Campaign visuals, social assets, and creative direction for stronger digital presence." },
                     ].map((service) => (
-                      <div key={service.id} className="portfolio-service-card border border-gray-200 rounded-[20px] p-5 @sm:p-6 @lg:p-8 flex flex-col items-start transition-all duration-300 hover:-translate-y-2 hover:shadow-xl bg-white group hover:border-gray-300 cursor-pointer h-full min-w-0 max-w-full break-words overflow-hidden" style={{ animationDelay: `${Number(service.id) * 45}ms` }}>
+                      <div
+                        key={service.id}
+                        className="portfolio-service-card border border-gray-200 rounded-[20px] p-5 @sm:p-6 @lg:p-8 flex flex-col items-start transition-all duration-300 bg-white h-full min-w-0 max-w-full break-words overflow-hidden"
+                        style={{ animationDelay: `${Number(service.id) * 45}ms` }}
+                      >
                         <div className="w-12 h-12 mb-4 @sm:mb-6 flex items-center justify-center text-gray-800 shrink-0">
                           {service.id === "01" && <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>}
                           {service.id === "02" && <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>}
@@ -1378,10 +1385,10 @@ export default function Portfolioedit() {
                           {service.desc}
                         </p>
                         <div className="mt-auto flex flex-wrap items-center gap-1.5 w-full shrink-0 min-w-0">
-                          <div className="w-[30px] h-[30px] rounded-full bg-[#1a3636] text-white flex items-center justify-center text-[11px] font-semibold shrink-0 group-hover:bg-[#63e5ff] group-hover:text-gray-900 transition-colors">
+                          <div className="w-[30px] h-[30px] rounded-full bg-[#1a3636] text-white flex items-center justify-center text-[11px] font-semibold shrink-0">
                             {service.id}
                           </div>
-                          <div className="flex items-center text-gray-300 group-hover:text-gray-900 transition-colors min-w-0">
+                          <div className="flex items-center text-gray-300 min-w-0">
                             <span className="w-8 h-[1px] bg-current"></span>
                             <FaArrowRight size={10} className="-ml-[2px]" />
                           </div>
