@@ -44,6 +44,7 @@ import {
 import {
   getBlockpagesCanvasElement,
   scanCanvasForIconTargets,
+  scanCanvasForVideoTargets,
   scrollToFirstIconTarget,
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
