@@ -414,6 +414,21 @@ function LandingContactSection() {
 export default function Home() {
   const router = useRouter(); // Added router for navigation intercepts
   const [activeFilter, setActiveFilter] = useState<(typeof templateFilters)[number]["value"]>("all");
+  const [isFilterMounted, setIsFilterMounted] = useState(false);
+
+  useEffect(() => {
+    const savedFilter = sessionStorage.getItem("landing-active-filter");
+    if (savedFilter) {
+      setActiveFilter(savedFilter as any);
+    }
+    setIsFilterMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isFilterMounted) {
+      sessionStorage.setItem("landing-active-filter", activeFilter);
+    }
+  }, [activeFilter, isFilterMounted]);
   const [activeFeature, setActiveFeature] = useState(0);
   const [openFaq, setOpenFaq] = useState(-1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -441,6 +456,11 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Prevent native browser scroll restoration to avoid race conditions/clashing
+    if (window.history && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
     const navigationEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
     const isReload = navigationEntry?.type === "reload";
 
@@ -461,9 +481,9 @@ export default function Home() {
       sessionStorage.setItem("landing-page-scroll-position", window.scrollY.toString());
     };
 
-    window.addEventListener("scroll", saveScrollPosition, { passive: true });
+    window.addEventListener("beforeunload", saveScrollPosition);
     return () => {
-      window.removeEventListener("scroll", saveScrollPosition);
+      window.removeEventListener("beforeunload", saveScrollPosition);
     };
   }, []);
 

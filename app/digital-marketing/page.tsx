@@ -536,25 +536,7 @@ export default function DigitalMarketingPreviewPage() {
           : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6"
       }
     >
-      {!isBlockpages && (
-        <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
-          <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
-            <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
-              <FaEye size={16} />
-            </Link>
-            <div className="w-px h-6 bg-gray-300 mx-1"></div>
-            <button onClick={() => setDeviceMode("desktop")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "desktop" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Desktop View">
-              <FaLaptop size={16} />
-            </button>
-            <button onClick={() => setDeviceMode("tablet")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "tablet" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Tablet View">
-              <FaTabletAlt size={16} />
-            </button>
-            <button onClick={() => setDeviceMode("mobile")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "mobile" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Mobile View">
-              <FaMobileAlt size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+
 
       <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "preview" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         {/* RESPONSIVE CANVAS FRAME */}
@@ -703,7 +685,7 @@ export default function DigitalMarketingPreviewPage() {
                     <motion.h2 variants={fadeInUp} className="mb-4 text-[clamp(1.125rem,5cqw,1.5rem)] font-black text-[#0A1E3D] @md:text-[clamp(1.5rem,7cqw,2.25rem)]">
                       Empowering Brands Through Digital Innovation
                     </motion.h2>
-                    <motion.p variants={fadeInUp} className="mx-auto mb-12 max-w-3xl text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">
+                    <motion.p variants={fadeInUp} className="mx-auto mb-12 max-w-3xl text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-center">
                       We help businesses grow online with innovative digital marketing strategies,
                       creative solutions, and data-driven campaigns that deliver measurable
                       results and lasting success.
@@ -735,7 +717,7 @@ export default function DigitalMarketingPreviewPage() {
                                 <span className="h-2 w-2 shrink-0 rounded-full bg-green-400 @sm:h-2.5 @sm:w-2.5" />
                                 {card.badge}
                               </span>
-                              <p className="w-full min-w-0 break-words text-[clamp(1rem,4.5cqw,1.25rem)] font-semibold leading-snug text-[#0A1E3D] @md:text-[clamp(1.125rem,5cqw,1.5rem)] @xl:text-[clamp(1.25rem,6cqw,1.75rem)]">
+                              <p className="w-full min-w-0 break-words text-[clamp(1rem,4.5cqw,1.25rem)] font-medium leading-relaxed text-[#0A1E3D] @md:text-[clamp(1.125rem,5cqw,1.5rem)] @xl:text-[clamp(1.25rem,6cqw,1.75rem)] text-left">
                                 {card.text}
                               </p>
                             </div>
@@ -759,7 +741,7 @@ export default function DigitalMarketingPreviewPage() {
                     className="mx-auto max-w-6xl"
                   >
                     <motion.h2 variants={fadeInUp} className="mb-4 text-[clamp(1.25rem,6cqw,1.875rem)] font-bold text-white @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Our Services</motion.h2>
-                    <motion.p variants={fadeInUp} className="mb-12 max-w-md text-sm font-medium leading-relaxed text-white/80 @md:text-base">
+                    <motion.p variants={fadeInUp} className="mb-12 max-w-md text-sm font-medium leading-relaxed text-white/80 @md:text-base text-left">
                       Delivering innovative solutions that help businesses grow, improve efficiency, and achieve lasting success.
                     </motion.p>
                     <div className="grid grid-cols-1 gap-5 @xl:grid-cols-2 @4xl:grid-cols-3 @4xl:gap-6">
@@ -776,7 +758,7 @@ export default function DigitalMarketingPreviewPage() {
                             <h3 className="w-full min-w-0 break-words text-base font-semibold text-white @md:text-lg">{service.title}</h3>
                             <FaArrowRight className="shrink-0 text-white/70 transition group-hover:translate-x-1 group-hover:text-white group-focus:translate-x-1 group-focus:text-white" />
                           </div>
-                          <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-white/80 @md:text-base">{service.desc}</p>
+                          <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-white/80 @md:text-base text-left">{service.desc}</p>
                         </motion.div>
                       ))}
                     </div>
@@ -794,7 +776,7 @@ export default function DigitalMarketingPreviewPage() {
                   >
                     <motion.div variants={slideInLeft} className="min-w-0 @container pr-0 @3xl:pr-10">
                       <h2 className="mb-6 w-full max-w-[24rem] text-[clamp(1.25rem,6cqw,1.875rem)] font-bold leading-tight text-[#0A1E3D] break-words @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Business Planning and Development</h2>
-                      <p className="mb-10 text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">
+                      <p className="mb-10 text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-left">
                         At <span className="text-[#1E56E5]">Elevate Digital</span>, we help businesses turn ideas into actionable strategies for sustainable growth and success.
                       </p>
                       <div className="grid grid-cols-1 gap-5 @md:grid-cols-2">
@@ -804,7 +786,7 @@ export default function DigitalMarketingPreviewPage() {
                               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1E56E5]" />
                               <h3 className="min-w-0 break-words text-sm font-bold text-[#0A1E3D]">{card.title}</h3>
                             </div>
-                            <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">{card.desc}</p>
+                            <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-left">{card.desc}</p>
                           </div>
                         ))}
                       </div>
@@ -877,7 +859,7 @@ export default function DigitalMarketingPreviewPage() {
                               {whyChooseItems.map((item) => (
                                 <motion.li variants={fadeInUp} key={item} className="flex min-w-0 items-center gap-4">
                                   <FaRegCheckCircle className="shrink-0 text-[22px] text-[#0A1E3D]" />
-                                  <span className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">{item}</span>
+                                  <span className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-left">{item}</span>
                                 </motion.li>
                               ))}
                             </ul>
@@ -940,7 +922,7 @@ export default function DigitalMarketingPreviewPage() {
                       variants={fadeInUp}
                     >
                       <h2 className="mb-4 text-[clamp(1.25rem,6cqw,1.875rem)] font-bold text-[#0A1E3D] @md:text-[clamp(1.5rem,7cqw,2.25rem)]">What Client Says</h2>
-                      <p className="mx-auto mb-12 max-w-xl text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">
+                      <p className="mx-auto mb-12 max-w-xl text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-center">
                         Our client&apos;s success stories showcase the impact of <br className="hidden @sm:block" /> our digital marketing expertise.
                       </p>
                     </motion.div>
@@ -1023,7 +1005,7 @@ export default function DigitalMarketingPreviewPage() {
                   </p>
                   <div className="relative z-10 mx-auto max-w-2xl">
                     <motion.h2 variants={fadeInUp} className="mb-4 text-[clamp(1.125rem,5cqw,1.5rem)] font-black text-white @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Ready to Scale Your Growth?</motion.h2>
-                    <motion.p variants={fadeInUp} className="mb-8 text-sm font-medium leading-relaxed text-white/90 @md:text-base">
+                    <motion.p variants={fadeInUp} className="mb-8 text-sm font-medium leading-relaxed text-white/90 @md:text-base text-center">
                       Stop guessing. Start growing. Our performance audits reveal exactly where you&apos;re leaving money on the table. Join 100+ brands scaling with precision.
                     </motion.p>
                     <motion.div variants={fadeInUp} className="flex flex-wrap items-center justify-center gap-4">
@@ -1058,7 +1040,7 @@ export default function DigitalMarketingPreviewPage() {
                       <h2 className="mb-6 w-full max-w-[16rem] text-[clamp(1.25rem,6cqw,1.875rem)] font-bold leading-tight text-[#0A1E3D] break-words @md:text-[clamp(1.5rem,7cqw,2.25rem)]">
                         Get in<br />touch with us
                       </h2>
-                      <p className="mb-10 text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">
+                      <p className="mb-10 text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-left">
                         We&apos;re here to help! Whether you have a question about our services, need assistance with your account or want to provide feedback, our team is ready to assist you.
                       </p>
                       <div className="mb-10 space-y-6">
@@ -1173,7 +1155,26 @@ export default function DigitalMarketingPreviewPage() {
             </div>
           </div>
 
-      {!isBlockpages && (deviceMode === "desktop" || deviceMode === "preview") && <Footer />}
+      {!isBlockpages && <Footer />}
+      {!isBlockpages && (
+        <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+          <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
+            <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
+              <FaEye size={16} />
+            </Link>
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <button onClick={() => setDeviceMode("desktop")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "desktop" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Desktop View">
+              <FaLaptop size={16} />
+            </button>
+            <button onClick={() => setDeviceMode("tablet")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "tablet" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Tablet View">
+              <FaTabletAlt size={16} />
+            </button>
+            <button onClick={() => setDeviceMode("mobile")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "mobile" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Mobile View">
+              <FaMobileAlt size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

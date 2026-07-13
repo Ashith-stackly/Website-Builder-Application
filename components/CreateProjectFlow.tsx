@@ -109,12 +109,12 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       <div className="absolute inset-0 bg-[#06224C]/80 backdrop-blur-sm" onClick={onClose}></div>
  
       {/* Modal Card - Width is 95% of viewport to handle high zoom */}
-      <div className="relative w-full max-w-[95vw] sm:max-w-2xl bg-white rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
+      <div className="relative w-full max-w-[95vw] sm:max-w-2xl bg-white rounded-2xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
        
         {/* Header - Flexible for large text */}
-        <div className="p-4 sm:p-6 border-b border-gray-100 flex items-start justify-between bg-gray-50 gap-4">
+        <div className="p-4 sm:p-6 border-b border-gray-100 flex items-start justify-between bg-gray-50 gap-4 shrink-0">
           <div className="min-w-0">
-            <h3 className="text-lg sm:text-xl font-black text-[#06224C] uppercase tracking-widest break-words">
+            <h3 className="text-base sm:text-xl font-black text-[#06224C] uppercase tracking-wider sm:tracking-widest break-words">
               Create Project
             </h3>
             <p className="text-[10px] font-bold text-gray-400 uppercase">Step {step} of 4</p>
@@ -237,11 +237,11 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         </div>
  
         {/* Footer Actions - Uses flex-wrap for high zoom */}
-        <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center gap-2">
+        <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center gap-2 shrink-0">
           {step > 1 && (
             <button
               onClick={handleBack}
-              className="px-4 py-2 sm:px-8 sm:py-3 font-black text-[10px] sm:text-xs uppercase tracking-widest text-gray-400 hover:text-[#06224C] transition-colors"
+              className="px-4 py-2 sm:px-8 sm:py-3 font-black text-[10px] sm:text-xs uppercase tracking-widest text-gray-400 hover:text-[#06224C] transition-colors cursor-pointer"
             >
               Back
             </button>
@@ -251,7 +251,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <button
               onClick={handleNext}
               disabled={!!error || !projectData.name}
-              className="ml-auto bg-[#06224C] text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-blue-900 transition-all disabled:opacity-50 shadow-lg whitespace-nowrap"
+              className="ml-auto bg-[#06224C] text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-blue-900 transition-all disabled:opacity-50 shadow-lg whitespace-nowrap cursor-pointer disabled:cursor-not-allowed"
             >
               Continue <FaArrowRight className="inline ml-1" />
             </button>
@@ -259,7 +259,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <button
               onClick={handleBuild}
               disabled={!projectData.template || projectData.sections.length === 0}
-              className="ml-auto bg-green-600 text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg disabled:opacity-50 whitespace-nowrap"
+              className="ml-auto bg-green-600 text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg disabled:opacity-50 whitespace-nowrap cursor-pointer disabled:cursor-not-allowed"
             >
               Build <FaWandMagicSparkles className="inline ml-1" />
             </button>
