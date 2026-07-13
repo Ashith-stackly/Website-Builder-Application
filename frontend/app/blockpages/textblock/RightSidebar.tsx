@@ -1,13 +1,19 @@
 "use client";
  
 import { ChevronDown, ChevronLeft, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SectionStyleConfig, TextBlockState, TextEditorTarget, TextTemplateType } from "./types";
 import {
   dispatchBlockpagesScrollToSection,
   getBlockpagesDefaultSectionId,
   getBlockpagesTemplateSections,
 } from "@/lib/blockpagesTemplateSections";
+import {
+  BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT,
+  loadHiddenElements,
+  markHiddenElement,
+  unmarkHiddenElement,
+} from "@/lib/blockpagesEditorPersistence";
  
 type TextRightSidebarProps = {
   state: TextBlockState;
@@ -26,9 +32,22 @@ const targetLabels: Record<TextEditorTarget, string> = {
 export default function TextRightSidebar({ state, onStateChange, onClose, template = "portfolio" }: TextRightSidebarProps) {
   const [activeTab, setActiveTab] = useState<"properties" | "styles">("styles");
   const [showSection, setShowSection] = useState(true);
+  const [showUserAccount, setShowUserAccount] = useState(true);
   const { section, textStyles, selectedTarget, sectionStyles = {} } = state;
   const templateSections = getBlockpagesTemplateSections(template);
   const activeSectionId = state.activeSectionId ?? getBlockpagesDefaultSectionId(template);
+
+  useEffect(() => {
+    if (template !== "ecommerce") return;
+
+    const syncUserAccountVisibility = () => {
+      setShowUserAccount(!loadHiddenElements("ecommerce").includes("buyscreen-user-account"));
+    };
+
+    syncUserAccountVisibility();
+    window.addEventListener(BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT, syncUserAccountVisibility);
+    return () => window.removeEventListener(BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT, syncUserAccountVisibility);
+  }, [template]);
  
   const setTarget = (selectedTarget: TextEditorTarget) => onStateChange({ ...state, selectedTarget });
   const updateSection = (props: Partial<typeof section>) => onStateChange({ ...state, section: { ...section, ...props } });
@@ -210,6 +229,26 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
                     Bold Header Text
                   </label>
                 </div>
+                {template === "ecommerce" ? (
+                  <div>
+                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0B1D40]/20 bg-white px-3 py-2 text-sm font-semibold text-[#0B1D40]">
+                      <input
+                        type="checkbox"
+                        checked={showUserAccount}
+                        onChange={(event) => {
+                          const nextShowUserAccount = event.target.checked;
+                          setShowUserAccount(nextShowUserAccount);
+                          if (nextShowUserAccount) {
+                            unmarkHiddenElement("ecommerce", "buyscreen-user-account");
+                          } else {
+                            markHiddenElement("ecommerce", "buyscreen-user-account");
+                          }
+                        }}
+                      />
+                      Show user account
+                    </label>
+                  </div>
+                ) : null}
               </>
             )}
  

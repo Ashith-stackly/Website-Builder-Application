@@ -1,6 +1,6 @@
 "use client";
  
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown, Eye, Redo2, Save, Send, Undo2, Check, AlertTriangle, Loader2 } from "lucide-react";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import { routePath } from "@/lib/paths";
@@ -25,9 +25,23 @@ import type { TextBlockState, TextEditorTarget, TextStyles, TextTemplateType } f
 import type { DraftSaveStatus } from "../BlockPagesClient";
 import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
 import { sanitizeBlockpagesPreviewClone } from "@/lib/blockpagesPreviewSanitize";
- 
-const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
- 
+import {
+  TEXTBLOCK_PREVIEW_STORAGE_KEY,
+  applyCanvasContent,
+  applyHiddenElementsToCanvas,
+  captureCanvasContent,
+  buildHiddenElementsCss,
+  BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT,
+  dispatchCanvasRestoredEvent,
+  getCanvasContentRoot,
+  inferHiddenElementsFromCanvasHtml,
+  loadHiddenElements,
+  loadPersistedCanvasHtml,
+  persistCanvasHtml,
+  persistTextBlockState,
+  syncHiddenElementsFromCanvas,
+} from "@/lib/blockpagesEditorPersistence";
+
 type PreviewDevice = "desktop" | "tablet" | "mobile";
  
 type TextCanvasProps = {
@@ -123,11 +137,169 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const activeEditableRef = useRef<HTMLElement | null>(null);
+  const isRestoringCanvasRef = useRef(false);
+  const pendingCanvasHtmlRef = useRef<string | null>(null);
+  const [hiddenElementsRevision, setHiddenElementsRevision] = useState(0);
+  const [hiddenElementIds, setHiddenElementIds] = useState<string[]>([]);
+  const [hiddenElementsCss, setHiddenElementsCss] = useState("");
   const { section, isTextEditable } = state;
+
+  const refreshHiddenElementsState = useCallback(() => {
+    const hidden = loadHiddenElements(template);
+    setHiddenElementIds(hidden);
+    setHiddenElementsCss(buildHiddenElementsCss(template, hidden));
+  }, [template]);
  
   const selectTarget = (target: TextEditorTarget) => {
     onStateChange({ ...state, selectedTarget: target });
   };
+
+  useLayoutEffect(() => {
+    const savedHtml = pendingCanvasHtmlRef.current ?? loadPersistedCanvasHtml(template);
+    if (savedHtml) {
+      inferHiddenElementsFromCanvasHtml(template, savedHtml);
+    }
+    refreshHiddenElementsState();
+  }, [template, refreshHiddenElementsState]);
+
+  useLayoutEffect(() => {
+    refreshHiddenElementsState();
+  }, [hiddenElementsRevision, refreshHiddenElementsState]);
+
+  useEffect(() => {
+    pendingCanvasHtmlRef.current = loadPersistedCanvasHtml(template);
+  }, [template]);
+
+  useLayoutEffect(() => {
+    if (!canvasRef.current || isRestoringCanvasRef.current) return;
+
+    const savedHtml = pendingCanvasHtmlRef.current ?? loadPersistedCanvasHtml(template);
+    if (!savedHtml) return;
+
+    const currentHtml = captureCanvasContent(canvasRef.current);
+    if (currentHtml === savedHtml) {
+      pendingCanvasHtmlRef.current = null;
+      return;
+    }
+
+    isRestoringCanvasRef.current = true;
+    applyCanvasContent(canvasRef.current, savedHtml);
+    inferHiddenElementsFromCanvasHtml(template, savedHtml);
+    applyHiddenElementsToCanvas(canvasRef.current, template);
+    pendingCanvasHtmlRef.current = null;
+    isRestoringCanvasRef.current = false;
+    syncHiddenElementsFromCanvas(canvasRef.current, template);
+    refreshHiddenElementsState();
+    dispatchCanvasRestoredEvent();
+  }, [
+    template,
+    state.section,
+    state.sectionStyles,
+    state.isTextEditable,
+    state.selectedTarget,
+    refreshHiddenElementsState,
+  ]);
+
+  useLayoutEffect(() => {
+    if (!canvasRef.current) return;
+    applyHiddenElementsToCanvas(canvasRef.current, template);
+    if (syncHiddenElementsFromCanvas(canvasRef.current, template)) {
+      refreshHiddenElementsState();
+      setHiddenElementsRevision((value) => value + 1);
+    }
+  }, [template, state.section, state.sectionStyles, state.isTextEditable, state.selectedTarget, refreshHiddenElementsState]);
+
+  useEffect(() => {
+    const handleHiddenElementsChanged = () => {
+      if (!canvasRef.current) return;
+      applyHiddenElementsToCanvas(canvasRef.current, template);
+      refreshHiddenElementsState();
+      setHiddenElementsRevision((value) => value + 1);
+    };
+
+    window.addEventListener(BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT, handleHiddenElementsChanged);
+    return () => window.removeEventListener(BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT, handleHiddenElementsChanged);
+  }, [template, refreshHiddenElementsState]);
+
+  useEffect(() => {
+    const root = getCanvasContentRoot(canvasRef.current);
+    if (!root) return;
+
+    let timer: number | null = null;
+    const scheduleSave = () => {
+      if (isRestoringCanvasRef.current || !canvasRef.current) return;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (!canvasRef.current) return;
+        if (syncHiddenElementsFromCanvas(canvasRef.current, template)) {
+          refreshHiddenElementsState();
+          setHiddenElementsRevision((value) => value + 1);
+        }
+        const html = captureCanvasContent(canvasRef.current);
+        persistCanvasHtml(template, html);
+        pendingCanvasHtmlRef.current = html;
+      }, 250);
+    };
+
+    root.addEventListener("input", scheduleSave, true);
+    const observer = new MutationObserver((mutations) => {
+      scheduleSave();
+      for (const mutation of mutations) {
+        for (const node of Array.from(mutation.removedNodes)) {
+          if (!(node instanceof Element)) continue;
+          if (
+            node.matches("[data-blockpages-element-id]") ||
+            node.querySelector("[data-blockpages-element-id]")
+          ) {
+            if (syncHiddenElementsFromCanvas(canvasRef.current, template)) {
+              refreshHiddenElementsState();
+              setHiddenElementsRevision((value) => value + 1);
+            }
+            break;
+          }
+        }
+      }
+    });
+    observer.observe(root, {
+      subtree: true,
+      characterData: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["src", "style", "class"],
+    });
+
+    return () => {
+      root.removeEventListener("input", scheduleSave, true);
+      observer.disconnect();
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [template, refreshHiddenElementsState]);
+
+  useEffect(() => {
+    const syncFromStorage = () => {
+      const savedHtml = loadPersistedCanvasHtml(template);
+      if (!savedHtml || !canvasRef.current) return;
+
+      const currentHtml = captureCanvasContent(canvasRef.current);
+      if (currentHtml === savedHtml) return;
+
+      isRestoringCanvasRef.current = true;
+      applyCanvasContent(canvasRef.current, savedHtml);
+      inferHiddenElementsFromCanvasHtml(template, savedHtml);
+      applyHiddenElementsToCanvas(canvasRef.current, template);
+      isRestoringCanvasRef.current = false;
+      refreshHiddenElementsState();
+      setHiddenElementsRevision((value) => value + 1);
+      dispatchCanvasRestoredEvent();
+    };
+
+    window.addEventListener("focus", syncFromStorage);
+    window.addEventListener("storage", syncFromStorage);
+    return () => {
+      window.removeEventListener("focus", syncFromStorage);
+      window.removeEventListener("storage", syncFromStorage);
+    };
+  }, [template, refreshHiddenElementsState]);
  
   useEffect(() => {
     const activeText = canvasRef.current?.querySelector(".editable-text-active") as HTMLElement | null;
@@ -287,7 +459,14 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   };
  
   const openPreviewPage = () => {
-    const previewClone = canvasRef.current?.cloneNode(true) as HTMLDivElement | undefined;
+    if (!canvasRef.current) return;
+
+    syncHiddenElementsFromCanvas(canvasRef.current, template);
+    const canvasHtml = captureCanvasContent(canvasRef.current);
+    persistCanvasHtml(template, canvasHtml);
+    persistTextBlockState(template, state);
+
+    const previewClone = canvasRef.current.cloneNode(true) as HTMLDivElement | undefined;
     if (!previewClone) return;
 
     sanitizeBlockpagesPreviewClone(previewClone);
@@ -408,6 +587,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               ${buildBlockpagesDropdownStylesCss()}
 
               ${buildBlockpagesCardShadowCss(section.shadow)}
+
+              ${hiddenElementsCss}
             `}</style>
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div
@@ -558,7 +739,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         onUpdateIconScale={onUpdateIconScale}
                       >
                         {template === "ecommerce" ? (
-                          <StorefrontPreview />
+                          <StorefrontPreview hiddenElementIds={hiddenElementIds} />
                         ) : (
                           <TemplatePreviewRouter template={template} onPreview={previewHandler} />
                         )}

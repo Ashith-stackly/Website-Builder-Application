@@ -727,7 +727,7 @@ export default function ECommercePage() {
       ro.disconnect();
       window.removeEventListener("resize", check);
     };
-  }, []);
+  }, [isPreviewOpen]);
 
   useLayoutEffect(() => {
     if (!isCarouselMode) return;
@@ -740,7 +740,7 @@ export default function ECommercePage() {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [isCarouselMode]);
+  }, [isCarouselMode, isPreviewOpen]);
 
   function moveProducts(direction: number) {
     if (!totalProducts) return;
@@ -1003,7 +1003,7 @@ export default function ECommercePage() {
   }, [previewSrc, previewDevice, activePreviewFrame.height]);
 
   return (
-    <main className="buyscreen-page flex min-h-[100dvh] w-full max-w-full min-w-0 flex-col overflow-visible bg-[#f5f7fb] text-[#111827]">
+    <main className="buyscreen-page flex w-full max-w-full min-w-0 flex-col overflow-visible bg-[#f5f7fb] text-[#111827]">
 
       {isEmbeddedPreview && (
         <style dangerouslySetInnerHTML={{
@@ -1014,16 +1014,7 @@ export default function ECommercePage() {
               display: none !important;
             }
 
-            /* Hide the internal scrollbar in the preview window */
-            ::-webkit-scrollbar {
-              display: none !important;
-              width: 0 !important;
-              background: transparent !important;
-            }
-            html, body {
-              -ms-overflow-style: none !important;  /* IE and Edge */
-              scrollbar-width: none !important;  /* Firefox */
-            }
+            /* Internal scrollbar in preview window is kept visible to match other templates */
           `
         }} />
       )}
@@ -2010,34 +2001,27 @@ export default function ECommercePage() {
       ) : null}
 
 
-      <div ref={contentStartRef} className="w-full bg-white pb-12">
+      <div ref={contentStartRef} className={`w-full ${!isEmbeddedPreview && isPreviewOpen ? "bg-[#F3F4F6]" : "bg-white"}`}>
 
-        <section className="buyscreen-shell bg-white">
+        <section className={`buyscreen-shell ${!isEmbeddedPreview && isPreviewOpen ? "bg-transparent" : "bg-white"}`}>
           {!isEmbeddedPreview && isPreviewOpen ? (
-            <div className="space-y-10 px-4 py-8 sm:space-y-12 sm:px-8 sm:py-10 lg:py-12">
-              <section className="overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] bg-[linear-gradient(180deg,#f8fbff_0%,#eaf1f8_100%)] p-3 shadow-[0_20px_60px_rgba(15,35,75,0.12)] sm:p-5">
-                <div
-                  className="mx-auto transition-all duration-300"
-                  style={{
-                    width: activePreviewFrame.width,
-                    maxWidth: "100%",
-                  }}
-                >
-                  <div className="overflow-hidden rounded-[1.75rem] border border-[#cbd5e1] bg-white shadow-[0_30px_90px_rgba(15,23,42,0.18)]">
-                    <iframe
-                      ref={iframeRef}
-                      title={`${activePreviewFrame.label} storefront preview`}
-                      src={previewSrc}
-                      className={`block w-full border-0 bg-white ${(previewDevice === "tablet" || previewDevice === "mobile") ? "overflow-y-auto" : ""}`}
-                      style={{
-                        height: (previewDevice === "tablet" || previewDevice === "mobile")
-                          ? `${activePreviewFrame.height}px`
-                          : (typeof iframeHeight === "number" ? `${iframeHeight}px` : iframeHeight),
-                      }}
-                    />
-                  </div>
-                </div>
-              </section>
+            <div className="flex w-full flex-1 justify-center py-4 px-2 md:py-8 md:px-4 transition-all duration-500">
+              <div
+                className={`bg-white relative flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${
+                  previewDevice === "mobile"
+                    ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+                    : previewDevice === "tablet"
+                    ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+                    : "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
+                }`}
+              >
+                <iframe
+                  ref={iframeRef}
+                  title={`${activePreviewFrame.label} storefront preview`}
+                  src={previewSrc}
+                  className="block w-full h-full border-0 bg-white overflow-y-auto"
+                />
+              </div>
             </div>
           ) : (
             <>
@@ -2803,7 +2787,7 @@ export default function ECommercePage() {
           )}
         </section>
       </div>
-      {(!isPreviewOpen || isEmbeddedPreview) && <Footer />}
+      {!isEmbeddedPreview && <Footer />}
       {!isEmbeddedPreview && (
         <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-5 left-1/2 -translate-x-1/2 max-w-[calc(100vw-2rem)] overflow-x-hidden flex-nowrap whitespace-nowrap hidden md:block">
           <div className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-2.5 py-1 sm:px-3 sm:py-1.5 flex-nowrap whitespace-nowrap shrink-0 overflow-x-hidden">
