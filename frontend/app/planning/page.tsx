@@ -695,22 +695,7 @@ export default function PlanningPage() {
                   </div>
                 </div>
                 <div className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8" style={{ maxWidth: 500 }}>
-                  {!isFreeCheckout && isRazorpayDemoMode() ? (
-                    <div
-                      className="mb-4 rounded-lg border border-sky-300/40 bg-sky-500/15 px-3 py-2.5 text-left text-[11px] leading-snug text-sky-50 sm:text-xs"
-                      role="status"
-                    >
-                      <p className="font-semibold">Demo payment mode</p>
-                      <p className="mt-1">{getRazorpaySetupHint()}</p>
-                      <p className="mt-1 break-words text-white/75">
-                        Click the button below to test invoice + billing history. For real Razorpay: add{" "}
-                        <code className="break-all rounded bg-black/20 px-1">NEXT_PUBLIC_RAZORPAY_KEY_ID</code> and{" "}
-                        <code className="break-all rounded bg-black/20 px-1">RAZORPAY_KEY_SECRET</code> in .env.local, restart{" "}
-                        <code className="break-all rounded bg-black/20 px-1">npm run dev</code>, and run{" "}
-                        <code className="break-all rounded bg-black/20 px-1">npm run razorpay-api</code>.
-                      </p>
-                    </div>
-                  ) : null}
+
                   <div className="rounded-xl border border-white/15 bg-white/10 p-4 text-xs shadow-lg shadow-blue-950/10 backdrop-blur sm:p-5 sm:text-sm">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">Order summary</p>
                     <p className="mt-2 text-lg font-bold text-white">{selectedPlan.name}</p>
