@@ -330,6 +330,12 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [wishlistItems, setWishlistItems] = useState<StoredCommerceItem[]>([]);
   const [cartItems, setCartItems] = useState<StoredCommerceItem[]>([]);
   const [activePanel, setActivePanel] = useState<"wishlist" | "cart" | null>(null);
+  const [cartToast, setCartToast] = useState<string | null>(null);
+
+  const showCartToast = (message: string) => {
+    setCartToast(message);
+    window.setTimeout(() => setCartToast(null), 2200);
+  };
   const [searchSelected, setSearchSelected] = useState(false);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [navbarSearchQuery, setNavbarSearchQuery] = useState("");
@@ -561,6 +567,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     window.localStorage.setItem("cartItems", JSON.stringify(next));
     window.localStorage.setItem("cartCount", String(nextCount));
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
+    showCartToast("Removed from cart successfully");
   };
  
   const updateCartQuantity = (title: string, change: -1 | 1) => {
@@ -720,15 +727,17 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               <AnimatePresence>{activeMenu === "categories" && (<motion.div key="categories-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-[200px] rounded-xl border border-gray-100 bg-white py-2 shadow-2xl">
                 {navCategories.map(({ title, label, icon: Icon, items }) => (
                   <div key={title} className="group/category relative">
-                    <Link href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="flex items-center justify-between border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                    <Link href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="flex items-center justify-between border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition group-hover/category:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
                       <span className="flex items-center gap-2">
                         <Icon className="w-4 opacity-50" />
                         {title}
                       </span>
                       <FaChevronRight className="text-[8px] opacity-30 transition group-hover/category:opacity-100" />
                     </Link>
-                    <div className="invisible absolute left-full top-0 z-[110] min-h-full w-[220px] rounded-r-xl border border-gray-100 bg-gray-50 opacity-0 shadow-[10px_0_30px_rgba(0,0,0,0.10)] transition group-hover/category:visible group-hover/category:opacity-100 group-focus-within/category:visible group-focus-within/category:opacity-100">
-                      <div className="border-b border-gray-200 bg-white px-5 py-3 text-[11px] font-black text-blue-600">{label}</div>
+                    <div className={`invisible absolute left-full z-[110] w-[220px] rounded-r-xl border border-gray-100 bg-gray-50 opacity-0 shadow-[10px_0_30px_rgba(0,0,0,0.10)] transition group-hover/category:visible group-hover/category:opacity-100 group-focus-within/category:visible group-focus-within/category:opacity-100 max-h-[300px] overflow-y-auto ${
+                      ["BLOG", "EDUCATION", "NEWSPAPER", "PHOTOGRAPHY"].includes(title) ? "bottom-0" : "top-0"
+                    }`}>
+                      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-5 py-3 text-[11px] font-black text-blue-600">{label}</div>
                       {items.map((categoryItem) => (
                         <Link key={`${title}-${categoryItem}`} href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="block border-b border-black/[0.03] px-5 py-2.5 text-[10px] font-extrabold uppercase text-slate-700 transition hover:bg-blue-50 hover:pl-6 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
                           {categoryItem}
@@ -980,7 +989,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       <AnimatePresence>
       {mobileOpen && (
         <motion.div
-          className="stackly-mobile-menu mt-3 bg-[#06224C] pb-5 pt-3 text-[11px] font-bold uppercase tracking-widest text-white shadow-[inset_0_10px_24px_-12px_rgba(0,0,0,0.55)] lg:hidden"
+          className="stackly-mobile-menu mt-3 bg-[#06224C] pb-5 pt-3 text-[11px] font-bold uppercase tracking-widest text-white shadow-[inset_0_10px_24px_-12px_rgba(0,0,0,0.55)] lg:hidden max-h-[calc(100vh-95px)] overflow-y-auto overscroll-contain"
           variants={mobileMenuVariants}
           initial="closed"
           animate="open"
@@ -1242,6 +1251,12 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       </>
     )}
     </AnimatePresence>
+
+    {cartToast && (
+      <div className="fixed bottom-5 right-5 z-[20001] rounded-xl bg-[#06224C] px-5 py-3 text-sm font-bold text-white shadow-2xl">
+        {cartToast}
+      </div>
+    )}
     </>
   );
 }

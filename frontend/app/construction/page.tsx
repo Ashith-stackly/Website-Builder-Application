@@ -140,26 +140,15 @@ const navLinks = [
 function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" | "mobile" }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-
   // State to manage the mobile Projects dropdown
   const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false);
 
-  const profileRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
-  const handleLogout = useCallback(() => {
-    window.localStorage.removeItem("stackly-auth-token");
-    setProfileOpen(false);
-    setMobileOpen(false);
-    router.push("/login");
-  }, [router]);
-
   useEffect(() => {
-    if (!profileOpen && !mobileOpen) return;
+    if (!mobileOpen) return;
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (profileOpen && profileRef.current && !profileRef.current.contains(target)) setProfileOpen(false);
       if (mobileOpen && headerRef.current && !headerRef.current.contains(target)) {
         setMobileOpen(false);
         setMobileProjectsOpen(false); // Close submenu when closing main menu
@@ -167,7 +156,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
     };
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [profileOpen, mobileOpen]);
+  }, [mobileOpen]);
 
   const showDesktopNav = deviceMode === "desktop";
 
@@ -243,30 +232,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                   <path d="m21 21-4.3-4.3" />
                 </svg>
               </button> */}
-              <div ref={profileRef} className="relative">
-                <button
-                  type="button"
-                  aria-label="Profile"
-                  className="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
-                  onClick={() => {
-                    setProfileOpen(!profileOpen);
-                    setMobileOpen(false);
-                  }}
-                >
-                  <FaUser size={14} />
-                </button>
-                {profileOpen && (
-                  <div className="absolute top-12 right-0 w-40 py-2 bg-white rounded-lg shadow-xl border border-gray-100 z-[60]" data-blockpages-dropdown-panel="true">
-                    <button
-                      type="button"
-                      className="flex items-center gap-3 w-full py-2.5 px-4 text-left text-sm font-bold text-red-600 hover:bg-red-50"
-                      onClick={handleLogout}
-                    >
-                      <FaRightFromBracket size={14} /> Logout
-                    </button>
-                  </div>
-                )}
-              </div>
+
             </div>
           )}
 
@@ -688,7 +654,7 @@ export default function ConstructionTemplatePage() {
                       INTO REALITY
                     </h1>
 
-                    <p className={r("text-[#06152B] mb-6 text-sm leading-relaxed max-w-md sm:mb-8")}>
+                    <p className={r("text-gray-600 mb-6 text-sm leading-relaxed max-w-md sm:mb-8 text-justify")}>
                       Innovative and functional architectural solutions tailored to your vision and needs.
                     </p>
 
@@ -801,7 +767,7 @@ export default function ConstructionTemplatePage() {
                             <h3 className={r("text-base font-black text-[#0A1E3D] mb-2.5 leading-snug sm:text-lg sm:mb-3")}>
                               {p.title} <span className="text-sm font-medium text-gray-700 font-sans tracking-wide">({p.category})</span>
                             </h3>
-                            <p className={r("text-gray-700 text-sm mb-5 leading-relaxed flex-1 sm:mb-6")}>{p.desc}</p>
+                            <p className={r("text-sm leading-relaxed text-gray-600 text-justify mb-5 flex-1 sm:mb-6")}>{p.desc}</p>
                             <div className="flex justify-end">
                               {/* <button
                                 onClick={() => scrollToSection("const-projects")}
@@ -825,9 +791,9 @@ export default function ConstructionTemplatePage() {
                       setActiveTab("All Projects");
                       scrollToSection("const-projects");
                     }}
-                    className={r("inline-flex items-center gap-2 border border-[#0A1E3D]/20 bg-transparent px-7 py-3 rounded-md font-bold text-[#0A1E3D] hover:bg-[#0A1E3D]/5 transition-colors text-sm whitespace-nowrap")}
+                    className={r("inline-flex flex-wrap justify-center items-center gap-2 border border-[#0A1E3D]/20 bg-transparent px-5 sm:px-7 py-3 rounded-md font-bold text-[#0A1E3D] hover:bg-[#0A1E3D]/5 transition-colors text-sm max-w-full")}
                   >
-                    View All Projects <FaArrowRight size={12} />
+                    <span>View All Projects</span> <FaArrowRight size={12} className="shrink-0" />
                   </button>
                 </div>
               </div>
@@ -857,7 +823,7 @@ export default function ConstructionTemplatePage() {
                   ))}
                 </div>
 
-                <div className={r("bg-[#EAF2FA] px-5 pt-10 pb-10 rounded-b-2xl sm:px-12 sm:pt-16 sm:pb-16 sm:rounded-b-3xl")}>
+                <div className={r("bg-[#EAF2FA] px-5 pt-10 pb-16 rounded-b-2xl sm:px-12 sm:pt-16 sm:pb-24 sm:rounded-b-3xl")}>
                   <div className={r("grid grid-cols-1 gap-8 items-center lg:grid-cols-2 lg:gap-12")}>
                     <div>
                       <p className={r("text-gray-500 font-medium text-sm flex items-center gap-3 mb-4 sm:gap-4")}>
@@ -866,7 +832,7 @@ export default function ConstructionTemplatePage() {
                       <h2 className={r("text-2xl font-black text-[#0A1E3D] mb-5 leading-tight sm:text-3xl lg:text-4xl sm:mb-6")}>
                         Our Services That We Provide.
                       </h2>
-                      <p className="text-gray-600 text-sm leading-relaxed max-w-md">
+                      <p className="text-sm leading-relaxed text-gray-600 text-justify max-w-md">
                         We deliver reliable construction solutions with quality craftsmanship and industry expertise. From planning to project completion, our team ensures every detail is built to perfection.
                       </p>
                     </div>
@@ -881,7 +847,7 @@ export default function ConstructionTemplatePage() {
                   </div>
                 </div>
 
-                <div className={r("mt-9 lg:-mt-12 lg:px-12 relative z-10 sm:mt-8")}>
+                <div className={r("-mt-10 lg:-mt-20 lg:px-12 relative z-10 sm:-mt-16")}>
                   <div className={r("grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3")}>
                     {services.map((s, i) => (
                       <div
@@ -889,7 +855,7 @@ export default function ConstructionTemplatePage() {
                         className={r("blockpages-card group flex flex-col p-6 rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-2 sm:p-8 lg:p-10 lg:min-h-[400px] bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white")}
                       >
                         <h3 className={r("text-lg font-black mb-4 leading-snug whitespace-pre-line sm:text-xl sm:mb-6 lg:text-2xl")}>{s.title}</h3>
-                        <p className={r("text-sm mb-7 leading-relaxed flex-1 sm:mb-10 text-gray-600 group-hover:text-gray-300 transition-colors duration-300")}>{s.desc}</p>
+                        <p className={r("text-sm mb-7 leading-relaxed flex-1 sm:mb-10 text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-justify")}>{s.desc}</p>
                         <button
                           onClick={() => scrollToSection("const-contact")}
                           className={r("px-3 py-2 rounded-full font-bold text-xs transition-all duration-300 border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm border-[#0A1E3D]/30 text-[#0A1E3D] group-hover:border-white/30 group-hover:text-white hover:!bg-white hover:!text-[#0A1E3D]")}
@@ -940,7 +906,7 @@ export default function ConstructionTemplatePage() {
                           {step.step}
                         </div>
                         <h3 className={r("text-lg font-black text-[#0A1E3D] mb-2 sm:text-xl sm:mb-3")}>{step.title}</h3>
-                        <p className="text-sm text-gray-900 leading-relaxed">{step.desc}</p>
+                        <p className="text-sm text-gray-600 leading-relaxed text-justify">{step.desc}</p>
                       </div>
                     );
                   })}
@@ -1014,7 +980,7 @@ export default function ConstructionTemplatePage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E3D] via-[#0A1E3D]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 sm:p-8">
                         <span className={r("text-blue-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500")}>{project.category}</span>
                         <h3 className={r("text-white font-black text-xl sm:text-3xl mb-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75")}>{project.title}</h3>
-                        <p className={r("text-white/80 text-xs sm:text-sm leading-relaxed line-clamp-none sm:line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150")}>{project.desc}</p>
+                        <p className={r("text-white/80 text-sm leading-relaxed line-clamp-none sm:line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150 text-justify")}>{project.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -1070,7 +1036,7 @@ export default function ConstructionTemplatePage() {
                         >
                           <button
                             aria-expanded={isActive}
-                            className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base rounded-xl")} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
+                            className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base")} ${isActive ? "rounded-t-xl" : "rounded-xl"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
                             onClick={() => setActiveFaq(isActive ? null : i)}
                           >
                             <span>{faq.question}</span>
@@ -1079,7 +1045,7 @@ export default function ConstructionTemplatePage() {
                             />
                           </button>
                           {isActive && (
-                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 pt-2 mt-[-8px] sm:px-6 sm:pb-5")}>
+                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")}>
                               {faq.answer}
                             </div>
                           )}
@@ -1100,7 +1066,7 @@ export default function ConstructionTemplatePage() {
                         >
                           <button
                             aria-expanded={isActive}
-                            className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base rounded-xl")} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
+                            className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base")} ${isActive ? "rounded-t-xl" : "rounded-xl"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
                             onClick={() => setActiveFaq(isActive ? null : i)}
                           >
                             <span>{faq.question}</span>
@@ -1109,7 +1075,7 @@ export default function ConstructionTemplatePage() {
                             />
                           </button>
                           {isActive && (
-                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 pt-2 mt-[-8px] sm:px-6 sm:pb-5")}>
+                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")}>
                               {faq.answer}
                             </div>
                           )}
@@ -1124,20 +1090,22 @@ export default function ConstructionTemplatePage() {
             {/* =================================================================
                 7. TESTIMONIALS
             ================================================================= */}
-            <section className={r("w-full bg-[#FDF8F5] py-10 px-4 sm:py-24 sm:px-6 lg:px-8")}>
+            <section className={r("w-full bg-[#FDF8F5] pt-10 pb-4 px-4 sm:pt-24 sm:pb-8 sm:px-6 lg:px-8")}>
               <div className="max-w-7xl mx-auto">
-                <div className={r("mb-10 sm:mb-16 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-end")}>
-                  <div>
+                <div className={r("mb-10 sm:mb-16 lg:grid lg:grid-cols-3 lg:gap-8 lg:items-end")}>
+                  <div className="lg:col-span-2">
                     <p className={r("text-gray-500 font-medium uppercase tracking-widest text-xs sm:text-sm flex items-center gap-3 mb-3 sm:gap-4 sm:mb-4")}>
                       <span className={r("w-8 h-px bg-gray-400 block shrink-0 sm:w-12")} /> Testimonials
                     </p>
                     <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight sm:text-4xl lg:text-5xl")}>
-                      Trusted for Professional Construction Excellence.
+                      Trusted for Professional Construction Excellence
                     </h2>
                   </div>
-                  <p className={r("text-gray-600 text-sm leading-relaxed mt-4 lg:mt-0 lg:text-base")}>
-                    See how our commitment to quality, craftsmanship, and customer satisfaction has earned the trust of clients across every project we build.
-                  </p>
+                  <div className="lg:col-span-1">
+                    <p className={r("text-gray-600 text-sm leading-relaxed mt-4 lg:mt-0")}>
+                      See how our commitment to quality, craftsmanship, and customer satisfaction has earned the trust of clients across every project we build.
+                    </p>
+                  </div>
                 </div>
 
                 <div
@@ -1159,7 +1127,7 @@ export default function ConstructionTemplatePage() {
                             <FaStar />
                             <FaStar />
                           </div>
-                          <p className={r("text-sm leading-relaxed mb-10 flex-1 text-gray-600 group-hover:text-gray-300 transition-colors duration-500")}>&quot;{t.text}&quot;</p>
+                          <p className={r("text-sm leading-relaxed mb-10 flex-1 text-gray-600 group-hover:text-gray-300 transition-colors duration-500 text-justify")}>&quot;{t.text}&quot;</p>
                         </div>
 
                         <div className={r("border-t flex flex-col items-center text-center relative pt-8 border-gray-300 group-hover:border-gray-600 transition-colors duration-500")}>
@@ -1172,7 +1140,7 @@ export default function ConstructionTemplatePage() {
                   })}
                 </div>
 
-                <div className="flex justify-center gap-3 mb-8 sm:mb-12">
+                <div className="flex justify-center gap-3">
                   <button
                     aria-label="Previous Testimonial"
                     onClick={() => scrollTestimonials("left")}
@@ -1195,9 +1163,9 @@ export default function ConstructionTemplatePage() {
                 8. CTA
             ================================================================= */}
             <section className={r("w-full bg-[#FDF8F5] pb-10 px-4 sm:pb-24 sm:px-6 lg:px-8")}>
-              <div className={r("max-w-7xl mx-auto bg-[#EAF2FA] rounded-3xl p-6 flex flex-col gap-8 overflow-hidden shadow-sm border border-white sm:rounded-[2.5rem] sm:p-10 md:p-16 md:flex-row md:items-center md:gap-12")}>
-                <div className={r("w-full md:w-1/2 relative z-30")}>
-                  <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight mb-4 sm:text-3xl md:text-5xl sm:mb-6")}>
+              <div className={r("max-w-7xl mx-auto bg-[#EAF2FA] rounded-3xl p-6 flex flex-col gap-8 overflow-hidden shadow-sm border border-white sm:rounded-[2.5rem] sm:p-10 md:p-16 lg:flex-row lg:items-center lg:gap-12")}>
+                <div className={r("w-full lg:w-1/2 relative z-30")}>
+                  <h2 className={r("text-2xl font-black text-[#0A1E3D] leading-tight mb-4 sm:text-3xl lg:text-5xl sm:mb-6")}>
                     Let&apos;s Build Together with Expert Construction Services
                   </h2>
                   <p className={r("text-gray-600 text-sm leading-relaxed mb-6 max-w-md sm:text-base sm:mb-8")}>
@@ -1210,7 +1178,7 @@ export default function ConstructionTemplatePage() {
                     Call Us Now <FaArrowRight />
                   </button>
                 </div>
-                <div className={r("w-full md:w-1/2 relative h-44 sm:h-60 md:h-auto flex items-center justify-center")}>
+                <div className={r("w-full lg:w-1/2 relative h-44 sm:h-60 md:h-72 lg:h-auto flex items-center justify-center")}>
                   <img
                     src={assetPath("/draw.webp")}
                     className={r("absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 object-cover rounded-xl shadow-2xl -rotate-12 -translate-x-5 sm:-translate-x-8 md:-translate-x-8 lg:-translate-x-12 z-10 grayscale hover:grayscale-0 transition-all duration-500")}
