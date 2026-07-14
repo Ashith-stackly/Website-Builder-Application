@@ -6,13 +6,8 @@ import Footer from "../../components/Footer";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane, FaUtensils, FaUsers, FaCouch, FaLeaf, FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaBars, FaXmark } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
-import { assetPath } from "@/lib/paths";
 
 const START_BUILDING_HREF = "/signup";
-
-function restaurantAsset(path: string) {
-  return encodeURI(assetPath(path));
-}
 
 function scrollToSection(sectionId: string) {
   const target = document.getElementById(sectionId);
@@ -192,32 +187,32 @@ const foodItems = [
   {
     title: "Premium Ribeye Steak",
     price: "₹450",
-    image: restaurantAsset("/premium-ribeye-steak.webp"),
+    image: "/premium-ribeye-steak.webp",
   },
   {
     title: "Artisan Cafe Pastries",
     price: "₹120",
-    image: restaurantAsset("/artisan-cafe-pastries.webp"),
+    image: "/artisan-cafe-pastries.webp",
   },
   {
     title: "Authentic Wood-Fired Pizza",
     price: "₹180",
-    image: restaurantAsset("/authentic-wood-fired-pizza.webp"),
+    image: "/authentic-wood-fired-pizza.webp",
   },
   {
     title: "Avocado Brunch Toast",
     price: "₹140",
-    image: restaurantAsset("/avocado-brunch-toast.webp"),
+    image: "/avocado-brunch-toast.webp",
   },
   {
     title: "Gourmet Street Tacos",
     price: "₹160",
-    image: restaurantAsset("/gourmet-street-tacos.webp"),
+    image: "/gourmet-street-tacos.webp",
   },
   {
     title: "Classic Cheeseburger",
     price: "₹150",
-    image: restaurantAsset("/classic-cheeseburger.webp"),
+    image: "/classic-cheeseburger.webp",
   },
 ];
 
@@ -244,17 +239,17 @@ const testimonials = [
   {
     quote: "Absolutely delicious! The food, the service, and the atmosphere were all perfect. Highly recommended.",
     name: "John Smith",
-    role: "CEO, Besnik",
+    role: "Besnik",
   },
   {
     quote: "An unforgettable dining experience. Every dish was a masterpiece, full of rich flavors and beautiful presentation.",
     name: "Sarah Jenkins",
-    role: "Food Critic, Gourmet Life",
+    role: "Gourmet Life",
   },
   {
     quote: "The service was incredibly warm and friendly, and the relaxing ambience made our anniversary dinner truly special.",
     name: "Michael Chang",
-    role: "Founder, DineOut",
+    role: "DineOut",
   }
 ];
 
@@ -360,7 +355,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Base / Right Image */}
                   <div className="w-[60%] h-[90%] absolute right-0 top-[5%] rounded-3xl overflow-hidden shadow-lg z-10">
                     <img
-                      src={restaurantAsset("/Image - 2.webp")}
+                      src="/Image - 2.webp"
                       alt="Chef plating food in kitchen"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -369,7 +364,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Overlapping / Left Image */}
                   <div className="w-[55%] aspect-[1.3] absolute left-0 bottom-[5%] rounded-3xl overflow-hidden shadow-2xl z-20 border-[4px] sm:border-[6px] border-[#FFF5F5]">
                     <img
-                      src={restaurantAsset("/Image -1.webp")}
+                      src="/Image -1.webp"
                       alt="Drinks and gourmet dishes"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -398,9 +393,11 @@ export default function RestaurantTemplatesPage() {
                         <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                       </div>
                       <div className="flex-1 flex flex-col min-w-0">
-                        <div className="flex justify-between items-start gap-3">
-                          <h3 className="text-base sm:text-lg font-bold text-[#0A1E3D] break-words leading-tight flex-1">{item.title}</h3>
-                          <span className="font-black text-[#0F2D5C] shrink-0">{item.price}</span>
+                        <div className="flex justify-between items-center gap-3 flex-wrap min-w-0 w-full">
+                          <h3 className="text-base sm:text-lg font-bold text-[#0A1E3D] break-words leading-tight flex-1 min-w-0">{item.title}</h3>
+                          <span className="inline-flex items-center justify-center bg-[#0F2D5C] text-white text-xs sm:text-sm font-black px-3.5 py-1 rounded-full shrink-0 max-w-full ml-auto">
+                            {item.price}
+                          </span>
                         </div>
                       </div>
                     </article>
@@ -415,8 +412,8 @@ export default function RestaurantTemplatesPage() {
               <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
                 <div className="rounded-[2rem] overflow-hidden shadow-xl w-full min-w-0">
                   <img
-                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop"
-                    alt="Restaurant Interior"
+                    src="/Restaurant-OurStory.webp"
+                    alt="Restaurant Our Story"
                     className="w-full h-auto aspect-[4/3] object-cover max-w-full"
                   />
                 </div>
@@ -518,53 +515,6 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
-            {/* 4. BUILD YOUR WAY (FEATURES) */}
-            <section id="restaurant-features" className={`bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-              }`}>
-              <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
-                <div className="break-words order-2 lg:order-1 min-w-0">
-                  <h2 className={r("font-black text-[#0A1E3D] text-balance leading-tight mb-8 text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>Build your restaurant site your way.</h2>
-                  <div className="space-y-8">
-                    {buildFeatures.map((item) => (
-                      <div key={item.title} className="min-w-0 break-words">
-                        <h3 className="text-base sm:text-lg font-bold text-[#0A1E3D] mb-2 break-words">{item.title}</h3>
-                        <p className="text-sm sm:text-base text-gray-600 leading-relaxed break-words">{item.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <Link href={START_BUILDING_HREF} className="inline-flex items-center justify-center min-h-[3.5rem] mt-10 px-4 sm:px-8 rounded-full bg-[#0A1E3D] text-white text-sm sm:text-base font-bold transition-all hover:bg-[#112a52] hover:-translate-y-1 hover:shadow-lg w-full sm:w-auto text-center">
-                    Create Your Site
-                  </Link>
-                </div>
-                <div className="rounded-[2rem] overflow-hidden shadow-2xl order-1 lg:order-2 w-full min-w-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?q=80&w=800&auto=format&fit=crop"
-                    alt="Chef plating food"
-                    className="w-full h-auto aspect-[4/3] object-cover max-w-full"
-                  />
-                </div>
-              </div>
-            </section>
-
-
-            {/* 5. INFRASTRUCTURE */}
-            <section className={`bg-[#0A1E3D] text-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
-              }`}>
-              <div className="max-w-7xl mx-auto">
-                <div className={r("bg-white/5 rounded-3xl border border-white/10 p-6 sm:p-10 lg:p-16")}>
-                  <h2 className={r("font-black mb-10 max-w-2xl text-balance leading-tight text-xl sm:text-2xl md:text-3xl lg:text-4xl break-words")}>The powerful infrastructure behind your restaurant.</h2>
-                  <div className={r("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12")}>
-                    {infraItems.map((item) => (
-                      <div key={item.title} className="border-t border-white/20 pt-6 min-w-0 break-words">
-                        <h3 className="text-base sm:text-lg font-bold mb-3 break-words">{item.title}</h3>
-                        <p className="text-gray-300 leading-relaxed text-xs sm:text-sm break-words">{item.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-
             {/* 6. FAQ */}
             <section id="restaurant-faq" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
               }`}>
@@ -612,7 +562,7 @@ export default function RestaurantTemplatesPage() {
                     <div className={r("flex-1 max-w-[200px] sm:max-w-[240px] w-full flex justify-center min-w-0")}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src={restaurantAsset("/testimonial-1.webp")}
+                          src="/testimonial-1.webp"
                           alt="Guest Experience 1"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"
@@ -672,7 +622,7 @@ export default function RestaurantTemplatesPage() {
                     <div className={r(`flex-1 max-w-[200px] sm:max-w-[240px] w-full justify-center min-w-0 ${deviceMode === "desktop" ? "lg:flex hidden" : "hidden"}`)}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src={restaurantAsset("/testimonial-2.webp")}
+                          src="/testimonial-2.webp"
                           alt="Guest Experience 2"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"

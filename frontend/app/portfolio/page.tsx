@@ -379,10 +379,10 @@ function Footer() {
               <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-white">Subscribe to our Updates</h3>
               <p className="mb-4 max-w-md text-sm leading-relaxed text-white/60">Get template drops, builder updates, and product notes in your inbox.</p>
               <form onSubmit={handleSubscribe} className="flex flex-wrap items-center gap-3 w-full max-w-md" aria-label="Subscribe to updates form" noValidate>
-                <div className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300 min-w-[240px]">
+                <div className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300 w-full min-w-0 isolate">
                   <label className="relative flex flex-grow items-center min-w-0">
                     <span className="sr-only">Email address</span>
-                    <FaEnvelope6 className="absolute left-4 text-gray-400" />
+                    <FaEnvelope6 className="absolute left-3.5 text-gray-400" />
                     <input
                       type="email"
                       value={email}
@@ -393,7 +393,7 @@ function Footer() {
                         }
                       }}
                       placeholder="Your email"
-                      className="w-full min-w-0 bg-transparent py-2.5 pl-11 pr-2 text-sm text-gray-800 focus:outline-none"
+                      className="w-full min-w-0 bg-transparent py-2.5 pl-10 pr-3 text-sm text-gray-800 focus:outline-none"
                       disabled={isSubmitting}
                     />
                   </label>
@@ -1456,32 +1456,32 @@ export default function Portfolioedit() {
                       {
                         tag: "Graphics Design",
                         title: "UI / UX Mobile App Design",
-                        img: "https://images.unsplash.com/photo-1542744094-3a31f272c490?w=500&h=500&fit=crop"
+                        img: "/mobile-app-design.webp"
                       },
                       {
                         tag: "UI UX Design",
                         title: "Website Template Design",
-                        img: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&h=500&fit=crop"
+                        img: "/Website-Template-Design.webp"
                       },
                       {
                         tag: "Programming",
                         title: "ISO App Development",
-                        img: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&h=500&fit=crop"
+                        img: "/ISO-App-Development.webp"
                       },
                       {
                         tag: "Graphics Design",
-                        title: "Handcraft With Palm Fan",
-                        img: "https://images.unsplash.com/photo-1542744094-3a31f272c490?w=500&h=500&fit=crop"
+                        title: "Branding Agency",
+                        img: "/Branding-Agency.webp"
                       },
                       {
                         tag: "Marketing",
                         title: "Social Media Marketing",
-                        img: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&h=500&fit=crop"
+                        img: "/Social-Media.webp"
                       },
                       {
                         tag: "Development",
                         title: "Full Stack Web Application",
-                        img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?w=500&h=500&fit=crop"
+                        img: "/Full-stack.webp"
                       }
                     ].map((proj, i) => (
                       <div key={i} className="portfolio-project-card flex flex-col w-full max-w-[320px] cursor-pointer group box-border" style={{ animationDelay: `${i * 80}ms` }}>
@@ -1492,7 +1492,7 @@ export default function Portfolioedit() {
                             width={500}
                             height={500}
                             sizes="(max-width: 768px) 100vw, 320px"
-                            className="w-full h-auto object-cover group-hover:scale-110 transition-transform duration-700"
+                            className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
                             unoptimized
                           />
                         </div>

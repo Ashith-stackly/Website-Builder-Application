@@ -820,8 +820,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             {...iconButtonMotion}
             type="button"
             onClick={() => {
-              setSearchSelected(true);
-              setIsSearchPanelOpen(true);
+              setSearchSelected((prev) => !prev);
+              setIsSearchPanelOpen((prev) => !prev);
               setActivePanel(null);
               setIsProfileMenuOpen(false);
               closeMenus();
