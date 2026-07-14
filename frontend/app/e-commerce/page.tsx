@@ -7,7 +7,16 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Footer from "@/components/Footer";
 import { assetPath, routePath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
-import { Heart } from "lucide-react";
+import { Heart, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  loadRazorpayCheckoutScript,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  openRazorpayCheckout,
+  isRazorpayDemoMode,
+  getRazorpaySetupHint
+} from "@/lib/razorpayClient";
 
 const buyCategoryNavClass =
   "buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
@@ -433,6 +442,10 @@ export default function ECommercePage() {
   const [licenseQty, setLicenseQty] = useState(1);
   const [activeBlogPost, setActiveBlogPost] = useState<BuyBlogPost | null>(null);
   const [actionToast, setActionToast] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+  const [paymentSuccessDetails, setPaymentSuccessDetails] = useState<{ paymentId: string; orderId: string; amount: number } | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const contentStartRef = useRef<HTMLDivElement | null>(null);
   const allCategoriesWrapRef = useRef<HTMLDivElement | null>(null);
@@ -915,6 +928,75 @@ export default function ECommercePage() {
   const lineTotalCents = licenseProduct ? licenseProduct.unitPriceCents * licenseQty : 0;
   const cartTotalCents = cartItems.reduce((sum, item) => sum + item.product.unitPriceCents * item.qty, 0);
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
+
+  const handleCheckout = async () => {
+    setPaymentLoading(true);
+    setPaymentError(null);
+
+    if (isRazorpayDemoMode()) {
+      try {
+        await new Promise((r) => window.setTimeout(r, 900));
+        setPaymentSuccessDetails({
+          paymentId: `pay_demo_${Math.random().toString(36).substring(2, 9)}`,
+          orderId: `order_demo_${Math.random().toString(36).substring(2, 9)}`,
+          amount: cartTotalCents,
+        });
+        setPaymentSuccess("Payment Successful!");
+        setCartItems([]);
+        setIsCartOpen(false);
+      } catch (e) {
+        setPaymentError("Demo checkout failed");
+      } finally {
+        setPaymentLoading(false);
+      }
+      return;
+    }
+
+    try {
+      await loadRazorpayCheckoutScript();
+      
+      const order = await createRazorpayOrder({
+        amountPaise: cartTotalCents,
+        planName: "E-Commerce Purchase",
+        billingPeriod: "One-Time",
+      });
+
+      setPaymentLoading(false);
+
+      openRazorpayCheckout({
+        order,
+        planLabel: `Purchase of ${cartItems.length} items from Curated Tech Store`,
+        customerName: "Demo Customer",
+        customerEmail: "customer@example.com",
+        customerPhone: "9876543210",
+        onDismiss: () => setPaymentLoading(false),
+        onSuccess: async (response) => {
+          setPaymentLoading(true);
+          try {
+            const verified = await verifyRazorpayPayment(response);
+            if (!verified) throw new Error("Payment verification failed");
+            
+            // Payment success handling
+            setPaymentSuccessDetails({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              amount: cartTotalCents,
+            });
+            setPaymentSuccess("Payment Successful!");
+            setCartItems([]);
+            setIsCartOpen(false);
+          } catch (e) {
+            setPaymentError(e instanceof Error ? e.message : "Payment failed");
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+      });
+    } catch (e) {
+      setPaymentError(e instanceof Error ? e.message : "Could not start payment");
+      setPaymentLoading(false);
+    }
+  };
 
   const previewParams = new URLSearchParams(searchParams.toString());
   previewParams.set(BUY_PREVIEW_QUERY_KEY, "embed");
@@ -1913,12 +1995,31 @@ export default function ECommercePage() {
                   <span className="text-sm font-black uppercase tracking-[0.28em] text-gray-500">Subtotal</span>
                   <span className="text-2xl font-black tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</span>
                 </div>
+                {paymentError && (
+                  <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 p-3 text-[12px] font-semibold text-red-600 border border-red-100">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                    <span>{paymentError}</span>
+                  </div>
+                )}
+                {isRazorpayDemoMode() && (
+                  <div className="mb-4 rounded-xl bg-amber-50/60 p-3 text-[11px] font-bold text-amber-700 border border-amber-100">
+                    {getRazorpaySetupHint() || "Demo Mode: Payment completes locally without keys."}
+                  </div>
+                )}
                 <button
                   type="button"
-                  onClick={() => alert("Checkout is coming soon.")}
-                  className="flex w-full items-center justify-center rounded-2xl bg-[#06224C] px-6 py-4 text-sm font-black uppercase tracking-[0.35em] text-white shadow-xl transition hover:bg-blue-900 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                  disabled={paymentLoading}
+                  onClick={handleCheckout}
+                  className="flex w-full items-center justify-center rounded-2xl bg-[#06224C] px-6 py-4 text-sm font-black uppercase tracking-[0.35em] text-white shadow-xl transition hover:bg-blue-900 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
                 >
-                  Checkout Now
+                  {paymentLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Checkout Now"
+                  )}
                 </button>
               </div>
             )}
@@ -2886,6 +2987,50 @@ export default function ECommercePage() {
           {actionToast}
         </div>
       ) : null}
+      {paymentSuccess && paymentSuccessDetails && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col items-center text-center font-sans"
+          >
+            <div className="h-16 w-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4">
+              <CheckCircle2 className="h-10 w-10" />
+            </div>
+            
+            <h2 className="text-xl font-bold text-[#06224C] mb-2">Order Placed Successfully!</h2>
+            <p className="text-sm text-slate-500 mb-6">
+              Thank you for your purchase. Your payment has been processed and verified securely.
+            </p>
+
+            <div className="w-full bg-[#f8fafc] border border-slate-100 rounded-2xl p-4 text-left text-xs font-semibold text-slate-600 space-y-2 mb-6">
+              <div className="flex justify-between">
+                <span>Payment ID</span>
+                <span className="text-[#06224C] font-bold">{paymentSuccessDetails.paymentId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Order ID</span>
+                <span className="text-[#06224C] font-bold">{paymentSuccessDetails.orderId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Amount Paid</span>
+                <span className="text-[#06224C] font-bold">{formatUsd(paymentSuccessDetails.amount)}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPaymentSuccess(null);
+                setPaymentSuccessDetails(null);
+              }}
+              className="w-full py-3.5 bg-[#06224C] text-white font-bold rounded-2xl transition hover:bg-blue-900 active:scale-[0.98] text-sm uppercase tracking-[0.2em]"
+            >
+              Continue Shopping
+            </button>
+          </motion.div>
+        </div>
+      )}
     </main>
   );
 }
