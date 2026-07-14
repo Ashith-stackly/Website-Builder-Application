@@ -3,18 +3,16 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
-import { ImageIcon, Layers2, Paintbrush, Plus, RefreshCw, Sparkles, SquareMousePointer, Trash2, X } from "lucide-react";
+import { Layers2, Paintbrush, Sparkles, SquareMousePointer, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ImagePicker } from "@/components/assets/ImagePicker";
-import { ICON_NAMES } from "@/components/draggable/IconComponent";
-import { blockRegistry } from "@/lib/blockRegistry";
 import type { BuilderComponent } from "@/types/builder";
+import { blockRegistry } from "@/lib/blockRegistry";
+import { ICON_NAMES } from "@/components/draggable/IconComponent";
 import { ContentField, contentInputClass } from "@/components/builder/PanelFields";
 import { StyleTab } from "./panel/StyleTab";
 import { EffectsTab } from "./panel/EffectsTab";
 import LayersPanel from "./LayersPanel";
 import { ImagePanel } from "@/components/blocks/image/ImagePanel";
-import { useAssetStore } from "@/store/assetStore";
 import { ROW_LAYOUTS } from "@/components/draggable/RowComponent";
 
 type Tab = "content" | "style" | "effects" | "layers";
@@ -25,179 +23,6 @@ const TABS: Array<{ id: Tab; label: string; Icon: LucideIcon }> = [
   { id: "effects",  label: "Effects",  Icon: Sparkles },
   { id: "layers",   label: "Layers",   Icon: Layers2 },
 ];
-
-const imagePresets = [
-  "/showcase.webp",
-  "/landing-optimized/portfolio03.webp",
-  "/landing-optimized/ecommerce.webp",
-  "/landing-optimized/business09.webp",
-  "/landing-optimized/construction02.webp",
-  "/landing-optimized/foodd03.webp",
-];
-
-type GalleryItem = {
-  src: string;
-  caption: string;
-};
-
-const parseGalleryContent = (content: string): GalleryItem[] =>
-  content
-    .split("\n")
-    .map((line) => {
-      const [rawSrc = "", ...captionParts] = line.split("|");
-      return {
-        src: rawSrc.trim(),
-        caption: captionParts.join("|").trim(),
-      };
-    })
-    .filter((item) => item.src);
-
-const serializeGalleryContent = (items: GalleryItem[]) =>
-  items
-    .filter((item) => item.src.trim())
-    .map((item) => `${item.src.trim()}|${item.caption.trim() || "Image"}`)
-    .join("\n");
-
-function GalleryContentEditor({
-  component,
-  onUpdate,
-}: {
-  component: BuilderComponent;
-  onUpdate: (id: string, updates: Partial<BuilderComponent>) => void;
-}) {
-  const getDataUrl = useAssetStore((s) => s.getDataUrl);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
-  const items = parseGalleryContent(component.content);
-
-  const saveItems = (next: GalleryItem[]) => {
-    onUpdate(component.id, { content: serializeGalleryContent(next) });
-  };
-
-  const openPicker = (index: number | null = null) => {
-    setReplaceIndex(index);
-    setPickerOpen(true);
-  };
-
-  const handleSelectImage = async (url: string, assetId?: string) => {
-    let src = url;
-
-    if (assetId) {
-      const dataUrl = await getDataUrl(assetId);
-      if (dataUrl) src = dataUrl;
-    }
-
-    const next = [...items];
-    if (replaceIndex === null) {
-      next.push({ src, caption: "Image" });
-    } else {
-      next[replaceIndex] = { ...next[replaceIndex], src };
-    }
-
-    saveItems(next);
-    setPickerOpen(false);
-    setReplaceIndex(null);
-  };
-
-  const updateCaption = (index: number, caption: string) => {
-    const next = items.map((item, itemIndex) => (itemIndex === index ? { ...item, caption } : item));
-    saveItems(next);
-  };
-
-  const removeItem = (index: number) => {
-    saveItems(items.filter((_, itemIndex) => itemIndex !== index));
-  };
-
-  const addPreset = (src: string) => {
-    saveItems([...items, { src, caption: src.split("/").pop()?.replace(/\.\w+$/, "") || "Image" }]);
-  };
-
-  return (
-    <div className="space-y-4">
-      <button
-        type="button"
-        onClick={() => openPicker()}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B1D40] px-3 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
-      >
-        <ImageIcon className="h-3.5 w-3.5" />
-        Add from Assets
-      </button>
-
-      {items.length === 0 ? (
-        <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#0B1D40]/20 bg-white/60 text-center text-[#566583]">
-          <ImageIcon className="h-8 w-8 text-[#0B1D40]/30" />
-          <span className="text-[12px] font-medium">No gallery images selected</span>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {items.map((item, index) => (
-            <div key={`${item.src}-${index}`} className="overflow-hidden rounded-xl border border-[#0B1D40]/10 bg-white/70">
-              <div className="relative h-32 bg-[#eef4fb]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.src}
-                  alt={item.caption || `Gallery image ${index + 1}`}
-                  className="h-full w-full object-cover"
-                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                />
-                <div className="absolute right-2 top-2 flex gap-1.5">
-                  <button
-                    type="button"
-                    title="Replace image"
-                    onClick={() => openPicker(index)}
-                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white/95 text-[#0B1D40] shadow-sm transition hover:bg-blue-50"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Remove image"
-                    onClick={() => removeItem(index)}
-                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white/95 text-red-500 shadow-sm transition hover:bg-red-50"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-              <div className="p-2">
-                <input
-                  className={contentInputClass}
-                  value={item.caption}
-                  onChange={(event) => updateCaption(index, event.target.value)}
-                  placeholder="Caption"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-2">
-        {imagePresets.slice(1, 5).map((src) => (
-          <button
-            key={src}
-            type="button"
-            className="flex items-center justify-center gap-1.5 truncate rounded-lg border border-[#0B1D40]/20 bg-white/60 px-2 py-2 text-[10px] font-bold text-[#0B1D40] transition hover:bg-[#0B1D40]/5"
-            onClick={() => addPreset(src)}
-          >
-            <Plus className="h-3 w-3 shrink-0" />
-            {src.split("/").pop()?.replace(".webp", "")}
-          </button>
-        ))}
-      </div>
-
-      <ImagePicker
-        open={pickerOpen}
-        onClose={() => {
-          setPickerOpen(false);
-          setReplaceIndex(null);
-        }}
-        onSelect={handleSelectImage}
-        currentUrl={replaceIndex === null ? undefined : items[replaceIndex]?.src}
-      />
-    </div>
-  );
-}
 
 export default function PropertyEditor({
   component,
@@ -241,10 +66,6 @@ export default function PropertyEditor({
           setProp={setProp}
         />
       );
-    }
-
-    if (component.type === "gallery") {
-      return <GalleryContentEditor component={component} onUpdate={onUpdate} />;
     }
 
     if (component.type === "image") {
