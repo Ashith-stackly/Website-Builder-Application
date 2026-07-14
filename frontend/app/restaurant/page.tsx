@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import Footer from "../../components/Footer";
+import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane, FaUtensils, FaUsers, FaCouch, FaLeaf, FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaBars, FaXmark } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
@@ -187,32 +188,32 @@ const foodItems = [
   {
     title: "Premium Ribeye Steak",
     price: "₹450",
-    image: "/premium-ribeye-steak.webp",
+    image: assetPath("/premium-ribeye-steak.webp"),
   },
   {
     title: "Artisan Cafe Pastries",
     price: "₹120",
-    image: "/artisan-cafe-pastries.webp",
+    image: assetPath("/artisan-cafe-pastries.webp"),
   },
   {
     title: "Authentic Wood-Fired Pizza",
     price: "₹180",
-    image: "/authentic-wood-fired-pizza.webp",
+    image: assetPath("/authentic-wood-fired-pizza.webp"),
   },
   {
     title: "Avocado Brunch Toast",
     price: "₹140",
-    image: "/avocado-brunch-toast.webp",
+    image: assetPath("/avocado-brunch-toast.webp"),
   },
   {
     title: "Gourmet Street Tacos",
     price: "₹160",
-    image: "/gourmet-street-tacos.webp",
+    image: assetPath("/gourmet-street-tacos.webp"),
   },
   {
     title: "Classic Cheeseburger",
     price: "₹150",
-    image: "/classic-cheeseburger.webp",
+    image: assetPath("/classic-cheeseburger.webp"),
   },
 ];
 
@@ -355,7 +356,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Base / Right Image */}
                   <div className="w-[60%] h-[90%] absolute right-0 top-[5%] rounded-3xl overflow-hidden shadow-lg z-10">
                     <img
-                      src="/Image - 2.webp"
+                      src={assetPath("/Image - 2.webp")}
                       alt="Chef plating food in kitchen"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -364,7 +365,7 @@ export default function RestaurantTemplatesPage() {
                   {/* Overlapping / Left Image */}
                   <div className="w-[55%] aspect-[1.3] absolute left-0 bottom-[5%] rounded-3xl overflow-hidden shadow-2xl z-20 border-[4px] sm:border-[6px] border-[#FFF5F5]">
                     <img
-                      src="/Image -1.webp"
+                      src={assetPath("/Image -1.webp")}
                       alt="Drinks and gourmet dishes"
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
@@ -412,7 +413,7 @@ export default function RestaurantTemplatesPage() {
               <div className={r("max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center")}>
                 <div className="rounded-[2rem] overflow-hidden shadow-xl w-full min-w-0">
                   <img
-                    src="/Restaurant-OurStory.webp"
+                    src={assetPath("/Restaurant-OurStory.webp")}
                     alt="Restaurant Our Story"
                     className="w-full h-auto aspect-[4/3] object-cover max-w-full"
                   />
@@ -562,7 +563,7 @@ export default function RestaurantTemplatesPage() {
                     <div className={r("flex-1 max-w-[200px] sm:max-w-[240px] w-full flex justify-center min-w-0")}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src="/testimonial-1.webp"
+                          src={assetPath("/testimonial-1.webp")}
                           alt="Guest Experience 1"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"
@@ -622,7 +623,7 @@ export default function RestaurantTemplatesPage() {
                     <div className={r(`flex-1 max-w-[200px] sm:max-w-[240px] w-full justify-center min-w-0 ${deviceMode === "desktop" ? "lg:flex hidden" : "hidden"}`)}>
                       <div className="w-full max-w-[150px] sm:max-w-[180px] md:max-w-[200px] rounded-[2rem] overflow-hidden shadow-md transition-all duration-500 hover:scale-105">
                         <img
-                          src="/testimonial-2.webp"
+                          src={assetPath("/testimonial-2.webp")}
                           alt="Guest Experience 2"
                           className="w-full h-auto object-cover max-w-full"
                           loading="lazy"

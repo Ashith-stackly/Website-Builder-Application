@@ -35,7 +35,7 @@ import {
 } from "@/lib/blockpagesStatCounter";
 
 function dmAsset(path: string) {
-  return encodeURI(assetPath(path));
+  return assetPath(path);
 }
 
 function scrollToSection(id: string) {

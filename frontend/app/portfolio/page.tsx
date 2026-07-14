@@ -1456,32 +1456,32 @@ export default function Portfolioedit() {
                       {
                         tag: "Graphics Design",
                         title: "UI / UX Mobile App Design",
-                        img: "/mobile-app-design.webp"
+                        img: assetPath("/mobile-app-design.webp")
                       },
                       {
                         tag: "UI UX Design",
                         title: "Website Template Design",
-                        img: "/Website-Template-Design.webp"
+                        img: assetPath("/Website-Template-Design.webp")
                       },
                       {
                         tag: "Programming",
                         title: "ISO App Development",
-                        img: "/ISO-App-Development.webp"
+                        img: assetPath("/ISO-App-Development.webp")
                       },
                       {
                         tag: "Graphics Design",
                         title: "Branding Agency",
-                        img: "/Branding-Agency.webp"
+                        img: assetPath("/Branding-Agency.webp")
                       },
                       {
                         tag: "Marketing",
                         title: "Social Media Marketing",
-                        img: "/Social-Media.webp"
+                        img: assetPath("/Social-Media.webp")
                       },
                       {
                         tag: "Development",
                         title: "Full Stack Web Application",
-                        img: "/Full-stack.webp"
+                        img: assetPath("/Full-Stack.webp")
                       }
                     ].map((proj, i) => (
                       <div key={i} className="portfolio-project-card flex flex-col w-full max-w-[320px] cursor-pointer group box-border" style={{ animationDelay: `${i * 80}ms` }}>

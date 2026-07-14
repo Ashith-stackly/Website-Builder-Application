@@ -1374,33 +1374,33 @@ export default function PortfolioPreview({
                         {
                           tag: "Graphics Design",
                           title: "UI / UX Mobile App Design",
-                          img: "https://images.unsplash.com/photo-1542744094-3a31f272c490?w=500&h=500&fit=crop"
+                          img: assetPath("/mobile-app-design.webp"),
                         },
                         {
                           tag: "UI UX Design",
                           title: "Website Template Design",
-                          img: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&h=500&fit=crop"
+                          img: assetPath("/Website-Template-Design.webp"),
                         },
                         {
                           tag: "Programming",
                           title: "ISO App Development",
-                          img: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&h=500&fit=crop"
+                          img: assetPath("/ISO-App-Development.webp"),
                         },
                         {
                           tag: "Graphics Design",
                           title: "Handcraft With Palm Fan",
-                          img: "https://images.unsplash.com/photo-1542744094-3a31f272c490?w=500&h=500&fit=crop"
+                          img: assetPath("/Branding-Agency.webp"),
                         },
                         {
                           tag: "Marketing",
                           title: "Social Media Marketing",
-                          img: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&h=500&fit=crop"
+                          img: assetPath("/Social-Media.webp"),
                         },
                         {
                           tag: "Development",
                           title: "Full Stack Web Application",
-                          img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?w=500&h=500&fit=crop"
-                        }
+                          img: assetPath("/Full-Stack.webp"),
+                        },
                       ].map((proj, i) => (
                         <div key={i} className="portfolio-project-card flex flex-col flex-none w-[240px] sm:w-[260px] max-w-[80vw] shrink-0 snap-start cursor-pointer group" style={{ animationDelay: `${i * 80}ms` }}>
                           <div className="w-full aspect-square rounded-[20px] mb-4 sm:mb-5 relative border border-gray-100 shadow-sm" data-crop-wrapper-id={`project_image_${i}`}>
