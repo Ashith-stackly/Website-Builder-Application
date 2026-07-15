@@ -7,6 +7,7 @@ import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import Footer from "@/components/Footer";
 import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProjectsSlider";
 import { animateStatCounterElement } from "@/lib/blockpagesStatCounter";
+import { bindBlockpagesPreviewInteractions } from "@/lib/blockpagesPreviewInteractions";
 import { sanitizeBlockpagesPreviewHtml } from "@/lib/blockpagesPreviewSanitize";
 import { TEXTBLOCK_PREVIEW_STORAGE_KEY } from "@/lib/blockpagesEditorPersistence";
 import { routePath } from "@/lib/paths";
@@ -164,37 +165,38 @@ export default function BlockPreviewPage() {
  
   useEffect(() => {
     if (!previewHtml) return;
- 
-    const timeoutId = setTimeout(() => {
+
+    let unbindPreviewInteractions = () => {};
+    const timeoutId = window.setTimeout(() => {
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               entry.target.classList.add("is-visible");
- 
+
               if (entry.target.classList.contains("skill-progress-bar")) {
                 const targetWidth = (entry.target as HTMLElement).dataset.targetWidth;
                 if (targetWidth) {
                   (entry.target as HTMLElement).style.width = targetWidth;
                 }
               }
- 
+
               if (entry.target.classList.contains("stat-animate-count")) {
                 animateStatCounterElement(entry.target as HTMLElement);
               }
- 
+
               observer.unobserve(entry.target);
             }
           });
         },
         { threshold: 0.1 }
       );
- 
+
       document.querySelectorAll(".portfolio-reveal").forEach((el) => {
         el.classList.remove("is-visible");
         observer.observe(el);
       });
- 
+
       document.querySelectorAll(".skill-progress-bar").forEach((el) => {
         const htmlEl = el as HTMLElement;
         htmlEl.style.width = "0%";
@@ -203,40 +205,18 @@ export default function BlockPreviewPage() {
         htmlEl.offsetHeight;
         observer.observe(el);
       });
- 
+
       document.querySelectorAll(".stat-animate-count").forEach((el) => {
         el.textContent = "0";
         observer.observe(el);
       });
- 
-      // Hook up mobile menu button in preview mode using event delegation
-      // This ensures it works even if React recreates the DOM elements
-      const handleMenuClick = (e: MouseEvent) => {
-        const btn = (e.target as HTMLElement).closest(".portfolio-mobile-menu-btn");
-        if (btn) {
-          const menu = document.querySelector(".portfolio-mobile-menu");
-          if (menu) {
-            if (menu.classList.contains("max-h-0")) {
-              menu.classList.remove("max-h-0", "opacity-0");
-              menu.classList.add("max-h-40", "opacity-100");
-            } else {
-              menu.classList.remove("max-h-40", "opacity-100");
-              menu.classList.add("max-h-0", "opacity-0");
-            }
-          }
-        }
-      };
- 
-      document.addEventListener("click", handleMenuClick);
-      (window as any)._currentPortfolioMenuListener = handleMenuClick;
- 
+
+      unbindPreviewInteractions = bindBlockpagesPreviewInteractions(document);
     }, 50);
- 
+
     return () => {
-      clearTimeout(timeoutId);
-      if ((window as any)._currentPortfolioMenuListener) {
-        document.removeEventListener("click", (window as any)._currentPortfolioMenuListener);
-      }
+      window.clearTimeout(timeoutId);
+      unbindPreviewInteractions();
     };
   }, [previewHtml]);
  

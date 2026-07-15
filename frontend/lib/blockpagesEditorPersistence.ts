@@ -39,9 +39,45 @@ export function loadPersistedCanvasHtml(template: TextTemplateType): string | nu
 
 export function persistCanvasHtml(template: TextTemplateType, html: string) {
   if (typeof window === "undefined" || !html.trim()) return;
+  if (!isPersistedCanvasHtmlValid(template, html)) return;
 
   try {
     window.localStorage.setItem(getTextBlockCanvasStorageKey(template), html);
+  } catch {
+    // Ignore quota errors.
+  }
+}
+
+const TEMPLATE_CANVAS_MARKERS: Partial<Record<TextTemplateType, string[]>> = {
+  portfolio: ["portfolio-shell"],
+  ecommerce: ["buyscreen-page", "buyscreen-header"],
+  blog: ["blog-blockpages-root", "blog-page"],
+  construction: ["construction-shell"],
+  restaurant: ["restaurant-shell"],
+  "digital-marketing": ["dm-shell"],
+  business: ["dm-shell"],
+};
+
+/** Templates whose canvas is a live React tree (not HTML snapshot restore). */
+export function templateUsesHtmlCanvasPersistence(template: TextTemplateType) {
+  return template === "portfolio" || template === "ecommerce";
+}
+
+export function isPersistedCanvasHtmlValid(template: TextTemplateType, html: string) {
+  if (!html.trim()) return false;
+  if (!templateUsesHtmlCanvasPersistence(template)) return false;
+
+  const markers = TEMPLATE_CANVAS_MARKERS[template];
+  if (!markers?.length) return html.length > 200;
+
+  return markers.some((marker) => html.includes(marker));
+}
+
+export function clearPersistedCanvasHtml(template: TextTemplateType) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(getTextBlockCanvasStorageKey(template));
   } catch {
     // Ignore quota errors.
   }
@@ -51,13 +87,18 @@ export function getCanvasContentRoot(container: ParentNode | null): HTMLElement 
   return container?.querySelector<HTMLElement>("[data-textblock-canvas]") ?? null;
 }
 
+export function getCanvasTemplateRoot(container: ParentNode | null): HTMLElement | null {
+  const canvas = getCanvasContentRoot(container);
+  return canvas?.querySelector<HTMLElement>("[data-blockpages-template-root]") ?? canvas;
+}
+
 export function captureCanvasContent(container: ParentNode | null): string {
-  const root = getCanvasContentRoot(container);
+  const root = getCanvasTemplateRoot(container);
   return root?.innerHTML ?? "";
 }
 
 export function applyCanvasContent(container: ParentNode | null, html: string) {
-  const root = getCanvasContentRoot(container);
+  const root = getCanvasTemplateRoot(container);
   if (!root || !html.trim()) return;
   root.innerHTML = html;
 }

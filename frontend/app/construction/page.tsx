@@ -28,15 +28,14 @@ import {
 } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { assetPath } from "@/lib/paths";
+import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
+import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 
 const START_BUILDING_HREF = "/signup";
 
 function scrollToSection(sectionId: string) {
-  const target = document.getElementById(sectionId);
-  if (target) {
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  scrollBlockpagesCanvasToSection(sectionId);
 }
 
 // SAFELIST FOR TAILWIND JIT (Required for getModeClasses dynamically generated tablet widths)
@@ -245,7 +244,10 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
           <button
             type="button"
+            data-blockpages-interactive="true"
             aria-label="Menu"
+            aria-controls="construction-mobile-nav"
+            aria-expanded={mobileOpen}
             className={`${showDesktopNav ? "md:hidden" : "flex"} w-11 h-11 sm:w-12 sm:h-12 items-center justify-center rounded-[12px] border border-white/30 text-white hover:bg-white/10 active:scale-95 transition-all shrink-0`}
             onClick={() => setMobileOpen(!mobileOpen)}
           >
@@ -254,8 +256,11 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
         </div>
       </div>
 
-      {mobileOpen && (
-        <nav className="absolute top-full left-0 w-full bg-[#06224C] border-b border-white/10 shadow-2xl flex flex-col py-6 px-4 z-50 max-h-[75vh] overflow-y-auto items-center text-center">
+      <nav
+        id="construction-mobile-nav"
+        aria-hidden={!mobileOpen}
+        className={`absolute top-full left-0 w-full bg-[#06224C] border-b border-white/10 shadow-2xl flex flex-col py-6 px-4 z-50 max-h-[75vh] overflow-y-auto items-center text-center ${mobileOpen ? "" : "hidden"}`}
+      >
           {navLinks.map((link) => {
             if (link.label === "Projects") {
               return (
@@ -269,8 +274,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                     <FaChevronDown size={12} className={`transition-transform duration-300 ${mobileProjectsOpen ? "rotate-180 text-blue-400" : ""}`} />
                   </button>
 
-                  {mobileProjectsOpen && (
-                    <div className="flex flex-col bg-[#041633] w-full pb-2 mb-2 rounded-lg overflow-hidden border border-white/5 items-center">
+                  <div className={`flex flex-col bg-[#041633] w-full pb-2 mb-2 rounded-lg overflow-hidden border border-white/5 items-center ${mobileProjectsOpen ? "" : "hidden"}`}>
                       {["All Projects", "Construction", "Architecture", "Renovation"].map(item => (
                         <button
                           key={item}
@@ -285,7 +289,6 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
                         </button>
                       ))}
                     </div>
-                  )}
                 </div>
               );
             }
@@ -311,8 +314,7 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
           >
             Get Started
           </Link>
-        </nav>
-      )}
+      </nav>
     </header>
   );
 }
@@ -409,7 +411,11 @@ export default function ConstructionTemplatePage() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
-  const activeDeviceMode: "desktop" | "tablet" | "mobile" = isBlockpages ? "desktop" : (deviceMode === "preview" ? "desktop" : deviceMode);
+  const activeDeviceMode: "desktop" | "tablet" | "mobile" = resolveBlockpagesDeviceMode(
+    isBlockpages,
+    blockpagesEditor?.deviceMode,
+    deviceMode === "preview" ? "desktop" : deviceMode
+  );
   const [email, setEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);

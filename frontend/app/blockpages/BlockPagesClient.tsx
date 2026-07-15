@@ -49,7 +49,8 @@ import {
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
 } from "@/lib/blockpagesEditTargets";
-import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
+import { buildPreviewHtmlFromCanvas } from "@/lib/blockpagesPreviewSanitize";
+import { getOverlayDefaultTop } from "@/lib/blockpagesOverlayLayers";
 import {
   loadPersistedTextBlockState,
   persistTextBlockState,
@@ -207,8 +208,8 @@ export default function BlockPagesClient() {
   const [editingIconId, setEditingIconId] = useState<string | null>(null);
   const [customIcons, setCustomIcons] = useState<Record<string, IconBlockProps>>({});
  
-  const [appliedDividers, setAppliedDividers] = useState<{ id: string, props: DividerBlockProps, position?: { x: number, y: number }, scale?: number }[]>([]);
-  const [appliedIcons, setAppliedIcons] = useState<{ id: string, props: IconBlockProps, position?: { x: number, y: number }, scale?: number }[]>([]);
+  const [appliedDividers, setAppliedDividers] = useState<{ id: string; props: DividerBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[]>([]);
+  const [appliedIcons, setAppliedIcons] = useState<{ id: string; props: IconBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[]>([]);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
   // ── Load saved draft on mount ──────────────────────────────────────────
@@ -291,19 +292,9 @@ export default function BlockPagesClient() {
       canvas = getBlockpagesCanvasElement();
     }
 
-    const previewClone = canvas?.cloneNode(true) as HTMLDivElement | undefined;
+    if (!(canvas instanceof HTMLElement)) return "";
 
-    previewClone?.querySelectorAll("[contenteditable]").forEach((element) => element.removeAttribute("contenteditable"));
-    previewClone?.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
-    previewClone?.querySelectorAll("[data-builder-chrome='true']").forEach((element) => element.remove());
-    previewClone?.querySelectorAll("[data-draggable-chrome='true']").forEach((element) => {
-      element.removeAttribute("title");
-      element.classList.remove("cursor-move", "active:cursor-grabbing", "hover:outline", "hover:outline-2", "hover:outline-blue-400", "hover:outline-dashed", "group");
-    });
-    previewClone?.querySelector("[data-textblock-canvas]")?.removeAttribute("class");
-    if (previewClone) injectPortfolioProjectsSliderNavAttributes(previewClone);
-
-    return previewClone?.innerHTML ?? "";
+    return buildPreviewHtmlFromCanvas(canvas);
   }, []);
 
   // ── Save Draft handler ─────────────────────────────────────────────────
@@ -1176,7 +1167,15 @@ export default function BlockPagesClient() {
                   const block = selectedDividerBlock ?? dividerBlocks[0];
                   if (block) {
                     setAppliedDividers((prev) => {
-                      const newDivider = { id: Date.now().toString(), props: block.props };
+                      const newDivider = {
+                        id: Date.now().toString(),
+                        props: block.props,
+                        position: {
+                          top: getOverlayDefaultTop("divider", prev.length),
+                          left: 16,
+                        },
+                        scale: 1,
+                      };
                       const next = [...prev, newDivider];
                       localStorage.setItem("stackly-custom-dividers", JSON.stringify(next));
                       return next;

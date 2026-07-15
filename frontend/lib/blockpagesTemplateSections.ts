@@ -136,6 +136,29 @@ export function dispatchBlockpagesScrollToSection(sectionId: string) {
   window.dispatchEvent(new CustomEvent("scrollToSectionEvent", { detail: sectionId }));
 }
 
+export function scrollBlockpagesCanvasToSection(sectionId: string) {
+  if (typeof document === "undefined" || !sectionId.trim()) return;
+
+  const escaped =
+    typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(sectionId) : sectionId.replace(/"/g, '\\"');
+
+  const scrollRoot = document.querySelector<HTMLElement>("[data-blockpages-scroll-root], [data-textblock-canvas]");
+  const target =
+    scrollRoot?.querySelector<HTMLElement>(`#${escaped}`) ?? document.getElementById(sectionId);
+
+  if (!target) return;
+
+  if (scrollRoot) {
+    const rootRect = scrollRoot.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const nextTop = scrollRoot.scrollTop + (targetRect.top - rootRect.top) - 8;
+    scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+    return;
+  }
+
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export function buildBlockpagesSectionStylesCss(sectionStyles: Record<string, { backgroundColor?: string; gradientBackground?: string; backgroundImage?: string }> = {}) {
   return Object.entries(sectionStyles)
     .map(([id, styles]) => {

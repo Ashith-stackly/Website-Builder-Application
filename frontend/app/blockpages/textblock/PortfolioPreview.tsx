@@ -22,6 +22,9 @@ import {
   FaMinus
 } from "react-icons/fa";
 import { assetPath } from "@/lib/paths";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import { shouldUseCompactTemplateHeader } from "@/lib/blockpagesEditorInteraction";
+import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
 import { PORTFOLIO_PROJECTS_SLIDER_ID, scrollPortfolioProjectsSlider } from "@/lib/portfolioProjectsSlider";
 import { useBuilder } from "../imageblock/BuilderContext";
 import type { BlockData } from "../buttonblock/types";
@@ -29,6 +32,7 @@ import type { VideoBlockData } from "../videoblock/types";
 import type { SectionStyleConfig } from "./types";
 import type { DividerBlockProps } from "../dividerblock/types";
 import DividerPreview from "../dividerblock/DividerPreview";
+import BlockpagesPositionedOverlay from "./BlockpagesPositionedOverlay";
 import type { IconBlockProps } from "../iconsblock/types";
 import IconPreview from "../iconsblock/IconPreview";
 
@@ -99,13 +103,13 @@ type PortfolioPreviewProps = {
   onEditVideo?: (videoId: string) => void;
   sectionStyles?: Record<string, SectionStyleConfig>;
   onPreview?: () => void;
-  appliedDividers?: { id: string, props: DividerBlockProps, position?: { x: number, y: number }, scale?: number }[];
+  appliedDividers?: { id: string, props: DividerBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: { x: number, y: number }) => void;
+  onUpdateDividerPosition?: (id: string, position: { top: number; left: number }) => void;
   onUpdateDividerScale?: (id: string, scale: number) => void;
-  appliedIcons?: { id: string, props: IconBlockProps, position?: { x: number, y: number }, scale?: number }[];
+  appliedIcons?: { id: string, props: IconBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveIcon?: (id: string) => void;
-  onUpdateIconPosition?: (id: string, position: { x: number, y: number }) => void;
+  onUpdateIconPosition?: (id: string, position: { top: number; left: number }) => void;
   onUpdateIconScale?: (id: string, scale: number) => void;
   isIconEditingMode?: boolean;
   customIcons?: Record<string, IconBlockProps>;
@@ -207,6 +211,9 @@ export default function PortfolioPreview({
   editingIconId,
   onSaveDraft,
 }: PortfolioPreviewProps) {
+  const blockpagesEditor = useBlockpagesEditor();
+  const previewDevice = blockpagesEditor?.deviceMode ?? "desktop";
+  const compactHeader = shouldUseCompactTemplateHeader(previewDevice);
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const projectsSliderRef = useRef<HTMLDivElement>(null);
@@ -408,10 +415,8 @@ export default function PortfolioPreview({
   ];
 
   const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-    }
+    scrollBlockpagesCanvasToSection(id);
+    setInnerMobileMenuOpen(false);
   };
 
   useEffect(() => {
@@ -464,7 +469,8 @@ export default function PortfolioPreview({
 
             {/* <div className="flex-1 overflow-y-auto min-w-0"> */}
             {/* <div className="flex-1 overflow-y-auto min-w-0 relative z-0"> */}
-            <div className="flex-1 min-w-0 relative z-0">
+            <div data-blockpages-overlay-container="true" className="flex-1 min-w-0 relative z-0">
+              <div data-blockpages-template-root className="relative w-full min-w-0 max-w-full">
               <div className="@container w-full min-h-[530px] max-w-full min-w-0 overflow-x-hidden rounded-none sm:rounded-xl border-0 sm:border-2 border-gray-300 flex flex-col relative portfolio-shell bg-[#F2F2F2] box-border">
 
 
@@ -472,7 +478,7 @@ export default function PortfolioPreview({
                 <div data-blockpages-template-header="true" className="sticky top-0 z-50 backdrop-blur-md bg-[#06224C]/95 flex w-full flex-wrap items-center justify-between gap-1 sm:gap-4 px-2 sm:px-4 py-2 sm:py-3 md:px-8 border-b border-gray-300 sm:rounded-t-xl">
 
                   {/* ✅ MOBILE LAYOUT */}
-                  <div className="flex flex-col w-full lg:hidden gap-2">
+                  <div className={`flex flex-col w-full gap-2 ${compactHeader ? "flex" : "lg:hidden"}`}>
 
                     {/* ROW 1 → Logo + Menu */}
                     {/* TOP ROW → Logo + Menu */}
@@ -495,8 +501,12 @@ export default function PortfolioPreview({
 
                       {/* RIGHT → Menu */}
                       <button
+                        type="button"
+                        data-blockpages-interactive="true"
                         onClick={() => setInnerMobileMenuOpen((v) => !v)}
                         className="portfolio-mobile-menu-btn h-7 w-7 sm:h-8 sm:w-8 border border-white/25 text-white rounded-md hover:bg-white/10 transition flex items-center justify-center shrink-0"
+                        aria-label="Open menu"
+                        aria-expanded={innerMobileMenuOpen}
                       >
                         <FaBars className="text-sm" />
                       </button>
@@ -534,7 +544,7 @@ export default function PortfolioPreview({
                   </div>
 
                   {/* ✅ DESKTOP (unchanged) */}
-                  <div className="hidden lg:flex w-full items-center justify-between flex-nowrap gap-2">
+                  <div className={`${compactHeader ? "hidden" : "hidden lg:flex"} w-full items-center justify-between flex-nowrap gap-2`}>
 
                     <div className="flex shrink-0 justify-start">
                       <Link href="/landing" className="flex h-10 min-w-[92px] items-center justify-center rounded-[50%] bg-white px-3">
@@ -974,104 +984,6 @@ export default function PortfolioPreview({
                     }
                   }
                 `}</style>
-
-                {appliedIcons.map((icon, index) => (
-                  <motion.div
-                    key={icon.id}
-                    drag
-                    dragMomentum={false}
-                    initial={{ x: icon.position?.x ?? 0, y: icon.position?.y ?? 0 }}
-                    onDragEnd={(e, info) => {
-                      onUpdateIconPosition?.(icon.id, {
-                        x: (icon.position?.x ?? 0) + info.offset.x,
-                        y: (icon.position?.y ?? 0) + info.offset.y
-                      });
-                    }}
-                    data-draggable-chrome="true"
-                    className="absolute left-0 z-[100] flex w-full max-w-full flex-col items-center bg-transparent cursor-move active:cursor-grabbing px-4 py-2 sm:px-6 md:px-12 lg:px-20"
-                    style={{ top: `${200 + index * 50}px` }}
-                    title="Drag to move the icon"
-                  >
-                    <div className="relative flex flex-col items-center justify-center group/inner outline-none" tabIndex={0}>
-                      <div className="absolute inset-0 -top-12 bg-transparent z-0" />
-                      <div className="relative z-10 transition-transform group-hover/inner:outline group-hover/inner:outline-2 group-hover/inner:outline-blue-400 group-hover/inner:outline-dashed group-focus-within/inner:outline group-focus-within/inner:outline-2 group-focus-within/inner:outline-blue-400 group-focus-within/inner:outline-dashed rounded-md p-2" style={{ transform: `scale(${icon.scale ?? 1})`, transformOrigin: 'center' }}>
-                        <IconPreview props={icon.props} />
-                      </div>
-                      <div data-builder-chrome="true" className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover/inner:flex group-focus-within/inner:flex items-center gap-2 z-[110] bg-white p-1.5 rounded-lg shadow-xl border border-gray-200">
-                        <button
-                          onClick={() => onUpdateIconScale?.(icon.id, Math.max(0.2, (icon.scale ?? 1) - 0.1))}
-                          className="bg-gray-100 text-gray-700 p-1.5 rounded-md shadow-sm hover:bg-gray-200 hover:scale-105 transition-transform flex items-center justify-center cursor-pointer"
-                          title="Decrease Size"
-                        >
-                          <FaMinus size={12} />
-                        </button>
-                        <button
-                          onClick={() => onUpdateIconScale?.(icon.id, (icon.scale ?? 1) + 0.1)}
-                          className="bg-gray-100 text-gray-700 p-1.5 rounded-md shadow-sm hover:bg-gray-200 hover:scale-105 transition-transform flex items-center justify-center cursor-pointer"
-                          title="Increase Size"
-                        >
-                          <FaPlus size={12} />
-                        </button>
-                        <button
-                          onClick={() => onRemoveIcon?.(icon.id)}
-                          className="bg-red-50 text-red-500 p-1.5 rounded-md shadow-sm hover:bg-red-100 hover:scale-105 transition-transform flex items-center justify-center cursor-pointer"
-                          title="Remove Icon"
-                        >
-                          <FaTrash size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-
-                {appliedDividers.map((divider, index) => (
-                  <motion.div
-                    key={divider.id}
-                    drag
-                    dragMomentum={false}
-                    initial={{ x: divider.position?.x ?? 0, y: divider.position?.y ?? 0 }}
-                    onDragEnd={(e, info) => {
-                      onUpdateDividerPosition?.(divider.id, {
-                        x: (divider.position?.x ?? 0) + info.offset.x,
-                        y: (divider.position?.y ?? 0) + info.offset.y
-                      });
-                    }}
-                    data-draggable-chrome="true"
-                    className="absolute left-0 z-[100] flex w-full max-w-full flex-col items-center bg-transparent cursor-move active:cursor-grabbing px-4 py-2 sm:px-6 md:px-12 lg:px-20"
-                    style={{ top: `${400 + index * 60}px` }}
-                    title="Drag to move the divider"
-                  >
-                    <div className="relative flex flex-col items-center w-full group/inner outline-none" tabIndex={0}>
-                      <div className="absolute inset-0 -top-12 bg-transparent z-0" />
-                      <div className="relative z-10 transition-transform group-hover/inner:outline group-hover/inner:outline-2 group-hover/inner:outline-blue-400 group-hover/inner:outline-dashed group-focus-within/inner:outline group-focus-within/inner:outline-2 group-focus-within/inner:outline-blue-400 group-focus-within/inner:outline-dashed rounded-md p-2" style={{ transform: `scale(${divider.scale ?? 1})`, transformOrigin: 'center', width: divider.props.width || '100%' }}>
-                        <DividerPreview props={divider.props} />
-                      </div>
-                      <div data-builder-chrome="true" className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover/inner:flex group-focus-within/inner:flex items-center gap-2 z-[110] bg-white p-1.5 rounded-lg shadow-xl border border-gray-200">
-                        <button
-                          onClick={() => onUpdateDividerScale?.(divider.id, Math.max(0.2, (divider.scale ?? 1) - 0.1))}
-                          className="bg-gray-100 text-gray-700 p-1.5 rounded-md shadow-sm hover:bg-gray-200 hover:scale-105 transition-transform flex items-center justify-center cursor-pointer"
-                          title="Decrease Size"
-                        >
-                          <FaMinus size={12} />
-                        </button>
-                        <button
-                          onClick={() => onUpdateDividerScale?.(divider.id, (divider.scale ?? 1) + 0.1)}
-                          className="bg-gray-100 text-gray-700 p-1.5 rounded-md shadow-sm hover:bg-gray-200 hover:scale-105 transition-transform flex items-center justify-center cursor-pointer"
-                          title="Increase Size"
-                        >
-                          <FaPlus size={12} />
-                        </button>
-                        <button
-                          onClick={() => onRemoveDivider?.(divider.id)}
-                          className="bg-red-50 text-red-500 p-1.5 rounded-md shadow-sm hover:bg-red-100 hover:scale-105 transition-transform flex items-center justify-center cursor-pointer"
-                          title="Remove Divider"
-                        >
-                          <FaTrash size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
 
                 {/* ABOUT SECTION */}
                 <div className="relative w-full overflow-hidden portfolio-hero bg-[#F2F2F2]" style={getSpecificSectionStyle('about')}>
@@ -1922,6 +1834,40 @@ export default function PortfolioPreview({
                   </div>
                 </footer>
               </div>
+              </div>
+
+              {appliedIcons.map((icon, index) => (
+                <BlockpagesPositionedOverlay
+                  key={icon.id}
+                  id={icon.id}
+                  index={index}
+                  kind="icon"
+                  position={icon.position}
+                  scale={icon.scale ?? 1}
+                  onPositionChange={(overlayId, nextPosition) => onUpdateIconPosition?.(overlayId, nextPosition)}
+                  onScaleChange={(overlayId, nextScale) => onUpdateIconScale?.(overlayId, nextScale)}
+                  onRemove={(overlayId) => onRemoveIcon?.(overlayId)}
+                >
+                  <IconPreview props={icon.props} />
+                </BlockpagesPositionedOverlay>
+              ))}
+
+              {appliedDividers.map((divider, index) => (
+                <BlockpagesPositionedOverlay
+                  key={divider.id}
+                  id={divider.id}
+                  index={index}
+                  kind="divider"
+                  position={divider.position}
+                  scale={divider.scale ?? 1}
+                  onPositionChange={(overlayId, nextPosition) => onUpdateDividerPosition?.(overlayId, nextPosition)}
+                  onScaleChange={(overlayId, nextScale) => onUpdateDividerScale?.(overlayId, nextScale)}
+                  onRemove={(overlayId) => onRemoveDivider?.(overlayId)}
+                  contentStyle={{ width: divider.props.width || "100%" }}
+                >
+                  <DividerPreview props={divider.props} />
+                </BlockpagesPositionedOverlay>
+              ))}
             </div>
 
             {/* <div className="w-full flex items-center justify-between mt-8 px-4"> */}

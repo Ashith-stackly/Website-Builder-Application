@@ -30,14 +30,14 @@ import type { IconBlockProps } from "@/app/blockpages/iconsblock/types";
 export interface AppliedDivider {
   id: string;
   props: DividerBlockProps;
-  position?: { x: number; y: number };
+  position?: { top?: number; left?: number; x?: number; y?: number };
   scale?: number;
 }
 
 export interface AppliedIcon {
   id: string;
   props: IconBlockProps;
-  position?: { x: number; y: number };
+  position?: { top?: number; left?: number; x?: number; y?: number };
   scale?: number;
 }
 

@@ -6,18 +6,15 @@ import Footer from "../../components/Footer";
 import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane, FaUtensils, FaUsers, FaCouch, FaLeaf, FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaBars, FaXmark } from "react-icons/fa6";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
+import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
 import { motion, AnimatePresence } from "framer-motion";
 
 const START_BUILDING_HREF = "/signup";
 
 function scrollToSection(sectionId: string) {
-  const target = document.getElementById(sectionId);
-  if (target) {
-    target.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }
+  scrollBlockpagesCanvasToSection(sectionId);
 }
 
 function getModeClasses(classesStr: string, deviceMode: "desktop" | "tablet" | "mobile") {
@@ -127,7 +124,7 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
   }, [mobileOpen]);
 
   return (
-    <header ref={headerRef} className={r("bg-[#0A1E3D] text-white w-full max-w-full sticky top-0 z-50 shadow-md")}>
+    <header ref={headerRef} data-blockpages-template-header="true" className={r("bg-[#0A1E3D] text-white w-full max-w-full sticky top-0 z-50 shadow-md")}>
       <div className={r(`w-full mx-auto py-4 flex items-center justify-between px-4 sm:px-6 lg:px-8 ${deviceMode === "desktop" ? "max-w-7xl" : ""
         }`)}>
         <button
@@ -155,6 +152,10 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
           <button
             type="button"
+            data-blockpages-interactive="true"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-controls="restaurant-mobile-nav"
+            aria-expanded={mobileOpen}
             className={r(`${deviceMode === "desktop" ? "md:hidden" : "flex"} inline-flex items-center justify-center w-10 h-10 rounded-md border text-white transition-colors ${mobileOpen ? "bg-white/20 border-white" : "border-white/60 hover:bg-white/20"
               }`)}
             onClick={() => { setMobileOpen((open) => !open); }}
@@ -164,9 +165,11 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
         </div>
       </div>
 
-      {/* MOBILE NAV WITH PT-6 GAP AND HIGHLIGHTS */}
-      {mobileOpen && (
-        <nav className={r("absolute top-full left-0 w-full bg-[#0A1E3D] border-t border-white/10 shadow-2xl flex flex-col pt-6 pb-6 px-6 gap-4 z-50")}>
+      <nav
+        id="restaurant-mobile-nav"
+        aria-hidden={!mobileOpen}
+        className={r(`absolute top-full left-0 w-full bg-[#0A1E3D] border-t border-white/10 shadow-2xl flex flex-col pt-6 pb-6 px-6 gap-4 z-50 ${mobileOpen ? "" : "hidden"}`)}
+      >
           {navLinks.map((link) => (
             <button
               key={link.label}
@@ -177,8 +180,7 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
               {link.label}
             </button>
           ))}
-        </nav>
-      )}
+      </nav>
     </header>
   );
 }
@@ -255,9 +257,12 @@ const testimonials = [
 ];
 
 export default function RestaurantTemplatesPage() {
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [openFaq, setOpenFaq] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [localDeviceMode, setLocalDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const deviceMode = resolveBlockpagesDeviceMode(isBlockpages, blockpagesEditor?.deviceMode, localDeviceMode);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [email, setEmail] = useState("");
@@ -282,32 +287,32 @@ export default function RestaurantTemplatesPage() {
 
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6">
+    <main className={isBlockpages ? "@container restaurant-shell w-full min-w-0 max-w-full overflow-x-hidden bg-white font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6"}>
 
-      {/* FLOATING DEVICE TOOLBAR */}
-      <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
-        <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
-          <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
-            <FaEye size={16} />
-          </Link>
-          <div className="w-px h-6 bg-gray-300 mx-1"></div>
-          <button onClick={() => setDeviceMode("desktop")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "desktop" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Desktop View">
-            <FaLaptop size={16} />
-          </button>
-          <button onClick={() => setDeviceMode("tablet")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "tablet" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Tablet View">
-            <FaTabletAlt size={16} />
-          </button>
-          <button onClick={() => setDeviceMode("mobile")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "mobile" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Mobile View">
-            <FaMobileAlt size={16} />
-          </button>
+      {!isBlockpages && (
+        <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-6 left-1/2 -translate-x-1/2 hidden md:block">
+          <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
+            <Link href="/landing#templates" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md hover:bg-gray-50 text-[#06224C] transition focus-visible:outline-none" title="Back to Landing">
+              <FaEye size={16} />
+            </Link>
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+            <button onClick={() => setLocalDeviceMode("desktop")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "desktop" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Desktop View">
+              <FaLaptop size={16} />
+            </button>
+            <button onClick={() => setLocalDeviceMode("tablet")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "tablet" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Tablet View">
+              <FaTabletAlt size={16} />
+            </button>
+            <button onClick={() => setLocalDeviceMode("mobile")} className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition focus-visible:outline-none ${deviceMode === "mobile" ? "border-gray-300 ring-2 ring-[#0A1E3D] text-[#0A1E3D]" : "border-gray-100 text-gray-500"}`} title="Mobile View">
+              <FaMobileAlt size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className={`flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
-        {/* RESPONSIVE CANVAS FRAME */}
+      <div className={isBlockpages ? "w-full min-w-0" : `flex-1 flex justify-center w-full transition-all duration-500 ${deviceMode !== "desktop" ? "py-4 md:py-8 px-2 md:px-4" : ""}`}>
         <div
-          ref={canvasScrollRef}
-          className={`bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+          ref={isBlockpages ? undefined : canvasScrollRef}
+          className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile" ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
             : deviceMode === "tablet" ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
               : "w-full min-h-screen"
             }`}
@@ -894,9 +899,11 @@ export default function RestaurantTemplatesPage() {
         </div>
       </div>
 
-      <div className="mt-4 md:mt-8 w-full">
-        <Footer />
-      </div>
+      {!isBlockpages && (
+        <div className="mt-4 md:mt-8 w-full">
+          <Footer />
+        </div>
+      )}
 
     </main>
   );

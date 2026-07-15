@@ -5,6 +5,8 @@ import { ChevronDown, Eye, Redo2, Save, Send, Undo2, Check, AlertTriangle, Loade
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import { routePath } from "@/lib/paths";
 import { getBlockpagesTemplateLabel } from "@/lib/blockpagesTemplates";
+import { BlockpagesEditorProvider } from "@/lib/blockpagesEditorContext";
+import { isBlockpagesInteractiveControl } from "@/lib/blockpagesEditorInteraction";
 import { buildBlockpagesSectionStylesCss } from "@/lib/blockpagesTemplateSections";
 import {
   buildBlockpagesDropdownStylesCss,
@@ -24,7 +26,7 @@ import type { IconBlockProps } from "../iconsblock/types";
 import type { TextBlockState, TextEditorTarget, TextStyles, TextTemplateType } from "./types";
 import type { DraftSaveStatus } from "../BlockPagesClient";
 import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
-import { sanitizeBlockpagesPreviewClone } from "@/lib/blockpagesPreviewSanitize";
+import { buildPreviewHtmlFromCanvas, finalizeBlockpagesEditorMotion } from "@/lib/blockpagesPreviewSanitize";
 import {
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
   applyCanvasContent,
@@ -35,11 +37,14 @@ import {
   dispatchCanvasRestoredEvent,
   getCanvasContentRoot,
   inferHiddenElementsFromCanvasHtml,
+  isPersistedCanvasHtmlValid,
   loadHiddenElements,
   loadPersistedCanvasHtml,
   persistCanvasHtml,
   persistTextBlockState,
   syncHiddenElementsFromCanvas,
+  templateUsesHtmlCanvasPersistence,
+  clearPersistedCanvasHtml,
 } from "@/lib/blockpagesEditorPersistence";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
@@ -63,13 +68,13 @@ type TextCanvasProps = {
   videoBlocks?: VideoBlockData[];
   isVideoEditingMode?: boolean;
   onEditVideo?: (videoId: string) => void;
-  appliedDividers?: { id: string, props: DividerBlockProps, position?: { x: number, y: number }, scale?: number }[];
+  appliedDividers?: { id: string, props: DividerBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: { x: number, y: number }) => void;
+  onUpdateDividerPosition?: (id: string, position: { top: number; left: number }) => void;
   onUpdateDividerScale?: (id: string, scale: number) => void;
-  appliedIcons?: { id: string, props: IconBlockProps, position?: { x: number, y: number }, scale?: number }[];
+  appliedIcons?: { id: string, props: IconBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveIcon?: (id: string) => void;
-  onUpdateIconPosition?: (id: string, position: { x: number, y: number }) => void;
+  onUpdateIconPosition?: (id: string, position: { top: number; left: number }) => void;
   onUpdateIconScale?: (id: string, scale: number) => void;
   isIconEditingMode?: boolean;
   customIcons?: Record<string, IconBlockProps>;
@@ -155,6 +160,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   };
 
   useLayoutEffect(() => {
+    if (!templateUsesHtmlCanvasPersistence(template)) return;
+
     const savedHtml = pendingCanvasHtmlRef.current ?? loadPersistedCanvasHtml(template);
     if (savedHtml) {
       inferHiddenElementsFromCanvasHtml(template, savedHtml);
@@ -167,14 +174,21 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   }, [hiddenElementsRevision, refreshHiddenElementsState]);
 
   useEffect(() => {
-    pendingCanvasHtmlRef.current = loadPersistedCanvasHtml(template);
+    pendingCanvasHtmlRef.current = templateUsesHtmlCanvasPersistence(template)
+      ? loadPersistedCanvasHtml(template)
+      : null;
+
+    if (!templateUsesHtmlCanvasPersistence(template)) {
+      clearPersistedCanvasHtml(template);
+    }
   }, [template]);
 
   useLayoutEffect(() => {
+    if (!templateUsesHtmlCanvasPersistence(template)) return;
     if (!canvasRef.current || isRestoringCanvasRef.current) return;
 
     const savedHtml = pendingCanvasHtmlRef.current ?? loadPersistedCanvasHtml(template);
-    if (!savedHtml) return;
+    if (!savedHtml || !isPersistedCanvasHtmlValid(template, savedHtml)) return;
 
     const currentHtml = captureCanvasContent(canvasRef.current);
     if (currentHtml === savedHtml) {
@@ -186,6 +200,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     applyCanvasContent(canvasRef.current, savedHtml);
     inferHiddenElementsFromCanvasHtml(template, savedHtml);
     applyHiddenElementsToCanvas(canvasRef.current, template);
+    const canvasRoot = getCanvasContentRoot(canvasRef.current);
+    if (canvasRoot) finalizeBlockpagesEditorMotion(canvasRoot);
     pendingCanvasHtmlRef.current = null;
     isRestoringCanvasRef.current = false;
     syncHiddenElementsFromCanvas(canvasRef.current, template);
@@ -222,6 +238,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   }, [template, refreshHiddenElementsState]);
 
   useEffect(() => {
+    if (!templateUsesHtmlCanvasPersistence(template)) return;
+
     const root = getCanvasContentRoot(canvasRef.current);
     if (!root) return;
 
@@ -236,8 +254,10 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
           setHiddenElementsRevision((value) => value + 1);
         }
         const html = captureCanvasContent(canvasRef.current);
-        persistCanvasHtml(template, html);
-        pendingCanvasHtmlRef.current = html;
+        if (isPersistedCanvasHtmlValid(template, html)) {
+          persistCanvasHtml(template, html);
+          pendingCanvasHtmlRef.current = html;
+        }
       }, 250);
     };
 
@@ -277,8 +297,10 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
 
   useEffect(() => {
     const syncFromStorage = () => {
+      if (!templateUsesHtmlCanvasPersistence(template)) return;
+
       const savedHtml = loadPersistedCanvasHtml(template);
-      if (!savedHtml || !canvasRef.current) return;
+      if (!savedHtml || !canvasRef.current || !isPersistedCanvasHtmlValid(template, savedHtml)) return;
 
       const currentHtml = captureCanvasContent(canvasRef.current);
       if (currentHtml === savedHtml) return;
@@ -287,6 +309,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       applyCanvasContent(canvasRef.current, savedHtml);
       inferHiddenElementsFromCanvasHtml(template, savedHtml);
       applyHiddenElementsToCanvas(canvasRef.current, template);
+      const canvasRoot = getCanvasContentRoot(canvasRef.current);
+      if (canvasRoot) finalizeBlockpagesEditorMotion(canvasRoot);
       isRestoringCanvasRef.current = false;
       refreshHiddenElementsState();
       setHiddenElementsRevision((value) => value + 1);
@@ -336,12 +360,17 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const contentRoot = getCanvasContentRoot(canvas);
+    if (!contentRoot) return;
+
     const textTags = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "LI", "LABEL", "A", "BUTTON"];
 
     const handleEditableMouseDown = (event: Event) => {
       if (!isTextEditable || isPreviewMode) return;
 
       const target = event.target as HTMLElement;
+      if (isBlockpagesInteractiveControl(target)) return;
+
       const editableNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
       if (!editableNode || editableNode.tagName !== "BUTTON") return;
 
@@ -354,6 +383,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       if (!isTextEditable || isPreviewMode) return;
 
       const target = event.target as HTMLElement;
+      if (isBlockpagesInteractiveControl(target)) return;
 
       const editableNode =
         (target.closest(
@@ -370,7 +400,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       event.stopImmediatePropagation();
 
       activeEditableRef.current = resolvedNode;
-      canvas.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
+      contentRoot.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
       resolvedNode.classList.add("editable-text-active");
       resolvedNode.focus();
 
@@ -386,6 +416,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
  
     const makeEditable = (node: Element) => {
       if (node.closest("[data-builder-chrome='true']")) return;
+      if (isBlockpagesInteractiveControl(node)) return;
 
       const isInDropdown = node.closest('[data-blockpages-dropdown-panel="true"]') !== null;
       const isHeader = !isInDropdown && nodeIsInBlockpagesHeaderChrome(node);
@@ -421,9 +452,18 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       Array.from(node.children).forEach(makeEditable);
     };
  
-    Array.from(canvas.children).forEach(makeEditable);
- 
+    makeEditable(contentRoot);
+
+    let resyncTimer: number | null = null;
+    const contentObserver = new MutationObserver(() => {
+      if (resyncTimer) window.clearTimeout(resyncTimer);
+      resyncTimer = window.setTimeout(() => makeEditable(contentRoot), 120);
+    });
+    contentObserver.observe(contentRoot, { childList: true, subtree: true });
+
     return () => {
+      contentObserver.disconnect();
+      if (resyncTimer) window.clearTimeout(resyncTimer);
       const removeListeners = (node: Element) => {
         if (textTags.includes(node.tagName)) {
           const htmlNode = node as HTMLElement;
@@ -432,9 +472,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         }
         Array.from(node.children).forEach(removeListeners);
       };
-      Array.from(canvas.children).forEach(removeListeners);
+      removeListeners(contentRoot);
     };
-  }, [isPreviewMode, isTextEditable, onStateChange, state]);
+  }, [isPreviewMode, isTextEditable, onStateChange, state, template]);
  
   const runNativeTextCommand = (command: "undo" | "redo") => {
     const activeEditable = activeEditableRef.current;
@@ -462,16 +502,18 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     if (!canvasRef.current) return;
 
     syncHiddenElementsFromCanvas(canvasRef.current, template);
-    const canvasHtml = captureCanvasContent(canvasRef.current);
-    persistCanvasHtml(template, canvasHtml);
+    if (templateUsesHtmlCanvasPersistence(template)) {
+      const canvasHtml = captureCanvasContent(canvasRef.current);
+      persistCanvasHtml(template, canvasHtml);
+    }
     persistTextBlockState(template, state);
 
-    const previewClone = canvasRef.current.cloneNode(true) as HTMLDivElement | undefined;
-    if (!previewClone) return;
+    const canvasRoot = getCanvasContentRoot(canvasRef.current);
+    if (!(canvasRoot instanceof HTMLElement)) return;
 
-    sanitizeBlockpagesPreviewClone(previewClone);
+    const previewHtml = buildPreviewHtmlFromCanvas(canvasRoot);
 
-    window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewClone.innerHTML);
+    window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
     window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
   };
   const previewHandler = onPreview ?? openPreviewPage;
@@ -592,11 +634,18 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
             `}</style>
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div
-                className="mx-auto w-full min-w-0 flex-1 transition-all duration-500 ease-in-out max-w-full"
+                className={`mx-auto w-full min-w-0 flex-1 transition-all duration-500 ease-in-out ${
+                  previewDevice === "mobile"
+                    ? "max-w-[375px] rounded-[2rem] border-8 border-slate-800 bg-white shadow-xl"
+                    : previewDevice === "tablet"
+                      ? "max-w-[768px] rounded-[2rem] border-8 border-slate-800 bg-white shadow-xl"
+                      : "max-w-full"
+                }`}
               >
                 <div
                   data-textblock-canvas
                   data-blockpages-scroll-root
+                  data-blockpages-device={previewDevice}
                   data-blockpages-text-editing={isTextEditable ? "true" : undefined}
                   className="@container min-h-[560px] h-[calc(100vh-220px)] w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar [overflow-wrap:break-word] [word-wrap:break-word]"
                 >
@@ -637,6 +686,35 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     }
                     [data-textblock-canvas] .restaurant-shell header nav {
                       -webkit-overflow-scrolling: touch;
+                    }
+                    [data-textblock-canvas][data-blockpages-device="mobile"] nav.buyscreen-categories > div.flex,
+                    [data-textblock-canvas][data-blockpages-device="tablet"] nav.buyscreen-categories > div.flex {
+                      display: flex !important;
+                    }
+                    [data-textblock-canvas][data-blockpages-device="mobile"] nav.buyscreen-categories .buyscreen-categories-list:not(.buyscreen-categories-list--open),
+                    [data-textblock-canvas][data-blockpages-device="tablet"] nav.buyscreen-categories .buyscreen-categories-list:not(.buyscreen-categories-list--open) {
+                      display: none !important;
+                    }
+                    [data-textblock-canvas][data-blockpages-device="mobile"] nav.buyscreen-categories .buyscreen-categories-list.buyscreen-categories-list--open,
+                    [data-textblock-canvas][data-blockpages-device="tablet"] nav.buyscreen-categories .buyscreen-categories-list.buyscreen-categories-list--open {
+                      display: flex !important;
+                      flex-direction: column;
+                      align-items: stretch;
+                      gap: 0.25rem;
+                      margin-top: 0.5rem;
+                      width: 100%;
+                    }
+                    [data-textblock-canvas][data-blockpages-device="desktop"] nav.buyscreen-categories > div.flex.lg\\:hidden {
+                      display: none !important;
+                    }
+                    [data-textblock-canvas][data-blockpages-device="desktop"] nav.buyscreen-categories .buyscreen-categories-list {
+                      display: flex !important;
+                      flex-direction: row;
+                      flex-wrap: wrap;
+                      align-items: center;
+                      gap: 0.5rem;
+                      margin-top: 0;
+                      width: auto;
                     }
                     [data-textblock-canvas] h1,
                     [data-textblock-canvas] h2,
@@ -683,8 +761,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     }
                   `}</style>
                   <div ref={contentRef} className="min-w-0 max-w-full">
-                    {template === "portfolio" ? (
-                      <PortfolioPreview
+                    <BlockpagesEditorProvider template={template} deviceMode={previewDevice} onPreview={previewHandler}>
+                      {template === "portfolio" ? (
+                        <PortfolioPreview
                         isImageEditingMode={isImageEditingMode}
                         customImages={customImages}
                         onEditImage={onEditImage}
@@ -741,11 +820,43 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         {template === "ecommerce" ? (
                           <StorefrontPreview hiddenElementIds={hiddenElementIds} />
                         ) : (
-                          <TemplatePreviewRouter template={template} onPreview={previewHandler} />
+                          <TemplatePreviewRouter template={template} />
                         )}
                       </BlockpagesCanvasEnhancer>
                     )}
+                    </BlockpagesEditorProvider>
                   </div>
+                </div>
+              </div>
+              <div
+                data-builder-chrome="true"
+                className="pointer-events-none absolute bottom-4 left-1/2 z-[130] -translate-x-1/2"
+              >
+                <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("desktop")}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "desktop" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
+                    title="Desktop View"
+                  >
+                    <FaLaptop size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("tablet")}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "tablet" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
+                    title="Tablet View"
+                  >
+                    <FaTabletAlt size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("mobile")}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "mobile" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
+                    title="Mobile View"
+                  >
+                    <FaMobileAlt size={14} />
+                  </button>
                 </div>
               </div>
             </div>

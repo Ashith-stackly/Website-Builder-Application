@@ -9,6 +9,8 @@ import { blogCategories } from "@/lib/blogCategories";
 import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
+import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
+import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
 
@@ -17,9 +19,7 @@ const START_BLOGGING_HREF = "/blog/manage/create";
 
 
 function scrollToBlogSection(sectionId: string) {
-  const target = document.getElementById(sectionId);
-  if (!target) return;
-  target.scrollIntoView({ behavior: "smooth", block: "start" });
+  scrollBlockpagesCanvasToSection(sectionId);
 }
 
 function scrollToBlogCategory(categoryId: string) {
@@ -349,6 +349,7 @@ function BlogHeader({
 
           <button
             type="button"
+            data-blockpages-interactive="true"
             className={`inline-flex items-center justify-center shrink-0 w-[2.5rem] h-[2.5rem] p-0 border rounded-[0.4rem] text-[var(--blog-white)] cursor-pointer transition-[background,border-color,color] duration-150 ease hover:bg-[rgba(255,255,255,0.22)] hover:border-white focus-visible:bg-[rgba(255,255,255,0.22)] focus-visible:border-white focus-visible:outline-none @[760px]:hidden @max-[340px]:w-[2.2rem] @max-[340px]:h-[2.2rem] ${mobileOpen ? "bg-[rgba(43,127,255,0.35)] border-[rgba(255,255,255,0.9)]" : "bg-[rgba(255,255,255,0.12)] border-[rgba(255,255,255,0.65)]"}`}
             aria-expanded={mobileOpen}
             aria-controls="blog-mobile-nav"

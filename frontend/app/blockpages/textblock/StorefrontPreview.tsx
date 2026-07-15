@@ -1445,6 +1445,7 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
             <div className="flex items-center justify-end lg:hidden">
               <button
                 type="button"
+                data-blockpages-interactive="true"
                 aria-expanded={isCategoryMenuOpen}
                 aria-controls="buyscreen-category-menu"
                 className="inline-flex items-center gap-2 rounded-md border border-white/30 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors duration-150 hover:bg-white hover:text-[#06224C]"

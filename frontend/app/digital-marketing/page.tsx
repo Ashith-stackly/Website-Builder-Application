@@ -27,6 +27,8 @@ import {
 } from "react-icons/fa6";
 import { assetPath } from "@/lib/paths";
 import Footer from "@/components/Footer";
+import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
+import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import {
   animateStatCounterElement,
@@ -39,7 +41,7 @@ function dmAsset(path: string) {
 }
 
 function scrollToSection(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  scrollBlockpagesCanvasToSection(id);
 }
 
 const fadeInUp: any = {
@@ -54,6 +56,29 @@ const staggerContainer: any = {
     transition: { staggerChildren: 0.15 },
   },
 };
+
+function getSectionMotion(isBlockpages: boolean, margin = "-50px") {
+  if (isBlockpages) {
+    return { initial: "show" as const, animate: "show" as const };
+  }
+
+  return {
+    initial: "hidden" as const,
+    whileInView: "show" as const,
+    viewport: { once: true, margin },
+  };
+}
+
+function getHeroImageMotion(isBlockpages: boolean) {
+  if (isBlockpages) return {};
+
+  return {
+    initial: { scale: 1.1, opacity: 0 },
+    whileInView: { scale: 1, opacity: 1 },
+    transition: { duration: 1 },
+    viewport: { once: true },
+  };
+}
 
 const slideInLeft: any = {
   hidden: { opacity: 0, x: -50 },
@@ -445,6 +470,11 @@ export default function DigitalMarketingPreviewPage() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [deviceMode, setDeviceMode] = useState<"preview" | "desktop" | "tablet" | "mobile">("preview");
+  const previewDevice = resolveBlockpagesDeviceMode(
+    isBlockpages,
+    blockpagesEditor?.deviceMode,
+    deviceMode === "preview" ? "desktop" : deviceMode
+  );
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
   const [innerNavHidden, setInnerNavHidden] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(1);
@@ -575,6 +605,10 @@ export default function DigitalMarketingPreviewPage() {
                     </div>
                     <button
                       type="button"
+                      data-blockpages-interactive="true"
+                      aria-label={innerMobileMenuOpen ? "Close menu" : "Open menu"}
+                      aria-controls="dm-mobile-nav"
+                      aria-expanded={innerMobileMenuOpen}
                       onClick={() => setInnerMobileMenuOpen((v) => !v)}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/25 text-white transition hover:bg-white/10 @sm:h-8 @sm:w-8"
                     >
@@ -610,7 +644,7 @@ export default function DigitalMarketingPreviewPage() {
                 <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${innerMobileMenuOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}
                 >
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2 bg-[#06224C] px-3 pb-3 pt-2">
+                  <div id="dm-mobile-nav" className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2 bg-[#06224C] px-3 pb-3 pt-2">
                     {navItems.map((item) => (
                       <button
                         key={item.id}
@@ -632,10 +666,7 @@ export default function DigitalMarketingPreviewPage() {
                 <section id="home" className="relative flex min-h-[320px] w-full items-center justify-center overflow-hidden @sm:min-h-[420px] @md:min-h-[520px]">
                   <div className="absolute inset-0 bg-[#0A1E3D]">
                     <motion.img
-                      initial={{ scale: 1.1, opacity: 0 }}
-                      whileInView={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 1 }}
-                      viewport={{ once: true }}
+                      {...getHeroImageMotion(isBlockpages)}
                       src={dmAsset("/Digital Marketing.webp")}
                       alt="Precision Marketing"
                       className="h-full w-full object-cover"
@@ -644,9 +675,7 @@ export default function DigitalMarketingPreviewPage() {
                     <div className="absolute inset-0 bg-black/60" />
                   </div>
                   <motion.div
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true }}
+                    {...getSectionMotion(isBlockpages, "0px")}
                     variants={staggerContainer}
                     className="relative z-10 mx-auto min-w-0 max-w-3xl px-4 py-16 text-center @md:px-8 @md:py-24"
                   >
@@ -676,9 +705,7 @@ export default function DigitalMarketingPreviewPage() {
                 {/* Mission & Vision */}
                 <section id="about" className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
                   <motion.div
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, margin: "-50px" }}
+                    {...getSectionMotion(isBlockpages)}
                     variants={staggerContainer}
                     className="mx-auto min-w-0 max-w-6xl text-center"
                   >
@@ -734,9 +761,7 @@ export default function DigitalMarketingPreviewPage() {
                 {/* Services */}
                 <section id="services" className="bg-[#0A1E3D] px-4 py-12 @md:px-8 @md:py-20">
                   <motion.div
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, margin: "-50px" }}
+                    {...getSectionMotion(isBlockpages)}
                     variants={staggerContainer}
                     className="mx-auto max-w-6xl"
                   >
@@ -768,9 +793,7 @@ export default function DigitalMarketingPreviewPage() {
                 {/* Business Planning */}
                 <section className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
                   <motion.div
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, margin: "-50px" }}
+                    {...getSectionMotion(isBlockpages)}
                     variants={staggerContainer}
                     className="mx-auto grid max-w-6xl items-center gap-10 @3xl:grid-cols-2"
                   >
@@ -805,9 +828,7 @@ export default function DigitalMarketingPreviewPage() {
                 {/* Why Choose Us */}
                 <section id="dm-why-choose" ref={isBlockpages ? statsRef : undefined} className="bg-[#FFF0F0] px-4 pb-12 @md:px-8 @md:pb-20">
                   <motion.div
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, margin: "-50px" }}
+                    {...getSectionMotion(isBlockpages)}
                     variants={staggerContainer}
                     className="mx-auto max-w-6xl"
                   >
@@ -916,9 +937,7 @@ export default function DigitalMarketingPreviewPage() {
                     onMouseLeave={() => setIsHoveredTestimonials(false)}
                   >
                     <motion.div
-                      initial="hidden"
-                      whileInView="show"
-                      viewport={{ once: true, margin: "-50px" }}
+                      {...getSectionMotion(isBlockpages)}
                       variants={fadeInUp}
                     >
                       <h2 className="mb-4 text-[clamp(1.25rem,6cqw,1.875rem)] font-bold text-[#0A1E3D] @md:text-[clamp(1.5rem,7cqw,2.25rem)]">What Client Says</h2>
@@ -994,9 +1013,7 @@ export default function DigitalMarketingPreviewPage() {
 
                 {/* CTA Banner */}
                 <motion.section
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, margin: "-50px" }}
+                  {...getSectionMotion(isBlockpages)}
                   variants={staggerContainer}
                   className="relative overflow-hidden bg-[#0A1E3D] px-4 py-16 text-center @md:px-8 @md:py-24"
                 >
@@ -1030,9 +1047,7 @@ export default function DigitalMarketingPreviewPage() {
                 {/* Contact */}
                 <section id="contact" className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
                   <motion.div
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, margin: "-50px" }}
+                    {...getSectionMotion(isBlockpages)}
                     variants={staggerContainer}
                     className="mx-auto flex max-w-6xl flex-col gap-12 @md:flex-row @md:gap-16"
                   >

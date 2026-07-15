@@ -1,8 +1,16 @@
 import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
 import { finalizeStatCounterElement } from "@/lib/blockpagesStatCounter";
+import { prepareBlockpagesPreviewMenus } from "@/lib/blockpagesPreviewInteractions";
+import {
+  bakeDraggableOverlayPositions,
+  prepareBlockpagesPreviewHtml,
+  shouldPreservePreviewTransform,
+} from "@/lib/blockpagesOverlayLayers";
 
 function revealHiddenMotionElements(root: ParentNode) {
   root.querySelectorAll<HTMLElement>("*").forEach((element) => {
+    if (shouldPreservePreviewTransform(element)) return;
+
     if (element.style.opacity === "0") {
       element.style.opacity = "1";
     }
@@ -12,6 +20,10 @@ function revealHiddenMotionElements(root: ParentNode) {
       element.style.transform = "none";
     }
   });
+}
+
+export function finalizeBlockpagesEditorMotion(root: ParentNode) {
+  revealHiddenMotionElements(root);
 }
 
 function finalizeStatCounters(root: ParentNode) {
@@ -35,6 +47,13 @@ function normalizePreviewScrollRoot(root: ParentNode) {
 }
 
 export function sanitizeBlockpagesPreviewClone(root: HTMLElement) {
+  root.querySelectorAll('[data-blockpages-overlay-kind="divider"]').forEach((overlay) => overlay.remove());
+  bakeDraggableOverlayPositions(root);
+  root.querySelectorAll("[data-blockpages-preview-divider] [data-blockpages-overlay-scale]").forEach((element) => {
+    if (element instanceof HTMLElement) {
+      element.style.transform = element.style.transform || "none";
+    }
+  });
   root.querySelectorAll("[contenteditable]").forEach((element) => element.removeAttribute("contenteditable"));
   root.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
   root.querySelectorAll("[data-builder-chrome='true']").forEach((element) => element.remove());
@@ -55,8 +74,15 @@ export function sanitizeBlockpagesPreviewClone(root: HTMLElement) {
   finalizeStatCounters(root);
   normalizePreviewScrollRoot(root);
   injectPortfolioProjectsSliderNavAttributes(root);
+  prepareBlockpagesPreviewMenus(root);
 
   return root;
+}
+
+export function buildPreviewHtmlFromCanvas(liveCanvas: HTMLElement) {
+  const preparedClone = prepareBlockpagesPreviewHtml(liveCanvas);
+  sanitizeBlockpagesPreviewClone(preparedClone);
+  return preparedClone.innerHTML;
 }
 
 export function sanitizeBlockpagesPreviewHtml(html: string) {

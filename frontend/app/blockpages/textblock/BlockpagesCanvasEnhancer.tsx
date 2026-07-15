@@ -2,8 +2,7 @@
 
 import { createElement, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { motion } from "framer-motion";
-import { FaMinus, FaPen, FaPlus, FaTrash } from "react-icons/fa";
+import { FaPen } from "react-icons/fa";
 import type { BlockData } from "../buttonblock/types";
 import type { DividerBlockProps } from "../dividerblock/types";
 import type { IconBlockProps } from "../iconsblock/types";
@@ -14,8 +13,10 @@ import {
 } from "@/lib/blockpagesEditTargets";
 import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 import { BLOCKPAGES_CANVAS_RESTORED_EVENT } from "@/lib/blockpagesEditorPersistence";
+import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
 import DividerPreview from "../dividerblock/DividerPreview";
 import IconPreview from "../iconsblock/IconPreview";
+import BlockpagesPositionedOverlay from "./BlockpagesPositionedOverlay";
 
 type OverlayKind = "image" | "button" | "video" | "icon";
 
@@ -45,13 +46,13 @@ type BlockpagesCanvasEnhancerProps = {
   customIcons?: Record<string, IconBlockProps>;
   videoBlocks?: VideoBlockData[];
   template?: BlockpagesTemplateId;
-  appliedDividers?: { id: string; props: DividerBlockProps; position?: { x: number; y: number }; scale?: number }[];
+  appliedDividers?: { id: string; props: DividerBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[];
   onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: { x: number; y: number }) => void;
+  onUpdateDividerPosition?: (id: string, position: { top: number; left: number }) => void;
   onUpdateDividerScale?: (id: string, scale: number) => void;
-  appliedIcons?: { id: string; props: IconBlockProps; position?: { x: number; y: number }; scale?: number }[];
+  appliedIcons?: { id: string; props: IconBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[];
   onRemoveIcon?: (id: string) => void;
-  onUpdateIconPosition?: (id: string, position: { x: number; y: number }) => void;
+  onUpdateIconPosition?: (id: string, position: { top: number; left: number }) => void;
   onUpdateIconScale?: (id: string, scale: number) => void;
 };
 
@@ -590,21 +591,7 @@ export default function BlockpagesCanvasEnhancer({
     const handleScrollToSection = (event: Event) => {
       const sectionId = (event as CustomEvent<string>).detail;
       if (!sectionId) return;
-
-      const escapeSectionId =
-        typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(sectionId) : sectionId;
-
-      const scrollRoot =
-        container.closest("[data-textblock-canvas]") ??
-        container.closest("[data-blockpages-scroll-root]") ??
-        container;
-
-      const target =
-        scrollRoot.querySelector(`#${escapeSectionId}`) ??
-        container.querySelector(`#${escapeSectionId}`) ??
-        document.getElementById(sectionId);
-
-      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollBlockpagesCanvasToSection(sectionId);
     };
 
     window.addEventListener("resize", handleReposition);
@@ -635,8 +622,10 @@ export default function BlockpagesCanvasEnhancer({
   };
 
   return (
-    <div ref={containerRef} className="relative w-full min-w-0 max-w-full">
-      {children}
+    <div ref={containerRef} data-blockpages-overlay-container="true" className="relative w-full min-w-0 max-w-full">
+      <div data-blockpages-template-root className="relative w-full min-w-0 max-w-full">
+        {children}
+      </div>
 
       {overlayTargets.length > 0 && (
         <div className="pointer-events-none absolute inset-0 z-[120] overflow-visible" aria-hidden={false}>
@@ -661,117 +650,36 @@ export default function BlockpagesCanvasEnhancer({
       )}
 
       {appliedIcons.map((icon, index) => (
-        <motion.div
+        <BlockpagesPositionedOverlay
           key={icon.id}
-          drag
-          dragMomentum={false}
-          initial={{ x: icon.position?.x ?? 0, y: icon.position?.y ?? 0 }}
-          onDragEnd={(_event, info) => {
-            onUpdateIconPosition?.(icon.id, {
-              x: (icon.position?.x ?? 0) + info.offset.x,
-              y: (icon.position?.y ?? 0) + info.offset.y,
-            });
-          }}
-          data-draggable-chrome="true"
-          className="absolute left-0 z-[100] flex w-full max-w-full flex-col items-center bg-transparent cursor-move active:cursor-grabbing px-4 py-2 sm:px-6 md:px-12 lg:px-20"
-          style={{ top: `${200 + index * 50}px` }}
-          title="Drag to move the icon"
+          id={icon.id}
+          index={index}
+          kind="icon"
+          position={icon.position}
+          scale={icon.scale ?? 1}
+          onPositionChange={(overlayId, nextPosition) => onUpdateIconPosition?.(overlayId, nextPosition)}
+          onScaleChange={(overlayId, nextScale) => onUpdateIconScale?.(overlayId, nextScale)}
+          onRemove={(overlayId) => onRemoveIcon?.(overlayId)}
         >
-          <div className="relative flex flex-col items-center justify-center group/inner outline-none" tabIndex={0}>
-            <div
-              className="relative z-10 rounded-md p-2 transition-transform group-hover/inner:outline group-hover/inner:outline-2 group-hover/inner:outline-dashed group-hover/inner:outline-blue-400 group-focus-within/inner:outline group-focus-within/inner:outline-2 group-focus-within/inner:outline-blue-400"
-              style={{ transform: `scale(${icon.scale ?? 1})`, transformOrigin: "center" }}
-            >
-              <IconPreview props={icon.props} />
-            </div>
-            <div
-              data-builder-chrome="true"
-              className="absolute -top-10 left-1/2 z-[110] hidden -translate-x-1/2 items-center gap-2 rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl group-hover/inner:flex group-focus-within/inner:flex"
-            >
-              <button
-                type="button"
-                onClick={() => onUpdateIconScale?.(icon.id, Math.max(0.2, (icon.scale ?? 1) - 0.1))}
-                className="flex cursor-pointer items-center justify-center rounded-md bg-gray-100 p-1.5 text-gray-700 shadow-sm transition-transform hover:scale-105 hover:bg-gray-200"
-                title="Decrease Size"
-              >
-                <FaMinus size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onUpdateIconScale?.(icon.id, (icon.scale ?? 1) + 0.1)}
-                className="flex cursor-pointer items-center justify-center rounded-md bg-gray-100 p-1.5 text-gray-700 shadow-sm transition-transform hover:scale-105 hover:bg-gray-200"
-                title="Increase Size"
-              >
-                <FaPlus size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onRemoveIcon?.(icon.id)}
-                className="flex cursor-pointer items-center justify-center rounded-md bg-red-50 p-1.5 text-red-500 shadow-sm transition-transform hover:scale-105 hover:bg-red-100"
-                title="Remove Icon"
-              >
-                <FaTrash size={12} />
-              </button>
-            </div>
-          </div>
-        </motion.div>
+          <IconPreview props={icon.props} />
+        </BlockpagesPositionedOverlay>
       ))}
 
       {appliedDividers.map((divider, index) => (
-        <motion.div
+        <BlockpagesPositionedOverlay
           key={divider.id}
-          drag
-          dragMomentum={false}
-          initial={{ x: divider.position?.x ?? 0, y: divider.position?.y ?? 0 }}
-          onDragEnd={(_event, info) => {
-            onUpdateDividerPosition?.(divider.id, {
-              x: (divider.position?.x ?? 0) + info.offset.x,
-              y: (divider.position?.y ?? 0) + info.offset.y,
-            });
-          }}
-          data-draggable-chrome="true"
-          className="absolute left-0 z-[100] flex w-full max-w-full flex-col items-center bg-transparent cursor-move active:cursor-grabbing px-4 py-2 sm:px-6 md:px-12 lg:px-20"
-          style={{ top: `${400 + index * 60}px` }}
-          title="Drag to move the divider"
+          id={divider.id}
+          index={index}
+          kind="divider"
+          position={divider.position}
+          scale={divider.scale ?? 1}
+          onPositionChange={(overlayId, nextPosition) => onUpdateDividerPosition?.(overlayId, nextPosition)}
+          onScaleChange={(overlayId, nextScale) => onUpdateDividerScale?.(overlayId, nextScale)}
+          onRemove={(overlayId) => onRemoveDivider?.(overlayId)}
+          contentStyle={{ width: divider.props.width || "100%" }}
         >
-          <div className="group/inner relative flex w-full flex-col items-center outline-none" tabIndex={0}>
-            <div
-              className="relative z-10 rounded-md p-2 transition-transform group-hover/inner:outline group-hover/inner:outline-2 group-hover/inner:outline-dashed group-hover/inner:outline-blue-400 group-focus-within/inner:outline group-focus-within/inner:outline-2 group-focus-within/inner:outline-blue-400"
-              style={{ transform: `scale(${divider.scale ?? 1})`, transformOrigin: "center", width: divider.props.width || "100%" }}
-            >
-              <DividerPreview props={divider.props} />
-            </div>
-            <div
-              data-builder-chrome="true"
-              className="absolute -top-10 left-1/2 z-[110] hidden -translate-x-1/2 items-center gap-2 rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl group-hover/inner:flex group-focus-within/inner:flex"
-            >
-              <button
-                type="button"
-                onClick={() => onUpdateDividerScale?.(divider.id, Math.max(0.2, (divider.scale ?? 1) - 0.1))}
-                className="flex cursor-pointer items-center justify-center rounded-md bg-gray-100 p-1.5 text-gray-700 shadow-sm transition-transform hover:scale-105 hover:bg-gray-200"
-                title="Decrease Size"
-              >
-                <FaMinus size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onUpdateDividerScale?.(divider.id, (divider.scale ?? 1) + 0.1)}
-                className="flex cursor-pointer items-center justify-center rounded-md bg-gray-100 p-1.5 text-gray-700 shadow-sm transition-transform hover:scale-105 hover:bg-gray-200"
-                title="Increase Size"
-              >
-                <FaPlus size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onRemoveDivider?.(divider.id)}
-                className="flex cursor-pointer items-center justify-center rounded-md bg-red-50 p-1.5 text-red-500 shadow-sm transition-transform hover:scale-105 hover:bg-red-100"
-                title="Remove Divider"
-              >
-                <FaTrash size={12} />
-              </button>
-            </div>
-          </div>
-        </motion.div>
+          <DividerPreview props={divider.props} />
+        </BlockpagesPositionedOverlay>
       ))}
     </div>
   );
