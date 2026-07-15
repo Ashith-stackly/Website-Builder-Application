@@ -250,7 +250,7 @@ const collectResponsiveCss = (components: BuilderComponent[]): string => {
   ].filter(Boolean).join("\n");
 };
 
-export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata) => {
+export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, workspaceId?: string) => {
   const body = components
     .slice()
     .sort((a, b) => a.order - b.order)
@@ -278,12 +278,44 @@ export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata) 
     : "";
   const responsiveCss = collectResponsiveCss(components);
 
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+  const trackingScript = workspaceId
+    ? `
+    <script>
+      (function() {
+        try {
+          var wsId = ${JSON.stringify(workspaceId)};
+          var apiBase = ${JSON.stringify(apiBaseUrl)};
+          if (window.__stackly_preview) return;
+          var sessionKey = "stackly_session_id";
+          var sessionId = sessionStorage.getItem(sessionKey);
+          if (!sessionId) {
+            sessionId = 's_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+            sessionStorage.setItem(sessionKey, sessionId);
+          }
+          var payload = {
+            workspaceId: wsId,
+            eventType: "page_view",
+            path: window.location.pathname || "/",
+            referrer: document.referrer || "",
+            userAgent: navigator.userAgent || "",
+            sessionId: sessionId
+          };
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", apiBase + "/analytics/event", true);
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.send(JSON.stringify(payload));
+        } catch(e) {}
+      })();
+    </script>`
+    : "";
+
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${pageTitle}</title>${metaDesc}${ogBlock}
+    <title>${pageTitle}</title>${metaDesc}${ogBlock}${trackingScript}
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #ffffff; color: #0B1D40; }

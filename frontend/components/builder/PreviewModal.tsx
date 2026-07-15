@@ -24,6 +24,7 @@ export function PreviewModal({
   const PREVIEW_INJECTIONS =
     `<base href="${origin}/" />` +
     `<script>` +
+    `window.__stackly_preview = true;` +
     `(function(){` +
     `document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a');if(a){e.preventDefault();e.stopPropagation();}},true);` +
     `document.addEventListener('submit',function(e){e.preventDefault();},true);` +

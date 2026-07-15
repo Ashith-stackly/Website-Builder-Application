@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import { staggerContainer, staggerChild, revealSection, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
-import { trackPageView } from "@/lib/analytics";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { usePersistentState } from "@/lib/hooks";
 import { readUserSettings, saveUserSettings } from "@/lib/userSettings";
@@ -54,7 +53,6 @@ function SettingsInner() {
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
-    trackPageView("/dashboard/settings");
     return () => controller.abort();
   }, [loadProjects]);
 
