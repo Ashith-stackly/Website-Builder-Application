@@ -1,12 +1,13 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef, useState, useMemo, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useRef, useState, useMemo, useLayoutEffect, type ReactNode } from "react";
 import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { AssetManager } from "@/components/assets/AssetManager";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { createPortal } from "react-dom";
 import SortableItem from "./SortableItem";
 import QuickInsertBar from "./QuickInsertBar";
 import ExportButton from "./ExportButton";
@@ -106,6 +107,8 @@ function Canvas({
   const [toolsOpen, setToolsOpen] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
+  const toolsBtnRef = useRef<HTMLButtonElement>(null);
+  const [toolsPos, setToolsPos] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (editingName) nameInputRef.current?.select();
@@ -114,12 +117,32 @@ function Canvas({
   useEffect(() => {
     if (!toolsOpen) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node)) {
+      if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node) &&
+          toolsBtnRef.current && !toolsBtnRef.current.contains(event.target as Node)) {
         setToolsOpen(false);
       }
     };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setToolsOpen(false);
+    };
     document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [toolsOpen]);
+
+  // Calculate dropdown position from button rect
+  useLayoutEffect(() => {
+    if (!toolsOpen || !toolsBtnRef.current) { setToolsPos(null); return; }
+    const rect = toolsBtnRef.current.getBoundingClientRect();
+    const dropdownWidth = 220;
+    let left = rect.right - dropdownWidth;
+    // Keep within viewport
+    if (left < 8) left = 8;
+    if (left + dropdownWidth > window.innerWidth - 8) left = window.innerWidth - dropdownWidth - 8;
+    setToolsPos({ top: rect.bottom + 6, left });
   }, [toolsOpen]);
 
   /* ── Save feedback ── */
@@ -222,7 +245,7 @@ function Canvas({
     >
       {/* ── Toolbar ── */}
       <div
-        className="relative z-30 flex h-[60px] flex-shrink-0 items-center justify-between gap-3 overflow-visible border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-4"
+        className="relative z-40 flex h-[60px] flex-shrink-0 items-center justify-between gap-3 overflow-visible border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left: undo/redo + project name */}
@@ -274,8 +297,9 @@ function Canvas({
 
         {/* Right: actions */}
         <div className="flex flex-shrink-0 items-center gap-1.5 md:gap-2">
-          <div className="relative" ref={toolsMenuRef}>
+          <div className="relative">
             <button
+              ref={toolsBtnRef}
               type="button"
               title="Builder tools"
               onClick={() => setToolsOpen((open) => !open)}
@@ -284,27 +308,6 @@ function Canvas({
               <MoreHorizontal className="h-4 w-4 text-gray-500" />
               <span className="hidden sm:inline">Tools</span>
             </button>
-            <AnimatePresence>
-              {toolsOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                  transition={{ duration: 0.16, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="absolute right-0 top-11 z-50 w-[220px] overflow-hidden rounded-xl border border-[#dbe3ef] bg-white p-1.5 shadow-[0_18px_50px_rgba(15,35,75,0.18)]"
-                >
-                  <ToolMenuButton label="Design" Icon={Palette} tone="text-violet-700 bg-violet-50 border-violet-100" onClick={() => runTool(toggleGlobalStyles)} />
-                  <ToolMenuButton label="Assets" Icon={Images} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(() => setIsAssetsOpen(true))} />
-                  <ToolMenuButton label="Starter" Icon={Sparkles} tone="text-blue-700 bg-blue-50 border-blue-100" onClick={() => runTool(onLoadStarter)} />
-                  <ToolMenuButton label="Load" Icon={FolderOpen} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(handleLoad)} />
-                  <ToolMenuButton label={isSaving ? "Saving" : saved || saveStatus === "saved" ? "Saved" : "Save"} Icon={saved || saveStatus === "saved" ? Check : Save} tone={saved || saveStatus === "saved" ? "text-green-700 bg-green-50 border-green-100" : "text-slate-700 bg-slate-50 border-slate-100"} onClick={() => runTool(() => { void handleSave(); })} />
-                  <ToolMenuButton label="Clear" Icon={Trash2} tone="text-red-700 bg-red-50 border-red-100" onClick={() => runTool(onClear)} />
-                  <div className="mx-1.5 my-1 h-px bg-gray-100" />
-                  <ToolMenuButton label="Export JSON" Icon={Download} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(() => { exportJSON(); })} />
-                  <ToolMenuButton label="Import JSON" Icon={FileUp} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(handleImportJSON)} />
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
           <button
             type="button"
@@ -422,7 +425,7 @@ function Canvas({
         }}
       >
         {selectionToolbar && (
-          <div className="sticky top-0 z-50 flex justify-center pb-2 pointer-events-none">
+          <div className="sticky top-0 z-20 flex justify-center pb-2 pointer-events-none">
             {selectionToolbar}
           </div>
         )}
@@ -498,6 +501,34 @@ function Canvas({
       </div>
 
       <AssetManager open={isAssetsOpen} onClose={() => setIsAssetsOpen(false)} />
+
+      {/* ── Tools dropdown (portal to escape stacking context) ── */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {toolsOpen && toolsPos && (
+            <motion.div
+              ref={toolsMenuRef}
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.98 }}
+              transition={{ duration: 0.16, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="fixed z-[200] w-[220px] overflow-hidden rounded-xl border border-[#dbe3ef] bg-white p-1.5 shadow-[0_18px_50px_rgba(15,35,75,0.18)]"
+              style={{ top: toolsPos.top, left: toolsPos.left }}
+            >
+              <ToolMenuButton label="Design" Icon={Palette} tone="text-violet-700 bg-violet-50 border-violet-100" onClick={() => runTool(toggleGlobalStyles)} />
+              <ToolMenuButton label="Assets" Icon={Images} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(() => setIsAssetsOpen(true))} />
+              <ToolMenuButton label="Starter" Icon={Sparkles} tone="text-blue-700 bg-blue-50 border-blue-100" onClick={() => runTool(onLoadStarter)} />
+              <ToolMenuButton label="Load" Icon={FolderOpen} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(handleLoad)} />
+              <ToolMenuButton label={isSaving ? "Saving" : saved || saveStatus === "saved" ? "Saved" : "Save"} Icon={saved || saveStatus === "saved" ? Check : Save} tone={saved || saveStatus === "saved" ? "text-green-700 bg-green-50 border-green-100" : "text-slate-700 bg-slate-50 border-slate-100"} onClick={() => runTool(() => { void handleSave(); })} />
+              <ToolMenuButton label="Clear" Icon={Trash2} tone="text-red-700 bg-red-50 border-red-100" onClick={() => runTool(onClear)} />
+              <div className="mx-1.5 my-1 h-px bg-gray-100" />
+              <ToolMenuButton label="Export JSON" Icon={Download} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(() => { exportJSON(); })} />
+              <ToolMenuButton label="Import JSON" Icon={FileUp} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(handleImportJSON)} />
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </main>
   );
 }

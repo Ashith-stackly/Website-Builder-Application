@@ -27,25 +27,31 @@ import type { Asset } from "@/types/assets";
 interface ImagePickerProps {
   open:        boolean;
   onClose:     () => void;
-  /** Called immediately when an asset is selected or URL confirmed. */
+  /** Called immediately when an asset is selected or URL confirmed (single mode). */
   onSelect:    (url: string, assetId?: string) => void;
   currentUrl?: string;
+  /** Selection mode. Defaults to "single" for backward compatibility. */
+  mode?:       "single" | "multiple";
+  /** Called with all selected assets when user confirms in "multiple" mode. */
+  onSelectMultiple?: (selections: Array<{ url: string; assetId?: string }>) => void;
 }
 
 type PickerTab = "library" | "upload" | "url";
 
-export function ImagePicker({ open, onClose, onSelect, currentUrl }: ImagePickerProps) {
+export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "single", onSelectMultiple }: ImagePickerProps) {
   const { assets, loadAssets, uploadFiles, deleteAsset, getUrl } = useAssetStore();
 
   const [tab,        setTab]        = useState<PickerTab>("library");
   const [search,     setSearch]     = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [multiSelectedIds, setMultiSelectedIds] = useState<Set<string>>(new Set());
   const [urlInput,   setUrlInput]   = useState(currentUrl ?? "");
 
   const urlRef = useRef<HTMLInputElement>(null);
+  const isMulti = mode === "multiple";
 
   useEffect(() => {
-    if (open) { loadAssets(); setSearch(""); setTab("library"); }
+    if (open) { loadAssets(); setSearch(""); setTab("library"); setMultiSelectedIds(new Set()); }
   }, [open, loadAssets]);
 
   useEffect(() => {
@@ -56,8 +62,17 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl }: ImagePicker
     a.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  /* Select from library */
+  /* Single-select from library */
   const handleAssetSelect = async (asset: Asset) => {
+    if (isMulti) {
+      setMultiSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(asset.id)) next.delete(asset.id);
+        else next.add(asset.id);
+        return next;
+      });
+      return;
+    }
     setSelectedId(asset.id);
     const url = await getUrl(asset.id);
     if (url) onSelect(url, asset.id);
@@ -66,11 +81,33 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl }: ImagePicker
   /* Upload then auto-select first uploaded file */
   const handleUpload = async (files: File[]) => {
     const uploaded = await uploadFiles(files);
+    if (isMulti) {
+      // In multi mode, add all uploaded to selection
+      setMultiSelectedIds((prev) => {
+        const next = new Set(prev);
+        uploaded.forEach((a) => next.add(a.id));
+        return next;
+      });
+      setTab("library");
+      return;
+    }
     if (uploaded[0]) {
       const url = await getUrl(uploaded[0].id);
       if (url) { onSelect(url, uploaded[0].id); onClose(); }
     }
     setTab("library");
+  };
+
+  /* Confirm multi-selection */
+  const confirmMultiSelect = async () => {
+    if (!onSelectMultiple || multiSelectedIds.size === 0) return;
+    const selections: Array<{ url: string; assetId?: string }> = [];
+    for (const id of multiSelectedIds) {
+      const url = await getUrl(id);
+      if (url) selections.push({ url, assetId: id });
+    }
+    onSelectMultiple(selections);
+    onClose();
   };
 
   /* Confirm external URL */
@@ -221,7 +258,7 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl }: ImagePicker
                           <AssetCard
                             key={asset.id}
                             asset={asset}
-                            selected={selectedId === asset.id}
+                            selected={isMulti ? multiSelectedIds.has(asset.id) : selectedId === asset.id}
                             onSelect={handleAssetSelect}
                             onDelete={deleteAsset}
                           />
@@ -238,13 +275,24 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl }: ImagePicker
               <span className="text-[11px] text-gray-400">
                 {assets.length} image{assets.length !== 1 ? "s" : ""} in library
               </span>
-              <button
-                onClick={onClose}
-                type="button"
-                className="rounded-lg px-4 py-2 text-[12px] font-semibold text-gray-500 hover:bg-gray-100"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                {isMulti && multiSelectedIds.size > 0 && (
+                  <button
+                    onClick={confirmMultiSelect}
+                    type="button"
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-[12px] font-bold text-white shadow-sm hover:bg-blue-700 transition"
+                  >
+                    Add Selected ({multiSelectedIds.size})
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  type="button"
+                  className="rounded-lg px-4 py-2 text-[12px] font-semibold text-gray-500 hover:bg-gray-100"
+                >
+                  {isMulti ? "Cancel" : "Close"}
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

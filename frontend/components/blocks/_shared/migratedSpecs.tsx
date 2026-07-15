@@ -67,13 +67,15 @@ import { DropZone } from "@/components/assets/DropZone";
 import { ImagePicker } from "@/components/assets/ImagePicker";
 import { useAssetStore } from "@/store/assetStore";
 import { escapeHtml } from "@/lib/htmlUtils";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { RefreshCw, Trash2, Plus, GripVertical } from "lucide-react";
 
 type ContentProps = { content: string };
 type ImageBlockProps = { src: string; alt?: string; assetId?: string };
 type IconBlockProps = { name: string };
 type ColumnsProps = { columns: "1" | "2" | "3" | "4" };
-type GalleryProps = { items: Array<{ src: string; caption: string }> };
+type GalleryItem = { src: string; caption: string; assetId?: string };
+type GalleryProps = { items: GalleryItem[] };
 
 const asObject = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -264,20 +266,210 @@ function DividerPanel() {
   );
 }
 
-function GalleryPanel({ data, setContent }: PanelProps<GalleryProps>) {
-  const raw = data.items.map((item) => `${item.src}|${item.caption}`).join("\n");
+const galleryImagePresets = [
+  "/showcase.webp",
+  "/landing-optimized/portfolio03.webp",
+  "/landing-optimized/ecommerce.webp",
+  "/landing-optimized/business09.webp",
+  "/landing-optimized/construction02.webp",
+  "/landing-optimized/foodd03.webp",
+];
+
+function serializeGalleryContent(items: GalleryItem[]) {
+  return items
+    .filter((item) => item.src.trim())
+    .map((item) => `${item.src.trim()}|${item.caption.trim() || "Image"}`)
+    .join("\n");
+}
+
+function GalleryPanel({ data, component, setContent, setProp }: PanelProps<GalleryProps>) {
+  const getDataUrl = useAssetStore((s) => s.getDataUrl);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const items = data.items;
+
+  const saveItems = useCallback(
+    (next: GalleryItem[]) => {
+      setContent?.(serializeGalleryContent(next));
+      setProp("items", next);
+    },
+    [setContent, setProp],
+  );
+
+  const openPicker = (index: number | null = null) => {
+    setReplaceIndex(index);
+    setPickerOpen(true);
+  };
+
+  const handleSelectImage = async (url: string, assetId?: string) => {
+    let src = url;
+    if (assetId) {
+      const dataUrl = await getDataUrl(assetId);
+      if (dataUrl) src = dataUrl;
+    }
+    const next = [...items];
+    if (replaceIndex === null) {
+      next.push({ src, caption: "Image", assetId });
+    } else {
+      next[replaceIndex] = { ...next[replaceIndex], src, assetId };
+    }
+    saveItems(next);
+    setPickerOpen(false);
+    setReplaceIndex(null);
+  };
+
+  const handleSelectMultiple = async (selections: Array<{ url: string; assetId?: string }>) => {
+    const newItems: GalleryItem[] = [];
+    for (const sel of selections) {
+      let src = sel.url;
+      if (sel.assetId) {
+        const dataUrl = await getDataUrl(sel.assetId);
+        if (dataUrl) src = dataUrl;
+      }
+      newItems.push({ src, caption: "Image", assetId: sel.assetId });
+    }
+    saveItems([...items, ...newItems]);
+    setPickerOpen(false);
+    setReplaceIndex(null);
+  };
+
+  const updateCaption = (index: number, caption: string) => {
+    const next = items.map((item, i) => (i === index ? { ...item, caption } : item));
+    saveItems(next);
+  };
+
+  const removeItem = (index: number) => {
+    saveItems(items.filter((_, i) => i !== index));
+  };
+
+  const addPreset = (src: string) => {
+    saveItems([...items, { src, caption: src.split("/").pop()?.replace(/\.\w+$/, "") || "Image" }]);
+  };
+
+  const handleDragStart = (index: number) => setDragIdx(index);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === index) return;
+    const next = [...items];
+    const [moved] = next.splice(dragIdx, 1);
+    next.splice(index, 0, moved);
+    saveItems(next);
+    setDragIdx(index);
+  };
+  const handleDragEnd = () => setDragIdx(null);
+
   return (
-    <label className="block">
-      <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">Images</span>
-      <textarea
-        className={`${contentInputClass} min-h-[180px] resize-none font-mono text-[11px]`}
-        onChange={(event) => setContent?.(event.target.value)}
-        value={raw}
+    <div className="space-y-4">
+      <button
+        type="button"
+        onClick={() => openPicker()}
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B1D40] px-3 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
+      >
+        <ImageIcon className="h-3.5 w-3.5" />
+        Add Images
+      </button>
+
+      {items.length === 0 ? (
+        <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#0B1D40]/20 bg-white/60 text-center text-[#566583]">
+          <ImageIcon className="h-8 w-8 text-[#0B1D40]/30" />
+          <span className="text-[12px] font-medium">No gallery images selected</span>
+          <button
+            type="button"
+            onClick={() => openPicker()}
+            className="mt-1 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 transition"
+          >
+            Add Images
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item, index) => (
+            <div
+              key={`${item.src}-${index}`}
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`overflow-hidden rounded-xl border bg-white/70 transition-shadow ${
+                dragIdx === index
+                  ? "border-blue-400 shadow-md"
+                  : "border-[#0B1D40]/10"
+              }`}
+            >
+              <div className="relative h-32 bg-[#eef4fb]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.src}
+                  alt={item.caption || `Gallery image ${index + 1}`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+                <div className="absolute left-2 top-2">
+                  <div className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md bg-white/95 text-[#566583] shadow-sm">
+                    <GripVertical className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+                <div className="absolute right-2 top-2 flex gap-1.5">
+                  <button
+                    type="button"
+                    title="Replace image"
+                    onClick={() => openPicker(index)}
+                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white/95 text-[#0B1D40] shadow-sm transition hover:bg-blue-50"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Remove image"
+                    onClick={() => removeItem(index)}
+                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white/95 text-red-500 shadow-sm transition hover:bg-red-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-2">
+                <input
+                  className={contentInputClass}
+                  value={item.caption}
+                  onChange={(event) => updateCaption(index, event.target.value)}
+                  placeholder="Caption"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        {galleryImagePresets.slice(1, 5).map((src) => (
+          <button
+            key={src}
+            type="button"
+            className="flex items-center justify-center gap-1.5 truncate rounded-lg border border-[#0B1D40]/20 bg-white/60 px-2 py-2 text-[10px] font-bold text-[#0B1D40] transition hover:bg-[#0B1D40]/5"
+            onClick={() => addPreset(src)}
+          >
+            <Plus className="h-3 w-3 shrink-0" />
+            {src.split("/").pop()?.replace(".webp", "")}
+          </button>
+        ))}
+      </div>
+
+      <ImagePicker
+        open={pickerOpen}
+        onClose={() => {
+          setPickerOpen(false);
+          setReplaceIndex(null);
+        }}
+        onSelect={handleSelectImage}
+        mode={replaceIndex === null ? "multiple" : "single"}
+        onSelectMultiple={handleSelectMultiple}
+        currentUrl={replaceIndex === null ? undefined : items[replaceIndex]?.src}
       />
-      <p className="mt-2 text-[11px] font-medium leading-5 text-[#566583]">
-        One image per line: <code className="rounded bg-[#eef4fb] px-1">url|caption</code>
-      </p>
-    </label>
+    </div>
   );
 }
 
@@ -477,6 +669,19 @@ function readColumns(component: BuilderComponent): ColumnsProps {
 }
 
 function readGallery(component: BuilderComponent): GalleryProps {
+  // Prefer structured props.images if available
+  const propsObj = asObject(component.props);
+  if (Array.isArray(propsObj.items) && propsObj.items.length > 0) {
+    const structured = (propsObj.items as Array<Record<string, unknown>>)
+      .map((item) => ({
+        src: asString(item.src),
+        caption: asString(item.caption, "Image"),
+        assetId: typeof item.assetId === "string" ? item.assetId : undefined,
+      }))
+      .filter((item) => item.src);
+    if (structured.length > 0) return { items: structured };
+  }
+  // Legacy: parse pipe-delimited content string
   const items = component.content
     .split("\n")
     .map((line) => {
