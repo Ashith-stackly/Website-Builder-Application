@@ -30,7 +30,7 @@ export const blogCategories = [
     id: "blog-cat-lifestyle",
     label: "Lifestyle",
     description: "Minimal designs for wellness, fashion, and everyday inspiration.",
-    image: "/blog/template-personal.webp",
+    image: "/blog/template-lifestyle.webp",
   },
   {
     id: "blog-cat-business",
