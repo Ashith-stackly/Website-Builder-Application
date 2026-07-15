@@ -797,8 +797,10 @@ export default function ECommercePage() {
       setShowAllProducts(false);
       setSearchQuery("");
       setActiveProductStart(0);
-      featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       setIsCategoryMenuOpen(false);
+      setTimeout(() => {
+        featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
     },
     [scrollToBlogSection, scrollToContactSection]
   );
@@ -811,8 +813,10 @@ export default function ECommercePage() {
     setShowAllProducts(false);
     setSearchQuery("");
     setActiveProductStart(0);
-    featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     setIsCategoryMenuOpen(false);
+    setTimeout(() => {
+      featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   }, []);
 
   const handleTopHeaderItemClick = useCallback(
@@ -954,7 +958,7 @@ export default function ECommercePage() {
 
     try {
       await loadRazorpayCheckoutScript();
-      
+
       const order = await createRazorpayOrder({
         amountPaise: cartTotalCents,
         planName: "E-Commerce Purchase",
@@ -975,7 +979,7 @@ export default function ECommercePage() {
           try {
             const verified = await verifyRazorpayPayment(response);
             if (!verified) throw new Error("Payment verification failed");
-            
+
             // Payment success handling
             setPaymentSuccessDetails({
               paymentId: response.razorpay_payment_id,
@@ -1212,7 +1216,7 @@ export default function ECommercePage() {
             .buyscreen-page section:not(.buyscreen-shell) {
               min-width: 0 !important;
               max-width: 100% !important;
-              overflow: hidden !important;
+              overflow: clip !important;
             }
             .buyscreen-page section.buyscreen-shell {
               min-width: 0 !important;
@@ -1234,7 +1238,7 @@ export default function ECommercePage() {
             /* 6. Hero Banner Overlay Fix (Responsive) */
             .buyscreen-page .buyscreen-hero {
               position: relative !important;
-              overflow: hidden !important;
+              overflow: clip !important;
               border-radius: 1.75rem !important;
               display: flex !important;
               flex-direction: column !important;
@@ -1824,6 +1828,8 @@ export default function ECommercePage() {
             .buyscreen-page .flex {
               flex-wrap: wrap;
             }
+            .buyscreen-page .flex-col,
+            .buyscreen-page .buyscreen-product-card,
             .buyscreen-page .buyscreen-products--carousel,
             .buyscreen-page .buyscreen-product-actions-mobile,
             .buyscreen-page .buyscreen-product-hover-actions > div {
@@ -1871,9 +1877,9 @@ export default function ECommercePage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
-                  {formatUsd(lineTotalCents)}
-                </p>
+                  <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
+                    {formatUsd(lineTotalCents)}
+                  </p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1947,7 +1953,7 @@ export default function ECommercePage() {
                   Your cart
                 </h2>
                 <div className="flex items-center gap-3">
-                <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
+                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -2041,7 +2047,7 @@ export default function ECommercePage() {
                   Your favorites
                 </h2>
                 <div className="flex items-center gap-3">
-                <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
+                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -2080,13 +2086,13 @@ export default function ECommercePage() {
                         >
                           Add to Cart
                         </button>
-                      <button
-                        type="button"
-                        onClick={() => removeFavoriteProduct(product.id)}
-                        className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
-                      >
-                        Remove
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => removeFavoriteProduct(product.id)}
+                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -2108,13 +2114,12 @@ export default function ECommercePage() {
           {!isEmbeddedPreview && isPreviewOpen ? (
             <div className="flex w-full flex-1 justify-center py-4 px-2 md:py-8 md:px-4 transition-all duration-500">
               <div
-                className={`bg-white relative flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${
-                  previewDevice === "mobile"
-                    ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
-                    : previewDevice === "tablet"
+                className={`bg-white relative flex flex-col overflow-hidden transition-all duration-500 ease-in-out ${previewDevice === "mobile"
+                  ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+                  : previewDevice === "tablet"
                     ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
                     : "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
-                }`}
+                  }`}
               >
                 <iframe
                   ref={iframeRef}
@@ -2419,7 +2424,7 @@ export default function ECommercePage() {
                   </div>
                 </section>
 
-                <section ref={featuredProductsRef}>
+                <section ref={featuredProductsRef} className="scroll-mt-24">
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">Curated collection</p>
@@ -2439,7 +2444,7 @@ export default function ECommercePage() {
                     </button>
                   </div>
 
-                  <div className="buyscreen-products-row flex items-stretch gap-2 sm:gap-4">
+                  <div className="buyscreen-products-row flex items-center gap-2 sm:gap-4">
                     {!showAllProducts && !isSearching ? (
                       <button
                         type="button"
@@ -2455,7 +2460,7 @@ export default function ECommercePage() {
                     ) : null}
                     <div
                       ref={productsViewportRef}
-                      className="min-w-0 flex-1 overflow-hidden"
+                      className="min-w-0 flex-1 overflow-clip"
                       onTouchStart={handleProductsTouchStart}
                       onTouchMove={handleProductsTouchMove}
                       onTouchEnd={handleProductsTouchFinal}
@@ -2477,32 +2482,34 @@ export default function ECommercePage() {
                             tabIndex={0}
                             className="buyscreen-product-card group relative flex min-w-0 flex-col rounded-2xl border border-[#e7edf5] bg-white p-2 shadow-sm transition duration-300 hover:border-[#bfdbfe] hover:shadow-[0_24px_55px_rgba(15,35,75,0.16)] sm:p-3"
                           >
-                            <div
-                              className="buyscreen-product-image-wrap relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#f8fafc]"
-                              role="img"
-                              aria-label={`${product.name} product image`}
-                            >
+                            <div className="block w-full shrink-0">
                               <div
-                                className="absolute inset-3 rounded-lg bg-[#f8fafc] bg-contain bg-center bg-no-repeat transition duration-500 group-hover:scale-105"
-                                style={{
-                                  backgroundImage: `url('${product.image}')`,
-                                }}
-                              />
-                              <div className="buyscreen-product-hover-actions pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden justify-center px-1 pb-2 pt-6 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 lg:flex">
-                                <div className="pointer-events-auto flex flex-nowrap items-center justify-center gap-[12px] overflow-hidden whitespace-nowrap">
-                                  <BuyProductActionButtons
-                                    compact={false}
-                                    isFavorite={favoriteProductIds.includes(product.id)}
-                                    onCartClick={() => openLicenseModal(product)}
-                                    onFavoriteClick={() => toggleFavorite(product)}
-                                    onShareClick={() => {
-                                      void shareProduct(product);
-                                    }}
-                                  />
+                                className="buyscreen-product-image-wrap relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#f8fafc]"
+                                role="img"
+                                aria-label={`${product.name} product image`}
+                              >
+                                <div
+                                  className="absolute inset-3 rounded-lg bg-[#f8fafc] bg-contain bg-center bg-no-repeat transition duration-500 group-hover:scale-105"
+                                  style={{
+                                    backgroundImage: `url('${product.image}')`,
+                                  }}
+                                />
+                                <div className="buyscreen-product-hover-actions pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden justify-center px-1 pb-2 pt-6 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 lg:flex">
+                                  <div className="pointer-events-auto flex flex-nowrap items-center justify-center gap-[12px] overflow-hidden whitespace-nowrap">
+                                    <BuyProductActionButtons
+                                      compact={false}
+                                      isFavorite={favoriteProductIds.includes(product.id)}
+                                      onCartClick={() => openLicenseModal(product)}
+                                      onFavoriteClick={() => toggleFavorite(product)}
+                                      onShareClick={() => {
+                                        void shareProduct(product);
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                            <div className="buyscreen-product-actions-mobile grid grid-cols-3 place-items-center gap-1 border-t border-[#f3f4f6] px-1 py-1.5 lg:hidden">
+                            <div className="buyscreen-product-actions-mobile grid shrink-0 grid-cols-3 place-items-center gap-1 border-t border-[#f3f4f6] px-1 py-1.5 lg:hidden">
                               <BuyProductActionButtons
                                 compact
                                 isFavorite={favoriteProductIds.includes(product.id)}
@@ -2892,19 +2899,19 @@ export default function ECommercePage() {
       {!isEmbeddedPreview && (
         <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-5 left-1/2 -translate-x-1/2 max-w-[calc(100vw-2rem)] overflow-x-hidden flex-nowrap whitespace-nowrap hidden md:block">
           <div className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-2.5 py-1 sm:px-3 sm:py-1.5 flex-nowrap whitespace-nowrap shrink-0 overflow-x-hidden">
-             <Link href="/landing#templates" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition shrink-0" title="Preview">
-                <FaEye size={14} className="shrink-0" />
-             </Link>
-             <div className="w-px h-6 bg-gray-200 mx-0.5 shrink-0"></div>
-             <button onClick={() => { setPreviewDevice("desktop"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
-                <FaLaptop size={14} className="shrink-0" />
-             </button>
-             <button onClick={() => { setPreviewDevice("tablet"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "tablet" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Tablet View">
-                <FaTabletAlt size={14} className="shrink-0" />
-             </button>
-             <button onClick={() => { setPreviewDevice("mobile"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "mobile" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Mobile View">
-                <FaMobileAlt size={14} className="shrink-0" />
-             </button>
+            <Link href="/landing#templates" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition shrink-0" title="Preview">
+              <FaEye size={14} className="shrink-0" />
+            </Link>
+            <div className="w-px h-6 bg-gray-200 mx-0.5 shrink-0"></div>
+            <button onClick={() => { setPreviewDevice("desktop"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "desktop" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Desktop View">
+              <FaLaptop size={14} className="shrink-0" />
+            </button>
+            <button onClick={() => { setPreviewDevice("tablet"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "tablet" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Tablet View">
+              <FaTabletAlt size={14} className="shrink-0" />
+            </button>
+            <button onClick={() => { setPreviewDevice("mobile"); setIsPreviewOpen(true); }} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md transition shrink-0 ${isPreviewOpen && previewDevice === "mobile" ? "border-gray-200 ring-2 ring-[#06224C] text-[#06224C]" : "border-gray-100 text-[#06224C]/70"}`} title="Mobile View">
+              <FaMobileAlt size={14} className="shrink-0" />
+            </button>
           </div>
         </div>
       )}
@@ -2997,7 +3004,7 @@ export default function ECommercePage() {
             <div className="h-16 w-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4">
               <CheckCircle2 className="h-10 w-10" />
             </div>
-            
+
             <h2 className="text-xl font-bold text-[#06224C] mb-2">Order Placed Successfully!</h2>
             <p className="text-sm text-slate-500 mb-6">
               Thank you for your purchase. Your payment has been processed and verified securely.
