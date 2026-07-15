@@ -2,6 +2,7 @@
 
 import type { BuilderComponent } from "@/types/builder";
 import { toReactStyle } from "./componentStyles";
+import { useBuilderStore } from "@/store/builderStore";
 
 /** Maps layout strings to CSS grid-template-columns values. */
 const LAYOUT_GRID: Record<string, string> = {
@@ -29,8 +30,10 @@ export default function RowComponent({
   isEditing?: boolean;
   onUpdate?: (content: string | null) => void;
 }) {
+  const viewport = useBuilderStore((s) => s.viewport);
   const layout = (component.props?.layout as string) || component.content || "50/50";
-  const gridCols = LAYOUT_GRID[layout] ?? LAYOUT_GRID["50/50"];
+  const isStacked = viewport === "mobile" || viewport === "tablet";
+  const gridCols = isStacked ? "1fr" : (LAYOUT_GRID[layout] ?? LAYOUT_GRID["50/50"]);
   const hasChildren = component.children.length > 0;
   const colCount = layout.split("/").length;
 

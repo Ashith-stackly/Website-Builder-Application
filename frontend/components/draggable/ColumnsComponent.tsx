@@ -9,6 +9,8 @@ const COL_CLASS: Record<string, string> = {
   "4": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
 };
 
+import { useBuilderStore } from "@/store/builderStore";
+
 export default function ColumnsComponent({
   component,
   children,
@@ -18,20 +20,29 @@ export default function ColumnsComponent({
   isEditing?: boolean;
   onUpdate?: (content: string | null) => void;
 }) {
+  const viewport = useBuilderStore((s) => s.viewport);
   const colCount = component.content || "3";
-  const colClass = COL_CLASS[colCount] ?? "grid-cols-1 sm:grid-cols-3";
   const hasChildren = component.children.length > 0;
   const count = parseInt(colCount) || 3;
 
+  // Viewport-aware layout calculation
+  const currentCols = viewport === "mobile"
+    ? 1
+    : (viewport === "tablet" && count > 2 ? 2 : count);
+
+  const colStyle = {
+    gridTemplateColumns: `repeat(${currentCols}, minmax(0, 1fr))`,
+  };
+
   return (
     <div
-      className={`w-full ${hasChildren ? `grid gap-4 ${colClass}` : ""}`}
-      style={toReactStyle(component.styles)}
+      className={`w-full ${hasChildren ? "grid gap-4" : ""}`}
+      style={{ ...toReactStyle(component.styles), ...colStyle }}
     >
       {hasChildren ? (
         children
       ) : (
-        <div className={`grid gap-3 ${colClass}`}>
+        <div className="grid gap-3" style={colStyle}>
           {Array.from({ length: count }).map((_, i) => (
             <div
               key={i}

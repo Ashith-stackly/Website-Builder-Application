@@ -3,6 +3,7 @@
 import { Send } from "lucide-react";
 import type { BuilderComponent, FormProps } from "@/types/builder";
 import { getBaseStyles } from "./componentStyles";
+import { useBuilderStore } from "@/store/builderStore";
 
 export const formDefaults: FormProps = {
   heading: "Get in Touch",
@@ -29,9 +30,14 @@ export default function FormComponent({
 }) {
   const props = (component.props as unknown as FormProps) || formDefaults;
   const base = getBaseStyles(component);
+  const viewport = useBuilderStore((s) => s.viewport);
 
   const fieldClass =
     "w-full rounded-xl border-2 border-[#e6edf5] bg-white px-4 py-3 text-sm font-medium text-[#0B1D40] placeholder-[#94a3b8] outline-none transition focus:border-[#0B1D40] focus:ring-2 focus:ring-[#0B1D40]/10";
+
+  const gridClass = viewport === "mobile"
+    ? "grid grid-cols-1 gap-4"
+    : "grid grid-cols-1 gap-4 sm:grid-cols-2";
 
   return (
     <div style={base} className="mx-auto w-full max-w-[640px] py-6">
@@ -52,7 +58,7 @@ export default function FormComponent({
         onSubmit={(e) => e.preventDefault()}
       >
         {/* 2-col grid for text/email/tel, full-width for textarea/select */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className={gridClass}>
           {props.fields
             .filter((f) => f.type !== "textarea")
             .map((field) => (

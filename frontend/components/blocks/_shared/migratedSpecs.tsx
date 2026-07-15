@@ -854,7 +854,10 @@ export const columnsSpec: BlockSpec<ColumnsProps> = {
   Renderer: ColumnsComponent,
   Panel: ColumnsPanel,
   accepts: "any",
-  exportHtml: (data, styleAttr) => `<div${styleAttr} style="display:grid;grid-template-columns:repeat(${escapeHtml(data.columns)},minmax(0,1fr));gap:16px"></div>`,
+  exportHtml: (data, styleAttr, children = "") => {
+    const attr = styleAttr.replace('class="', 'class="stackly-columns ');
+    return `<div${attr} data-columns="${escapeHtml(data.columns)}">${children}</div>`;
+  },
   ai: { description: "A responsive column container.", exampleOutput: { columns: "3" } },
 };
 
@@ -880,7 +883,13 @@ export const gallerySpec: BlockSpec<GalleryProps> = {
   read: readGallery,
   Renderer: GalleryComponent,
   Panel: GalleryPanel,
-  exportHtml: (data, styleAttr) => `<section${styleAttr}>${data.items.map((item) => `<figure><img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.caption || "Website image")}" /><figcaption>${escapeHtml(item.caption)}</figcaption></figure>`).join("")}</section>`,
+  exportHtml: (data, styleAttr) => {
+    const attr = styleAttr.replace('class="', 'class="stackly-gallery ');
+    const gallery = data.items
+      .map((item) => `<figure><img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.caption || "Website image")}" /><figcaption>${escapeHtml(item.caption)}</figcaption></figure>`)
+      .join("");
+    return `<section${attr}><div class="stackly-gallery-grid">${gallery}</div></section>`;
+  },
   ai: { description: "A gallery of images with captions.", exampleOutput: { items: [{ src: "/showcase.webp", caption: "Website image" }] } },
 };
 
@@ -894,7 +903,10 @@ export const containerSpec: BlockSpec<Record<string, never>> = {
   Renderer: ContainerComponent,
   Panel: DividerPanel,
   accepts: "any",
-  exportHtml: (_data, styleAttr) => `<section${styleAttr}></section>`,
+  exportHtml: (_data, styleAttr, children = "") => {
+    const attr = styleAttr.replace('class="', 'class="stackly-container ');
+    return `<section${attr}>${children}</section>`;
+  },
   ai: { description: "A generic container section for nested blocks.", exampleOutput: {} },
 };
 
@@ -985,7 +997,12 @@ export const pricingTableSpec: BlockSpec<PricingTableProps> = {
   read: readPricingTable,
   Renderer: PricingTableComponent,
   Panel: PricingTablePanel,
-  exportHtml: (data, styleAttr) => `<section${styleAttr}>${data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : ""}<div style="display:flex;gap:16px">${data.tiers.map((tier) => `<div style="flex:1;border:1px solid #dbe3ef;border-radius:12px;padding:24px;text-align:center"><h3>${escapeHtml(tier.name)}</h3><div style="font-size:2em;font-weight:800">${escapeHtml(tier.price)}<small>${escapeHtml(tier.period)}</small></div><ul style="list-style:none;padding:0">${tier.features.map((feature) => `<li style="padding:4px 0">${escapeHtml(feature)}</li>`).join("")}</ul><button>${escapeHtml(tier.cta)}</button></div>`).join("")}</div></section>`,
+  exportHtml: (data, styleAttr) => {
+    const attr = styleAttr.replace('class="', 'class="stackly-pricing-table ');
+    const heading = data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : "";
+    const tiers = data.tiers.map((tier) => `<div class="pricing-tier"><h3>${escapeHtml(tier.name)}</h3><div class="pricing-price">${escapeHtml(tier.price)}<small>${escapeHtml(tier.period)}</small></div><ul class="pricing-features">${tier.features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join("")}</ul><button class="pricing-cta">${escapeHtml(tier.cta)}</button></div>`).join("");
+    return `<section${attr}>${heading}<div class="pricing-grid">${tiers}</div></section>`;
+  },
   ai: { description: "A multi-tier pricing table.", exampleOutput: pricingTableDefaults },
 };
 
@@ -998,7 +1015,12 @@ export const testimonialSpec: BlockSpec<TestimonialProps> = {
   read: readTestimonial,
   Renderer: TestimonialComponent,
   Panel: TestimonialPanel,
-  exportHtml: (data, styleAttr) => `<section${styleAttr}>${data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : ""}<div style="display:flex;gap:16px">${data.items.map((item) => `<article><blockquote style="font-style:italic">"${escapeHtml(item.quote)}"</blockquote><p style="font-weight:700">${escapeHtml(item.name)}</p><p style="color:#94a3b8">${escapeHtml(item.role)}</p></article>`).join("")}</div></section>`,
+  exportHtml: (data, styleAttr) => {
+    const attr = styleAttr.replace('class="', 'class="stackly-testimonial ');
+    const heading = data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : "";
+    const items = data.items.map((item) => `<article class="testimonial-card"><blockquote>"${escapeHtml(item.quote)}"</blockquote><p class="testimonial-name">${escapeHtml(item.name)}</p><p class="testimonial-role">${escapeHtml(item.role)}</p></article>`).join("");
+    return `<section${attr}>${heading}<div class="testimonial-grid">${items}</div></section>`;
+  },
   ai: { description: "Customer testimonial cards.", exampleOutput: testimonialDefaults },
 };
 
@@ -1011,7 +1033,12 @@ export const footerSpec: BlockSpec<FooterProps> = {
   read: readFooter,
   Renderer: FooterComponent,
   Panel: FooterPanel,
-  exportHtml: (data, styleAttr) => `<footer${styleAttr}><div style="display:flex;gap:32px"><div style="flex:1"><strong>${escapeHtml(data.brand)}</strong><p>${escapeHtml(data.tagline || "")}</p></div>${data.columns.map((column) => `<div style="flex:1"><h4>${escapeHtml(column.title)}</h4>${column.links.map((link) => `<a href="${escapeHtml(link.href)}" style="display:block;padding:4px 0">${escapeHtml(link.label)}</a>`).join("")}</div>`).join("")}</div><p style="text-align:center">${escapeHtml(data.copyright || "")}</p></footer>`,
+  exportHtml: (data, styleAttr) => {
+    const attr = styleAttr.replace('class="', 'class="stackly-footer ');
+    const brandHtml = `<div class="footer-brand"><strong>${escapeHtml(data.brand)}</strong><p>${escapeHtml(data.tagline || "")}</p></div>`;
+    const colsHtml = data.columns.map((column) => `<div class="footer-col"><h4>${escapeHtml(column.title)}</h4>${column.links.map((link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`).join("")}</div>`).join("");
+    return `<footer${attr}><div class="footer-grid">${brandHtml}${colsHtml}</div><hr class="footer-divider"/><p class="footer-copyright">${escapeHtml(data.copyright || "")}</p></footer>`;
+  },
   ai: { description: "A footer with columns and social links.", exampleOutput: footerDefaults },
 };
 
@@ -1024,7 +1051,13 @@ export const formSpec: BlockSpec<FormProps> = {
   read: readForm,
   Renderer: FormComponent,
   Panel: FormPanel,
-  exportHtml: (data, styleAttr) => `<section${styleAttr}>${data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : ""}${data.description ? `<p style="text-align:center">${escapeHtml(data.description)}</p>` : ""}<form>${data.fields.map((field) => field.type === "textarea" ? `<label style="display:block;margin-bottom:12px"><span>${escapeHtml(field.label)}</span><textarea placeholder="${escapeHtml(field.placeholder || "")}" rows="4"></textarea></label>` : `<label style="display:block;margin-bottom:12px"><span>${escapeHtml(field.label)}</span><input type="${escapeHtml(field.type)}" placeholder="${escapeHtml(field.placeholder || "")}" /></label>`).join("")}<button type="submit">${escapeHtml(data.submitLabel)}</button></form></section>`,
+  exportHtml: (data, styleAttr) => {
+    const attr = styleAttr.replace('class="', 'class="stackly-form ');
+    const heading = data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : "";
+    const desc = data.description ? `<p style="text-align:center;margin-bottom:20px;color:#566583">${escapeHtml(data.description)}</p>` : "";
+    const fieldHtml = data.fields.map((field) => field.type === "textarea" ? `<label style="display:block;margin-bottom:12px"><span>${escapeHtml(field.label)}</span><textarea placeholder="${escapeHtml(field.placeholder || "")}" rows="4" style="display:block;width:100%;padding:12px;border:1px solid #dbe3ef;border-radius:8px;margin-top:4px"></textarea></label>` : `<label style="display:block;margin-bottom:12px"><span>${escapeHtml(field.label)}</span><input type="${escapeHtml(field.type)}" placeholder="${escapeHtml(field.placeholder || "")}" style="display:block;width:100%;padding:12px;border:1px solid #dbe3ef;border-radius:8px;margin-top:4px"/></label>`).join("");
+    return `<section${attr}>${heading}${desc}<form>${fieldHtml}<button type="submit" style="width:100%">${escapeHtml(data.submitLabel)}</button></form></section>`;
+  },
   ai: { description: "A contact/signup form with configurable fields.", exampleOutput: formDefaults },
 };
 
@@ -1103,10 +1136,11 @@ export const rowSpec: BlockSpec<RowProps> = {
   Renderer: RowComponent,
   Panel: RowPanel,
   accepts: "any",
-  exportHtml: (data, styleAttr) => {
+  exportHtml: (data, styleAttr, children = "") => {
     const cols = data.layout.split("/");
     const gridCols = cols.map((c) => `${parseInt(c) || 1}fr`).join(" ");
-    return `<section${styleAttr}><div style="display:grid;grid-template-columns:${gridCols};gap:16px"></div></section>`;
+    const attr = styleAttr.replace('class="', 'class="stackly-row ');
+    return `<section${attr}><div class="stackly-row-grid" style="--grid-template-columns: ${gridCols}">${children}</div></section>`;
   },
   ai: { description: "A row container with configurable column layout.", exampleOutput: rowDefaults },
 };

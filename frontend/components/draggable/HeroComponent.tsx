@@ -5,6 +5,8 @@ import { readHero } from "@/components/blocks/hero/spec";
 import type { BuilderComponent } from "@/types/builder";
 import { getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
 
+import { useBuilderStore } from "@/store/builderStore";
+
 export default function HeroComponent({
   component,
   onPatch,
@@ -17,11 +19,12 @@ export default function HeroComponent({
   // Typed read — falls back to legacy pipe `content` for pre-migration documents.
   const { title, description, cta } = readHero(component);
   const textStyle = getTextStyles(component.styles);
+  const viewport = useBuilderStore((s) => s.viewport);
 
   /**
-   * Inline save helper: writes a single prop via `onPatch` so the store
-   * shallow-merges only the changed field (no full-object overwrite).
-   * Nested objects (like `cta`) are spread-merged to preserve sibling keys.
+   * Update one field of one item immutably.
+   * Creates a new array with only the patched item replaced — all other
+   * items and their fields are preserved exactly as stored.
    */
   function saveProp(field: "title" | "description", value: string) {
     onPatch?.({ props: { [field]: value } });
@@ -31,9 +34,14 @@ export default function HeroComponent({
     onPatch?.({ props: { cta: { ...cta, label: value } } });
   }
 
+  const isMobile = viewport === "mobile";
+  const gridStyle = isMobile
+    ? { gridTemplateColumns: "1fr" }
+    : { gridTemplateColumns: "1.15fr 0.85fr", alignItems: "center" };
+
   return (
     <section className="w-full overflow-hidden border border-[#dbe3ef]" style={toReactStyle(component.styles)}>
-      <div className="grid gap-6 md:grid-cols-[1.15fr_0.85fr] md:items-center">
+      <div className="grid gap-6" style={gridStyle}>
         <div>
           <InlineText componentId={component.id} textKey="hero.title" textLabel="Hero title" as="h1" value={title} onSave={(v) => saveProp("title", v)} className="text-[34px] font-bold leading-tight" style={getTargetTextStyles(component, "hero.title", textStyle)} />
           <InlineText componentId={component.id} textKey="hero.description" textLabel="Hero description" as="p" value={description} onSave={(v) => saveProp("description", v)} className="mt-4 max-w-[560px] text-base font-medium leading-7" style={getTargetTextStyles(component, "hero.description", textStyle)} />

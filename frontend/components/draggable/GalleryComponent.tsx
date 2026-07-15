@@ -8,6 +8,8 @@ import { getTargetTextStyles, getTextStyles, toReactStyle } from "./componentSty
 import { useAssetStore } from "@/store/assetStore";
 import { ImageIcon } from "lucide-react";
 
+import { useBuilderStore } from "@/store/builderStore";
+
 interface GalleryItem {
   src: string;
   caption: string;
@@ -41,6 +43,7 @@ function readGalleryItems(component: BuilderComponent): GalleryItem[] {
 }
 
 export default function GalleryComponent({ component, onUpdate }: { component: BuilderComponent; onUpdate?: (content: string | null) => void }) {
+  const viewport = useBuilderStore((s) => s.viewport);
   const textStyle = getTextStyles(component.styles);
   const images = readGalleryItems(component);
 
@@ -116,9 +119,13 @@ export default function GalleryComponent({ component, onUpdate }: { component: B
     );
   }
 
+  const currentCols = viewport === "mobile"
+    ? 1
+    : (viewport === "tablet" ? 2 : 3);
+
   return (
     <section className="w-full border border-[#dbe3ef] shadow-sm" style={toReactStyle(component.styles)}>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${currentCols}, minmax(0, 1fr))` }}>
         {images.map((image, index) => {
           const displaySrc = getDisplaySrc(image);
           return (

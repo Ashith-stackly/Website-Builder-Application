@@ -46,6 +46,8 @@ export const footerDefaults: FooterProps = {
   ],
 };
 
+import { useBuilderStore } from "@/store/builderStore";
+
 export default function FooterComponent({
   component,
 }: {
@@ -57,12 +59,19 @@ export default function FooterComponent({
 }) {
   const props = (component.props as unknown as FooterProps) || footerDefaults;
   const base = getBaseStyles(component);
+  const viewport = useBuilderStore((s) => s.viewport);
+
+  const gridClass = viewport === "mobile"
+    ? "grid gap-10 grid-cols-1"
+    : viewport === "tablet"
+      ? "grid gap-10 grid-cols-2"
+      : "grid gap-10 grid-cols-4";
 
   return (
     <footer style={{ ...base, backgroundColor: base.backgroundColor || "#0B1D40" }} className="w-full">
       <div className="mx-auto max-w-[1100px] px-6 py-12">
         {/* Top: brand + columns */}
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={gridClass}>
           {/* Brand col */}
           <div className="flex flex-col gap-3">
             <span className="text-xl font-black text-white">{props.brand}</span>

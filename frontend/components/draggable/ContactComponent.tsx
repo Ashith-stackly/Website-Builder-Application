@@ -5,6 +5,8 @@ import { readContact } from "@/components/blocks/contact/spec";
 import type { BuilderComponent } from "@/types/builder";
 import { getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
 
+import { useBuilderStore } from "@/store/builderStore";
+
 export default function ContactComponent({
   component,
   onPatch,
@@ -17,6 +19,7 @@ export default function ContactComponent({
   // Typed read — falls back to legacy pipe `content` for pre-migration documents.
   const { title, description, inputPlaceholder, cta } = readContact(component);
   const textStyle = getTextStyles(component.styles);
+  const viewport = useBuilderStore((s) => s.viewport);
 
   /** Patch one top-level scalar field; store shallow-merges the rest. */
   function saveProp(field: "title" | "description", value: string) {
@@ -28,14 +31,24 @@ export default function ContactComponent({
     onPatch?.({ props: { cta: { ...cta, label: value } } });
   }
 
+  const isMobile = viewport === "mobile";
+
+  const outerGridStyle = isMobile
+    ? { gridTemplateColumns: "1fr" }
+    : { gridTemplateColumns: "1fr 1fr", alignItems: "end" };
+
+  const formClass = isMobile
+    ? "flex flex-col gap-3"
+    : "flex flex-col gap-3 sm:flex-row flex-1";
+
   return (
     <section className="w-full border border-[#dbe3ef] shadow-sm" style={toReactStyle(component.styles)}>
-      <div className="grid gap-5 md:grid-cols-[1fr_1fr] md:items-end">
+      <div className="grid gap-5" style={outerGridStyle}>
         <div>
           <InlineText componentId={component.id} textKey="contact.title" textLabel="Contact title" as="h2" value={title} onSave={(v) => saveProp("title", v)} className="text-2xl font-bold" style={getTargetTextStyles(component, "contact.title", textStyle)} />
           <InlineText componentId={component.id} textKey="contact.description" textLabel="Contact description" as="p" value={description} onSave={(v) => saveProp("description", v)} className="mt-2 text-sm font-medium leading-6" style={getTargetTextStyles(component, "contact.description", textStyle)} />
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className={formClass}>
           <input className="min-w-0 flex-1 rounded-md border border-[#dbe3ef] px-4 py-3 text-sm font-semibold text-[#0B1D40] outline-none focus:ring-2 focus:ring-blue-100" placeholder={inputPlaceholder} readOnly />
           <InlineText componentId={component.id} textKey="contact.cta" textLabel="Contact button" as="button" value={cta.label} onSave={(v) => saveCtaLabel(v)} className="px-5 py-3 text-sm font-bold shadow-sm transition hover:opacity-90" style={getTargetTextStyles(component, "contact.cta", { color: "#ffffff", backgroundColor: "#0B1D40", borderRadius: "6px" })} />
         </div>
