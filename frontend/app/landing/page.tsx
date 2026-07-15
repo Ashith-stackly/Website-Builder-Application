@@ -167,7 +167,7 @@ const templates = [
   { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", badge: "Free" },
   { title: "Digital Marketing", category: "portfolio", image: "/portfolio03.webp", alt: "Agency Pro template", description: "A polished showcase for design teams.", price: 190, badge: "Premium" },
   { title: "Restaurant", category: "portfolio", image: "/portfolio04.webp", alt: "Minimal Studio template", description: "Clean white-space focused layout.", badge: "Free" },
-  { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
+  { title: "Blogging Page", category: "blog", image: "/landing-optimized/template-personal.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
   { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
   { title: "Store", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "Store template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
   { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },

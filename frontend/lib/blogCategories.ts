@@ -5,7 +5,8 @@ export const blogCategories = [
     label: "Personal Blog",
     description:
       "Clean layouts for storytellers, journals, and creative portfolios.",
-    image: "/landing-optimized/blog1.webp",
+    image: "/template-personal.webp",
+ 
   },
   {
     id: "blog-cat-tech",

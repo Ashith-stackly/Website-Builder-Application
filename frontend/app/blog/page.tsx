@@ -9,8 +9,6 @@ import { blogCategories } from "@/lib/blogCategories";
 import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
-import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
-import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
 
@@ -19,7 +17,9 @@ const START_BLOGGING_HREF = "/blog/manage/create";
 
 
 function scrollToBlogSection(sectionId: string) {
-  scrollBlockpagesCanvasToSection(sectionId);
+  const target = document.getElementById(sectionId);
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function scrollToBlogCategory(categoryId: string) {
@@ -349,7 +349,6 @@ function BlogHeader({
 
           <button
             type="button"
-            data-blockpages-interactive="true"
             className={`inline-flex items-center justify-center shrink-0 w-[2.5rem] h-[2.5rem] p-0 border rounded-[0.4rem] text-[var(--blog-white)] cursor-pointer transition-[background,border-color,color] duration-150 ease hover:bg-[rgba(255,255,255,0.22)] hover:border-white focus-visible:bg-[rgba(255,255,255,0.22)] focus-visible:border-white focus-visible:outline-none @[760px]:hidden @max-[340px]:w-[2.2rem] @max-[340px]:h-[2.2rem] ${mobileOpen ? "bg-[rgba(43,127,255,0.35)] border-[rgba(255,255,255,0.9)]" : "bg-[rgba(255,255,255,0.12)] border-[rgba(255,255,255,0.65)]"}`}
             aria-expanded={mobileOpen}
             aria-controls="blog-mobile-nav"
@@ -485,7 +484,7 @@ const blogImages = {
   buildDesk: "/blog/build-desk.webp",
   teamWork: "/blog/team-work.webp",
   analytics: "/blog/analytics-dashboard.webp",
-  faq: "/blog/faq-help.svg",
+  faq: "/blog/FAQ.webp",
 };
 
 const templates = [
@@ -682,82 +681,40 @@ export default function BlogPage() {
               {/* Top — continuous hero + image + templates (matches screenshot flow) */}
               <div
                 id="blog-home"
-                className="blog-top-zone blog-anchor-section w-full min-w-0 pt-0"
-                style={{
-                  background: 'linear-gradient(180deg, var(--blog-blue-bg) 0%, var(--blog-blue-bg) var(--blog-top-split, 38%), var(--blog-pink-bg) var(--blog-top-split, 38%), var(--blog-pink-bg) 100%)'
-                }}
+                className="blog-top-zone blog-anchor-section w-full min-w-0 pt-0 bg-[var(--blog-pink-bg)]"
               >
-                <section className="bg-transparent pt-[clamp(2rem,5cqw,3.5rem)] pb-0 w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border">
+                <section className="bg-transparent pt-[clamp(3rem,6cqw,4rem)] pb-[clamp(3rem,6cqw,4rem)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border">
                   <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
-                    <div className="text-center pb-[clamp(1.5rem,4cqw,2.25rem)] max-w-[46rem] mx-auto @max-[639px]:px-0">
-                      <h1 className="text-[clamp(1.5rem,4.8cqw,3.25rem)] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--blog-navy)] [text-wrap:balance] flex flex-wrap items-center justify-center gap-[0.35rem_0.5rem] m-0 text-center max-w-full w-full @min-[1280px]:text-[3.25rem] break-words [overflow-wrap:anywhere]">
-                        Create a Blog Worth{" "}
-                        <span className="inline-flex flex-wrap items-center justify-center gap-[0.35rem] whitespace-normal max-w-full">
-                          Sharing
-                          <span className="inline-flex shrink-0 items-center justify-center text-[#2b7fff] w-[clamp(2.75rem,6.5cqw,3.5rem)] h-[clamp(2rem,5cqw,2.5rem)] m-0 leading-none align-middle" aria-hidden>
-                            <BlogHeroTrendArrow />
-                          </span>
-                        </span>
+                    <div className="text-center max-w-[64rem] mx-auto @max-[639px]:px-0 flex flex-col items-center">
+                      <h1 className="text-[clamp(1.5rem,4.8cqw,3.25rem)] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--blog-navy)] m-0 text-center max-w-full w-full @min-[1280px]:text-[3.25rem] break-words [overflow-wrap:anywhere]">
+                        Discover Stories That Spark Curiosity
                       </h1>
-                      <p className="mt-[clamp(0.85rem,2cqw,1.25rem)] max-w-[36rem] mx-auto text-[clamp(0.9rem,1.9cqw,1.0625rem)] leading-[1.65] text-[var(--blog-navy)] break-words [overflow-wrap:anywhere]">
-                        Get a full suite of intuitive design features and powerful marketing
-                        tools to create a unique blog that leaves a lasting impression.
+                      <p className="mt-[clamp(0.85rem,2cqw,1.25rem)] max-w-[48rem] mx-auto text-[clamp(0.9rem,1.9cqw,1.0625rem)] leading-[1.65] text-[var(--blog-navy)] text-center break-words [overflow-wrap:anywhere]">
+                        Explore expert insights, practical guides, inspiring stories, and the latest trends across<br className="hidden @min-[640px]:block" />
+                        technology, design, business, travel, and lifestyle.
                       </p>
-                      <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(1rem,2.5cqw,1.5rem)] min-h-[2.75rem] py-[0.55rem] px-[1.75rem] rounded-full border border-[var(--blog-navy)] bg-[var(--blog-white)] text-[var(--blog-navy)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-navy)] hover:text-[var(--blog-white)] hover:border-[var(--blog-navy)] hover:shadow-[0_6px_18px_rgba(0,31,63,0.2)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-                        Start Blogging
-                      </Link>
                     </div>
                   </div>
                 </section>
 
-                <div className="bg-transparent p-0 relative z-10 w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border">
-                  <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
-                    <div className="w-full max-w-[62rem] mx-auto rounded-[0.85rem] overflow-hidden min-w-0 leading-none shadow-[0_6px_24px_rgba(0,31,63,0.1)] @min-[1024px]:w-[min(88%,58rem)]">
-                      <img
-                        className="block w-full aspect-[16/9] object-cover object-center @min-[640px]:aspect-[2.15/1] @min-[1024px]:aspect-[2.2/1] @min-[1024px]:max-h-[20rem]"
-                        src={assetPath(blogImages.hero)}
-                        alt="Professionals collaborating in a modern office"
-                        loading="eager"
-                        decoding="async"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 58rem"
-                      />
-                    </div>
-                  </div>
+                <div className="w-full min-w-0 leading-none">
+                  <img
+                    className="block w-full h-auto object-cover object-center"
+                    src={assetPath(blogImages.hero)}
+                    alt="Professionals collaborating in a modern office"
+                    loading="eager"
+                    decoding="async"
+                    sizes="100vw"
+                  />
                 </div>
 
-                <section className="bg-transparent pt-[clamp(2rem,5cqw,3rem)] pb-[clamp(2.5rem,6cqw,4rem)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border">
-                  <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0 text-center">
-                    <h2 className="text-[clamp(1.75rem,4.5cqw,2.75rem)] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--blog-navy)] [text-wrap:balance] @min-[1280px]:text-[2.75rem] text-[clamp(1.5rem,4cqw,2.35rem)] mt-0 break-words [overflow-wrap:anywhere]">
-                      Blog templates that set you up for success
-                    </h2>
-                    <p className="mt-[1rem] text-[clamp(0.95rem,2cqw,1.125rem)] leading-[1.65] text-[var(--blog-navy)] max-w-[40rem] mx-auto break-words [overflow-wrap:anywhere]">
-                      Choose from 900+ free customizable templates built
-                      <br className="hidden @min-[640px]:block" />
-                      with everything you need.
-                    </p>
-                    <Link href="/landing#templates" className="inline-flex items-center justify-center gap-[0.35rem] mt-[clamp(1rem,2.5cqw,1.5rem)] min-h-[2.75rem] py-[0.6rem] px-[1.5rem] rounded-full border border-[#d1d5db] bg-[var(--blog-white)] text-[var(--blog-navy)] text-[clamp(0.875rem,1.8cqw,1rem)] font-semibold no-underline max-w-full text-center hover:bg-blue-900 hover:text-white hover:shadow-lg hover:scale-105 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none">
-                      Explore Template <span aria-hidden>→</span>
-                    </Link>
-                    <div className="grid grid-cols-1 gap-[clamp(1.5rem,3cqw,2rem)] @max-[639px]:gap-[1.25rem] @min-[640px]:@max-[1023px]:gap-[1.5rem] @min-[1024px]:gap-[2rem] @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3 mt-[clamp(2rem,5cqw,3rem)] w-full min-w-0">
-                      {templates.map((item) => (
-                        <article key={item.title} className="min-w-0 text-center">
-                          <div className="rounded-[var(--blog-radius-sm)] overflow-hidden w-full aspect-[4/3]">
-                            <img
-                              className="block w-full h-full object-cover"
-                              src={assetPath(item.image)}
-                              data-blockpages-img-id={`blog-template-${item.title.replace(/\s+/g, '-').toLowerCase()}`}
-                              alt={item.alt}
-                              loading="lazy"
-                              decoding="async"
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-                            />
-                          </div>
-                          <span className="inline-block mt-[1rem] text-[clamp(0.95rem,2cqw,1.0625rem)] font-semibold text-[var(--blog-navy)] underline [text-underline-offset:4px]">{item.title}</span>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                </section>
+                <div className="w-full bg-[#0a192f] py-[1.5rem] flex justify-center">
+                  <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center min-h-[2.75rem] py-[0.55rem] px-[2.5rem] rounded-full border border-[var(--blog-white)] bg-transparent text-[var(--blog-white)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-all duration-300 ease-out max-w-full text-center hover:bg-[var(--blog-white)] hover:text-[#0a192f] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                    Explore Blog
+                  </Link>
+                </div>
+
+
               </div>
 
               {/* Build your way */}
