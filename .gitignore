@@ -35,6 +35,8 @@ coverage/
 Thumbs.db
 *.pem
 .idea/
+.vscode/
+
 
 # ---- debug logs ----
 npm-debug.log*
