@@ -789,7 +789,6 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       }
 
       set((state) => ({
-        ...captureHistory(state),
         components: orderComponents(cloneComponentTree(components)),
         selectedComponentId: null,
         selectedTextStyleTarget: null,
@@ -802,6 +801,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         isSaving: false,
         saveStatus: "saved",
         saveError: null,
+        history: [],
+        future: [],
       }));
 
       // Persist the generated starter layout once so a reopen restores it

@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState, useMemo, useLayoutEffect, type ReactNode } from "react";
-import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
+import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, RefreshCw, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { AssetManager } from "@/components/assets/AssetManager";
@@ -157,7 +157,10 @@ function Canvas({
     autosaveFingerprintRef.current = null;
     const controller = new AbortController();
     void loadProject(projectId, controller.signal);
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      loadedProjectRef.current = null;
+    };
   }, [loadProject, projectId]);
 
   useEffect(() => {
@@ -442,7 +445,37 @@ function Canvas({
             ...(viewport !== "desktop" ? { maxWidth: VIEWPORT_WIDTHS[viewport], margin: "0 auto" } : {}),
           }}
         >
-          {flowComponents.length === 0 && floatingComponents.length === 0 ? (
+          {((isSaving || saveStatus === "saving") && components.length === 0) ? (
+            <div className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-xl border border-gray-200 bg-white px-6 py-12 text-center shadow-sm">
+              <Loader2 className="h-8 w-8 animate-spin text-[#0B1D40] opacity-70" />
+              <p className="mt-4 text-sm font-semibold text-gray-500">
+                Loading project content...
+              </p>
+            </div>
+          ) : (saveStatus === "error" && components.length === 0) ? (
+            <div className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-xl border border-red-200 bg-red-50/50 px-6 py-12 text-center shadow-sm">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-red-100 text-red-700 animate-pulse">
+                <CloudOff className="h-7 w-7" />
+              </div>
+              <h2 className="text-[18px] font-bold text-red-800">Failed to load project</h2>
+              <p className="mt-2 max-w-[360px] text-sm font-medium leading-6 text-red-600">
+                {saveError || "An error occurred while opening the project."}
+              </p>
+              <button
+                type="button"
+                className="mt-6 flex items-center gap-2 rounded-md bg-[#0B1D40] px-5 py-3 text-sm font-bold text-white shadow transition hover:bg-[#152B52] active:scale-95"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  loadedProjectRef.current = null;
+                  const controller = new AbortController();
+                  void loadProject(projectId!, controller.signal);
+                }}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry Loading
+              </button>
+            </div>
+          ) : flowComponents.length === 0 && floatingComponents.length === 0 ? (
             <div className="flex min-h-[280px] w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#dbe3ef] bg-white px-6 text-center shadow-[0_18px_45px_rgba(15,35,75,0.08)] transition">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[#eef4fb] text-[#0B1D40]">
                 <ChevronDown className="h-7 w-7" />
