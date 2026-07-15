@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 import { arrayMove } from "@dnd-kit/sortable";
 import { generateHtml } from "@/lib/exportHtml";
-import { autosaveProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
+import { autosaveProject, createProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
 import { featureItemDefaults } from "@/components/blocks/feature-item/spec";
 import { heroDefaults } from "@/components/blocks/hero/spec";
 import { navigationDefaults } from "@/components/blocks/navigation/spec";
@@ -900,6 +900,69 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
           isSaving: false,
           saveStatus: "error",
           saveError: getSaveErrorMessage(error, "Unable to save generated HTML."),
+        });
+      }
+      return false;
+    }
+  },
+  saveDraft: async (signal) => {
+    const state = get();
+    if (state.components.length === 0) return false;
+
+    // Cancel any in-flight autosave to avoid conflicts
+    autosaveController?.abort();
+    autosaveController = linkedAbortController(signal);
+    const seq = ++autosaveSeq;
+
+    set({ isSaving: true, saveStatus: "saving", saveError: null });
+
+    try {
+      let projectId = state.currentProjectId;
+
+      // First save: create the project in the backend
+      if (!projectId) {
+        const name = (state.currentProjectName || "My Website").trim();
+        const project = await createProject(
+          { projectName: name, category: "website-builder" },
+          autosaveController.signal,
+        );
+        projectId = project._id;
+        set({ currentProjectId: projectId });
+
+        // Update URL so page reloads re-open this project
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.set("projectId", projectId);
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
+
+      // Persist builder data + rendered HTML
+      const savedAt = new Date().toISOString();
+      await autosaveProject(
+        projectId,
+        {
+          builderData: buildProjectData(get()),
+          htmlContent: get().exportHtml(),
+        },
+        autosaveController.signal,
+      );
+
+      if (seq === autosaveSeq) {
+        set({ isDirty: false, lastSaved: savedAt, isSaving: false, saveStatus: "saved", saveError: null });
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        if (seq === autosaveSeq) set({ isSaving: false, saveStatus: "idle" });
+        return false;
+      }
+
+      if (seq === autosaveSeq) {
+        set({
+          isSaving: false,
+          saveStatus: "error",
+          saveError: getSaveErrorMessage(error, "Unable to save draft. Your work is still on the canvas."),
         });
       }
       return false;

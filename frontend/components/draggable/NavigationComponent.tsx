@@ -36,7 +36,7 @@ export default function NavigationComponent({
     onPatch?.({ props: { cta: { ...cta, label } } });
   }
 
-  const isMobile = viewport === "mobile";
+  const isMobile = viewport === "mobile" || viewport === "tablet";
   const isTablet = viewport === "tablet";
 
   return (

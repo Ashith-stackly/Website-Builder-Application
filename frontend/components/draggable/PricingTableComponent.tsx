@@ -34,6 +34,8 @@ export const pricingTableDefaults: PricingTableProps = {
   ],
 };
 
+import { useBuilderStore } from "@/store/builderStore";
+
 export default function PricingTableComponent({
   component,
 }: {
@@ -45,6 +47,12 @@ export default function PricingTableComponent({
 }) {
   const props = (component.props as unknown as PricingTableProps) || pricingTableDefaults;
   const base = getBaseStyles(component);
+  const viewport = useBuilderStore((s) => s.viewport);
+
+  const colCount = Math.min(props.tiers.length, 3);
+  const currentCols = viewport === "mobile"
+    ? 1
+    : (viewport === "tablet" ? 2 : colCount);
 
   return (
     <div style={base} className="w-full py-6">
@@ -59,7 +67,7 @@ export default function PricingTableComponent({
 
       <div
         className="mx-auto grid w-full gap-5"
-        style={{ gridTemplateColumns: `repeat(${Math.min(props.tiers.length, 3)}, minmax(0, 1fr))`, maxWidth: 960 }}
+        style={{ gridTemplateColumns: `repeat(${currentCols}, minmax(0, 1fr))`, maxWidth: 960 }}
       >
         {props.tiers.map((tier, i) => (
           <div

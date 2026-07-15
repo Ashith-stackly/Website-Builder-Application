@@ -40,7 +40,7 @@ const collisionDetectionStrategy: CollisionDetection = (args) => {
 };
 
 export default function BuilderLayout() {
-  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveHtml, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock } = useBuilder();
+  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveDraft, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock } = useBuilder();
   const [activePaletteType, setActivePaletteType] = useState<ComponentType | null>(null);
   const [activeCanvasType, setActiveCanvasType] = useState<ComponentType | null>(null);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
@@ -68,7 +68,7 @@ export default function BuilderLayout() {
       if (ctrl) {
         if (e.key === "z" && !e.shiftKey)         { e.preventDefault(); undo(); return; }
         if ((e.key === "z" && e.shiftKey) || e.key === "y") { e.preventDefault(); redo(); return; }
-        if (e.key === "s")                         { e.preventDefault(); void saveHtml(); return; }
+        if (e.key === "s")                         { e.preventDefault(); void saveDraft(); return; }
         if (e.key === "d" && selectedComponentId) { e.preventDefault(); duplicateComponent(selectedComponentId); return; }
         if (e.key === "c" && !inInput)             { e.preventDefault(); copyComponents(); return; }
         if (e.key === "v" && !inInput)             { e.preventDefault(); pasteComponents(); return; }
@@ -116,7 +116,7 @@ export default function BuilderLayout() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isInlineEditing, selectedComponentId, components, undo, redo, saveHtml, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock]);
+  }, [isInlineEditing, selectedComponentId, components, undo, redo, saveDraft, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock]);
   const selectedComponent = selectedComponentId ? findByIdDeep(components, selectedComponentId) : null;
 
   useEffect(() => {

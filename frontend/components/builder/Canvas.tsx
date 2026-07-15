@@ -64,7 +64,7 @@ function Canvas({
   const saveError = useBuilderStore((s) => s.saveError);
   const loadProject = useBuilderStore((s) => s.loadProject);
   const autosave = useBuilderStore((s) => s.autosave);
-  const saveHtml = useBuilderStore((s) => s.saveHtml);
+  const saveDraft = useBuilderStore((s) => s.saveDraft);
   const markDirty = useBuilderStore((s) => s.markDirty);
   const canvasMode = useBuilderStore((s) => s.canvasMode);
   const autoSaveEnabled = useDesignStore((s) => s.autoSaveEnabled);
@@ -177,7 +177,7 @@ function Canvas({
 
   const handleSave = async () => {
     useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
-    const ok = await saveHtml();
+    const ok = await saveDraft();
     if (!ok) return;
 
     setSaved(true);

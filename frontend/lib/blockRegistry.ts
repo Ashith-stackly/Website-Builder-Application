@@ -121,7 +121,7 @@ export interface BlockSpec<P = Record<string, any>> {
    * string (e.g. ` style="color:#fff;padding:12px"`).
    * Returns a self-contained HTML string for the exported document.
    */
-  exportHtml: (data: P, styleAttr: string) => string;
+  exportHtml: (data: P, styleAttr: string, children?: string) => string;
 
   /* ── Container behaviour (future) ──────────────────────────────── */
   /**

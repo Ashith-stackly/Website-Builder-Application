@@ -142,12 +142,13 @@ export const featuresSpec: BlockSpec<FeaturesProps> = {
   Panel: FeaturesPanel,
   exportHtml: (data, styleAttr) => {
     const heading = data.heading
-      ? `<h2>${escapeHtml(data.heading)}</h2>`
+      ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>`
       : "";
     const cards = data.items
-      .map(({ title, description }) => `<article><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></article>`)
+      .map(({ title, description }, index) => `<article><div class="features-num">${index + 1}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></article>`)
       .join("");
-    return `<section${styleAttr}>${heading}${cards}</section>`;
+    const attr = styleAttr.replace('class="', 'class="stackly-features ');
+    return `<section${attr}>${heading}<div class="stackly-features-grid">${cards}</div></section>`;
   },
   ai: {
     description: "A features grid section containing an array of titled cards, each with a title and description. Optional heading above the grid.",

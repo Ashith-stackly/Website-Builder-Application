@@ -5,6 +5,8 @@ import { readFeatures } from "@/components/blocks/features/spec";
 import type { BuilderComponent } from "@/types/builder";
 import { getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
 
+import { useBuilderStore } from "@/store/builderStore";
+
 export default function FeaturesComponent({
   component,
   onPatch,
@@ -17,6 +19,7 @@ export default function FeaturesComponent({
   // Typed read — falls back to legacy newline+pipe `content` for pre-migration documents.
   const { items } = readFeatures(component);
   const textStyle = getTextStyles(component.styles);
+  const viewport = useBuilderStore((s) => s.viewport);
 
   /**
    * Update one field of one item immutably.
@@ -28,9 +31,13 @@ export default function FeaturesComponent({
     onPatch?.({ props: { items: next } });
   }
 
+  const currentCols = viewport === "mobile"
+    ? 1
+    : (viewport === "tablet" ? 2 : 3);
+
   return (
     <section className="w-full border border-[#dbe3ef] shadow-sm" style={toReactStyle(component.styles)}>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${currentCols}, minmax(0, 1fr))` }}>
         {items.map((item, index) => (
           <article className="rounded-lg border border-[#dbe3ef] bg-[#f7f9fc] p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-md" key={index}>
             <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-md bg-[#0B1D40] text-sm font-bold text-white">

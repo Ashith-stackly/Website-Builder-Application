@@ -29,6 +29,8 @@ export const testimonialDefaults: TestimonialProps = {
   layout: "cards",
 };
 
+import { useBuilderStore } from "@/store/builderStore";
+
 export default function TestimonialComponent({
   component,
 }: {
@@ -40,6 +42,12 @@ export default function TestimonialComponent({
 }) {
   const props = (component.props as unknown as TestimonialProps) || testimonialDefaults;
   const base = getBaseStyles(component);
+  const viewport = useBuilderStore((s) => s.viewport);
+
+  const colCount = Math.min(props.items.length, 3);
+  const currentCols = viewport === "mobile"
+    ? 1
+    : (viewport === "tablet" ? 2 : colCount);
 
   return (
     <div style={base} className="w-full py-6">
@@ -55,7 +63,7 @@ export default function TestimonialComponent({
       <div
         className="mx-auto grid w-full gap-5"
         style={{
-          gridTemplateColumns: `repeat(${Math.min(props.items.length, 3)}, minmax(0, 1fr))`,
+          gridTemplateColumns: `repeat(${currentCols}, minmax(0, 1fr))`,
           maxWidth: 960,
         }}
       >

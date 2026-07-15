@@ -65,7 +65,14 @@ export const videoSpec: BlockSpec<VideoProps> = {
       ? `<p style="margin:12px 0 0;font-weight:700;text-align:center">${escapeHtml(data.title)}</p>`
       : "";
 
-    return `<div${styleAttr}><div style="position:relative;padding-top:56.25%"><iframe src="${escapeHtml(embedUrl)}" title="${escapeHtml(data.title || "Video")}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:8px"></iframe></div>${caption}</div>`;
+    const aspectPaddings: Record<string, string> = {
+      "16/9": "56.25%",
+      "4/3": "75%",
+      "1/1": "100%",
+    };
+    const paddingTop = aspectPaddings[data.aspectRatio ?? "16/9"] ?? "56.25%";
+
+    return `<div${styleAttr}><div style="position:relative;padding-top:${paddingTop}"><iframe src="${escapeHtml(embedUrl)}" title="${escapeHtml(data.title || "Video")}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:8px"></iframe></div>${caption}</div>`;
   },
   ai: {
     description: "An embedded video block supporting YouTube and Vimeo URLs with configurable aspect ratio.",
