@@ -497,6 +497,8 @@ export interface BuilderState {
   autosave: (signal?: AbortSignal) => Promise<boolean>;
   markDirty: () => void;
   saveHtml: (signal?: AbortSignal) => Promise<boolean>;
+  /** Create a project on first save, then autosave builder data + HTML. */
+  saveDraft: (signal?: AbortSignal) => Promise<boolean>;
   /** Reset builder state after logout. */
   resetBuilder: () => void;
   /** Active editing viewport. */

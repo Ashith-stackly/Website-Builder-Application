@@ -26,6 +26,7 @@ export const useBuilderActions = () =>
       autosave: s.autosave,
       markDirty: s.markDirty,
       saveHtml: s.saveHtml,
+      saveDraft: s.saveDraft,
       /* Wix-style freeform editing */
       toggleSelectComponent: s.toggleSelectComponent,
       copyComponents: s.copyComponents,
