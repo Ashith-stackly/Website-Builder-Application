@@ -28,12 +28,8 @@ import {
   revealSection,
   spring,
 } from "@/lib/motion";
-import {
-  getAnalyticsData,
-  seedDemoAnalytics,
-  trackPageView,
-  trackVisitor,
-} from "@/lib/analytics";
+import { useProjectStore } from "@/store/projectStore";
+import { getProjectAnalytics } from "@/lib/projectApi";
 import { useCountUp } from "@/lib/hooks";
 import type { AnalyticsData, AnalyticsDateFilter, DailyTraffic } from "@/types/analytics";
 
@@ -48,27 +44,59 @@ const FILTERS: { value: AnalyticsDateFilter; label: string; icon: React.ElementT
 function AnalyticsInner() {
   const [filter, setFilter] = useState<AnalyticsDateFilter>("7days");
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = (f: AnalyticsDateFilter) => setData(getAnalyticsData(f));
+  const { projects, loadProjects, isLoading: projectsLoading } = useProjectStore();
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
 
   useEffect(() => {
-    trackVisitor();
-    trackPageView("/analytics");
-    if (getAnalyticsData("30days").totalViews === 0) seedDemoAnalytics();
-    load(filter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const controller = new AbortController();
+    void loadProjects(controller.signal);
+    return () => controller.abort();
+  }, [loadProjects]);
 
   useEffect(() => {
-    load(filter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+    if (projects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [projects, selectedProjectId]);
+
+  const fetchAnalytics = async (projectId: string, f: AnalyticsDateFilter, showRefreshing = false) => {
+    if (!projectId) return;
+    if (showRefreshing) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+
+    const days = f === "today" ? 1 : f === "7days" ? 7 : 30;
+
+    try {
+      const res = await getProjectAnalytics(projectId, days);
+      setData(res);
+    } catch (err: any) {
+      console.error("Error fetching analytics:", err);
+      if (!navigator.onLine) {
+        setError("You are currently offline. Please check your internet connection and try again.");
+      } else {
+        setError(err?.message || "Failed to load project analytics. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedProjectId) {
+      void fetchAnalytics(selectedProjectId, filter);
+    }
+  }, [selectedProjectId, filter]);
 
   const refresh = () => {
-    setRefreshing(true);
-    load(filter);
-    window.setTimeout(() => setRefreshing(false), 600);
+    if (selectedProjectId) {
+      void fetchAnalytics(selectedProjectId, filter, true);
+    }
   };
 
   const exportCsv = () => {
@@ -96,6 +124,43 @@ function AnalyticsInner() {
     URL.revokeObjectURL(url);
   };
 
+  if (projectsLoading || (loading && !data)) return <AnalyticsSkeleton />;
+
+  if (projects.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <motion.div variants={staggerChild} className="grid place-items-center rounded-3xl border p-16 text-center"
+          style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <span className="grid h-14 w-14 place-items-center rounded-2xl" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+            <Activity className="h-6 w-6" />
+          </span>
+          <h3 className="mt-4 text-lg font-black" style={{ color: "var(--text)" }}>No projects found</h3>
+          <p className="mt-1 max-w-sm text-sm" style={{ color: "var(--text-muted)" }}>
+            Create a website builder project first to view its analytics.
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <motion.div variants={staggerChild} className="grid place-items-center rounded-3xl border p-16 text-center"
+          style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-rose-50 text-rose-600" style={{ background: "rgba(244,63,94,0.12)", color: "var(--accent)" }}>
+            <Activity className="h-6 w-6" />
+          </span>
+          <h3 className="mt-4 text-lg font-black text-rose-800">Connection Error</h3>
+          <p className="mt-1 max-w-md text-sm text-rose-600">{error}</p>
+          <button onClick={refresh} className="mt-5 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-500/25 transition hover:bg-rose-700" style={{ background: "var(--accent)" }}>
+            Retry
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!data) return <AnalyticsSkeleton />;
 
   const isEmpty = data.totalViews === 0;
@@ -114,9 +179,23 @@ function AnalyticsInner() {
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6 lg:space-y-8">
         {/* Header row */}
         <motion.div variants={staggerChild} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+          <div className="flex flex-col gap-1.5">
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl" style={{ color: "var(--text)" }}>Analytics</h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>Traffic and engagement across your published sites.</p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>Project:</span>
+              <select
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                className="rounded-xl border bg-transparent px-3 py-1.5 text-xs font-bold shadow-sm outline-none cursor-pointer"
+                style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id} className="font-bold" style={{ background: "var(--surface)", color: "var(--text)" }}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-0.5 rounded-xl border p-1" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
@@ -148,7 +227,7 @@ function AnalyticsInner() {
         </motion.div>
 
         {isEmpty ? (
-          <EmptyAnalytics onSeed={() => { seedDemoAnalytics(); load(filter); }} />
+          <EmptyAnalytics />
         ) : (
           <>
             {/* KPIs */}
@@ -159,7 +238,7 @@ function AnalyticsInner() {
             {/* Chart + sources */}
             <div className="grid gap-6 lg:grid-cols-3">
               <motion.div variants={staggerChild} className="lg:col-span-2">
-                <TrafficChart data={data.dailyTraffic} />
+                <TrafficChart dailyData={data.dailyTraffic} weeklyData={data.weeklyTraffic} />
               </motion.div>
               <motion.div variants={staggerChild}>
                 <DeviceBreakdown visitors={data.uniqueVisitors} />
@@ -222,10 +301,15 @@ function KpiCard({
 
 /* ─── Traffic area chart (theme-aware SVG + Framer) ────────────────────── */
 
-function TrafficChart({ data }: { data: DailyTraffic[] }) {
+function TrafficChart({ dailyData, weeklyData }: { dailyData: DailyTraffic[]; weeklyData: any[] }) {
   const [hover, setHover] = useState<number | null>(null);
+  const [chartMode, setChartMode] = useState<"daily" | "weekly">("daily");
   const W = 640, H = 220, PAD = 12;
-  const points = data.length ? data : [{ date: "", views: 0, visitors: 0 }];
+
+  const points = chartMode === "daily"
+    ? (dailyData.length ? dailyData : [{ date: "", views: 0, visitors: 0 }])
+    : (weeklyData.length ? weeklyData.map(w => ({ date: w.week, views: w.views, visitors: w.visitors })) : [{ date: "", views: 0, visitors: 0 }]);
+
   const max = Math.max(...points.map((p) => p.views), 1);
 
   const coords = points.map((p, i) => {
@@ -248,11 +332,33 @@ function TrafficChart({ data }: { data: DailyTraffic[] }) {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-black" style={{ color: "var(--text)" }}>Traffic overview</h3>
-          <p className="text-xs" style={{ color: "var(--text-faint)" }}>Daily page views</p>
+          <p className="text-xs" style={{ color: "var(--text-faint)" }}>
+            {chartMode === "daily" ? "Daily page views" : "Weekly page views"}
+          </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--accent)" }}>
-          <TrendingUp className="h-3.5 w-3.5" /> Live
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0.5 rounded-lg border p-0.5" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+            {(["daily", "weekly"] as const).map((mode) => {
+              const active = chartMode === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setChartMode(mode)}
+                  className="relative rounded px-2 py-0.5 text-[10px] font-bold capitalize transition"
+                  style={{
+                    color: active ? "#fff" : "var(--text-muted)",
+                    background: active ? "var(--accent)" : "transparent"
+                  }}
+                >
+                  {mode}
+                </button>
+               );
+             })}
+          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--accent)" }}>
+            <TrendingUp className="h-3.5 w-3.5" /> Live
+          </span>
+        </div>
       </div>
 
       <div className="relative w-full" style={{ aspectRatio: `${W} / ${H}` }}>
@@ -474,7 +580,7 @@ function ActivityCard({ events }: { events: { page: string; timestamp: number; s
 
 /* ─── Empty / skeleton ─────────────────────────────────────────────────── */
 
-function EmptyAnalytics({ onSeed }: { onSeed: () => void }) {
+function EmptyAnalytics() {
   return (
     <motion.div variants={staggerChild} className="grid place-items-center rounded-3xl border p-16 text-center"
       style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
@@ -483,11 +589,8 @@ function EmptyAnalytics({ onSeed }: { onSeed: () => void }) {
       </span>
       <h3 className="mt-4 text-lg font-black" style={{ color: "var(--text)" }}>No analytics yet</h3>
       <p className="mt-1 max-w-sm text-sm" style={{ color: "var(--text-muted)" }}>
-        Publish a site to start collecting real traffic, or load sample data to explore the dashboard.
+        Publish your site and drive traffic to start collecting analytics.
       </p>
-      <button onClick={onSeed} className="mt-5 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
-        Load sample data
-      </button>
     </motion.div>
   );
 }

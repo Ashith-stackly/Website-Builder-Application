@@ -34,7 +34,7 @@ import {
   hoverLift,
 } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
-import { trackPageView, trackVisitor } from "@/lib/analytics";
+import { getProjectAnalytics } from "@/lib/projectApi";
 import { useCountUp, useClickOutside } from "@/lib/hooks";
 import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
@@ -81,11 +81,11 @@ export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("there");
 
+  const [visitors, setVisitors] = useState(0);
+
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
-    trackVisitor();
-    trackPageView("/dashboard");
     try {
       const raw = window.localStorage.getItem("stacklyUserSettings");
       if (raw) {
@@ -97,6 +97,34 @@ export default function DashboardPage() {
     }
     return () => controller.abort();
   }, [loadProjects]);
+
+  useEffect(() => {
+    if (projects.length === 0) {
+      setVisitors(0);
+      return;
+    }
+
+    let active = true;
+    const fetchAll = async () => {
+      try {
+        const promises = projects.map((p) =>
+          getProjectAnalytics(p.id, 30).catch(() => ({ uniqueVisitors: 0 }))
+        );
+        const results = await Promise.all(promises);
+        if (active) {
+          const sum = results.reduce((acc, res) => acc + (res?.uniqueVisitors ?? 0), 0);
+          setVisitors(sum);
+        }
+      } catch (err) {
+        console.error("Dashboard overview analytics load error:", err);
+      }
+    };
+
+    void fetchAll();
+    return () => {
+      active = false;
+    };
+  }, [projects]);
 
   // Open the create flow from the sidebar / command palette (?new=1).
   useEffect(() => {
@@ -111,21 +139,13 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     const published = projects.filter((p) => p.status === "published").length;
     const blocks = projects.reduce((acc, p) => acc + (p.components?.length ?? 0), 0);
-    let visitors = 0;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const mod = require("@/lib/analytics");
-      visitors = mod.getAnalyticsData?.()?.uniqueVisitors ?? 0;
-    } catch {
-      /* ignore */
-    }
     return [
       { label: "Projects", value: projects.length, icon: FolderKanban, tone: TILE_TONES[0], sub: "in this workspace" },
       { label: "Published", value: published, icon: Globe, tone: TILE_TONES[3], sub: "live sites" },
       { label: "Visitors", value: visitors, icon: Users, tone: TILE_TONES[1], sub: "last 30 days" },
       { label: "Blocks built", value: blocks, icon: Blocks, tone: TILE_TONES[2], sub: "across projects" },
     ];
-  }, [projects]);
+  }, [projects, visitors]);
 
   const progress = Math.min(100, 20 + projects.length * 12);
 

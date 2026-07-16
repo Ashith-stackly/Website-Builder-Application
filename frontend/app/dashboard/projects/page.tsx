@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { staggerContainer, staggerChild, gridContainer, cardItem, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
-import { trackPageView } from "@/lib/analytics";
 import { usePersistentState, useClickOutside } from "@/lib/hooks";
 import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
@@ -69,7 +68,6 @@ export default function ProjectsPage() {
   useEffect(() => {
     const c = new AbortController();
     void loadProjects(c.signal);
-    trackPageView("/dashboard/projects");
     return () => c.abort();
   }, [loadProjects]);
 

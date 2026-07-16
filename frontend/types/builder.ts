@@ -60,6 +60,19 @@ export interface ComponentStyles {
   display?: string;
   gap?: string;
   flexWrap?: string;
+  /* ── Layout (grid / flex / alignment — WYSIWYG parity) ──────────── */
+  flexDirection?: string;
+  justifyContent?: string;
+  alignItems?: string;
+  gridTemplateColumns?: string;
+  gridTemplateRows?: string;
+  columnGap?: string;
+  rowGap?: string;
+  maxWidth?: string;
+  objectFit?: string;
+  aspectRatio?: string;
+  letterSpacing?: string;
+  lineHeight?: string;
 }
 
 /**

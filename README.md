@@ -8,8 +8,8 @@ and a Node.js/Express/MongoDB backend.
 ```
 Website-Builder-Application/
 ├── frontend/      Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4
-├── backend/       Node.js + Express + MongoDB (Mongoose), layered architecture
-├── docs/          Project docs — codebase-analysis dashboard + planning/ archive
+├── backend/       Node.js + Express + MongoDB (Mongoose), unified layered architecture
+├── docs/          Project docs — codebase-analysis dashboard + manager briefs
 ├── README.md      You are here
 └── .gitignore
 ```
@@ -42,7 +42,7 @@ frontend/
 </details>
 
 <details open>
-<summary><b>backend/</b> — Express API (Backend A, primary; Backend B merged in)</summary>
+<summary><b>backend/</b> — Consolidated Express API with 16 database models and 15 route controllers</summary>
 
 ```
 backend/
@@ -183,10 +183,4 @@ when using it, set the prompted backend environment variables such as `MONGODB_U
    typed clients in `lib/` (`api.ts`, `projectApi.ts`, `templateApi.ts`, `blogApi.ts`).
 4. **Standards**: consistent folder/file naming, `require`/`module.exports` on the backend,
    ES modules on the frontend, env-driven config, and a uniform JSON response/error shape.
-5. **Docs**: the codebase-analysis dashboard lives in [`docs/index.html`](docs/index.html);
-   historical planning docs are in [`docs/planning/`](docs/planning/).
-
-### Known integration follow-ups
-- Some frontend API clients call `/api/projects` and `/api/templates`, while the backend
-  currently mounts `/api/workspace` and `/api/template`. Aligning these route names (or adding
-  aliases) is a functional task tracked separately — it is **not** part of this structural setup.
+5. **Docs**: the codebase-analysis dashboard lives in [`docs/index.html`](docs/index.html).

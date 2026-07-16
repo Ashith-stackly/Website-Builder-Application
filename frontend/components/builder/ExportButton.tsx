@@ -104,12 +104,13 @@ export default function ExportButton({ components }: { components: BuilderCompon
   const [isExporting, setIsExporting] = useState(false);
   const getDataUrl = useAssetStore((s) => s.getDataUrl);
   const seo = useDesignStore((s) => s.seo);
+  const tokens = useDesignStore((s) => s.tokens);
 
   const handleExport = async () => {
     if (isExporting) return;
     setIsExporting(true);
     try {
-      downloadHtml(await embedImageAssets(components, getDataUrl), seo);
+      downloadHtml(await embedImageAssets(components, getDataUrl), seo, undefined, tokens);
     } finally {
       setIsExporting(false);
     }

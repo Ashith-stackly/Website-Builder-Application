@@ -32,6 +32,19 @@ export const toReactStyle = (styles: ComponentStyles): CSSProperties => ({
   zIndex: styles.zIndex ? parseInt(styles.zIndex, 10) : undefined,
   minWidth: styles.minWidth || undefined,
   minHeight: styles.minHeight || undefined,
+  /* Layout (grid / flex / alignment) */
+  flexDirection: styles.flexDirection as CSSProperties["flexDirection"],
+  justifyContent: styles.justifyContent as CSSProperties["justifyContent"],
+  alignItems: styles.alignItems as CSSProperties["alignItems"],
+  gridTemplateColumns: styles.gridTemplateColumns || undefined,
+  gridTemplateRows: styles.gridTemplateRows || undefined,
+  columnGap: styles.columnGap || undefined,
+  rowGap: styles.rowGap || undefined,
+  maxWidth: styles.maxWidth || undefined,
+  objectFit: styles.objectFit as CSSProperties["objectFit"],
+  aspectRatio: styles.aspectRatio || undefined,
+  letterSpacing: styles.letterSpacing || undefined,
+  lineHeight: styles.lineHeight || undefined,
 });
 
 /** Convenience wrapper: accept a full BuilderComponent and return CSSProperties. */

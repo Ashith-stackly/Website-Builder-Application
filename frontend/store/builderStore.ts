@@ -727,7 +727,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     })),
   clearCanvas: () =>
     set((state) => ({ ...captureHistory(state), components: [], selectedComponentId: null })),
-  exportHtml: () => generateHtml(get().components, useDesignStore.getState().seo),
+  exportHtml: () => generateHtml(get().components, useDesignStore.getState().seo, get().currentProjectId || undefined, useDesignStore.getState().tokens),
   undo: () =>
     set((state) => {
       if (state.history.length === 0) return state;
@@ -789,7 +789,6 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       }
 
       set((state) => ({
-        ...captureHistory(state),
         components: orderComponents(cloneComponentTree(components)),
         selectedComponentId: null,
         selectedTextStyleTarget: null,
@@ -802,6 +801,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         isSaving: false,
         saveStatus: "saved",
         saveError: null,
+        history: [],
+        future: [],
       }));
 
       // Persist the generated starter layout once so a reopen restores it
