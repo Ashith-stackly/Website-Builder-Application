@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { LucideIcon } from "lucide-react";
 import type { BuilderComponent, ComponentStyles, SEOMetadata } from "@/types/builder";
+import type { DesignTokens } from "@/store/designStore";
 import { escapeHtml } from "@/lib/htmlUtils";
 
 const styleToString = (styles: ComponentStyles) =>
@@ -97,32 +98,9 @@ const renderComponent = (component: BuilderComponent): string => {
   const styleAttr = componentAttr(component);
   const content = escapeHtml(component.content);
   const children = component.children.map(renderComponent).join("\n");
-  const rowGrid: Record<string, string> = {
-    "50/50": "1fr 1fr",
-    "33/33/33": "1fr 1fr 1fr",
-    "25/50/25": "1fr 2fr 1fr",
-    "25/75": "1fr 3fr",
-    "75/25": "3fr 1fr",
-    "33/67": "1fr 2fr",
-    "67/33": "2fr 1fr",
-  };
-
-  if (component.type === "container") {
-    return `<section${styleAttr}>${children || content}</section>`;
-  }
-
-  if (component.type === "columns") {
-    return `<div${componentAttr(component, { display: "flex", gap: "16px", flexWrap: "wrap", ...component.styles })}>${children}</div>`;
-  }
-
-  if (component.type === "row") {
-    const layout = String(component.props?.layout || component.content || "50/50");
-    const gridTemplateColumns = rowGrid[layout] ?? rowGrid["50/50"];
-    return `<section${componentAttr(component, { ...component.styles })}><div style="display:grid;grid-template-columns:${escapeHtml(gridTemplateColumns)};gap:16px">${children}</div></section>`;
-  }
 
   // ── Registry path ────────────────────────────────────────────────────────────
-  // Migrated blocks delegate export to spec.exportHtml(data, styleAttr, children).
+  // All migrated blocks delegate export to spec.exportHtml(data, styleAttr, children).
   const spec = blockRegistry[component.type];
   if (spec) {
     const data = spec.read(component);
@@ -250,7 +228,7 @@ const collectResponsiveCss = (components: BuilderComponent[]): string => {
   ].filter(Boolean).join("\n");
 };
 
-export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, workspaceId?: string) => {
+export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, workspaceId?: string, tokens?: DesignTokens) => {
   const body = components
     .slice()
     .sort((a, b) => a.order - b.order)
@@ -318,18 +296,22 @@ export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, 
     <title>${pageTitle}</title>${metaDesc}${ogBlock}${trackingScript}
     <style>
       * { box-sizing: border-box; }
-      body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #ffffff; color: #0B1D40; }
+      body { margin: 0; font-family: ${escapeHtml(tokens?.typography?.fontFamily || 'Arial, Helvetica, sans-serif')}; background: ${escapeHtml(tokens?.colors?.background || '#ffffff')}; color: ${escapeHtml(tokens?.colors?.text || '#0B1D40')}; }
       main { width: min(960px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0; }
-      main { position: relative; min-height: 680px; }
-      main > * + * { margin-top: 16px; }
+      main { position: relative; min-height: 680px; display: flex; flex-direction: column; gap: 12px; }
       .stackly-floating { position: absolute; margin: 0 !important; width: max-content; max-width: calc(100% - 8px); }
       .stackly-floating > * { margin: 0 !important; }
       .stackly-floating svg { display: block; }
-      .hero-split { display: flex; align-items: center; gap: 40px; }
-      .hero-text { flex: 1; }
-      .hero-media { flex: 1; }
+      /* Hero: CSS Grid layout matching the canvas renderer (1.15fr 0.85fr) */
+      .hero-split { display: grid; grid-template-columns: 1.15fr 0.85fr; align-items: center; gap: 24px; }
+      .hero-text { min-width: 0; }
+      .hero-media { min-width: 0; }
       .hero-media img { width: 100%; border-radius: 12px; }
-      @media (max-width: 768px) { .hero-split { flex-direction: column; text-align: center; } }
+      /* Hero placeholder wireframe — mirrors the canvas HeroComponent's right-column placeholder */
+      .hero-placeholder { min-height: 180px; border-radius: 8px; border: 1px solid #dbe3ef; background: #ffffff; padding: 16px; box-shadow: 0 1px 3px rgba(15,35,75,0.05); display: flex; flex-direction: column; gap: 12px; }
+      .hero-placeholder-bar { height: 12px; width: 96px; border-radius: 9999px; background: #dbe3ef; margin-bottom: 4px; }
+      .hero-placeholder-block { border-radius: 4px; background: #f7f9fc; }
+      @media (max-width: 768px) { .hero-split { grid-template-columns: 1fr; text-align: center; } }
       nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; position: relative; }
       .nav-brand-group { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; min-width: max-content; }
       .nav-logo { display: block; height: 36px; width: auto; max-width: 120px; object-fit: contain; flex-shrink: 0; }
@@ -476,8 +458,8 @@ ${body}
 </html>`;
 };
 
-export const downloadHtml = (components: BuilderComponent[], seo?: SEOMetadata, filename = "stackly-page.html") => {
-  const html = generateHtml(components, seo);
+export const downloadHtml = (components: BuilderComponent[], seo?: SEOMetadata, filename = "stackly-page.html", tokens?: DesignTokens) => {
+  const html = generateHtml(components, seo, undefined, tokens);
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

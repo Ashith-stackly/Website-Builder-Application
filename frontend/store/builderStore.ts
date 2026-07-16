@@ -727,7 +727,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     })),
   clearCanvas: () =>
     set((state) => ({ ...captureHistory(state), components: [], selectedComponentId: null })),
-  exportHtml: () => generateHtml(get().components, useDesignStore.getState().seo, get().currentProjectId || undefined),
+  exportHtml: () => generateHtml(get().components, useDesignStore.getState().seo, get().currentProjectId || undefined, useDesignStore.getState().tokens),
   undo: () =>
     set((state) => {
       if (state.history.length === 0) return state;

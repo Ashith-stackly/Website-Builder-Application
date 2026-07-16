@@ -120,17 +120,16 @@ export const heroSpec: BlockSpec<HeroProps> = {
     const mediaHtml =
       data.media?.type === "image" && data.media.src
         ? `<img src="${escapeHtml(data.media.src)}" alt="${escapeHtml(data.media.alt ?? data.title)}" style="max-width:100%;height:auto;border-radius:12px;" />`
-        : "";
+        : `<div class="hero-placeholder"><div class="hero-placeholder-bar"></div><div class="hero-placeholder-block" style="height:64px"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="hero-placeholder-block" style="height:80px"></div><div class="hero-placeholder-block" style="height:80px"></div></div></div>`;
     const textHtml =
       `<div class="hero-text">` +
       `<h1>${escapeHtml(data.title)}</h1>` +
       `<p>${escapeHtml(data.description)}</p>` +
       `<a href="${escapeHtml(href)}" role="button">${escapeHtml(data.cta.label)}</a>` +
       `</div>`;
-    const inner =
-      mediaHtml
-        ? `<div class="hero-split">${textHtml}<div class="hero-media">${mediaHtml}</div></div>`
-        : textHtml;
+    /* Always render the two-column split layout (matching the canvas renderer)
+       regardless of whether there is a real image or a placeholder. */
+    const inner = `<div class="hero-split">${textHtml}<div class="hero-media">${mediaHtml}</div></div>`;
     return `<section${styleAttr}>${inner}</section>`;
   },
   ai: {
