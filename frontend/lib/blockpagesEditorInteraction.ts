@@ -1,9 +1,30 @@
 import type { BlockpagesPreviewDevice } from "@/lib/blockpagesEditorContext";
 
-export function isBlockpagesInteractiveControl(node: Element | null) {
+type BlockpagesInteractiveControlOptions = {
+  allowTextEditing?: boolean;
+};
+
+export function isBlockpagesInteractiveControl(
+  node: Element | null,
+  options?: BlockpagesInteractiveControlOptions
+) {
   if (!(node instanceof HTMLElement)) return false;
   if (node.closest('[data-blockpages-interactive="true"]')) return true;
-  if (node.closest(".portfolio-mobile-menu, .portfolio-mobile-menu-btn, .portfolio-mobile-menu ")) return true;
+  if (node.closest(".portfolio-mobile-menu, .portfolio-mobile-menu-btn, .portfolio-mobile-menu")) return true;
+
+  if (options?.allowTextEditing) {
+    const ariaLabel = (node.getAttribute("aria-label") ?? "").toLowerCase();
+    if (ariaLabel.includes("menu") && !node.isContentEditable && !node.closest('[contenteditable="true"]')) {
+      return true;
+    }
+
+    const button = node.closest("button") as HTMLElement | null;
+    if (button?.querySelector("svg") && (button.textContent ?? "").trim().length <= 2) {
+      return true;
+    }
+
+    return false;
+  }
 
   const ariaLabel = (node.getAttribute("aria-label") ?? "").toLowerCase();
   if (ariaLabel.includes("menu")) return true;

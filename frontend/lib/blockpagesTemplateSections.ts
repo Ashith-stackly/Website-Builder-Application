@@ -18,8 +18,8 @@ const ECOMMERCE_SECTIONS: BlockpagesTemplateSection[] = [
   { id: "buyscreen-home", label: "Home" },
   { id: "buyscreen-about", label: "About Us" },
   { id: "buyscreen-categories", label: "Categories" },
-  { id: "buyscreen-products", label: "Our Products" },
   { id: "buyscreen-video", label: "Video Block" },
+  { id: "buyscreen-products", label: "Our Products" },
   { id: "buyscreen-contact", label: "Contact" },
 ];
 
@@ -46,7 +46,6 @@ const RESTAURANT_SECTIONS: BlockpagesTemplateSection[] = [
   { id: "restaurant-menu", label: "Menu" },
   { id: "restaurant-about", label: "About" },
   { id: "restaurant-why-choose-us", label: "Why Choose Us" },
-  { id: "restaurant-features", label: "Features" },
   { id: "restaurant-faq", label: "FAQ" },
   { id: "restaurant-testimonials", label: "Testimonials" },
   { id: "restaurant-contact", label: "Contact" },
@@ -142,7 +141,9 @@ export function scrollBlockpagesCanvasToSection(sectionId: string) {
   const escaped =
     typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(sectionId) : sectionId.replace(/"/g, '\\"');
 
-  const scrollRoot = document.querySelector<HTMLElement>("[data-blockpages-scroll-root], [data-textblock-canvas]");
+  const scrollRoot = document.querySelector<HTMLElement>(
+    "[data-blockpages-scroll-root], [data-textblock-canvas], [data-blockpages-preview-root]"
+  );
   const target =
     scrollRoot?.querySelector<HTMLElement>(`#${escaped}`) ?? document.getElementById(sectionId);
 

@@ -28,7 +28,15 @@ export function nodeIsInBlockpagesHeaderChrome(node: Element) {
 
   return Boolean(
     node.closest(
-      ".buyscreen-header, .buyscreen-categories, .portfolio-shell > .sticky, .portfolio-mobile-menu, .restaurant-shell header, .construction-shell header, .dm-shell > .sticky, .dm-shell header"
+      "[data-blockpages-template-header='true'], .buyscreen-header, .buyscreen-categories, .portfolio-shell > .sticky, .portfolio-mobile-menu, .restaurant-shell header, .construction-shell header, .dm-shell > .sticky, .dm-shell header"
+    )
+  );
+}
+
+export function nodeIsInBlockpagesFooterChrome(node: Element) {
+  return Boolean(
+    node.closest(
+      "[data-blockpages-template-footer='true'], footer, .stackly-footer, .restaurant-shell footer, .construction-shell footer, .blog-page footer, .blog-blockpages-root footer, .dm-shell footer"
     )
   );
 }
@@ -41,6 +49,7 @@ export function buildBlockpagesDropdownStylesCss() {
     [data-textblock-canvas] .buyscreen-all-categories-wrap,
     [data-textblock-canvas] .construction-shell header,
     [data-textblock-canvas] .restaurant-shell header,
+    [data-textblock-canvas] [data-blockpages-template-header="true"],
     [data-textblock-canvas] .blog-page header,
     [data-textblock-canvas] .blog-page header nav .relative,
     [data-textblock-canvas] .blog-page header nav .group {

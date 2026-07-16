@@ -2,6 +2,88 @@ import type { TextBlockState, TextTemplateType } from "@/app/blockpages/textbloc
 
 export const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
 
+export const BLOCKPAGES_REQUEST_PREVIEW_EVENT = "blockpages-request-preview";
+
+export function getBlockpagesStorageKey(suffix: string) {
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/^\/+|\/+$/g, "");
+  return basePath ? `stackly-${basePath}-${suffix}` : suffix;
+}
+
+export function readBlockpagesStorageItem(suffix: string) {
+  if (typeof window === "undefined") return null;
+
+  const namespacedKey = getBlockpagesStorageKey(suffix);
+  const namespacedValue = window.localStorage.getItem(namespacedKey);
+  if (namespacedValue !== null) return namespacedValue;
+
+  return window.localStorage.getItem(suffix);
+}
+
+export function writeBlockpagesStorageItem(suffix: string, value: string) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(getBlockpagesStorageKey(suffix), value);
+  } catch {
+    // Ignore quota errors.
+  }
+}
+
+export function getBlockpagesPreviewSnapshotKey(template: TextTemplateType) {
+  return `textblock-preview-snapshot-${template}`;
+}
+
+export function getBlockpagesAppliedDividersKey(template: TextTemplateType) {
+  return `stackly-custom-dividers-${template}`;
+}
+
+export function getBlockpagesAppliedIconsKey(template: TextTemplateType) {
+  return `stackly-custom-icons-${template}`;
+}
+
+const LEGACY_APPLIED_DIVIDERS_KEY = "stackly-custom-dividers";
+const LEGACY_APPLIED_ICONS_KEY = "stackly-custom-icons";
+
+export function loadAppliedDividersForTemplate(template: TextTemplateType) {
+  const namespaced = readBlockpagesStorageItem(getBlockpagesAppliedDividersKey(template));
+  const raw = namespaced ?? readBlockpagesStorageItem(LEGACY_APPLIED_DIVIDERS_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.length > 0 ? parsed : [];
+    if (parsed) return [{ id: "legacy", props: parsed }];
+  } catch {
+    return [];
+  }
+
+  return [];
+}
+
+export function loadAppliedIconsForTemplate(template: TextTemplateType) {
+  const namespaced = readBlockpagesStorageItem(getBlockpagesAppliedIconsKey(template));
+  const raw = namespaced ?? readBlockpagesStorageItem(LEGACY_APPLIED_ICONS_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.length > 0 ? parsed : [];
+    if (parsed) return [{ id: "legacy", props: parsed }];
+  } catch {
+    return [];
+  }
+
+  return [];
+}
+
+export function persistAppliedDividersForTemplate(template: TextTemplateType, dividers: unknown[]) {
+  writeBlockpagesStorageItem(getBlockpagesAppliedDividersKey(template), JSON.stringify(dividers));
+}
+
+export function persistAppliedIconsForTemplate(template: TextTemplateType, icons: unknown[]) {
+  writeBlockpagesStorageItem(getBlockpagesAppliedIconsKey(template), JSON.stringify(icons));
+}
+
 export function getTextBlockStateStorageKey(template: TextTemplateType) {
   return `stackly-textblock-state-${template}`;
 }
@@ -100,7 +182,17 @@ export function captureCanvasContent(container: ParentNode | null): string {
 export function applyCanvasContent(container: ParentNode | null, html: string) {
   const root = getCanvasTemplateRoot(container);
   if (!root || !html.trim()) return;
+
+  const scrollRoot = getCanvasContentRoot(container);
+  const savedScrollTop = scrollRoot?.scrollTop ?? 0;
+  const savedScrollLeft = scrollRoot?.scrollLeft ?? 0;
+
   root.innerHTML = html;
+
+  if (scrollRoot) {
+    scrollRoot.scrollTop = savedScrollTop;
+    scrollRoot.scrollLeft = savedScrollLeft;
+  }
 }
 
 export const BLOCKPAGES_CANVAS_RESTORED_EVENT = "blockpages-canvas-restored";

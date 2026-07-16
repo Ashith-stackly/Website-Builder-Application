@@ -9,7 +9,12 @@ import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProject
 import { animateStatCounterElement } from "@/lib/blockpagesStatCounter";
 import { bindBlockpagesPreviewInteractions } from "@/lib/blockpagesPreviewInteractions";
 import { sanitizeBlockpagesPreviewHtml } from "@/lib/blockpagesPreviewSanitize";
-import { TEXTBLOCK_PREVIEW_STORAGE_KEY } from "@/lib/blockpagesEditorPersistence";
+import { readBlockpagesPreviewCaptureDevice } from "@/lib/blockpagesOverlayLayers";
+import {
+  TEXTBLOCK_PREVIEW_STORAGE_KEY,
+  readBlockpagesStorageItem,
+  getBlockpagesStorageKey,
+} from "@/lib/blockpagesEditorPersistence";
 import { routePath } from "@/lib/paths";
 import { loadBlockPagesDraft, type BlockPagesDraftPayload } from "@/lib/blockPagesDraftApi";
 
@@ -141,7 +146,11 @@ export default function BlockPreviewPage() {
 
     // MODE 1: Current editor state preview (localStorage)
     const loadPreview = () => {
-      const rawHtml = window.localStorage.getItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "";
+      const rawHtml = readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "";
+      const capturedDevice = readBlockpagesPreviewCaptureDevice(rawHtml);
+      if (capturedDevice) {
+        setPreviewDevice(capturedDevice);
+      }
       setPreviewHtml(sanitizeBlockpagesPreviewHtml(rawHtml));
     };
  
@@ -150,9 +159,17 @@ export default function BlockPreviewPage() {
     });
  
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === TEXTBLOCK_PREVIEW_STORAGE_KEY) {
-        setPreviewHtml(sanitizeBlockpagesPreviewHtml(event.newValue ?? ""));
+      const previewKeys = new Set([
+        TEXTBLOCK_PREVIEW_STORAGE_KEY,
+        getBlockpagesStorageKey(TEXTBLOCK_PREVIEW_STORAGE_KEY),
+      ]);
+      if (!event.key || !previewKeys.has(event.key)) return;
+      const nextHtml = event.newValue ?? readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "";
+      const capturedDevice = readBlockpagesPreviewCaptureDevice(nextHtml);
+      if (capturedDevice) {
+        setPreviewDevice(capturedDevice);
       }
+      setPreviewHtml(sanitizeBlockpagesPreviewHtml(nextHtml));
     };
  
     window.addEventListener("storage", handleStorage);
@@ -192,7 +209,12 @@ export default function BlockPreviewPage() {
         { threshold: 0.1 }
       );
 
+      document.querySelectorAll(".portfolio-reveal:not(.is-visible)").forEach((el) => {
+        el.classList.add("is-visible");
+      });
+
       document.querySelectorAll(".portfolio-reveal").forEach((el) => {
+        if (el.closest("[data-blockpages-preview-root='true']")) return;
         el.classList.remove("is-visible");
         observer.observe(el);
       });

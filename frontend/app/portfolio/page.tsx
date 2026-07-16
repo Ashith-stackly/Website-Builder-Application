@@ -1337,6 +1337,7 @@ export default function Portfolioedit() {
 
                   </div>
                 </div>
+                <div data-blockpages-section-end="about" className="h-0 w-full" aria-hidden="true" />
                 {/* </div> */}
 
                 {/* MY SERVICES SECTION */}

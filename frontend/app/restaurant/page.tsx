@@ -95,7 +95,7 @@ const navLinks = [
   { label: "Home", hash: "#restaurant-home" },
   { label: "Menu", hash: "#restaurant-menu" },
   { label: "About Us", hash: "#restaurant-about" },
-  { label: "Features", hash: "#restaurant-features" },
+  { label: "Features", hash: "#restaurant-why-choose-us" },
   { label: "FAQ", hash: "#restaurant-faq" },
   { label: "Contact", hash: "#restaurant-contact" },
 ] as const;
@@ -665,7 +665,7 @@ export default function RestaurantTemplatesPage() {
               </div>
             </section>
 
-            <footer className={`@container bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
+            <footer id="restaurant-footer" data-blockpages-template-footer="true" className={`@container bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="mx-auto max-w-7xl w-full">
                 <div className="grid grid-cols-1 gap-10 @md:grid-cols-2 @4xl:grid-cols-4">
                   <div>

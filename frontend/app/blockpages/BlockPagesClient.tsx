@@ -49,11 +49,24 @@ import {
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
 } from "@/lib/blockpagesEditTargets";
-import { buildPreviewHtmlFromCanvas } from "@/lib/blockpagesPreviewSanitize";
-import { getOverlayDefaultTop } from "@/lib/blockpagesOverlayLayers";
+import { buildPreviewHtmlFromCanvas, flushBlockpagesPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
+import {
+  getOverlayDefaultTop,
+  getVisibleCanvasAnchorY,
+  resolveDividerSectionPlacementAtY,
+} from "@/lib/blockpagesOverlayLayers";
 import {
   loadPersistedTextBlockState,
   persistTextBlockState,
+  readBlockpagesStorageItem,
+  writeBlockpagesStorageItem,
+  getBlockpagesPreviewSnapshotKey,
+  loadAppliedDividersForTemplate,
+  loadAppliedIconsForTemplate,
+  persistAppliedDividersForTemplate,
+  persistAppliedIconsForTemplate,
+  TEXTBLOCK_PREVIEW_STORAGE_KEY,
+  BLOCKPAGES_REQUEST_PREVIEW_EVENT,
 } from "@/lib/blockpagesEditorPersistence";
 import VideoCanvas from "./videoblock/Canvas";
 import VideoRightSidebar from "./videoblock/RightSidebar";
@@ -131,8 +144,6 @@ const initialTextBlockState: TextBlockState = {
  
 export type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
 
-const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
-
 export default function BlockPagesClient() {
   const searchParams = useSearchParams();
   const requestedTemplate = searchParams.get("template");
@@ -168,6 +179,11 @@ export default function BlockPagesClient() {
         ...current,
         activeSectionId: getBlockpagesDefaultSectionId(parsed),
       }));
+    }
+
+    if (!searchParams.get("projectId")) {
+      setAppliedDividers(loadAppliedDividersForTemplate(parsed));
+      setAppliedIcons(loadAppliedIconsForTemplate(parsed));
     }
   }, [searchParams]);
 
@@ -208,9 +224,14 @@ export default function BlockPagesClient() {
   const [editingIconId, setEditingIconId] = useState<string | null>(null);
   const [customIcons, setCustomIcons] = useState<Record<string, IconBlockProps>>({});
  
-  const [appliedDividers, setAppliedDividers] = useState<{ id: string; props: DividerBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[]>([]);
+  const [appliedDividers, setAppliedDividers] = useState<{ id: string; props: DividerBlockProps; position?: { top?: number; left?: number; x?: number; y?: number; sectionId?: string; anchorPath?: number[]; insertMode?: "after" | "before" }; scale?: number }[]>([]);
   const [appliedIcons, setAppliedIcons] = useState<{ id: string; props: IconBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[]>([]);
+  const [pendingDividerScrollId, setPendingDividerScrollId] = useState<string | null>(null);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+
+  const clearPendingDividerScroll = useCallback(() => {
+    setPendingDividerScrollId(null);
+  }, []);
 
   // ── Load saved draft on mount ──────────────────────────────────────────
   useEffect(() => {
@@ -294,8 +315,11 @@ export default function BlockPagesClient() {
 
     if (!(canvas instanceof HTMLElement)) return "";
 
-    return buildPreviewHtmlFromCanvas(canvas);
-  }, []);
+    const captureDevice =
+      (canvas.getAttribute("data-blockpages-device") as "desktop" | "tablet" | "mobile" | null) ?? "desktop";
+
+    return buildPreviewHtmlFromCanvas(canvas, { captureDevice, appliedDividers });
+  }, [appliedDividers]);
 
   // ── Save Draft handler ─────────────────────────────────────────────────
   const handleSaveDraft = useCallback(async () => {
@@ -358,10 +382,41 @@ export default function BlockPagesClient() {
   ]);
 
   const handlePreview = useCallback(() => {
-    const previewHtml = buildPreviewHtml(true);
-    window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
-    window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
-  }, [buildPreviewHtml]);
+    const openPreview = (previewHtml: string) => {
+      if (!previewHtml.trim()) return false;
+      writeBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
+      writeBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate), previewHtml);
+      window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
+      return true;
+    };
+
+    if (getBlockpagesCanvasElement() instanceof HTMLElement) {
+      window.dispatchEvent(new CustomEvent(BLOCKPAGES_REQUEST_PREVIEW_EVENT));
+      return;
+    }
+
+    const cachedHtml = readBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate));
+    if (cachedHtml?.trim() && openPreview(cachedHtml)) return;
+
+    flushSync(() => setActiveBlockPage("text"));
+
+    const attemptCapture = (attempt = 0) => {
+      if (getBlockpagesCanvasElement() instanceof HTMLElement) {
+        window.dispatchEvent(new CustomEvent(BLOCKPAGES_REQUEST_PREVIEW_EVENT));
+        return;
+      }
+
+      if (attempt < 40) {
+        window.requestAnimationFrame(() => attemptCapture(attempt + 1));
+        return;
+      }
+
+      const fallbackHtml = readBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate));
+      if (fallbackHtml?.trim()) openPreview(fallbackHtml);
+    };
+
+    attemptCapture();
+  }, [textTemplate]);
 
   const verifyCanvasHasVideoTargets = (template: TextTemplateType) => {
     if (templateHasBuiltInVideoSlots(template)) return true;
@@ -409,7 +464,7 @@ export default function BlockPagesClient() {
  
   useEffect(() => {
     try {
-      const storedImages = localStorage.getItem("stackly-custom-images");
+      const storedImages = readBlockpagesStorageItem("stackly-custom-images");
       if (storedImages) {
         const parsed = JSON.parse(storedImages);
         const validImages: Record<string, string> = {};
@@ -423,7 +478,7 @@ export default function BlockPagesClient() {
         }
         window.setTimeout(() => setCustomImages(validImages), 0);
         if (hasChanges) {
-          localStorage.setItem("stackly-custom-images", JSON.stringify(validImages));
+          writeBlockpagesStorageItem("stackly-custom-images", JSON.stringify(validImages));
         }
       }
     } catch (e) {
@@ -431,7 +486,7 @@ export default function BlockPagesClient() {
     }
  
     try {
-      const storedButtons = localStorage.getItem("stackly-custom-buttons");
+      const storedButtons = readBlockpagesStorageItem("stackly-custom-buttons");
       if (storedButtons) {
         window.setTimeout(() => {
           setCustomButtons(JSON.parse(storedButtons) as Record<string, ButtonProps>);
@@ -442,20 +497,9 @@ export default function BlockPagesClient() {
     }
  
     try {
-      const storedDividers = localStorage.getItem("stackly-custom-dividers");
-      if (storedDividers) {
-        window.setTimeout(() => {
-          const parsed = JSON.parse(storedDividers);
-          if (Array.isArray(parsed)) setAppliedDividers(parsed);
-          else if (parsed) setAppliedDividers([{ id: 'legacy', props: parsed }]);
-        }, 0);
-      }
-    } catch (e) {
-      console.error("Failed to load custom dividers", e);
-    }
- 
-    try {
-      const storedIcons = localStorage.getItem("stackly-custom-icons");
+      if (searchParams.get("projectId")) return;
+
+      const storedIcons = readBlockpagesStorageItem("stackly-custom-icons");
       if (storedIcons) {
         window.setTimeout(() => {
           const parsed = JSON.parse(storedIcons);
@@ -468,7 +512,7 @@ export default function BlockPagesClient() {
     }
  
     try {
-      const storedStaticIcons = localStorage.getItem("stackly-custom-static-icons");
+      const storedStaticIcons = readBlockpagesStorageItem("stackly-custom-static-icons");
       if (storedStaticIcons) {
         window.setTimeout(() => {
           setCustomIcons(JSON.parse(storedStaticIcons) as Record<string, IconBlockProps>);
@@ -493,7 +537,10 @@ export default function BlockPagesClient() {
   }, [textTemplate]);
  
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    const scrollRoot = document.querySelector<HTMLElement>("[data-textblock-canvas]");
+    if (!scrollRoot || activeBlockPage === "text") return;
+    scrollRoot.scrollTop = 0;
+    scrollRoot.scrollLeft = 0;
   }, [activeBlockPage]);
 
   useEffect(() => {
@@ -818,7 +865,7 @@ export default function BlockPagesClient() {
               if (editingImageId) {
                 setCustomImages((prev) => {
                   const next = { ...prev, [editingImageId]: url };
-                  localStorage.setItem("stackly-custom-images", JSON.stringify(next));
+                  writeBlockpagesStorageItem("stackly-custom-images", JSON.stringify(next));
                   return next;
                 });
               }
@@ -827,6 +874,14 @@ export default function BlockPagesClient() {
             }}
             onCloseMobileImageSelect={() => setEditingImageId(null)}
             onSelectBlockPage={(page) => {
+              const keepsTextCanvasMounted =
+                activeBlockPage === "text" &&
+                (page === "text" || page === "image" || page === "button" || page === "video");
+
+              if (activeBlockPage === "text" && !keepsTextCanvasMounted) {
+                flushBlockpagesPreviewSnapshot(textTemplate);
+              }
+
               if (page === "image" && activeBlockPage === "text") {
                 setIsImageEditingMode((prev) => !prev);
                 setIsButtonEditingMode(false);
@@ -925,7 +980,7 @@ export default function BlockPagesClient() {
                   if (editingButtonId) {
                     setCustomButtons((prev) => {
                       const next = { ...prev, [editingButtonId]: props };
-                      localStorage.setItem("stackly-custom-buttons", JSON.stringify(next));
+                  writeBlockpagesStorageItem("stackly-custom-buttons", JSON.stringify(next));
                       return next;
                     });
                   }
@@ -968,7 +1023,6 @@ export default function BlockPagesClient() {
               state={textBlockState}
               onStateChange={pushTextState}
               onSaveDraft={handleSaveDraft}
-              onPreview={handlePreview}
               saveStatus={saveStatus}
               canUndo={pastTextStates.length > 0}
               canRedo={futureTextStates.length > 0}
@@ -998,6 +1052,7 @@ export default function BlockPagesClient() {
                   showNoVideoAlert();
                   return;
                 }
+                flushBlockpagesPreviewSnapshot(textTemplate);
                 setEditingVideoId(videoId);
                 setActiveBlockPage("video");
               }}
@@ -1005,6 +1060,7 @@ export default function BlockPagesClient() {
               editingIconId={editingIconId}
               customIcons={customIcons}
               onEditIcon={(iconId) => {
+                flushBlockpagesPreviewSnapshot(textTemplate);
                 setEditingIconId(iconId);
                 if (typeof window !== "undefined" && window.innerWidth >= 1024) {
                   setActiveBlockPage("icons");
@@ -1013,47 +1069,49 @@ export default function BlockPagesClient() {
               appliedDividers={appliedDividers}
               onRemoveDivider={(id) => {
                 setAppliedDividers((prev) => {
-                  const next = prev.filter(d => d.id !== id);
-                  localStorage.setItem("stackly-custom-dividers", JSON.stringify(next));
+                  const next = prev.filter((d) => d.id !== id);
+                  persistAppliedDividersForTemplate(textTemplate, next);
                   return next;
                 });
               }}
               appliedIcons={appliedIcons}
               onRemoveIcon={(id) => {
                 setAppliedIcons((prev) => {
-                  const next = prev.filter(i => i.id !== id);
-                  localStorage.setItem("stackly-custom-icons", JSON.stringify(next));
+                  const next = prev.filter((i) => i.id !== id);
+                  persistAppliedIconsForTemplate(textTemplate, next);
                   return next;
                 });
               }}
               onUpdateDividerPosition={(id, position) => {
                 setAppliedDividers((prev) => {
-                  const next = prev.map(d => d.id === id ? { ...d, position } : d);
-                  localStorage.setItem("stackly-custom-dividers", JSON.stringify(next));
+                  const next = prev.map((d) => (d.id === id ? { ...d, position } : d));
+                  persistAppliedDividersForTemplate(textTemplate, next);
                   return next;
                 });
               }}
               onUpdateDividerScale={(id, scale) => {
                 setAppliedDividers((prev) => {
-                  const next = prev.map(d => d.id === id ? { ...d, scale } : d);
-                  localStorage.setItem("stackly-custom-dividers", JSON.stringify(next));
+                  const next = prev.map((d) => (d.id === id ? { ...d, scale } : d));
+                  persistAppliedDividersForTemplate(textTemplate, next);
                   return next;
                 });
               }}
               onUpdateIconPosition={(id, position) => {
                 setAppliedIcons((prev) => {
-                  const next = prev.map(i => i.id === id ? { ...i, position } : i);
-                  localStorage.setItem("stackly-custom-icons", JSON.stringify(next));
+                  const next = prev.map((i) => (i.id === id ? { ...i, position } : i));
+                  persistAppliedIconsForTemplate(textTemplate, next);
                   return next;
                 });
               }}
               onUpdateIconScale={(id, scale) => {
                 setAppliedIcons((prev) => {
-                  const next = prev.map(i => i.id === id ? { ...i, scale } : i);
-                  localStorage.setItem("stackly-custom-icons", JSON.stringify(next));
+                  const next = prev.map((i) => (i.id === id ? { ...i, scale } : i));
+                  persistAppliedIconsForTemplate(textTemplate, next);
                   return next;
                 });
               }}
+              pendingDividerScrollId={pendingDividerScrollId}
+              onPendingDividerScrollComplete={clearPendingDividerScroll}
             />
             <div className="hidden w-[210px] shrink-0 xl:block">
               <TextRightSidebar state={textBlockState} onStateChange={pushTextState} template={textTemplate} />
@@ -1067,7 +1125,7 @@ export default function BlockPagesClient() {
                 if (editingImageId) {
                   setCustomImages((prev) => {
                     const next = { ...prev, [editingImageId]: url };
-                    localStorage.setItem("stackly-custom-images", JSON.stringify(next));
+                    writeBlockpagesStorageItem("stackly-custom-images", JSON.stringify(next));
                     return next;
                   });
                 }
@@ -1166,20 +1224,40 @@ export default function BlockPagesClient() {
                 onApplyDivider={() => {
                   const block = selectedDividerBlock ?? dividerBlocks[0];
                   if (block) {
+                    const newDividerId = Date.now().toString();
+                    const canvas = getBlockpagesCanvasElement();
+                    const fallbackTop = getOverlayDefaultTop("divider", appliedDividers.length);
+                    const anchorY =
+                      canvas instanceof HTMLElement
+                        ? getVisibleCanvasAnchorY(canvas)
+                        : fallbackTop;
+                    const placement =
+                      canvas instanceof HTMLElement
+                        ? resolveDividerSectionPlacementAtY(canvas, anchorY)
+                        : null;
+
                     setAppliedDividers((prev) => {
                       const newDivider = {
-                        id: Date.now().toString(),
+                        id: newDividerId,
                         props: block.props,
                         position: {
-                          top: getOverlayDefaultTop("divider", prev.length),
+                          top: anchorY,
                           left: 16,
+                          ...(placement?.sectionId
+                            ? {
+                                sectionId: placement.sectionId,
+                                anchorPath: placement.anchorPath,
+                                insertMode: placement.insertMode,
+                              }
+                            : {}),
                         },
                         scale: 1,
                       };
                       const next = [...prev, newDivider];
-                      localStorage.setItem("stackly-custom-dividers", JSON.stringify(next));
+                      persistAppliedDividersForTemplate(textTemplate, next);
                       return next;
                     });
+                    setPendingDividerScrollId(newDividerId);
                   }
                   setActiveBlockPage("text");
                 }}
@@ -1226,14 +1304,22 @@ export default function BlockPagesClient() {
                     if (editingIconId) {
                       setCustomIcons((prev) => {
                         const next = { ...prev, [editingIconId]: block.props };
-                        localStorage.setItem("stackly-custom-static-icons", JSON.stringify(next));
+                        writeBlockpagesStorageItem("stackly-custom-static-icons", JSON.stringify(next));
                         return next;
                       });
                     } else {
                       setAppliedIcons((prev) => {
-                        const newIcon = { id: Date.now().toString(), props: block.props };
+                        const newIcon = {
+                          id: Date.now().toString(),
+                          props: block.props,
+                          position: {
+                            top: getOverlayDefaultTop("icon", prev.length),
+                            left: 16,
+                          },
+                          scale: 1,
+                        };
                         const next = [...prev, newIcon];
-                        localStorage.setItem("stackly-custom-icons", JSON.stringify(next));
+                        persistAppliedIconsForTemplate(textTemplate, next);
                         return next;
                       });
                     }

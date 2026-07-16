@@ -10,6 +10,7 @@ import { isBlockpagesInteractiveControl } from "@/lib/blockpagesEditorInteractio
 import { buildBlockpagesSectionStylesCss } from "@/lib/blockpagesTemplateSections";
 import {
   buildBlockpagesDropdownStylesCss,
+  nodeIsInBlockpagesFooterChrome,
   nodeIsInBlockpagesHeaderChrome,
   nodeIsInBlockpagesHeaderDropdown,
 } from "@/lib/blockpagesDropdownStyles";
@@ -24,11 +25,13 @@ import type { VideoBlockData } from "../videoblock/types";
 import type { DividerBlockProps } from "../dividerblock/types";
 import type { IconBlockProps } from "../iconsblock/types";
 import type { TextBlockState, TextEditorTarget, TextStyles, TextTemplateType } from "./types";
+import type { BlockpagesOverlayPosition } from "@/lib/blockpagesOverlayLayers";
 import type { DraftSaveStatus } from "../BlockPagesClient";
 import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
-import { buildPreviewHtmlFromCanvas, finalizeBlockpagesEditorMotion } from "@/lib/blockpagesPreviewSanitize";
+import { buildPreviewHtmlFromCanvas, finalizeBlockpagesEditorMotion, persistPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
 import {
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
+  BLOCKPAGES_REQUEST_PREVIEW_EVENT,
   applyCanvasContent,
   applyHiddenElementsToCanvas,
   captureCanvasContent,
@@ -45,6 +48,7 @@ import {
   syncHiddenElementsFromCanvas,
   templateUsesHtmlCanvasPersistence,
   clearPersistedCanvasHtml,
+  writeBlockpagesStorageItem,
 } from "@/lib/blockpagesEditorPersistence";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
@@ -70,11 +74,11 @@ type TextCanvasProps = {
   onEditVideo?: (videoId: string) => void;
   appliedDividers?: { id: string, props: DividerBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: { top: number; left: number }) => void;
+  onUpdateDividerPosition?: (id: string, position: BlockpagesOverlayPosition) => void;
   onUpdateDividerScale?: (id: string, scale: number) => void;
   appliedIcons?: { id: string, props: IconBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveIcon?: (id: string) => void;
-  onUpdateIconPosition?: (id: string, position: { top: number; left: number }) => void;
+  onUpdateIconPosition?: (id: string, position: BlockpagesOverlayPosition) => void;
   onUpdateIconScale?: (id: string, scale: number) => void;
   isIconEditingMode?: boolean;
   customIcons?: Record<string, IconBlockProps>;
@@ -83,6 +87,8 @@ type TextCanvasProps = {
   onSaveDraft?: () => void;
   onPreview?: () => void;
   saveStatus?: DraftSaveStatus;
+  pendingDividerScrollId?: string | null;
+  onPendingDividerScrollComplete?: () => void;
 };
  
 const rgbToHex = (rgb: string) => {
@@ -136,18 +142,25 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   onSaveDraft,
   onPreview,
   saveStatus = "idle",
+  pendingDividerScrollId = null,
+  onPendingDividerScrollComplete,
 }: TextCanvasProps) {
   const isPreviewMode = false;
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const activeEditableRef = useRef<HTMLElement | null>(null);
+  const stateRef = useRef(state);
+  const onStateChangeRef = useRef(onStateChange);
   const isRestoringCanvasRef = useRef(false);
   const pendingCanvasHtmlRef = useRef<string | null>(null);
   const [hiddenElementsRevision, setHiddenElementsRevision] = useState(0);
   const [hiddenElementIds, setHiddenElementIds] = useState<string[]>([]);
   const [hiddenElementsCss, setHiddenElementsCss] = useState("");
   const { section, isTextEditable } = state;
+
+  stateRef.current = state;
+  onStateChangeRef.current = onStateChange;
 
   const refreshHiddenElementsState = useCallback(() => {
     const hidden = loadHiddenElements(template);
@@ -209,28 +222,43 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     dispatchCanvasRestoredEvent();
   }, [
     template,
-    state.section,
-    state.sectionStyles,
-    state.isTextEditable,
-    state.selectedTarget,
     refreshHiddenElementsState,
   ]);
 
   useLayoutEffect(() => {
     if (!canvasRef.current) return;
+
+    const scrollRoot = getCanvasContentRoot(canvasRef.current);
+    const savedScrollTop = scrollRoot?.scrollTop ?? 0;
+    const savedScrollLeft = scrollRoot?.scrollLeft ?? 0;
+
     applyHiddenElementsToCanvas(canvasRef.current, template);
     if (syncHiddenElementsFromCanvas(canvasRef.current, template)) {
       refreshHiddenElementsState();
       setHiddenElementsRevision((value) => value + 1);
     }
-  }, [template, state.section, state.sectionStyles, state.isTextEditable, state.selectedTarget, refreshHiddenElementsState]);
+
+    if (scrollRoot) {
+      scrollRoot.scrollTop = savedScrollTop;
+      scrollRoot.scrollLeft = savedScrollLeft;
+    }
+  }, [template, hiddenElementsRevision, refreshHiddenElementsState]);
 
   useEffect(() => {
     const handleHiddenElementsChanged = () => {
       if (!canvasRef.current) return;
+      const scrollRoot = getCanvasContentRoot(canvasRef.current);
+      const savedScrollTop = scrollRoot?.scrollTop ?? 0;
+      const savedScrollLeft = scrollRoot?.scrollLeft ?? 0;
+
       applyHiddenElementsToCanvas(canvasRef.current, template);
       refreshHiddenElementsState();
       setHiddenElementsRevision((value) => value + 1);
+
+      if (scrollRoot) {
+        scrollRoot.scrollTop = savedScrollTop;
+        scrollRoot.scrollLeft = savedScrollLeft;
+      }
     };
 
     window.addEventListener(BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT, handleHiddenElementsChanged);
@@ -296,6 +324,51 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   }, [template, refreshHiddenElementsState]);
 
   useEffect(() => {
+    const canvasRoot = getCanvasContentRoot(canvasRef.current);
+    if (!canvasRoot) return;
+
+    let timer: number | null = null;
+    const scheduleSnapshot = () => {
+      if (isRestoringCanvasRef.current || !canvasRef.current) return;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const liveCanvas = getCanvasContentRoot(canvasRef.current);
+        if (liveCanvas instanceof HTMLElement) {
+          persistPreviewSnapshot(template, liveCanvas, appliedDividers);
+        }
+      }, 1200);
+    };
+
+    scheduleSnapshot();
+    canvasRoot.addEventListener("input", scheduleSnapshot, true);
+    const observer = new MutationObserver((mutations) => {
+      const shouldSnapshot = mutations.some((mutation) => {
+        const target = mutation.target;
+        if (!(target instanceof Element)) return true;
+        return !target.closest('[data-blockpages-overlay="true"]');
+      });
+      if (shouldSnapshot) scheduleSnapshot();
+    });
+    observer.observe(canvasRoot, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["src", "hidden"],
+    });
+
+    return () => {
+      canvasRoot.removeEventListener("input", scheduleSnapshot, true);
+      observer.disconnect();
+      if (timer) window.clearTimeout(timer);
+      const liveCanvas = getCanvasContentRoot(canvasRef.current);
+      if (liveCanvas instanceof HTMLElement) {
+        persistPreviewSnapshot(template, liveCanvas, appliedDividers);
+      }
+    };
+  }, [template, appliedDividers]);
+
+  useEffect(() => {
     const syncFromStorage = () => {
       if (!templateUsesHtmlCanvasPersistence(template)) return;
 
@@ -327,7 +400,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
  
   useEffect(() => {
     const activeText = canvasRef.current?.querySelector(".editable-text-active") as HTMLElement | null;
-    if (!activeText || state.selectedTarget !== "text") return;
+    if (!activeText) return;
  
     if (state.textStyles.color) {
       activeText.style.setProperty(
@@ -364,12 +437,14 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     if (!contentRoot) return;
 
     const textTags = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "LI", "LABEL", "A", "BUTTON"];
+    const selectedTarget = state.selectedTarget;
+    const textEditingOptions = { allowTextEditing: true };
 
     const handleEditableMouseDown = (event: Event) => {
       if (!isTextEditable || isPreviewMode) return;
 
       const target = event.target as HTMLElement;
-      if (isBlockpagesInteractiveControl(target)) return;
+      if (isBlockpagesInteractiveControl(target, textEditingOptions)) return;
 
       const editableNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
       if (!editableNode || editableNode.tagName !== "BUTTON") return;
@@ -383,7 +458,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       if (!isTextEditable || isPreviewMode) return;
 
       const target = event.target as HTMLElement;
-      if (isBlockpagesInteractiveControl(target)) return;
+      if (isBlockpagesInteractiveControl(target, textEditingOptions)) return;
 
       const editableNode =
         (target.closest(
@@ -411,48 +486,47 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         fontFamily: resolvedNode.style.fontFamily || computedStyle.fontFamily,
       };
 
-      onStateChange({ ...state, selectedTarget: "text", textStyles: nextTextStyles });
+      onStateChangeRef.current({ ...stateRef.current, textStyles: nextTextStyles });
     };
- 
+
     const makeEditable = (node: Element) => {
       if (node.closest("[data-builder-chrome='true']")) return;
-      if (isBlockpagesInteractiveControl(node)) return;
 
       const isInDropdown = node.closest('[data-blockpages-dropdown-panel="true"]') !== null;
       const isHeader = !isInDropdown && nodeIsInBlockpagesHeaderChrome(node);
       const isDropdownHeader = isInDropdown && nodeIsInBlockpagesHeaderDropdown(node);
-      const isFooter = node.closest("footer, .stackly-footer, .restaurant-shell footer, .construction-shell footer, .blog-page footer, .dm-shell footer") !== null;
+      const isFooter = nodeIsInBlockpagesFooterChrome(node);
       const isMain = !isHeader && !isDropdownHeader && !isFooter;
- 
+
       let shouldBeEditable = false;
       if (isTextEditable && !isPreviewMode) {
-        if (state.selectedTarget === "header" && (isHeader || isDropdownHeader)) shouldBeEditable = true;
-        else if (state.selectedTarget === "footer" && isFooter) shouldBeEditable = true;
-        else if (state.selectedTarget === "main" && isMain) shouldBeEditable = true;
-        else if (state.selectedTarget === "text") shouldBeEditable = true;
+        if (selectedTarget === "header" && (isHeader || isDropdownHeader)) shouldBeEditable = true;
+        else if (selectedTarget === "footer" && isFooter) shouldBeEditable = true;
+        else if (selectedTarget === "main" && isMain) shouldBeEditable = true;
+        else if (selectedTarget === "text") shouldBeEditable = true;
       }
 
       if (textTags.includes(node.tagName)) {
-        if (shouldBeEditable) {
-          const htmlNode = node as HTMLElement;
+        const htmlNode = node as HTMLElement;
+        const isInteractiveOnly = isBlockpagesInteractiveControl(node, textEditingOptions) && !shouldBeEditable;
+
+        if (shouldBeEditable && !isInteractiveOnly) {
           node.setAttribute("contenteditable", "true");
-          htmlNode.addEventListener("click", handleTextClick, true);
           if (node.tagName === "BUTTON") {
             htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
           }
         } else {
-          const htmlNode = node as HTMLElement;
           node.removeAttribute("contenteditable");
-          htmlNode.removeEventListener("click", handleTextClick, true);
           htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
           node.classList.remove("editable-text-active");
         }
       }
- 
+
       Array.from(node.children).forEach(makeEditable);
     };
- 
+
     makeEditable(contentRoot);
+    contentRoot.addEventListener("click", handleTextClick, true);
 
     let resyncTimer: number | null = null;
     const contentObserver = new MutationObserver(() => {
@@ -464,17 +538,17 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     return () => {
       contentObserver.disconnect();
       if (resyncTimer) window.clearTimeout(resyncTimer);
+      contentRoot.removeEventListener("click", handleTextClick, true);
       const removeListeners = (node: Element) => {
         if (textTags.includes(node.tagName)) {
           const htmlNode = node as HTMLElement;
-          htmlNode.removeEventListener("click", handleTextClick, true);
           htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
         }
         Array.from(node.children).forEach(removeListeners);
       };
       removeListeners(contentRoot);
     };
-  }, [isPreviewMode, isTextEditable, onStateChange, state, template]);
+  }, [isPreviewMode, isTextEditable, state.selectedTarget, template]);
  
   const runNativeTextCommand = (command: "undo" | "redo") => {
     const activeEditable = activeEditableRef.current;
@@ -498,7 +572,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     }
   };
  
-  const openPreviewPage = () => {
+  const openPreviewPage = useCallback(() => {
     if (!canvasRef.current) return;
 
     syncHiddenElementsFromCanvas(canvasRef.current, template);
@@ -511,11 +585,26 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     const canvasRoot = getCanvasContentRoot(canvasRef.current);
     if (!(canvasRoot instanceof HTMLElement)) return;
 
-    const previewHtml = buildPreviewHtmlFromCanvas(canvasRoot);
+    const captureDevice =
+      (canvasRoot.getAttribute("data-blockpages-device") as "desktop" | "tablet" | "mobile" | null) ?? "desktop";
 
-    window.localStorage.setItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
+    const previewHtml = buildPreviewHtmlFromCanvas(canvasRoot, {
+      captureDevice,
+      appliedDividers,
+    });
+    if (!previewHtml.trim()) return;
+
+    writeBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
+    persistPreviewSnapshot(template, canvasRoot, appliedDividers);
     window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
-  };
+  }, [state, template, appliedDividers]);
+
+  useEffect(() => {
+    const handleRequestPreview = () => openPreviewPage();
+    window.addEventListener(BLOCKPAGES_REQUEST_PREVIEW_EVENT, handleRequestPreview);
+    return () => window.removeEventListener(BLOCKPAGES_REQUEST_PREVIEW_EVENT, handleRequestPreview);
+  }, [openPreviewPage]);
+
   const previewHandler = onPreview ?? openPreviewPage;
  
   return (
@@ -605,6 +694,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
  
           <div
             ref={canvasRef}
+            data-blockpages-canvas-host="true"
             className="relative flex min-h-0 flex-1 flex-col"
             style={{ backgroundColor: section.backgroundColor, textAlign: section.alignment }}
           >
@@ -644,6 +734,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               >
                 <div
                   data-textblock-canvas
+                  data-blockpages-template={template}
                   data-blockpages-scroll-root
                   data-blockpages-device={previewDevice}
                   data-blockpages-text-editing={isTextEditable ? "true" : undefined}
@@ -684,8 +775,14 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     [data-textblock-canvas] .restaurant-shell header > div {
                       overflow: visible !important;
                     }
-                    [data-textblock-canvas] .restaurant-shell header nav {
-                      -webkit-overflow-scrolling: touch;
+                    [data-textblock-canvas] [data-blockpages-overlay-container="true"] {
+                      overflow: visible !important;
+                    }
+                    [data-textblock-canvas] [data-blockpages-overlay="true"] {
+                      z-index: 120;
+                    }
+                    [data-textblock-canvas] [data-blockpages-overlay-toolbar="true"] {
+                      pointer-events: auto !important;
                     }
                     [data-textblock-canvas][data-blockpages-device="mobile"] nav.buyscreen-categories > div.flex,
                     [data-textblock-canvas][data-blockpages-device="tablet"] nav.buyscreen-categories > div.flex {
@@ -763,34 +860,55 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                   <div ref={contentRef} className="min-w-0 max-w-full">
                     <BlockpagesEditorProvider template={template} deviceMode={previewDevice} onPreview={previewHandler}>
                       {template === "portfolio" ? (
-                        <PortfolioPreview
-                        isImageEditingMode={isImageEditingMode}
-                        customImages={customImages}
-                        onEditImage={onEditImage}
-                        editingImageId={editingImageId}
-                        isButtonEditingMode={isButtonEditingMode}
-                        customButtons={customButtons}
-                        onEditButton={onEditButton}
-                        videoBlocks={videoBlocks}
-                        isVideoEditingMode={isVideoEditingMode}
-                        onEditVideo={onEditVideo}
-                        sectionStyles={state.sectionStyles}
-                        onPreview={previewHandler}
-                        appliedDividers={appliedDividers}
-                        onRemoveDivider={onRemoveDivider}
-                        onUpdateDividerPosition={onUpdateDividerPosition}
-                        onUpdateDividerScale={onUpdateDividerScale}
-                        appliedIcons={appliedIcons}
-                        onRemoveIcon={onRemoveIcon}
-                        onUpdateIconPosition={onUpdateIconPosition}
-                        onUpdateIconScale={onUpdateIconScale}
-                        isIconEditingMode={isIconEditingMode}
-                        customIcons={customIcons}
-                        onEditIcon={onEditIcon}
-                        editingIconId={editingIconId}
-                        onSaveDraft={onSaveDraft}
-                      />
-                    ) : (
+                        <BlockpagesCanvasEnhancer
+                          template={template}
+                          isImageEditingMode={isImageEditingMode}
+                          customImages={customImages}
+                          onEditImage={onEditImage}
+                          editingImageId={editingImageId}
+                          isButtonEditingMode={isButtonEditingMode}
+                          customButtons={customButtons}
+                          onEditButton={onEditButton}
+                          editingButtonId={editingButtonId}
+                          isVideoEditingMode={isVideoEditingMode}
+                          onEditVideo={onEditVideo}
+                          videoBlocks={videoBlocks}
+                          isIconEditingMode={isIconEditingMode}
+                          onEditIcon={onEditIcon}
+                          editingIconId={editingIconId}
+                          customIcons={customIcons}
+                          appliedDividers={appliedDividers}
+                          onRemoveDivider={onRemoveDivider}
+                          onUpdateDividerPosition={onUpdateDividerPosition}
+                          onUpdateDividerScale={onUpdateDividerScale}
+                          appliedIcons={appliedIcons}
+                          onRemoveIcon={onRemoveIcon}
+                          onUpdateIconPosition={onUpdateIconPosition}
+                          onUpdateIconScale={onUpdateIconScale}
+                          pendingDividerScrollId={pendingDividerScrollId}
+                          onPendingDividerScrollComplete={onPendingDividerScrollComplete}
+                        >
+                          <PortfolioPreview
+                            isImageEditingMode={isImageEditingMode}
+                            customImages={customImages}
+                            onEditImage={onEditImage}
+                            editingImageId={editingImageId}
+                            isButtonEditingMode={isButtonEditingMode}
+                            customButtons={customButtons}
+                            onEditButton={onEditButton}
+                            videoBlocks={videoBlocks}
+                            isVideoEditingMode={isVideoEditingMode}
+                            onEditVideo={onEditVideo}
+                            sectionStyles={state.sectionStyles}
+                            onPreview={previewHandler}
+                            isIconEditingMode={isIconEditingMode}
+                            customIcons={customIcons}
+                            onEditIcon={onEditIcon}
+                            editingIconId={editingIconId}
+                            onSaveDraft={onSaveDraft}
+                          />
+                        </BlockpagesCanvasEnhancer>
+                      ) : (
                       <BlockpagesCanvasEnhancer
                         template={template}
                         isImageEditingMode={isImageEditingMode}
@@ -816,6 +934,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         onRemoveIcon={onRemoveIcon}
                         onUpdateIconPosition={onUpdateIconPosition}
                         onUpdateIconScale={onUpdateIconScale}
+                        pendingDividerScrollId={pendingDividerScrollId}
+                        onPendingDividerScrollComplete={onPendingDividerScrollComplete}
                       >
                         {template === "ecommerce" ? (
                           <StorefrontPreview hiddenElementIds={hiddenElementIds} />

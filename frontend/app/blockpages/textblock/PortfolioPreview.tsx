@@ -12,7 +12,6 @@ import {
   FaEnvelope,
   FaPaperPlane,
   FaEye,
-  FaPen,
   FaPlay,
   FaMapMarkerAlt,
   FaLinkedin,
@@ -30,9 +29,6 @@ import { useBuilder } from "../imageblock/BuilderContext";
 import type { BlockData } from "../buttonblock/types";
 import type { VideoBlockData } from "../videoblock/types";
 import type { SectionStyleConfig } from "./types";
-import type { DividerBlockProps } from "../dividerblock/types";
-import DividerPreview from "../dividerblock/DividerPreview";
-import BlockpagesPositionedOverlay from "./BlockpagesPositionedOverlay";
 import type { IconBlockProps } from "../iconsblock/types";
 import IconPreview from "../iconsblock/IconPreview";
 
@@ -103,14 +99,6 @@ type PortfolioPreviewProps = {
   onEditVideo?: (videoId: string) => void;
   sectionStyles?: Record<string, SectionStyleConfig>;
   onPreview?: () => void;
-  appliedDividers?: { id: string, props: DividerBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
-  onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: { top: number; left: number }) => void;
-  onUpdateDividerScale?: (id: string, scale: number) => void;
-  appliedIcons?: { id: string, props: IconBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
-  onRemoveIcon?: (id: string) => void;
-  onUpdateIconPosition?: (id: string, position: { top: number; left: number }) => void;
-  onUpdateIconScale?: (id: string, scale: number) => void;
   isIconEditingMode?: boolean;
   customIcons?: Record<string, IconBlockProps>;
   onEditIcon?: (iconId: string) => void;
@@ -197,14 +185,6 @@ export default function PortfolioPreview({
   onEditVideo,
   sectionStyles = {},
   onPreview,
-  appliedDividers = [],
-  onRemoveDivider,
-  onUpdateDividerPosition,
-  onUpdateDividerScale,
-  appliedIcons = [],
-  onRemoveIcon,
-  onUpdateIconPosition,
-  onUpdateIconScale,
   isIconEditingMode = false,
   customIcons = {},
   onEditIcon,
@@ -415,6 +395,8 @@ export default function PortfolioPreview({
   ];
 
   const scrollToSection = (id: string) => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.isContentEditable) return;
     scrollBlockpagesCanvasToSection(id);
     setInnerMobileMenuOpen(false);
   };
@@ -427,8 +409,6 @@ export default function PortfolioPreview({
     return () => window.removeEventListener('scrollToSectionEvent', handleScrollEvent as EventListener);
   }, []);
 
-  console.log("PortfolioPreview Debug:", { isImageEditingMode, editingImageId, imageAdjustments, activeFilter, activeCrop });
-
   const getFilterStyle = (imageId: string) => {
     if (!isImageEditingMode || editingImageId !== imageId || !imageAdjustments) return {};
 
@@ -438,8 +418,7 @@ export default function PortfolioPreview({
   };
 
   return (
-
-    <main className="flex flex-col min-h-screen bg-white relative">
+    <>
       {imageAdjustments && isImageEditingMode && editingImageId && (
         <style>{`
           [data-crop-wrapper-id="${editingImageId}"] {
@@ -455,23 +434,7 @@ export default function PortfolioPreview({
           }
         `}</style>
       )}
-      {/* ====== MAIN BUILDER LAYOUT ====== */}
-      <div className="flex flex-1">
-
-        {/* MAIN CONTENT */}
-
-        {/* <div className="flex-1 bg-white p-4 md:p-7 flex justify-center min-w-0 overflow-hidden"> */}
-        <div className="flex-1 bg-white p-0 flex justify-center min-w-0">
-
-          {/* <div className="w-full max-w-[1200px] relative flex flex-col h-[calc(100vh-80px)] min-w-0"> */}
-          <div className="w-full relative flex flex-col min-w-0 max-w-none">
-            {/* Canvas Box */}
-
-            {/* <div className="flex-1 overflow-y-auto min-w-0"> */}
-            {/* <div className="flex-1 overflow-y-auto min-w-0 relative z-0"> */}
-            <div data-blockpages-overlay-container="true" className="flex-1 min-w-0 relative z-0">
-              <div data-blockpages-template-root className="relative w-full min-w-0 max-w-full">
-              <div className="@container w-full min-h-[530px] max-w-full min-w-0 overflow-x-hidden rounded-none sm:rounded-xl border-0 sm:border-2 border-gray-300 flex flex-col relative portfolio-shell bg-[#F2F2F2] box-border">
+      <div className="@container w-full min-h-[530px] max-w-full min-w-0 overflow-x-hidden rounded-none sm:rounded-xl border-0 sm:border-2 border-gray-300 flex flex-col relative portfolio-shell bg-[#F2F2F2] box-border">
 
 
                 {/* <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4 py-2 sm:py-3 md:px-8 lg:flex-nowrap border-b border-gray-300 bg-[#06224C] rounded-t-xl"> */}
@@ -700,15 +663,6 @@ export default function PortfolioPreview({
                                   unoptimized
                                 />
                               </div>
-                              {isImageEditingMode && (
-                                <button
-                                  onClick={() => onEditImage?.("hero_image_1")}
-                                  className="absolute -top-2 -right-2 bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                                  title="Edit Image"
-                                >
-                                  <FaPen size={12} />
-                                </button>
-                              )}
                             </div>
                           </div>
 
@@ -725,40 +679,24 @@ export default function PortfolioPreview({
                           <div className="relative inline-block">
                             <button
                               type="button"
+                              data-blockpages-button-id="hero_btn_1"
                               onClick={() => scrollToSection("projects")}
                               className={getCustomButtonStyle("hero_btn_1", "w-full sm:w-auto min-w-[160px] flex justify-center items-center px-4 py-3 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm font-semibold transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] whitespace-normal break-words").className}
                               style={getCustomButtonStyle("hero_btn_1", "").style}
                             >
                               View My Works
                             </button>
-                            {isButtonEditingMode && (
-                              <button
-                                onClick={() => onEditButton?.("hero_btn_1")}
-                                className="absolute -top-3 -right-3 bg-white/90 text-gray-800 p-1.5 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                                title="Edit Button"
-                              >
-                                <FaPen size={12} />
-                              </button>
-                            )}
                           </div>
 
                           <div className="relative inline-block">
                             <Link
                               href="/page-not-found"
+                              data-blockpages-button-id="hero_btn_2"
                               className={getCustomButtonStyle("hero_btn_2", "w-full sm:w-auto min-w-[160px] flex justify-center items-center px-4 py-3 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm font-semibold transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] whitespace-normal break-words").className}
                               style={getCustomButtonStyle("hero_btn_2", "").style}
                             >
                               Download CV
                             </Link>
-                            {isButtonEditingMode && (
-                              <button
-                                onClick={() => onEditButton?.("hero_btn_2")}
-                                className="absolute -top-3 -right-3 bg-white/90 text-gray-800 p-1.5 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                                title="Edit Button"
-                              >
-                                <FaPen size={12} />
-                              </button>
-                            )}
                           </div>
 
                         </div>
@@ -802,15 +740,6 @@ export default function PortfolioPreview({
                               }}>
                               <Image src={customImages["hero_image_1"] || assetPath("/portfoliologo.webp")} alt="Srinivas Pentakota - UI/UX Designer Portfolio" fill sizes="245px" data-image-id="hero_image_1" className="w-full h-full object-cover" style={getFilterStyle("hero_image_1")} unoptimized />
                             </div>
-                            {isImageEditingMode && (
-                              <button
-                                onClick={() => onEditImage?.("hero_image_1")}
-                                className="absolute -top-2 -right-2 bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                                title="Edit Image"
-                              >
-                                <FaPen size={14} />
-                              </button>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -986,8 +915,8 @@ export default function PortfolioPreview({
                 `}</style>
 
                 {/* ABOUT SECTION */}
-                <div className="relative w-full overflow-hidden portfolio-hero bg-[#F2F2F2]" style={getSpecificSectionStyle('about')}>
-                  <div id="about" className="relative z-10 w-full px-4 sm:px-6 md:px-12 lg:px-20 py-10 md:py-16">
+                <div id="about" className="relative w-full overflow-hidden portfolio-hero bg-[#F2F2F2]" style={getSpecificSectionStyle('about')}>
+                  <div className="relative z-10 w-full px-4 sm:px-6 md:px-12 lg:px-20 py-10 md:py-16">
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
                       <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">About</h2>
                       <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl md:text-3xl tracking-tight leading-none">Me</span>
@@ -1137,7 +1066,8 @@ export default function PortfolioPreview({
 
                     </div>
                   </div>
-                  {/* </div> */}
+                </div>
+                <div data-blockpages-section-end="about" className="h-0 w-full" aria-hidden="true" />
 
                   {/* MY SERVICES SECTION */}
                   <div className="relative z-10 w-full max-w-full overflow-x-hidden px-4 sm:px-6 md:px-12 lg:px-20 pb-16 lg:pb-24">
@@ -1243,11 +1173,10 @@ export default function PortfolioPreview({
                     </div>
                   </div>
 
-                </div>
                 {/* MY PROJECTS SECTION */}
 
-                <div className="relative w-full overflow-hidden portfolio-hero" style={{ backgroundColor: '#FFFFFF', ...getSpecificSectionStyle('projects') }}>
-                  <div id="projects" className="w-full px-0 md:px-6 lg:px-12 pb-16 lg:pb-24 relative z-10 overflow-hidden">
+                <div id="projects" className="relative w-full overflow-hidden portfolio-hero" style={{ backgroundColor: '#FFFFFF', ...getSpecificSectionStyle('projects') }}>
+                  <div className="w-full px-0 md:px-6 lg:px-12 pb-16 lg:pb-24 relative z-10 overflow-hidden">
 
                     {/* <div className="px-6 md:px-6 lg:px-8 mb-12">
                     <h2 className="text-base font-bold flex items-center gap-1 mb-4 text-gray-800 tracking-wide max-w-full w-fit">
@@ -1320,15 +1249,6 @@ export default function PortfolioPreview({
                             <div className="absolute inset-0 overflow-hidden rounded-[20px]" data-vignette-id={`project_image_${i}`}>
                               <Image src={customImages[`project_image_${i}`] || proj.img} alt={proj.title} fill sizes="260px" data-image-id={`project_image_${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" style={getFilterStyle(`project_image_${i}`)} unoptimized />
                             </div>
-                            {isImageEditingMode && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onEditImage?.(`project_image_${i}`); }}
-                                className="absolute top-3 right-3 bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                                title="Edit Image"
-                              >
-                                <FaPen size={14} />
-                              </button>
-                            )}
                           </div>
                           <div className="flex items-start mb-3">
                             <span className="bg-[#63e5ff] border border-gray-900 text-gray-900 px-3.5 py-1.5 rounded-full text-[11px] font-semibold leading-none">
@@ -1464,7 +1384,7 @@ export default function PortfolioPreview({
 
                     {/* RIGHT COLUMN: Image/Video */}
                     <div className="relative w-full lg:w-7/12 flex justify-center lg:justify-end">
-                      <div className="relative w-full max-w-[640px] aspect-video rounded-[2rem] overflow-hidden shadow-2xl" data-crop-wrapper-id="video_block_bg">
+                      <div className="relative w-full max-w-[640px] aspect-video rounded-[2rem] overflow-hidden shadow-2xl" data-crop-wrapper-id="video_block_bg" data-blockpages-video-slot="true" data-blockpages-video-id="video_block">
                         {videoBlockProps?.sourceType === 'embed' && videoBlockProps.embedCode ? (
                           (() => {
                             const trimmed = videoBlockProps.embedCode.trim();
@@ -1525,25 +1445,6 @@ export default function PortfolioPreview({
                       </div>
                     </div>
 
-                    {/* CENTER: Edit Button Overlay */}
-                    {isVideoEditingMode && (
-                      <button
-                        onClick={() => onEditVideo?.("video_block")}
-                        className="absolute top-4 right-4 bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                        title="Edit Video"
-                      >
-                        <FaPen size={14} />
-                      </button>
-                    )}
-                    {isImageEditingMode && (
-                      <button
-                        onClick={() => onEditImage?.("video_block_bg")}
-                        className="absolute top-4 right-4 bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                        title="Edit Image"
-                      >
-                        <FaPen size={14} />
-                      </button>
-                    )}
                   </div>
                 </div>
                 {/* CONTACT SECTION */}
@@ -1637,21 +1538,14 @@ export default function PortfolioPreview({
                         </div>
                         <div className="relative">
                           <button
+                            type="button"
+                            data-blockpages-button-id="contact_btn"
                             className={getCustomButtonStyle("contact_btn", "w-full bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20").className}
                             style={getCustomButtonStyle("contact_btn", "").style}
                           >
                             Send Message
                             <FaPaperPlane className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                           </button>
-                          {isButtonEditingMode && (
-                            <button
-                              onClick={() => onEditButton?.("contact_btn")}
-                              className="absolute -top-3 -right-3 bg-white/90 text-gray-800 p-1.5 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform z-50 flex items-center justify-center cursor-pointer border border-gray-200"
-                              title="Edit Button"
-                            >
-                              <FaPen size={12} />
-                            </button>
-                          )}
                         </div>
                       </form>
                     </div>
@@ -1833,83 +1727,8 @@ export default function PortfolioPreview({
                     </div>
                   </div>
                 </footer>
-              </div>
-              </div>
-
-              {appliedIcons.map((icon, index) => (
-                <BlockpagesPositionedOverlay
-                  key={icon.id}
-                  id={icon.id}
-                  index={index}
-                  kind="icon"
-                  position={icon.position}
-                  scale={icon.scale ?? 1}
-                  onPositionChange={(overlayId, nextPosition) => onUpdateIconPosition?.(overlayId, nextPosition)}
-                  onScaleChange={(overlayId, nextScale) => onUpdateIconScale?.(overlayId, nextScale)}
-                  onRemove={(overlayId) => onRemoveIcon?.(overlayId)}
-                >
-                  <IconPreview props={icon.props} />
-                </BlockpagesPositionedOverlay>
-              ))}
-
-              {appliedDividers.map((divider, index) => (
-                <BlockpagesPositionedOverlay
-                  key={divider.id}
-                  id={divider.id}
-                  index={index}
-                  kind="divider"
-                  position={divider.position}
-                  scale={divider.scale ?? 1}
-                  onPositionChange={(overlayId, nextPosition) => onUpdateDividerPosition?.(overlayId, nextPosition)}
-                  onScaleChange={(overlayId, nextScale) => onUpdateDividerScale?.(overlayId, nextScale)}
-                  onRemove={(overlayId) => onRemoveDivider?.(overlayId)}
-                  contentStyle={{ width: divider.props.width || "100%" }}
-                >
-                  <DividerPreview props={divider.props} />
-                </BlockpagesPositionedOverlay>
-              ))}
-            </div>
-
-            {/* <div className="w-full flex items-center justify-between mt-8 px-4"> */}
-            {/* <div className="w-full flex items-center justify-between px-4 py-3 mt-10 border-t bg-white"> */}
-
-            {/* 
-              <button className="h-10 px-4 rounded-lg flex items-center gap-2 text-blue-800 border border-blue-600 bg-transparent hover:bg-blue-50">
-                Help
-              </button>
-
-
-              <div className="h-10 flex items-center justify-center rounded-lg px-3 gap-3 bg-transparent border border-blue-600">
-                <button className="h-full px-3 rounded flex items-center text-blue-800 hover:bg-blue-50">
-                  <FaLaptop />
-                </button>
-                <button className="h-full px-3 rounded flex items-center text-blue-800 hover:bg-blue-50">
-                  <FaMobileAlt />
-                </button>
-                <button className="h-full px-3 rounded flex items-center text-blue-800 hover:bg-blue-50">
-                  <FaTabletAlt />
-                </button>
-                <button className="h-full px-3 rounded flex items-center text-blue-800 hover:bg-blue-50">
-                  <FaSearch />
-                </button>
-              </div>
-
-
-              <button className="h-10 px-4 rounded-lg flex items-center gap-2 text-blue-800 border border-blue-600 bg-transparent hover:bg-blue-50">
-                Zoom
-              </button> */}
-
-            {/* </div> */}
-          </div>
-
-
-        </div>
-
-
-
-
       </div>
-    </main>
+    </>
   );
 }
 

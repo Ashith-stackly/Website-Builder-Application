@@ -42,6 +42,7 @@ export default function DividerPreview({
       >
         <div
           className={alignmentClass(props.alignment)}
+          data-blockpages-divider-line="true"
           style={{
             width: `${weight}px`,
             backgroundColor: color,
@@ -55,7 +56,10 @@ export default function DividerPreview({
   if (props.variant === "double-line") {
     return (
       <div className={`w-full ${alignmentClass(props.alignment)}`} style={containerStyle}>
-        <div style={{ width, borderTop: `${weight}px double ${color}` }} />
+        <div
+          data-blockpages-divider-line="true"
+          style={{ width, borderTop: `${weight}px double ${color}` }}
+        />
       </div>
     );
   }
@@ -66,20 +70,31 @@ export default function DividerPreview({
         className={`flex w-full items-center gap-3 ${alignmentClass(props.alignment)}`}
         style={containerStyle}
       >
-        <div className="flex-1 border-0" style={{ borderTop: `${weight}px ${lineStyle} ${color}` }} />
+        <div
+          className="flex-1 border-0"
+          data-blockpages-divider-line="true"
+          style={{ borderTop: `${weight}px ${lineStyle} ${color}` }}
+        />
         {props.variant === "line-with-icon" ? (
           <Star className="shrink-0" size={compact ? 14 : 16} fill="currentColor" style={{ color }} />
         ) : (
           <span className="shrink-0 text-sm font-medium" style={{ color }}>{props.centerText || "or"}</span>
         )}
-        <div className="flex-1 border-0" style={{ borderTop: `${weight}px ${lineStyle} ${color}` }} />
+        <div
+          className="flex-1 border-0"
+          data-blockpages-divider-line="true"
+          style={{ borderTop: `${weight}px ${lineStyle} ${color}` }}
+        />
       </div>
     );
   }
  
   return (
     <div className={`w-full ${alignmentClass(props.alignment)}`} style={containerStyle}>
-      <div style={{ width, borderTop: `${weight}px ${lineStyle} ${color}` }} />
+      <div
+        data-blockpages-divider-line="true"
+        style={{ width, borderTop: `${weight}px ${lineStyle} ${color}` }}
+      />
     </div>
   );
 }

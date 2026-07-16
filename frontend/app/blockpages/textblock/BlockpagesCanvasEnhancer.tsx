@@ -13,6 +13,16 @@ import {
 } from "@/lib/blockpagesEditTargets";
 import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 import { BLOCKPAGES_CANVAS_RESTORED_EVENT } from "@/lib/blockpagesEditorPersistence";
+import { useBlockpagesOverlayToolbar } from "@/lib/blockpagesOverlayToolbar";
+import {
+  getDividerAnchorY,
+  getVisibleCanvasAnchorY,
+  resolveDividerFlowAnchor,
+  resolveDividerSectionIdAtY,
+  resolveDividerSectionPlacementAtY,
+  scrollCanvasToDividerPosition,
+  type BlockpagesOverlayPosition,
+} from "@/lib/blockpagesOverlayLayers";
 import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
 import DividerPreview from "../dividerblock/DividerPreview";
 import IconPreview from "../iconsblock/IconPreview";
@@ -46,14 +56,21 @@ type BlockpagesCanvasEnhancerProps = {
   customIcons?: Record<string, IconBlockProps>;
   videoBlocks?: VideoBlockData[];
   template?: BlockpagesTemplateId;
-  appliedDividers?: { id: string; props: DividerBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[];
+  appliedDividers?: {
+    id: string;
+    props: DividerBlockProps;
+    position?: BlockpagesOverlayPosition;
+    scale?: number;
+  }[];
   onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: { top: number; left: number }) => void;
+  onUpdateDividerPosition?: (id: string, position: BlockpagesOverlayPosition) => void;
   onUpdateDividerScale?: (id: string, scale: number) => void;
   appliedIcons?: { id: string; props: IconBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[];
   onRemoveIcon?: (id: string) => void;
-  onUpdateIconPosition?: (id: string, position: { top: number; left: number }) => void;
+  onUpdateIconPosition?: (id: string, position: BlockpagesOverlayPosition) => void;
   onUpdateIconScale?: (id: string, scale: number) => void;
+  pendingDividerScrollId?: string | null;
+  onPendingDividerScrollComplete?: () => void;
 };
 
 const OVERLAY_BUTTON_CLASS: Record<OverlayKind, string> = {
@@ -322,10 +339,155 @@ export default function BlockpagesCanvasEnhancer({
   onRemoveIcon,
   onUpdateIconPosition,
   onUpdateIconScale,
+  pendingDividerScrollId = null,
+  onPendingDividerScrollComplete,
 }: BlockpagesCanvasEnhancerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iconRootsRef = useRef<Map<string, Root>>(new Map());
   const [overlayTargets, setOverlayTargets] = useState<EditOverlayTarget[]>([]);
+
+  useBlockpagesOverlayToolbar(containerRef, {
+    appliedDividers,
+    appliedIcons,
+    onRemoveDivider,
+    onRemoveIcon,
+    onUpdateDividerScale,
+    onUpdateIconScale,
+  });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    appliedDividers.forEach((divider) => {
+      const overlay = container.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${divider.id}"]`);
+      if (!overlay || typeof divider.position?.top !== "number") return;
+
+      overlay.style.top = `${divider.position.top}px`;
+      overlay.style.left = `${divider.position.left ?? 16}px`;
+    });
+  }, [appliedDividers]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const liveCanvas = container?.closest<HTMLElement>("[data-textblock-canvas]");
+    const templateRoot = container?.querySelector<HTMLElement>("[data-blockpages-template-root]");
+    if (!container || !liveCanvas || !onUpdateDividerPosition) return;
+
+    const resolveDividerSections = () => {
+      appliedDividers.forEach((divider) => {
+        const overlay = container.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${divider.id}"]`);
+
+        if (pendingDividerScrollId === divider.id && !divider.position?.sectionId) {
+          const anchorY = overlay
+            ? getDividerAnchorY(overlay, container)
+            : getVisibleCanvasAnchorY(liveCanvas);
+          const placement = resolveDividerSectionPlacementAtY(liveCanvas, anchorY);
+          if (placement?.sectionId) {
+            if (overlay) {
+              overlay.dataset.blockpagesDividerAnchorPath = JSON.stringify(placement.anchorPath);
+              overlay.dataset.blockpagesDividerInsertMode = placement.insertMode ?? "after";
+              overlay.dataset.blockpagesDividerSectionId = placement.sectionId;
+            }
+            onUpdateDividerPosition(divider.id, {
+              top: divider.position?.top ?? placement.top ?? anchorY,
+              left: divider.position?.left ?? placement.left ?? 16,
+              anchorPath: placement.anchorPath,
+              insertMode: placement.insertMode,
+              sectionId: placement.sectionId,
+            });
+            requestAnimationFrame(() => {
+              scrollCanvasToDividerPosition(
+                liveCanvas,
+                divider.position?.top ?? placement.top ?? anchorY
+              );
+              onPendingDividerScrollComplete?.();
+            });
+            return;
+          }
+        }
+
+        if (!overlay) return;
+
+        const resolved = resolveDividerFlowAnchor(liveCanvas, overlay);
+        if (!resolved?.sectionId) return;
+
+        const needsSectionUpdate =
+          !divider.position?.sectionId ||
+          divider.position.sectionId !== resolved.sectionId ||
+          !divider.position.anchorPath?.length;
+
+        if (!needsSectionUpdate) return;
+
+        overlay.dataset.blockpagesDividerAnchorPath = JSON.stringify(resolved.path);
+        overlay.dataset.blockpagesDividerInsertMode = resolved.mode;
+        overlay.dataset.blockpagesDividerSectionId = resolved.sectionId;
+
+        onUpdateDividerPosition(divider.id, {
+          top: divider.position?.top ?? resolved.top ?? 0,
+          left: divider.position?.left ?? resolved.left ?? 16,
+          anchorPath: resolved.path,
+          insertMode: resolved.mode,
+          sectionId: resolved.sectionId,
+        });
+
+        if (pendingDividerScrollId === divider.id) {
+          requestAnimationFrame(() => {
+            scrollCanvasToDividerPosition(
+              liveCanvas,
+              divider.position?.top ?? resolved.top ?? 0
+            );
+            onPendingDividerScrollComplete?.();
+          });
+        }
+      });
+    };
+
+    resolveDividerSections();
+
+    const delayed = window.setTimeout(resolveDividerSections, 400);
+    const delayed2 = window.setTimeout(resolveDividerSections, 1200);
+    const observer = templateRoot
+      ? new MutationObserver(() => {
+          window.requestAnimationFrame(resolveDividerSections);
+        })
+      : null;
+
+    if (observer && templateRoot) {
+      observer.observe(templateRoot, { childList: true, subtree: true });
+    }
+
+    return () => {
+      window.clearTimeout(delayed);
+      window.clearTimeout(delayed2);
+      observer?.disconnect();
+    };
+  }, [
+    appliedDividers,
+    onUpdateDividerPosition,
+    pendingDividerScrollId,
+    onPendingDividerScrollComplete,
+  ]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    appliedDividers.forEach((divider) => {
+      const overlay = container.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${divider.id}"]`);
+      if (!overlay || !divider.position) return;
+
+      if (divider.position.anchorPath?.length) {
+        overlay.dataset.blockpagesDividerAnchorPath = JSON.stringify(divider.position.anchorPath);
+      }
+      if (divider.position.insertMode) {
+        overlay.dataset.blockpagesDividerInsertMode = divider.position.insertMode;
+      }
+      if (divider.position.sectionId) {
+        overlay.dataset.blockpagesDividerSectionId = divider.position.sectionId;
+      }
+    });
+  }, [appliedDividers]);
 
   const syncOverlayTargets = useCallback(() => {
     const container = containerRef.current;
@@ -407,6 +569,33 @@ export default function BlockpagesCanvasEnhancer({
         }
       }
     });
+
+    if (isVideoEditingMode && onEditVideo) {
+      const videoAnchors = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          "[data-blockpages-video-slot='true'], [data-blockpages-video-id], video"
+        )
+      ).filter((element) => !isInsideBuilderChrome(element));
+
+      videoAnchors.forEach((anchor, index) => {
+        const rect = anchor.getBoundingClientRect();
+        if (rect.width < 48 || rect.height < 48) return;
+
+        const videoId = anchor.getAttribute("data-blockpages-video-id") || `video_${index}`;
+        anchor.setAttribute("data-blockpages-video-id", videoId);
+
+        const position = getOverlayPosition(container, anchor, "video");
+        if (position) {
+          targets.push({
+            id: videoId,
+            kind: "video",
+            top: position.top,
+            left: position.left,
+            title: "Edit Video",
+          });
+        }
+      });
+    }
 
     setOverlayTargets(targets);
   }, [
@@ -614,6 +803,56 @@ export default function BlockpagesCanvasEnhancer({
     };
   }, [syncOverlayTargets]);
 
+  const handleDividerPositionChange = useCallback(
+    (overlayId: string, nextPosition: BlockpagesOverlayPosition) => {
+      const container = containerRef.current;
+      const liveCanvas = container?.closest<HTMLElement>("[data-textblock-canvas]");
+      const overlay = container?.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${overlayId}"]`);
+
+      if (liveCanvas && overlay) {
+        const resolved = resolveDividerFlowAnchor(liveCanvas, overlay);
+        if (resolved?.sectionId) {
+          overlay.dataset.blockpagesDividerAnchorPath = JSON.stringify(resolved.path);
+          overlay.dataset.blockpagesDividerInsertMode = resolved.mode;
+          overlay.dataset.blockpagesDividerSectionId = resolved.sectionId;
+          onUpdateDividerPosition?.(overlayId, {
+            top: nextPosition.top ?? resolved.top ?? 0,
+            left: nextPosition.left ?? resolved.left ?? 16,
+            anchorPath: resolved.path,
+            insertMode: resolved.mode,
+            sectionId: resolved.sectionId,
+          });
+          return;
+        }
+
+        const anchorY =
+          typeof nextPosition.top === "number"
+            ? nextPosition.top + 6
+            : container
+              ? getDividerAnchorY(overlay, container)
+              : 0;
+        const fallbackSectionId = resolveDividerSectionIdAtY(liveCanvas, anchorY);
+        if (fallbackSectionId) {
+          overlay.dataset.blockpagesDividerSectionId = fallbackSectionId;
+          overlay.dataset.blockpagesDividerInsertMode = "after";
+          onUpdateDividerPosition?.(overlayId, {
+            top: nextPosition.top ?? 0,
+            left: nextPosition.left ?? 16,
+            insertMode: "after",
+            sectionId: fallbackSectionId,
+          });
+          return;
+        }
+      }
+
+      onUpdateDividerPosition?.(overlayId, {
+        top: nextPosition.top ?? 0,
+        left: nextPosition.left ?? 0,
+      });
+    },
+    [onUpdateDividerPosition]
+  );
+
   const handleOverlayClick = (target: EditOverlayTarget) => {
     if (target.kind === "image") onEditImage?.(target.id);
     if (target.kind === "button") onEditButton?.(target.id);
@@ -622,8 +861,8 @@ export default function BlockpagesCanvasEnhancer({
   };
 
   return (
-    <div ref={containerRef} data-blockpages-overlay-container="true" className="relative w-full min-w-0 max-w-full">
-      <div data-blockpages-template-root className="relative w-full min-w-0 max-w-full">
+    <div ref={containerRef} data-blockpages-overlay-container="true" className="relative w-full min-w-0 max-w-full overflow-visible">
+      <div data-blockpages-template-root="true" className="relative w-full min-w-0 max-w-full">
         {children}
       </div>
 
@@ -657,7 +896,12 @@ export default function BlockpagesCanvasEnhancer({
           kind="icon"
           position={icon.position}
           scale={icon.scale ?? 1}
-          onPositionChange={(overlayId, nextPosition) => onUpdateIconPosition?.(overlayId, nextPosition)}
+          onPositionChange={(overlayId, nextPosition) =>
+            onUpdateIconPosition?.(overlayId, {
+              top: nextPosition.top ?? 0,
+              left: nextPosition.left ?? 0,
+            })
+          }
           onScaleChange={(overlayId, nextScale) => onUpdateIconScale?.(overlayId, nextScale)}
           onRemove={(overlayId) => onRemoveIcon?.(overlayId)}
         >
@@ -673,7 +917,7 @@ export default function BlockpagesCanvasEnhancer({
           kind="divider"
           position={divider.position}
           scale={divider.scale ?? 1}
-          onPositionChange={(overlayId, nextPosition) => onUpdateDividerPosition?.(overlayId, nextPosition)}
+          onPositionChange={handleDividerPositionChange}
           onScaleChange={(overlayId, nextScale) => onUpdateDividerScale?.(overlayId, nextScale)}
           onRemove={(overlayId) => onRemoveDivider?.(overlayId)}
           contentStyle={{ width: divider.props.width || "100%" }}
