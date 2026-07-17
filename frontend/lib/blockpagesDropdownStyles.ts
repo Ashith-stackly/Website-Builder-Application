@@ -1,10 +1,21 @@
-/** Descendant selector: skip dropdown flyout panels and their contents. */
+/** Descendant selector: skip dropdown flyout panels and header CTA buttons. */
 export const BLOCKPAGES_DROPDOWN_EXCLUDE =
-  ':not(:is([data-blockpages-dropdown-panel="true"], [data-blockpages-dropdown-panel="true"] *))';
+  ':not(:is([data-blockpages-dropdown-panel="true"], [data-blockpages-dropdown-panel="true"] *, [data-blockpages-header-cta="true"], [data-blockpages-header-cta="true"] *))';
 
 export function isBlockpagesTextEditingActive() {
   if (typeof document === "undefined") return false;
   return Boolean(document.querySelector('[data-blockpages-text-editing="true"]'));
+}
+
+export function mutationIsInsideContentEditable(mutation: MutationRecord) {
+  const target =
+    mutation.target instanceof Element ? mutation.target : mutation.target.parentElement;
+  return Boolean(target?.closest('[contenteditable="true"]'));
+}
+
+export function mutationsAreFromTextEditing(mutations: MutationRecord[]) {
+  if (!isBlockpagesTextEditingActive() || mutations.length === 0) return false;
+  return mutations.every(mutationIsInsideContentEditable);
 }
 
 export function nodeIsInBlockpagesHeaderDropdown(node: Element) {
@@ -54,6 +65,42 @@ export function buildBlockpagesDropdownStylesCss() {
     [data-textblock-canvas] .blog-page header nav .relative,
     [data-textblock-canvas] .blog-page header nav .group {
       overflow: visible !important;
+    }
+
+    [data-textblock-canvas] .buyscreen-search input {
+      color: #111827 !important;
+      -webkit-text-fill-color: #111827 !important;
+      caret-color: #06224C !important;
+      background-color: #ffffff !important;
+    }
+
+    [data-textblock-canvas] .buyscreen-search input::placeholder {
+      color: #6b7280 !important;
+      -webkit-text-fill-color: #6b7280 !important;
+      opacity: 1 !important;
+    }
+
+    [data-textblock-canvas] nav.buyscreen-categories .buyscreen-category-item:hover,
+    [data-textblock-canvas] nav.buyscreen-categories .buyscreen-category-item:focus-visible,
+    [data-textblock-canvas] nav.buyscreen-categories .buyscreen-categories-list > button.buyscreen-category-item:hover,
+    [data-textblock-canvas] nav.buyscreen-categories .buyscreen-categories-list > button.buyscreen-category-item:focus-visible {
+      background: #2563eb !important;
+      background-color: #2563eb !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      outline: none !important;
+    }
+
+    [data-textblock-canvas] .construction-shell header [data-blockpages-header-cta="true"] {
+      color: #0a1e3d !important;
+      -webkit-text-fill-color: #0a1e3d !important;
+      background-color: #ffffff !important;
+    }
+
+    [data-textblock-canvas] .construction-shell header [data-blockpages-header-cta="true"]:hover {
+      color: #0a1e3d !important;
+      -webkit-text-fill-color: #0a1e3d !important;
+      background-color: #f3f4f6 !important;
     }
 
     [data-textblock-canvas] .group > [data-blockpages-dropdown-panel="true"] {
@@ -163,10 +210,12 @@ export function buildBlockpagesDropdownStylesCss() {
     [data-textblock-canvas] [data-blockpages-dropdown-panel="true"] [contenteditable="true"],
     [data-textblock-canvas] .blog-page header [contenteditable="true"],
     [data-textblock-canvas] .buyscreen-categories [contenteditable="true"],
-    [data-textblock-canvas] .construction-shell header [contenteditable="true"] {
+    [data-textblock-canvas] .construction-shell header [contenteditable="true"],
+    [data-textblock-canvas] [contenteditable="true"] {
       user-select: text !important;
       -webkit-user-select: text !important;
       cursor: text !important;
+      caret-color: auto !important;
     }
 
     [data-textblock-canvas] [data-blockpages-dropdown-panel="true"] .editable-text-active,

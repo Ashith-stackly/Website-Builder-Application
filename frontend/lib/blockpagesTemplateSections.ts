@@ -18,7 +18,6 @@ const ECOMMERCE_SECTIONS: BlockpagesTemplateSection[] = [
   { id: "buyscreen-home", label: "Home" },
   { id: "buyscreen-about", label: "About Us" },
   { id: "buyscreen-categories", label: "Categories" },
-  { id: "buyscreen-video", label: "Video Block" },
   { id: "buyscreen-products", label: "Our Products" },
   { id: "buyscreen-contact", label: "Contact" },
 ];

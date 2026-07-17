@@ -1,6 +1,6 @@
 "use client";
 
-import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { MutableRefObject, memo, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -11,7 +11,6 @@ import {
   FaMobileAlt,
   FaEnvelope,
   FaPaperPlane,
-  FaEye,
   FaPlay,
   FaMapMarkerAlt,
   FaLinkedin,
@@ -98,12 +97,10 @@ type PortfolioPreviewProps = {
   isVideoEditingMode?: boolean;
   onEditVideo?: (videoId: string) => void;
   sectionStyles?: Record<string, SectionStyleConfig>;
-  onPreview?: () => void;
   isIconEditingMode?: boolean;
   customIcons?: Record<string, IconBlockProps>;
   onEditIcon?: (iconId: string) => void;
   editingIconId?: string | null;
-  onSaveDraft?: () => void;
 };
 
 function useLocalInView<T extends HTMLElement>({
@@ -172,7 +169,7 @@ function AnimatedCount({
   );
 }
 
-export default function PortfolioPreview({
+function PortfolioPreview({
   isImageEditingMode = false,
   customImages = {},
   onEditImage,
@@ -184,12 +181,10 @@ export default function PortfolioPreview({
   isVideoEditingMode = false,
   onEditVideo,
   sectionStyles = {},
-  onPreview,
   isIconEditingMode = false,
   customIcons = {},
   onEditIcon,
   editingIconId,
-  onSaveDraft,
 }: PortfolioPreviewProps) {
   const blockpagesEditor = useBlockpagesEditor();
   const previewDevice = blockpagesEditor?.deviceMode ?? "desktop";
@@ -483,27 +478,6 @@ export default function PortfolioPreview({
                       </span>
                     </div>
 
-                    {/* ROW 3 → Actions (NOW VISIBLE ON MOBILE ✅) */}
-                    <div className="flex justify-center" data-builder-chrome="true">
-                      <div className="flex flex-wrap justify-center gap-1 sm:gap-2 w-full">
-
-                        {/* Save Draft */}
-                        <button onClick={() => onSaveDraft?.()} className="relative group px-2 sm:px-3 py-1 border border-gray-300/40 rounded-md overflow-hidden shadow-sm">
-                          <span className="absolute inset-0 bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
-                          <span className="relative z-10 text-[10px] sm:text-xs font-semibold text-white inline-block transition-transform duration-300 group-hover:scale-105">Save Draft</span>
-                        </button>
-
-                        {/* Preview */}
-                        <button type="button" onClick={onPreview} className="relative group px-2 sm:px-3 py-1 border border-gray-300/40 rounded-md overflow-hidden shadow-sm">
-                          <span className="absolute inset-0 bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out"></span>
-                          <span className="relative z-10 flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-white transition-transform duration-300 group-hover:scale-105">
-                            Preview <FaEye className="text-[10px]" />
-                          </span>
-                        </button>
-
-                      </div>
-                    </div>
-
                   </div>
 
                   {/* ✅ DESKTOP (unchanged) */}
@@ -544,25 +518,6 @@ export default function PortfolioPreview({
                             <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
                           </button>
                         ))}
-                      </div>
-
-                      {/* ACTION BUTTONS ✅ */}
-                      <div className="flex border border-gray-300/40 rounded-md overflow-hidden text-xs font-bold whitespace-nowrap bg-white/5 shadow-sm" data-builder-chrome="true">
-
-                        <button onClick={() => onSaveDraft?.()} className="relative group px-3 py-1.5 overflow-hidden">
-                          <span className="absolute inset-0 bg-white/20 scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300 ease-out"></span>
-                          <span className="relative z-10 text-white transition-transform duration-300 group-hover:-translate-y-0.5 inline-block">Save Draft</span>
-                        </button>
-
-                        <div className="w-px bg-gray-300/40"></div>
-
-                        <button type="button" onClick={onPreview} className="relative group px-3 py-1.5 overflow-hidden flex items-center gap-1.5">
-                          <span className="absolute inset-0 bg-white/20 scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300 ease-out"></span>
-                          <span className="relative z-10 text-white flex items-center gap-1 transition-transform duration-300 group-hover:-translate-y-0.5">
-                            Preview <FaEye className="text-[11px]" />
-                          </span>
-                        </button>
-
                       </div>
 
                     </div>
@@ -1732,3 +1687,4 @@ export default function PortfolioPreview({
   );
 }
 
+export default memo(PortfolioPreview);

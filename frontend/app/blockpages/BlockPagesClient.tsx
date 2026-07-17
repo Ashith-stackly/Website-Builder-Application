@@ -49,11 +49,11 @@ import {
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
 } from "@/lib/blockpagesEditTargets";
-import { buildPreviewHtmlFromCanvas, flushBlockpagesPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
 import {
   getOverlayDefaultTop,
   getVisibleCanvasAnchorY,
   resolveDividerSectionPlacementAtY,
+  scrubOrphanDividerDomFromLiveCanvas,
 } from "@/lib/blockpagesOverlayLayers";
 import {
   loadPersistedTextBlockState,
@@ -65,9 +65,14 @@ import {
   loadAppliedIconsForTemplate,
   persistAppliedDividersForTemplate,
   persistAppliedIconsForTemplate,
+  captureCanvasContent,
+  isPersistedCanvasHtmlValid,
+  persistCanvasHtml,
+  templateUsesHtmlCanvasPersistence,
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
   BLOCKPAGES_REQUEST_PREVIEW_EVENT,
 } from "@/lib/blockpagesEditorPersistence";
+import { buildPreviewHtmlFromCanvas, flushBlockpagesPreviewSnapshot, persistPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
 import VideoCanvas from "./videoblock/Canvas";
 import VideoRightSidebar from "./videoblock/RightSidebar";
 import type { VideoBlockData } from "./videoblock/types";
@@ -182,7 +187,9 @@ export default function BlockPagesClient() {
     }
 
     if (!searchParams.get("projectId")) {
-      setAppliedDividers(loadAppliedDividersForTemplate(parsed));
+      const loadedDividers = loadAppliedDividersForTemplate(parsed);
+      setAppliedDividers(loadedDividers);
+      persistAppliedDividersForTemplate(parsed, loadedDividers);
       setAppliedIcons(loadAppliedIconsForTemplate(parsed));
     }
   }, [searchParams]);
@@ -232,6 +239,46 @@ export default function BlockPagesClient() {
   const clearPendingDividerScroll = useCallback(() => {
     setPendingDividerScrollId(null);
   }, []);
+
+  const syncAppliedDividerPersistence = useCallback(
+    (dividers: { id: string; props: DividerBlockProps; position?: { top?: number; left?: number; x?: number; y?: number; sectionId?: string; anchorPath?: number[]; insertMode?: "after" | "before" }; scale?: number }[]) => {
+      persistAppliedDividersForTemplate(textTemplate, dividers);
+
+      if (typeof window === "undefined") return;
+
+      window.requestAnimationFrame(() => {
+        const canvas = getBlockpagesCanvasElement();
+        if (!(canvas instanceof HTMLElement)) return;
+
+        scrubOrphanDividerDomFromLiveCanvas(
+          canvas,
+          dividers.map((divider) => divider.id)
+        );
+
+        if (templateUsesHtmlCanvasPersistence(textTemplate)) {
+          const html = captureCanvasContent(canvas);
+          if (isPersistedCanvasHtmlValid(textTemplate, html)) {
+            persistCanvasHtml(textTemplate, html);
+          }
+        }
+
+        const liveCanvas = canvas.querySelector<HTMLElement>("[data-textblock-canvas]");
+        if (liveCanvas) {
+          persistPreviewSnapshot(textTemplate, liveCanvas, dividers);
+        }
+      });
+    },
+    [textTemplate]
+  );
+
+  useEffect(() => {
+    const canvas = getBlockpagesCanvasElement();
+    if (!(canvas instanceof HTMLElement)) return;
+    scrubOrphanDividerDomFromLiveCanvas(
+      canvas,
+      appliedDividers.map((divider) => divider.id)
+    );
+  }, [appliedDividers]);
 
   // ── Load saved draft on mount ──────────────────────────────────────────
   useEffect(() => {
@@ -879,7 +926,7 @@ export default function BlockPagesClient() {
                 (page === "text" || page === "image" || page === "button" || page === "video");
 
               if (activeBlockPage === "text" && !keepsTextCanvasMounted) {
-                flushBlockpagesPreviewSnapshot(textTemplate);
+                flushBlockpagesPreviewSnapshot(textTemplate, appliedDividers);
               }
 
               if (page === "image" && activeBlockPage === "text") {
@@ -1052,7 +1099,7 @@ export default function BlockPagesClient() {
                   showNoVideoAlert();
                   return;
                 }
-                flushBlockpagesPreviewSnapshot(textTemplate);
+                flushBlockpagesPreviewSnapshot(textTemplate, appliedDividers);
                 setEditingVideoId(videoId);
                 setActiveBlockPage("video");
               }}
@@ -1060,7 +1107,7 @@ export default function BlockPagesClient() {
               editingIconId={editingIconId}
               customIcons={customIcons}
               onEditIcon={(iconId) => {
-                flushBlockpagesPreviewSnapshot(textTemplate);
+                flushBlockpagesPreviewSnapshot(textTemplate, appliedDividers);
                 setEditingIconId(iconId);
                 if (typeof window !== "undefined" && window.innerWidth >= 1024) {
                   setActiveBlockPage("icons");
@@ -1070,7 +1117,7 @@ export default function BlockPagesClient() {
               onRemoveDivider={(id) => {
                 setAppliedDividers((prev) => {
                   const next = prev.filter((d) => d.id !== id);
-                  persistAppliedDividersForTemplate(textTemplate, next);
+                  syncAppliedDividerPersistence(next);
                   return next;
                 });
               }}

@@ -1,6 +1,6 @@
 "use client";
 
-import { createElement, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createElement, memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { FaPen } from "react-icons/fa";
 import type { BlockData } from "../buttonblock/types";
@@ -21,9 +21,14 @@ import {
   resolveDividerSectionIdAtY,
   resolveDividerSectionPlacementAtY,
   scrollCanvasToDividerPosition,
+  scrubOrphanDividerDomFromLiveCanvas,
   type BlockpagesOverlayPosition,
 } from "@/lib/blockpagesOverlayLayers";
 import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
+import {
+  isBlockpagesTextEditingActive,
+  mutationsAreFromTextEditing,
+} from "@/lib/blockpagesDropdownStyles";
 import DividerPreview from "../dividerblock/DividerPreview";
 import IconPreview from "../iconsblock/IconPreview";
 import BlockpagesPositionedOverlay from "./BlockpagesPositionedOverlay";
@@ -114,6 +119,13 @@ function isInsideTemplateHeader(element: HTMLElement) {
         "[data-template-header='true']",
       ].join(", ")
     )
+  );
+}
+
+function isExplicitHeaderEditableButton(element: HTMLElement) {
+  return (
+    element.hasAttribute("data-blockpages-button-id") ||
+    element.getAttribute("data-blockpages-header-cta") === "true"
   );
 }
 
@@ -215,8 +227,14 @@ function isTemplateChromeButton(element: HTMLElement) {
 
 function isEditableButton(element: HTMLElement) {
   if (isInsideBuilderChrome(element)) return false;
-  if (isInsideTemplateHeader(element)) return false;
-  if (isTemplateChromeButton(element)) return false;
+
+  const inHeader = isInsideTemplateHeader(element);
+  if (inHeader) {
+    if (!isExplicitHeaderEditableButton(element)) return false;
+  } else if (isTemplateChromeButton(element)) {
+    return false;
+  }
+
   if (element.getAttribute("data-blockpages-edit-overlay") === "true") return false;
 
   const rect = element.getBoundingClientRect();
@@ -313,7 +331,7 @@ function getOverlayPosition(
   return { top, left };
 }
 
-export default function BlockpagesCanvasEnhancer({
+function BlockpagesCanvasEnhancer({
   children,
   isImageEditingMode = false,
   customImages = {},
@@ -355,6 +373,17 @@ export default function BlockpagesCanvasEnhancer({
     onUpdateIconScale,
   });
 
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const liveCanvas = container?.closest<HTMLElement>("[data-textblock-canvas]");
+    if (!liveCanvas) return;
+
+    scrubOrphanDividerDomFromLiveCanvas(
+      liveCanvas,
+      appliedDividers.map((divider) => divider.id)
+    );
+  }, [appliedDividers]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -375,6 +404,8 @@ export default function BlockpagesCanvasEnhancer({
     if (!container || !liveCanvas || !onUpdateDividerPosition) return;
 
     const resolveDividerSections = () => {
+      if (isBlockpagesTextEditingActive()) return;
+
       appliedDividers.forEach((divider) => {
         const overlay = container.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${divider.id}"]`);
 
@@ -448,7 +479,8 @@ export default function BlockpagesCanvasEnhancer({
     const delayed = window.setTimeout(resolveDividerSections, 400);
     const delayed2 = window.setTimeout(resolveDividerSections, 1200);
     const observer = templateRoot
-      ? new MutationObserver(() => {
+      ? new MutationObserver((mutations) => {
+          if (mutationsAreFromTextEditing(mutations)) return;
           window.requestAnimationFrame(resolveDividerSections);
         })
       : null;
@@ -774,6 +806,7 @@ export default function BlockpagesCanvasEnhancer({
     if (!container) return;
 
     const handleReposition = () => {
+      if (isBlockpagesTextEditingActive()) return;
       window.requestAnimationFrame(syncOverlayTargets);
     };
 
@@ -787,7 +820,10 @@ export default function BlockpagesCanvasEnhancer({
     window.addEventListener("scroll", handleReposition, true);
     window.addEventListener("scrollToSectionEvent", handleScrollToSection as EventListener);
 
-    const observer = new MutationObserver(handleReposition);
+    const observer = new MutationObserver((mutations) => {
+      if (mutationsAreFromTextEditing(mutations)) return;
+      handleReposition();
+    });
     observer.observe(container, { childList: true, subtree: true, attributes: true });
 
     const delayed = window.setTimeout(handleReposition, 400);
@@ -928,3 +964,5 @@ export default function BlockpagesCanvasEnhancer({
     </div>
   );
 }
+
+export default memo(BlockpagesCanvasEnhancer);

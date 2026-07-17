@@ -237,7 +237,10 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
 
           <Link
             href={START_BUILDING_HREF}
-            className="hidden sm:inline-flex bg-white text-[#0A1E3D] px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold hover:bg-gray-100 transition-colors shadow-lg whitespace-nowrap"
+            data-blockpages-interactive="true"
+            data-blockpages-header-cta="true"
+            data-blockpages-button-id="const-header-get-started"
+            className="construction-header-cta hidden sm:inline-flex bg-white text-[#0A1E3D] px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold hover:bg-gray-100 transition-colors shadow-lg whitespace-nowrap"
           >
             Get Started
           </Link>
@@ -309,7 +312,10 @@ function ConstructionHeader({ deviceMode }: { deviceMode: "desktop" | "tablet" |
           })}
           <Link
             href={START_BUILDING_HREF}
-            className="mt-6 bg-white text-[#0A1E3D] px-8 py-3 rounded-full text-sm font-bold text-center hover:bg-gray-100 transition-colors shadow-lg"
+            data-blockpages-interactive="true"
+            data-blockpages-header-cta="true"
+            data-blockpages-button-id="const-header-get-started-mobile"
+            className="construction-header-cta mt-6 bg-white text-[#0A1E3D] px-8 py-3 rounded-full text-sm font-bold text-center hover:bg-gray-100 transition-colors shadow-lg"
             onClick={() => setMobileOpen(false)}
           >
             Get Started

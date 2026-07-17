@@ -2,19 +2,47 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { assetPath } from "@/lib/paths";
+import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
+
+const buyCategoryNavClass =
+  "buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
 
 const buyCategories = [
   { label: "All Categories" },
   { label: "Products" },
   { label: "Blog" },
-  { label: "Video Block" },
   { label: "Contact" },
   { label: "Limited Sale" },
   { label: "Best Seller" },
   { label: "New Arrivals" },
 ];
+
+const buyscreenCategoryNavSections: Record<string, string> = {
+  Products: "buyscreen-products",
+  Blog: "buyscreen-about",
+  Contact: "buyscreen-contact",
+  "Limited Sale": "buyscreen-products",
+  "Best Seller": "buyscreen-products",
+  "New Arrivals": "buyscreen-products",
+};
+
+const buyscreenTopHeaderNavSections: Record<string, string> = {
+  Home: "buyscreen-home",
+  "About Us": "buyscreen-about",
+  "Our Products": "buyscreen-products",
+  Categories: "buyscreen-categories",
+  Contact: "buyscreen-contact",
+};
+
+const buyscreenTopHeaderMobileItems = ["Home", "About Us", "Our Products", "Categories", "Contact"] as const;
+
+function scrollToBuyscreenSection(sectionId: string) {
+  window.requestAnimationFrame(() => {
+    scrollBlockpagesCanvasToSection(sectionId);
+  });
+}
 
 const buyAllSubCategories: Array<{ key: string; label: string; productIds: string[] }> = [
   { key: "mobiles", label: "Mobiles", productIds: ["phone"] },
@@ -91,12 +119,6 @@ const buyCategorySpotlights = [
     subCategoryKey: "audio",
     accent: "from-[#fff7ed] to-[#f8fafc]",
   },
-];
-
-const buyDealHighlights = [
-  { label: "Delivery", value: "48h" },
-  { label: "Warranty", value: "1 year" },
-  { label: "Support", value: "24/7" },
 ];
 
 type BuyShoppingStepIcon = "browse" | "cart" | "checkout";
@@ -291,7 +313,7 @@ function BuyMailIcon() {
 }
 
 
-export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: string[] }) {
+function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: string[] }) {
   const router = useRouter();
   const [activeProductStart, setActiveProductStart] = useState(0);
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -601,12 +623,10 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
     setActiveProductStart((prev) => (prev + direction + totalProducts) % totalProducts);
   }
 
-  const handleCategoryClick = useCallback(
-    (label: string) => {
-      if (label === "Blog" || label === "Contact") {
-        router.push("/page-not-found");
-        return;
-      }
+  const handleCategoryClick = useCallback((label: string) => {
+    const sectionId = buyscreenCategoryNavSections[label];
+
+    if (sectionId === "buyscreen-products") {
       setActiveSubCategoryKey(null);
       setIsAllCategoriesDropdownOpen(false);
       setIsUserMenuOpen(false);
@@ -614,11 +634,19 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
       setShowAllProducts(false);
       setSearchQuery("");
       setActiveProductStart(0);
-      featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       setIsCategoryMenuOpen(false);
-    },
-    [router]
-  );
+      scrollToBuyscreenSection("buyscreen-products");
+      return;
+    }
+
+    if (sectionId) {
+      setIsAllCategoriesDropdownOpen(false);
+      setIsUserMenuOpen(false);
+      setIsCategoryMenuOpen(false);
+      scrollToBuyscreenSection(sectionId);
+      return;
+    }
+  }, []);
 
   const handleSubCategoryClick = useCallback((key: string) => {
     setActiveCategoryLabel("All Categories");
@@ -628,28 +656,21 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
     setShowAllProducts(false);
     setSearchQuery("");
     setActiveProductStart(0);
-    featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     setIsCategoryMenuOpen(false);
+    scrollToBuyscreenSection("buyscreen-products");
   }, []);
 
-  const handleTopHeaderItemClick = useCallback(
-    (item: string) => {
-      setActiveTopHeaderItem(item);
-      setIsTopHeaderMenuOpen(false);
-      setIsTopHeaderSearchOpen(false);
-      setIsTopHeaderProfileMenuOpen(false);
+  const handleTopHeaderItemClick = useCallback((item: string) => {
+    setActiveTopHeaderItem(item);
+    setIsTopHeaderMenuOpen(false);
+    setIsTopHeaderSearchOpen(false);
+    setIsTopHeaderProfileMenuOpen(false);
 
-      if (item === "Home") {
-        window.requestAnimationFrame(() => {
-          contentStartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-        return;
-      }
-
-      router.push("/page-not-found");
-    },
-    [router],
-  );
+    const sectionId = buyscreenTopHeaderNavSections[item];
+    if (sectionId) {
+      scrollToBuyscreenSection(sectionId);
+    }
+  }, []);
 
   const handleProductsTouchStart = useCallback(
     (e: React.TouchEvent<HTMLDivElement>) => {
@@ -879,6 +900,19 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
             overflow: visible !important;
             position: relative;
             z-index: 50;
+          }
+
+          .buyscreen-page .buyscreen-search input {
+            color: #374151 !important;
+            -webkit-text-fill-color: #374151 !important;
+            caret-color: #06224C !important;
+          }
+
+          .buyscreen-page nav.buyscreen-categories .buyscreen-category-item:hover,
+          .buyscreen-page nav.buyscreen-categories .buyscreen-category-item:focus-visible {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            outline: none;
           }
         `
       }} />
@@ -1294,7 +1328,7 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
           <div className="border-t border-white/20 lg:hidden planning-zoom-show-mobile-menu">
             <div className="mx-auto w-full max-w-7xl px-4 pb-3 pt-2 sm:px-6 lg:px-8">
               <div className="grid grid-cols-2 gap-2">
-                {["Home", "About Us", "Our Products", "Categories", "Video Block", "Contact"].map((item) => (
+                {buyscreenTopHeaderMobileItems.map((item) => (
                   <button
                     key={item}
                     type="button"
@@ -1336,9 +1370,13 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
             </div>
 
             <div className="buyscreen-header-actions flex w-full min-w-0 items-center justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
-              <label className="buyscreen-search flex h-9 w-[150px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:w-[210px] sm:text-xs">
+              <label
+                data-blockpages-interactive="true"
+                className="buyscreen-search flex h-9 w-[150px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:w-[210px] sm:text-xs"
+              >
                 <input
                   type="text"
+                  data-blockpages-interactive="true"
                   value={searchQuery}
                   onChange={(e) => {
                     const nextValue = e.target.value;
@@ -1351,10 +1389,10 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
                     e.preventDefault();
                     setActiveProductStart(0);
                     setShowAllProducts(false);
-                    featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    scrollToBuyscreenSection("buyscreen-products");
                   }}
                   placeholder="Search..."
-                  className="min-w-0 flex-1 bg-transparent text-[#4b5563] outline-none placeholder:text-[#4b5563] placeholder:opacity-100"
+                  className="min-w-0 flex-1 bg-white text-[#111827] outline-none placeholder:text-[#6b7280] placeholder:opacity-100"
                 />
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#374151]" aria-hidden>
                   <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.7" />
@@ -1506,7 +1544,8 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
                   <button
                     key={item.label}
                     type="button"
-                    className={`buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white hover:bg-transparent hover:!text-white focus:bg-transparent focus:!text-white active:bg-transparent active:!text-white focus-visible:outline-none focus-visible:bg-transparent focus-visible:!text-white focus-visible:ring-2 focus-visible:ring-white/50 ${item.label === "Limited Sale" ? "lg:ml-auto" : ""} ${item.label === "Best Seller" ? "!bg-transparent !border-0 !shadow-none !ring-0" : ""}`}
+                    data-blockpages-interactive="true"
+                    className={`${buyCategoryNavClass} ${item.label === "Limited Sale" ? "lg:ml-auto" : ""}`}
                     onClick={() => handleCategoryClick(item.label)}
                   >
                     {item.label}
@@ -1535,7 +1574,7 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
                   <button
                     type="button"
                     className="inline-flex w-full items-center justify-center rounded-full bg-white px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-[#06224C] shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#fef3c7] sm:w-auto sm:px-6"
-                    onClick={() => featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    onClick={() => scrollToBuyscreenSection("buyscreen-products")}
                   >
                     Shop Now
                   </button>
@@ -1613,47 +1652,6 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
                     </div>
                   </article>
                 ))}
-              </div>
-            </section>
-
-            <section id="buyscreen-video" className="buyscreen-deal-banner buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] bg-[#06224C] p-5 text-white shadow-[0_24px_70px_rgba(6,34,76,0.22)] sm:p-7 lg:p-8">
-              <div className="grid gap-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] lg:items-center">
-                <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[#93c5fd]">Weekend tech event</p>
-                  <h2 className="mt-2 text-2xl font-black leading-tight sm:text-3xl">Save up to 50% on audio, accessories, and daily carry tech.</h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/75 sm:text-base">
-                    Promote seasonal offers with a confident retail banner, clear value props, and product actions that move shoppers back to the catalog.
-                  </p>
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-[#06224C] transition duration-300 hover:-translate-y-0.5 hover:bg-[#fef3c7]"
-                      onClick={() => {
-                        setActiveCategoryLabel("Limited Sale");
-                        setActiveSubCategoryKey(null);
-                        setShowAllProducts(true);
-                        featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }}
-                    >
-                      View Sale
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-white/10"
-                      onClick={() => openLicenseModal(buyProductById.get("audio") ?? buyProducts[0])}
-                    >
-                      Add Deal Item
-                    </button>
-                  </div>
-                </div>
-                <div className="buyscreen-deal-highlights grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-                  {buyDealHighlights.map((item) => (
-                    <div key={item.label} className="buyscreen-deal-highlight-card rounded-2xl border border-white/15 bg-white/10 p-3 text-center backdrop-blur sm:p-4">
-                      <p className="text-xl font-black sm:text-2xl">{item.value}</p>
-                      <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white/65 sm:text-[10px]">{item.label}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
             </section>
 
@@ -1936,3 +1934,4 @@ export default function StorefrontPreview({ hiddenElementIds = [] }: { hiddenEle
   );
 }
 
+export default memo(StorefrontPreview);

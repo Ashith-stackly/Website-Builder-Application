@@ -1,4 +1,5 @@
 import type { TextBlockState, TextTemplateType } from "@/app/blockpages/textblock/types";
+import type { AppliedDivider } from "@/lib/blockPagesDraftApi";
 
 export const TEXTBLOCK_PREVIEW_STORAGE_KEY = "stackly-textblock-preview-html";
 
@@ -44,20 +45,284 @@ export function getBlockpagesAppliedIconsKey(template: TextTemplateType) {
 const LEGACY_APPLIED_DIVIDERS_KEY = "stackly-custom-dividers";
 const LEGACY_APPLIED_ICONS_KEY = "stackly-custom-icons";
 
-export function loadAppliedDividersForTemplate(template: TextTemplateType) {
-  const namespaced = readBlockpagesStorageItem(getBlockpagesAppliedDividersKey(template));
-  const raw = namespaced ?? readBlockpagesStorageItem(LEGACY_APPLIED_DIVIDERS_KEY);
+type StoredAppliedDivider = {
+  id?: string;
+  props?: AppliedDivider["props"];
+  position?: AppliedDivider["position"] & {
+    sectionId?: string;
+    anchorPath?: number[];
+    insertMode?: "after" | "before";
+  };
+  scale?: number;
+};
+
+function normalizeStoredAppliedDividers(parsed: unknown): StoredAppliedDivider[] {
+  if (Array.isArray(parsed)) return parsed as StoredAppliedDivider[];
+  if (parsed && typeof parsed === "object") return [{ id: "legacy", props: parsed as AppliedDivider["props"] }];
+  return [];
+}
+
+function dedupeStoredAppliedDividers(dividers: StoredAppliedDivider[]): AppliedDivider[] {
+  const seenIds = new Set<string>();
+  const deduped: AppliedDivider[] = [];
+
+  for (const divider of dividers) {
+    const id = typeof divider.id === "string" ? divider.id.trim() : "";
+    if (!id || !divider.props || seenIds.has(id)) continue;
+
+    const top = divider.position?.top ?? 0;
+    const left = divider.position?.left ?? 16;
+    const overlapsExisting = deduped.some((existing) => {
+      const existingTop = existing.position?.top ?? 0;
+      const existingLeft = existing.position?.left ?? 16;
+      return Math.abs(existingTop - top) < 8 && Math.abs(existingLeft - left) < 8;
+    });
+    if (overlapsExisting) continue;
+
+    seenIds.add(id);
+    deduped.push({
+      id,
+      props: divider.props,
+      position: divider.position,
+      scale: divider.scale,
+    });
+  }
+
+  return deduped;
+}
+
+/** Remove divider overlay/preview artifacts accidentally baked into template HTML. */
+export function scrubDividerArtifactsFromHtml(html: string) {
+  if (!html.trim()) return html;
+  if (typeof document === "undefined") return html;
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+
+  wrapper
+    .querySelectorAll(
+      '[data-blockpages-preview-divider="true"], [data-blockpages-overlay-kind="divider"], [data-blockpages-overlay-toolbar="true"]'
+    )
+    .forEach((node) => node.remove());
+
+  return wrapper.innerHTML;
+}
+
+const REMOVED_ECOMMERCE_SECTION_IDS = ["buyscreen-video"];
+
+function normalizeEcommerceNavLabel(label: string) {
+  return label.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function isRetiredEcommerceNavLabel(label: string) {
+  const normalized = normalizeEcommerceNavLabel(label);
+  return normalized === "video block" || normalized.startsWith("video block ");
+}
+
+function scrubEcommerceRetiredNavLabels(root: ParentNode) {
+  const selectors = [
+    ".buyscreen-category-item",
+    ".buyscreen-top-header-nav-item",
+    "nav.buyscreen-categories button",
+    "nav.buyscreen-categories a",
+    ".buyscreen-categories-list button",
+    ".buyscreen-categories-list a",
+    ".buyscreen-top-header-mobile-row button",
+    ".buyscreen-top-header-mobile-row a",
+  ].join(", ");
+
+  root.querySelectorAll(selectors).forEach((node) => {
+    const label = node.textContent ?? "";
+    if (isRetiredEcommerceNavLabel(label)) node.remove();
+  });
+}
+
+function scrubEcommerceRetiredSections(root: ParentNode) {
+  for (const sectionId of REMOVED_ECOMMERCE_SECTION_IDS) {
+    const escaped =
+      typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(sectionId) : sectionId.replace(/"/g, '\\"');
+    root.querySelectorAll(`#${escaped}, section[id="${escaped}"]`).forEach((node) => node.remove());
+  }
+
+  root.querySelectorAll("section.buyscreen-deal-banner, .buyscreen-deal-banner").forEach((node) => node.remove());
+}
+
+const ECOMMERCE_CATEGORY_NAV_CLASS_BLOCKLIST =
+  /\s!?bg-transparent|\s!?border-0|\s!?shadow-none|\s!?ring-0|\shover:!?bg-transparent|\shover:!?text-white|\sfocus:!?bg-transparent|\sfocus:!?text-white|\sactive:!?bg-transparent|\sactive:!?text-white|\sfocus-visible:!?bg-transparent|\sfocus-visible:!?text-white/g;
+
+function normalizeEcommerceCategoryNavButton(button: HTMLElement) {
+  button.setAttribute("data-blockpages-interactive", "true");
+  button.removeAttribute("contenteditable");
+  button.classList.remove("editable-text-active");
+  button.style.removeProperty("background");
+  button.style.removeProperty("background-color");
+
+  if (button.className) {
+    button.className = button.className.replace(ECOMMERCE_CATEGORY_NAV_CLASS_BLOCKLIST, "").replace(/\s+/g, " ").trim();
+  }
+
+  if (!button.classList.contains("buyscreen-category-item")) {
+    button.classList.add("buyscreen-category-item");
+  }
+}
+
+function normalizeEcommerceCategoryNavButtons(root: ParentNode) {
+  root
+    .querySelectorAll<HTMLElement>(
+      "nav.buyscreen-categories .buyscreen-category-item, nav.buyscreen-categories .buyscreen-categories-list > button"
+    )
+    .forEach((button) => {
+      if (button.closest(".buyscreen-all-categories-dropdown")) return;
+      if (button.classList.contains("buyscreen-all-categories-item")) return;
+      normalizeEcommerceCategoryNavButton(button);
+    });
+}
+
+/** String fallback for persisted HTML that predates current nav class names. */
+function scrubEcommerceRetiredChromeFromHtmlString(html: string) {
+  let next = html;
+
+  next = next.replace(/<section\b[^>]*\bid\s*=\s*["']buyscreen-video["'][^>]*>[\s\S]*?<\/section>/gi, "");
+  next = next.replace(/<button\b[^>]*>[\s\S]*?\bVideo\s*Block\b[\s\S]*?<\/button>/gi, "");
+  next = next.replace(/<a\b[^>]*>[\s\S]*?\bVideo\s*Block\b[\s\S]*?<\/a>/gi, "");
+
+  return next;
+}
+
+/** Remove retired ecommerce chrome from a live canvas (after HTML snapshot restore). */
+export function scrubEcommerceRetiredChrome(root: ParentNode | null) {
+  if (!root || typeof document === "undefined") return;
+
+  scrubEcommerceRetiredSections(root);
+  scrubEcommerceRetiredNavLabels(root);
+  normalizeEcommerceCategoryNavButtons(root);
+}
+
+export function scrubAndPersistEcommerceCanvas(container: ParentNode | null) {
+  if (!container || typeof document === "undefined") return false;
+
+  const templateRoot = getCanvasTemplateRoot(container);
+  if (!templateRoot) return false;
+
+  const before = captureCanvasContent(container);
+  scrubEcommerceRetiredChrome(templateRoot);
+  const after = captureCanvasContent(container);
+
+  if (before === after) return false;
+  if (!isPersistedCanvasHtmlValid("ecommerce", after)) return false;
+
+  persistCanvasHtml("ecommerce", after);
+  return true;
+}
+
+function isRetiredPortfolioHeaderActionLabel(label: string) {
+  const normalized = label.replace(/\s+/g, " ").trim().toLowerCase();
+  return normalized === "save draft" || normalized.startsWith("preview");
+}
+
+/** Remove Save Draft / Preview chrome from portfolio template header nav. */
+export function scrubPortfolioRetiredHeaderActions(root: ParentNode | null) {
+  if (!root || typeof document === "undefined") return;
+
+  root
+    .querySelectorAll(
+      '.portfolio-shell [data-blockpages-template-header="true"] [data-builder-chrome="true"], .portfolio-shell [data-blockpages-template-header="true"] [data-builder-chrome="true"] button'
+    )
+    .forEach((node) => node.remove());
+
+  root
+    .querySelectorAll('.portfolio-shell [data-blockpages-template-header="true"] button')
+    .forEach((node) => {
+      const label = node.textContent ?? "";
+      if (isRetiredPortfolioHeaderActionLabel(label)) node.remove();
+    });
+}
+
+function scrubPortfolioRetiredHeaderActionsFromHtmlString(html: string) {
+  let next = html;
+  next = next.replace(
+    /<div\b[^>]*data-builder-chrome="true"[^>]*>[\s\S]*?\bSave Draft\b[\s\S]*?<\/div>/gi,
+    ""
+  );
+  next = next.replace(/<button\b[^>]*>[\s\S]*?\bSave Draft\b[\s\S]*?<\/button>/gi, "");
+  next = next.replace(/<button\b[^>]*>[\s\S]*?\bPreview\b[\s\S]*?<\/button>/gi, "");
+  return next;
+}
+
+/** Strip retired template sections from persisted canvas HTML (prevents refresh resurrection). */
+export function scrubRemovedTemplateSectionsFromHtml(html: string, template: TextTemplateType) {
+  let cleaned = scrubDividerArtifactsFromHtml(html);
+  if (!cleaned.trim() || typeof document === "undefined") return cleaned;
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = cleaned;
+
+  if (template === "ecommerce") {
+    scrubEcommerceRetiredChrome(wrapper);
+
+    let cleanedHtml = wrapper.innerHTML;
+    if (cleanedHtml.includes("Video Block") || cleanedHtml.includes("buyscreen-video")) {
+      cleanedHtml = scrubEcommerceRetiredChromeFromHtmlString(cleanedHtml);
+    }
+    return cleanedHtml;
+  }
+
+  if (template === "portfolio") {
+    scrubPortfolioRetiredHeaderActions(wrapper);
+    let cleanedHtml = wrapper.innerHTML;
+    if (cleanedHtml.includes("Save Draft") || cleanedHtml.includes("Preview")) {
+      cleanedHtml = scrubPortfolioRetiredHeaderActionsFromHtmlString(cleanedHtml);
+    }
+    return cleanedHtml;
+  }
+
+  return cleaned;
+}
+
+function migratePersistedCanvasHtml(template: TextTemplateType, raw: string, cleaned: string) {
+  if (cleaned === raw || typeof window === "undefined") return;
+
+  try {
+    writeBlockpagesStorageItem(getTextBlockCanvasStorageKey(template), cleaned);
+    window.localStorage.setItem(getTextBlockCanvasStorageKey(template), cleaned);
+  } catch {
+    // Ignore quota errors.
+  }
+}
+
+export function normalizePersistedTextBlockState(
+  template: TextTemplateType,
+  state: TextBlockState
+): TextBlockState {
+  if (template !== "ecommerce") return state;
+
+  let nextState = state;
+
+  if (state.activeSectionId && REMOVED_ECOMMERCE_SECTION_IDS.includes(state.activeSectionId)) {
+    nextState = { ...nextState, activeSectionId: "buyscreen-products" };
+  }
+
+  if (state.sectionStyles && REMOVED_ECOMMERCE_SECTION_IDS.some((id) => id in state.sectionStyles!)) {
+    const sectionStyles = { ...state.sectionStyles };
+    for (const sectionId of REMOVED_ECOMMERCE_SECTION_IDS) {
+      delete sectionStyles[sectionId];
+    }
+    nextState = { ...nextState, sectionStyles };
+  }
+
+  return nextState;
+}
+
+export function loadAppliedDividersForTemplate(template: TextTemplateType): AppliedDivider[] {
+  const raw = readBlockpagesStorageItem(getBlockpagesAppliedDividersKey(template));
   if (!raw) return [];
 
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed.length > 0 ? parsed : [];
-    if (parsed) return [{ id: "legacy", props: parsed }];
+    return dedupeStoredAppliedDividers(normalizeStoredAppliedDividers(parsed));
   } catch {
     return [];
   }
-
-  return [];
 }
 
 export function loadAppliedIconsForTemplate(template: TextTemplateType) {
@@ -77,7 +342,19 @@ export function loadAppliedIconsForTemplate(template: TextTemplateType) {
 }
 
 export function persistAppliedDividersForTemplate(template: TextTemplateType, dividers: unknown[]) {
-  writeBlockpagesStorageItem(getBlockpagesAppliedDividersKey(template), JSON.stringify(dividers));
+  const json = JSON.stringify(dividers);
+  writeBlockpagesStorageItem(getBlockpagesAppliedDividersKey(template), json);
+
+  if (typeof window === "undefined") return;
+
+  try {
+    // Keep unprefixed template key in sync for older builds on the same origin.
+    window.localStorage.setItem(getBlockpagesAppliedDividersKey(template), json);
+    // Global legacy key resurrected stale dividers across templates in production.
+    window.localStorage.removeItem(LEGACY_APPLIED_DIVIDERS_KEY);
+  } catch {
+    // Ignore quota errors.
+  }
 }
 
 export function persistAppliedIconsForTemplate(template: TextTemplateType, icons: unknown[]) {
@@ -98,7 +375,8 @@ export function loadPersistedTextBlockState(template: TextTemplateType): TextBlo
   try {
     const raw = window.localStorage.getItem(getTextBlockStateStorageKey(template));
     if (!raw) return null;
-    return JSON.parse(raw) as TextBlockState;
+    const parsed = JSON.parse(raw) as TextBlockState;
+    return normalizePersistedTextBlockState(template, parsed);
   } catch {
     return null;
   }
@@ -116,15 +394,26 @@ export function persistTextBlockState(template: TextTemplateType, state: TextBlo
 
 export function loadPersistedCanvasHtml(template: TextTemplateType): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(getTextBlockCanvasStorageKey(template));
+
+  const raw =
+    readBlockpagesStorageItem(getTextBlockCanvasStorageKey(template)) ??
+    window.localStorage.getItem(getTextBlockCanvasStorageKey(template));
+  if (!raw) return null;
+
+  const cleaned = scrubRemovedTemplateSectionsFromHtml(raw, template);
+  migratePersistedCanvasHtml(template, raw, cleaned);
+  return cleaned;
 }
 
 export function persistCanvasHtml(template: TextTemplateType, html: string) {
   if (typeof window === "undefined" || !html.trim()) return;
-  if (!isPersistedCanvasHtmlValid(template, html)) return;
+
+  const cleaned = scrubRemovedTemplateSectionsFromHtml(html, template);
+  if (!isPersistedCanvasHtmlValid(template, cleaned)) return;
 
   try {
-    window.localStorage.setItem(getTextBlockCanvasStorageKey(template), html);
+    writeBlockpagesStorageItem(getTextBlockCanvasStorageKey(template), cleaned);
+    window.localStorage.setItem(getTextBlockCanvasStorageKey(template), cleaned);
   } catch {
     // Ignore quota errors.
   }
@@ -158,8 +447,11 @@ export function isPersistedCanvasHtmlValid(template: TextTemplateType, html: str
 export function clearPersistedCanvasHtml(template: TextTemplateType) {
   if (typeof window === "undefined") return;
 
+  const suffix = getTextBlockCanvasStorageKey(template);
+
   try {
-    window.localStorage.removeItem(getTextBlockCanvasStorageKey(template));
+    window.localStorage.removeItem(getBlockpagesStorageKey(suffix));
+    window.localStorage.removeItem(suffix);
   } catch {
     // Ignore quota errors.
   }

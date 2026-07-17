@@ -10,9 +10,14 @@ export function isBlockpagesInteractiveControl(
 ) {
   if (!(node instanceof HTMLElement)) return false;
   if (node.closest('[data-blockpages-interactive="true"]')) return true;
+  if (node.closest("input, textarea, select, .buyscreen-search")) return true;
   if (node.closest(".portfolio-mobile-menu, .portfolio-mobile-menu-btn, .portfolio-mobile-menu")) return true;
 
   if (options?.allowTextEditing) {
+    if (node.closest("nav.buyscreen-categories .buyscreen-category-item, nav.buyscreen-categories .buyscreen-categories-list > button")) {
+      return true;
+    }
+
     const ariaLabel = (node.getAttribute("aria-label") ?? "").toLowerCase();
     if (ariaLabel.includes("menu") && !node.isContentEditable && !node.closest('[contenteditable="true"]')) {
       return true;

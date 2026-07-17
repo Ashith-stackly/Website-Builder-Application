@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-
+ 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, ReactNode, useState } from "react";
@@ -20,7 +20,7 @@ import {
   EMAIL_REQUIRED_ERROR,
   getSignupEmailValidationError,
 } from "@/lib/emailValidation";
-
+ 
 type ModalKey =
   | "features"
   | "templates"
@@ -32,7 +32,7 @@ type ModalKey =
   | "status"
   | "privacy"
   | "terms";
-
+ 
 const modalContent: Record<ModalKey, { title: string; body: ReactNode }> = {
   terms: {
     title: "Terms of Service",
@@ -158,13 +158,13 @@ const modalContent: Record<ModalKey, { title: string; body: ReactNode }> = {
     ),
   },
 };
-
+ 
 const footerGroups = [
   ["Product", [["Features", "features"], ["Templates", "templates"], ["Pricing", "pricing"], ["Changelog", "changelog"]]],
   ["Resources", [["User Guide", "documentation"], ["API Reference", "api"], ["Blog", "blog"], ["Status", "status"]]],
-  ["Company", [["About", "about"], ["Privacy Policy", "privacy"], ["Contact", "contact"]]],
+  ["Company", [["About", "about"], ["Privacy Policy", "privacy"], ["Contact", "contact"], ["Terms of Service", "terms"]]],
 ] as const;
-
+ 
 const socials = [
   ["Facebook", FaFacebookF, "https://www.facebook.com/thestackly/", "hover:bg-blue-500"],
   ["YouTube", FaYoutube, "https://www.youtube.com/@TheStackly", "hover:bg-red-600"],
@@ -173,82 +173,82 @@ const socials = [
   ["LinkedIn", FaLinkedinIn, "https://in.linkedin.com/company/the-stackly/", "hover:bg-blue-700"],
   ["Website", FaGlobe, "https://www.thestackly.com/", "hover:bg-blue-600"],
 ] as const;
-
+ 
 const footerReveal: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
 };
-
+ 
 const footerItem: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: "easeOut" } },
 };
-
+ 
 const socialReveal: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.05 } },
 };
-
+ 
 const socialItem: Variants = {
   hidden: { opacity: 0, scale: 0.7, y: 8 },
   visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.32, ease: "easeOut" } },
 };
-
+ 
 export default function Footer() {
   const router = useRouter();
   const [activeModal, setActiveModal] = useState<ModalKey | null>(null);
   const [email, setEmail] = useState("");
   const [fieldMessage, setFieldMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
-
+ 
   const handleSubscribe = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
+ 
     if (!email) {
       setFieldMessage({ type: "error", text: EMAIL_REQUIRED_ERROR });
       return;
     }
-
+ 
     if (/\s/.test(email)) {
       setFieldMessage({ type: "error", text: "Email address cannot contain spaces." });
       return;
     }
-
+ 
     const emailError = getSignupEmailValidationError(email.toLowerCase());
     if (emailError) {
       setFieldMessage({ type: "error", text: emailError });
       return;
     }
-
+ 
     setEmail("");
     setFieldMessage({ type: "success", text: "Subscribed successfully!" });
   };
-
+ 
   const openFooterItem = (key: string) => {
     if (key === "about") {
       router.push("/aboutus");
       return;
     }
-
+ 
     if (key === "contact") {
       router.push("/contact");
       return;
     }
-
+ 
     if (key === "templates") {
       router.push("/templates");
       return;
     }
-
+ 
     if (key === "blog") {
       router.push("/blog");
       return;
     }
-
+ 
     setActiveModal(key as ModalKey);
   };
-
+ 
   const modal = activeModal ? modalContent[activeModal] : null;
-
+ 
   return (
     <>
       <motion.footer
@@ -280,7 +280,7 @@ export default function Footer() {
                 MMR Complex, Salem,<br />Tamil Nadu 636008
               </p>
             </motion.div>
-
+ 
             {/* Columns 2-4: Links */}
             {footerGroups.map(([title, links]) => (
               <motion.div key={title} variants={footerItem}>
@@ -296,7 +296,7 @@ export default function Footer() {
                 </ul>
               </motion.div>
             ))}
-
+ 
             {/* Column 5: Newsletter */}
             <motion.div variants={footerItem}>
               <h4 className="mb-4 text-xs font-black uppercase tracking-wider">Newsletter</h4>
@@ -345,10 +345,10 @@ export default function Footer() {
               </form>
             </motion.div>
           </motion.div>
-
+ 
           <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 @sm:flex-row">
             <p className="text-xs text-white/50">Copyright 2018-2026 TheStackly.com INC. All rights reserved.</p>
-            
+           
             <motion.div
               className="flex items-center gap-4"
               variants={socialReveal}
@@ -362,15 +362,10 @@ export default function Footer() {
                 </motion.a>
               ))}
             </motion.div>
-
-            <div className="flex gap-6 text-xs text-white/50">
-              <button type="button" onClick={() => setActiveModal("terms")} className="transition hover:text-white">Terms of Service</button>
-              <button type="button" onClick={() => setActiveModal("privacy")} className="transition hover:text-white">Privacy Policy</button>
-            </div>
           </div>
         </div>
       </motion.footer>
-
+ 
       {modal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
           <button type="button" aria-label="Close legal popup" onClick={() => setActiveModal(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
@@ -392,3 +387,5 @@ export default function Footer() {
     </>
   );
 }
+ 
+ 

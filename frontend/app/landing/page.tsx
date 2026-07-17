@@ -57,6 +57,13 @@ import {
 import { fadeUp, scaleIn, staggerContainer } from "@/lib/motion";
 import { hasDemoSubscription } from "@/lib/demoAuth";
 import { assetPath } from "@/lib/paths";
+import {
+  loadRazorpayCheckoutScript,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  openRazorpayCheckout,
+} from "@/lib/razorpayClient";
+import MockCheckoutModal from "@/components/MockCheckoutModal";
 type TemplateCategory = "portfolio" | "blog" | "ecommerce" | "business";
 
 const Footer = dynamic(() => import("@/components/Footer"), {
@@ -167,7 +174,7 @@ const templates = [
   { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", badge: "Free" },
   { title: "Digital Marketing", category: "portfolio", image: "/portfolio03.webp", alt: "Agency Pro template", description: "A polished showcase for design teams.", price: 190, badge: "Premium" },
   { title: "Restaurant", category: "portfolio", image: "/portfolio04.webp", alt: "Minimal Studio template", description: "Clean white-space focused layout.", badge: "Free" },
-  { title: "Blogging Page", category: "blog", image: "/landing-optimized/template-personal.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
+  { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
   { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
   { title: "Store", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "Store template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
   { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
@@ -439,6 +446,54 @@ export default function Home() {
   const [wishlistToast, setWishlistToast] = useState<string | null>(null);
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [comingSoonTemplate, setComingSoonTemplate] = useState("");
+  const [checkoutProduct, setCheckoutProduct] = useState<WishlistItem | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  const handleBuyNow = (product: WishlistItem) => {
+    setCheckoutProduct(product);
+  };
+
+  const executePayment = async (product: WishlistItem) => {
+    setCheckoutProduct(null);
+    setPaymentLoading(true);
+    try {
+      await loadRazorpayCheckoutScript();
+
+      const totalPaise = Math.round(product.price * 100);
+      const planName = product.title;
+
+      const order = await createRazorpayOrder({
+        amountPaise: totalPaise,
+        planName,
+        billingPeriod: "One-Time",
+      });
+
+      openRazorpayCheckout({
+        order,
+        planLabel: `Purchase of ${planName} Template`,
+        customerName: "Demo Customer",
+        customerEmail: "customer@example.com",
+        customerPhone: "9876543210",
+        onDismiss: () => setPaymentLoading(false),
+        onSuccess: async (response) => {
+          setPaymentLoading(true);
+          try {
+            const verified = await verifyRazorpayPayment(response);
+            if (!verified) throw new Error("Payment verification failed");
+
+            alert(`Payment Successful for ${product.title}!`);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Payment verification failed");
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not initialize payment");
+      setPaymentLoading(false);
+    }
+  };
 
   // Slider State
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -1103,17 +1158,27 @@ export default function Home() {
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => addToCart(product)}
-                      disabled={isInCart}
-                      aria-label={isInCart ? `${product.title} is already in cart` : `Add ${product.title} to cart`}
-                      className={`cursor-pointer flex h-10 w-12 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition ${isInCart ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
-                    >
-                      {isInCart ? <FaCheck className="text-sm" /> : <FaCartShopping />}
-                    </button>
-                    <a href="#templates" className="flex h-10 flex-1 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2.5">
+                    <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => addToCart(product)}
+                        disabled={isInCart}
+                        aria-label={isInCart ? `${product.title} is already in cart` : `Add ${product.title} to cart`}
+                        className={`cursor-pointer flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition ${isInCart ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
+                      >
+                        {isInCart ? <FaCheck className="text-sm" /> : <FaCartShopping />}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={paymentLoading}
+                        onClick={() => handleBuyNow(product)}
+                        className="cursor-pointer flex h-10 flex-1 items-center justify-center rounded-xl bg-[#06224C] text-sm font-bold text-white transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-95 shadow-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Buy Now
+                      </button>
+                    </div>
+                    <a href="#templates" className="flex h-10 w-full sm:flex-1 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105 whitespace-nowrap">
                       View Template
                     </a>
                   </div>
@@ -1440,6 +1505,17 @@ export default function Home() {
           </div>
         )}
       </AnimatePresence>
+
+      <MockCheckoutModal
+        isOpen={checkoutProduct !== null}
+        onClose={() => setCheckoutProduct(null)}
+        onSuccess={() => checkoutProduct && executePayment(checkoutProduct)}
+        productName={checkoutProduct?.title || ""}
+        productPrice={checkoutProduct?.price || 0}
+        productImage={checkoutProduct?.image}
+        productAlt={checkoutProduct?.alt}
+        quantity={1}
+      />
     </main>
   );
 }

@@ -835,7 +835,7 @@ export default function BlogPage() {
               </section>
 
               {/* Support */}
-              <section className="bg-[var(--blog-pink-bg)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border py-[var(--blog-section-y)] @min-[1280px]:py-[5.5rem]">
+              <section className="bg-[var(--blog-pink-bg)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border">
                 <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0 grid grid-cols-1 gap-[clamp(1.25rem,3cqw,2rem)] @min-[900px]:grid-cols-2 @min-[900px]:gap-8">
                   <article className="blockpages-card group/card bg-[var(--blog-white)] rounded-[var(--blog-radius-lg)] p-[clamp(2.5rem,5cqw,3.5rem)] px-[clamp(2rem,4cqw,2.75rem)] text-center min-w-0 min-h-[clamp(16rem,35cqw,18rem)] flex flex-col items-center justify-center border-2 border-transparent shadow-[0_4px_20px_rgba(0,31,63,0.06)] transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[3px] focus-within:border-[var(--blog-accent)] focus-within:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-within:outline-none @max-[899px]:p-[clamp(1.75rem,4cqw,2.5rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[899px]:min-h-auto @max-[899px]:hover:translate-y-0 @max-[480px]:p-6 @max-[480px]:px-5 @max-[340px]:p-5 @max-[340px]:px-3">
                     <h3 className="text-[clamp(1.125rem,2.5cqw,1.375rem)] font-bold text-[var(--blog-navy)]">24/7 support</h3>

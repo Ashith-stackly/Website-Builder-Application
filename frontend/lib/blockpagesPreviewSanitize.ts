@@ -17,6 +17,7 @@ import {
   loadAppliedDividersForTemplate,
   writeBlockpagesStorageItem,
 } from "@/lib/blockpagesEditorPersistence";
+import { scrubOrphanDividerDomFromLiveCanvas } from "@/lib/blockpagesOverlayLayers";
 
 function revealHiddenMotionElements(root: ParentNode) {
   root.querySelectorAll<HTMLElement>("*").forEach((element) => {
@@ -137,10 +138,6 @@ export function buildPreviewHtmlFromCanvas(
     appliedDividers?: BlockpagesAppliedOverlay[];
   }
 ) {
-  liveCanvas.querySelectorAll<HTMLElement>('[contenteditable="true"]').forEach((element) => {
-    element.blur();
-  });
-
   const captureDevice =
     options?.captureDevice ??
     ((liveCanvas.getAttribute("data-blockpages-device") as BlockpagesPreviewCaptureDevice | null) ?? "desktop");
@@ -166,14 +163,21 @@ export function buildPreviewHtmlFromCanvas(
   return parts.join("");
 }
 
-export function flushBlockpagesPreviewSnapshot(template: TextTemplateType) {
+export function flushBlockpagesPreviewSnapshot(
+  template: TextTemplateType,
+  appliedDividers?: BlockpagesAppliedOverlay[]
+) {
   if (typeof document === "undefined") return false;
 
   const liveCanvas = document.querySelector<HTMLElement>("[data-textblock-canvas]");
   if (!liveCanvas) return false;
 
-  const appliedDividers = loadAppliedDividersForTemplate(template);
-  persistPreviewSnapshot(template, liveCanvas, appliedDividers);
+  const dividers = appliedDividers ?? loadAppliedDividersForTemplate(template);
+  scrubOrphanDividerDomFromLiveCanvas(
+    liveCanvas,
+    dividers.map((divider) => divider.id)
+  );
+  persistPreviewSnapshot(template, liveCanvas, dividers);
   return true;
 }
 

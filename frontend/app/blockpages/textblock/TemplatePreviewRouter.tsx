@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import dynamic from "next/dynamic";
 import type { TextTemplateType } from "./types";
 
@@ -30,7 +31,7 @@ type TemplatePreviewRouterProps = {
   template: TextTemplateType;
 };
 
-export default function TemplatePreviewRouter({ template }: TemplatePreviewRouterProps) {
+function TemplatePreviewRouter({ template }: TemplatePreviewRouterProps) {
   const PageComponent = INLINE_TEMPLATE_PAGES[template];
 
   if (!PageComponent) {
@@ -39,3 +40,5 @@ export default function TemplatePreviewRouter({ template }: TemplatePreviewRoute
 
   return <PageComponent />;
 }
+
+export default memo(TemplatePreviewRouter);

@@ -10,6 +10,8 @@ import { isBlockpagesInteractiveControl } from "@/lib/blockpagesEditorInteractio
 import { buildBlockpagesSectionStylesCss } from "@/lib/blockpagesTemplateSections";
 import {
   buildBlockpagesDropdownStylesCss,
+  isBlockpagesTextEditingActive,
+  mutationsAreFromTextEditing,
   nodeIsInBlockpagesFooterChrome,
   nodeIsInBlockpagesHeaderChrome,
   nodeIsInBlockpagesHeaderDropdown,
@@ -28,7 +30,7 @@ import type { TextBlockState, TextEditorTarget, TextStyles, TextTemplateType } f
 import type { BlockpagesOverlayPosition } from "@/lib/blockpagesOverlayLayers";
 import type { DraftSaveStatus } from "../BlockPagesClient";
 import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
-import { buildPreviewHtmlFromCanvas, finalizeBlockpagesEditorMotion, persistPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
+import { buildPreviewHtmlFromCanvas, finalizeBlockpagesEditorMotion, finalizeCanvasBeforePreview, persistPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
 import {
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
   BLOCKPAGES_REQUEST_PREVIEW_EVENT,
@@ -39,16 +41,20 @@ import {
   BLOCKPAGES_HIDDEN_ELEMENTS_CHANGED_EVENT,
   dispatchCanvasRestoredEvent,
   getCanvasContentRoot,
+  getCanvasTemplateRoot,
   inferHiddenElementsFromCanvasHtml,
   isPersistedCanvasHtmlValid,
   loadHiddenElements,
   loadPersistedCanvasHtml,
   persistCanvasHtml,
   persistTextBlockState,
+  scrubAndPersistEcommerceCanvas,
+  scrubRemovedTemplateSectionsFromHtml,
   syncHiddenElementsFromCanvas,
   templateUsesHtmlCanvasPersistence,
   clearPersistedCanvasHtml,
   writeBlockpagesStorageItem,
+  BLOCKPAGES_CANVAS_RESTORED_EVENT,
 } from "@/lib/blockpagesEditorPersistence";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
@@ -120,6 +126,18 @@ function resolveEditableColor(element: HTMLElement, color: string) {
   }
   return color;
 }
+
+function textStylesEqual(a: TextStyles, b: TextStyles) {
+  return (
+    a.color === b.color &&
+    a.fontSize === b.fontSize &&
+    a.fontFamily === b.fontFamily &&
+    a.lineHeight === b.lineHeight &&
+    a.letterSpacing === b.letterSpacing &&
+    a.fontWeight === b.fontWeight &&
+    a.textAlign === b.textAlign
+  );
+}
  
 export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onUndo, onRedo, template = "ecommerce", isImageEditingMode = false, customImages = {}, onEditImage, editingImageId, isButtonEditingMode = false, customButtons = {},
   onEditButton,
@@ -150,6 +168,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const activeEditableRef = useRef<HTMLElement | null>(null);
+  const isTextSelectingRef = useRef(false);
   const stateRef = useRef(state);
   const onStateChangeRef = useRef(onStateChange);
   const isRestoringCanvasRef = useRef(false);
@@ -211,6 +230,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
 
     isRestoringCanvasRef.current = true;
     applyCanvasContent(canvasRef.current, savedHtml);
+    if (template === "ecommerce") {
+      scrubAndPersistEcommerceCanvas(canvasRef.current);
+    }
     inferHiddenElementsFromCanvasHtml(template, savedHtml);
     applyHiddenElementsToCanvas(canvasRef.current, template);
     const canvasRoot = getCanvasContentRoot(canvasRef.current);
@@ -224,6 +246,29 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     template,
     refreshHiddenElementsState,
   ]);
+
+  useLayoutEffect(() => {
+    if (template !== "ecommerce" || !canvasRef.current || isRestoringCanvasRef.current) return;
+    scrubAndPersistEcommerceCanvas(canvasRef.current);
+  }, [template]);
+
+  useEffect(() => {
+    if (template !== "ecommerce") return;
+
+    const cleanupRetiredChrome = () => {
+      if (!canvasRef.current) return;
+      scrubAndPersistEcommerceCanvas(canvasRef.current);
+    };
+
+    cleanupRetiredChrome();
+    const frameId = window.requestAnimationFrame(cleanupRetiredChrome);
+    window.addEventListener(BLOCKPAGES_CANVAS_RESTORED_EVENT, cleanupRetiredChrome);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener(BLOCKPAGES_CANVAS_RESTORED_EVENT, cleanupRetiredChrome);
+    };
+  }, [template]);
 
   useLayoutEffect(() => {
     if (!canvasRef.current) return;
@@ -284,13 +329,14 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         const html = captureCanvasContent(canvasRef.current);
         if (isPersistedCanvasHtmlValid(template, html)) {
           persistCanvasHtml(template, html);
-          pendingCanvasHtmlRef.current = html;
+          pendingCanvasHtmlRef.current = scrubRemovedTemplateSectionsFromHtml(html, template);
         }
       }, 250);
     };
 
     root.addEventListener("input", scheduleSave, true);
     const observer = new MutationObserver((mutations) => {
+      if (isBlockpagesTextEditingActive() && mutationsAreFromTextEditing(mutations)) return;
       scheduleSave();
       for (const mutation of mutations) {
         for (const node of Array.from(mutation.removedNodes)) {
@@ -342,6 +388,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     scheduleSnapshot();
     canvasRoot.addEventListener("input", scheduleSnapshot, true);
     const observer = new MutationObserver((mutations) => {
+      if (isBlockpagesTextEditingActive() && mutationsAreFromTextEditing(mutations)) return;
       const shouldSnapshot = mutations.some((mutation) => {
         const target = mutation.target;
         if (!(target instanceof Element)) return true;
@@ -380,6 +427,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
 
       isRestoringCanvasRef.current = true;
       applyCanvasContent(canvasRef.current, savedHtml);
+      if (template === "ecommerce") {
+        scrubAndPersistEcommerceCanvas(canvasRef.current);
+      }
       inferHiddenElementsFromCanvasHtml(template, savedHtml);
       applyHiddenElementsToCanvas(canvasRef.current, template);
       const canvasRoot = getCanvasContentRoot(canvasRef.current);
@@ -398,10 +448,24 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     };
   }, [template, refreshHiddenElementsState]);
  
-  useEffect(() => {
-    const activeText = canvasRef.current?.querySelector(".editable-text-active") as HTMLElement | null;
+  useLayoutEffect(() => {
+    const activeText =
+      activeEditableRef.current ??
+      (canvasRef.current?.querySelector(".editable-text-active") as HTMLElement | null);
     if (!activeText) return;
- 
+
+    const selection = window.getSelection();
+    const hadFocus = document.activeElement === activeText;
+    const isSelecting = isTextSelectingRef.current;
+    const savedRange =
+      !isSelecting &&
+      selection &&
+      selection.rangeCount > 0 &&
+      selection.anchorNode &&
+      activeText.contains(selection.anchorNode)
+        ? selection.getRangeAt(0).cloneRange()
+        : null;
+
     if (state.textStyles.color) {
       activeText.style.setProperty(
         "color",
@@ -409,24 +473,32 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         "important"
       );
     } else activeText.style.removeProperty("color");
- 
+
     if (state.textStyles.fontSize) activeText.style.setProperty("font-size", `${state.textStyles.fontSize}px`, "important");
     else activeText.style.removeProperty("font-size");
- 
+
     if (state.textStyles.fontFamily) activeText.style.setProperty("font-family", state.textStyles.fontFamily, "important");
     else activeText.style.removeProperty("font-family");
- 
+
     if (state.textStyles.lineHeight) activeText.style.setProperty("line-height", state.textStyles.lineHeight, "important");
     else activeText.style.removeProperty("line-height");
- 
+
     if (state.textStyles.letterSpacing) activeText.style.setProperty("letter-spacing", state.textStyles.letterSpacing, "important");
     else activeText.style.removeProperty("letter-spacing");
- 
+
     if (state.textStyles.fontWeight) activeText.style.setProperty("font-weight", state.textStyles.fontWeight, "important");
     else activeText.style.removeProperty("font-weight");
- 
+
     if (state.textStyles.textAlign) activeText.style.setProperty("text-align", state.textStyles.textAlign, "important");
     else activeText.style.removeProperty("text-align");
+
+    if (hadFocus) {
+      activeText.focus({ preventScroll: true });
+      if (savedRange && selection) {
+        selection.removeAllRanges();
+        selection.addRange(savedRange);
+      }
+    }
   }, [state.selectedTarget, state.textStyles]);
  
   useEffect(() => {
@@ -440,45 +512,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     const selectedTarget = state.selectedTarget;
     const textEditingOptions = { allowTextEditing: true };
 
-    const handleEditableMouseDown = (event: Event) => {
-      if (!isTextEditable || isPreviewMode) return;
-
-      const target = event.target as HTMLElement;
-      if (isBlockpagesInteractiveControl(target, textEditingOptions)) return;
-
-      const editableNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
-      if (!editableNode || editableNode.tagName !== "BUTTON") return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      editableNode.focus();
-    };
-
-    const handleTextClick = (event: Event) => {
-      if (!isTextEditable || isPreviewMode) return;
-
-      const target = event.target as HTMLElement;
-      if (isBlockpagesInteractiveControl(target, textEditingOptions)) return;
-
-      const editableNode =
-        (target.closest(
-          '[data-blockpages-dropdown-panel="true"] button, button.buyscreen-all-categories-item, button.buyscreen-user-menu-item, [contenteditable="true"]'
-        ) as HTMLElement | null) ?? target;
-
-      if (!editableNode.isContentEditable && !editableNode.closest('[contenteditable="true"]')) return;
-
-      const resolvedNode = editableNode.closest('[contenteditable="true"]') as HTMLElement ?? editableNode;
-      if (!resolvedNode.isContentEditable) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-
-      activeEditableRef.current = resolvedNode;
-      contentRoot.querySelectorAll(".editable-text-active").forEach((element) => element.classList.remove("editable-text-active"));
-      resolvedNode.classList.add("editable-text-active");
-      resolvedNode.focus();
-
+    const syncTextStylesFromNode = (resolvedNode: HTMLElement) => {
       const computedStyle = window.getComputedStyle(resolvedNode);
       const nextTextStyles: TextStyles = {
         color: rgbToHex(resolvedNode.style.color || computedStyle.color),
@@ -486,11 +520,114 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         fontFamily: resolvedNode.style.fontFamily || computedStyle.fontFamily,
       };
 
+      if (textStylesEqual(stateRef.current.textStyles, nextTextStyles)) return;
       onStateChangeRef.current({ ...stateRef.current, textStyles: nextTextStyles });
+    };
+
+    const activateEditableNode = (resolvedNode: HTMLElement) => {
+      activeEditableRef.current = resolvedNode;
+      contentRoot.querySelectorAll(".editable-text-active").forEach((element) => {
+        element.classList.remove("editable-text-active");
+      });
+      resolvedNode.classList.add("editable-text-active");
+      window.requestAnimationFrame(() => {
+        if (activeEditableRef.current !== resolvedNode) return;
+        syncTextStylesFromNode(resolvedNode);
+      });
+    };
+
+    const handleEditableMouseDown = (event: Event) => {
+      if (!isTextEditable || isPreviewMode) return;
+
+      const mouseEvent = event as MouseEvent;
+      const target = mouseEvent.target as HTMLElement;
+      if (isBlockpagesInteractiveControl(target, textEditingOptions)) return;
+
+      const editableNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
+      if (!editableNode || editableNode.tagName !== "BUTTON") return;
+
+      mouseEvent.preventDefault();
+      mouseEvent.stopPropagation();
+      activateEditableNode(editableNode);
+      editableNode.focus({ preventScroll: true });
+    };
+
+    const handleTextMouseDown = (event: Event) => {
+      if (!isTextEditable || isPreviewMode) return;
+
+      const mouseEvent = event as MouseEvent;
+      const target = mouseEvent.target as HTMLElement;
+      if (isBlockpagesInteractiveControl(target, textEditingOptions)) return;
+
+      const resolvedNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
+      if (!resolvedNode?.isContentEditable) return;
+
+      isTextSelectingRef.current = true;
+      if (activeEditableRef.current !== resolvedNode) {
+        activateEditableNode(resolvedNode);
+      }
+    };
+
+    const handleTextMouseUp = () => {
+      isTextSelectingRef.current = false;
+    };
+
+    const placeCaretAtEnd = (editableNode: HTMLElement) => {
+      const selection = window.getSelection();
+      if (!selection) return;
+      const range = document.createRange();
+      range.selectNodeContents(editableNode);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
+    const ensureEditablePlaceholder = (editableNode: HTMLElement) => {
+      if (editableNode.textContent?.trim()) return;
+      if (editableNode.innerHTML === "<br>" || editableNode.innerHTML === "<br/>") return;
+      editableNode.innerHTML = "<br>";
+    };
+
+    const handleTextInput = (event: Event) => {
+      if (!isTextEditable || isPreviewMode) return;
+
+      const target = event.target as HTMLElement;
+      const editableNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
+      if (!editableNode?.isContentEditable) return;
+
+      activeEditableRef.current = editableNode;
+      ensureEditablePlaceholder(editableNode);
+
+      if (document.activeElement !== editableNode) {
+        editableNode.focus({ preventScroll: true });
+        placeCaretAtEnd(editableNode);
+      }
+    };
+
+    const handleTextFocusIn = (event: Event) => {
+      if (!isTextEditable || isPreviewMode) return;
+
+      const target = event.target as HTMLElement;
+      const resolvedNode = target.closest('[contenteditable="true"]') as HTMLElement | null;
+      if (!resolvedNode?.isContentEditable) return;
+      if (activeEditableRef.current === resolvedNode) return;
+
+      activateEditableNode(resolvedNode);
     };
 
     const makeEditable = (node: Element) => {
       if (node.closest("[data-builder-chrome='true']")) return;
+      if (node.closest('[data-blockpages-interactive="true"], .buyscreen-search, input, textarea, select')) return;
+      if (
+        node instanceof HTMLElement &&
+        node.tagName === "BUTTON" &&
+        node.closest("nav.buyscreen-categories") &&
+        (node.classList.contains("buyscreen-category-item") || node.hasAttribute("data-blockpages-interactive"))
+      ) {
+        node.removeAttribute("contenteditable");
+        node.classList.remove("editable-text-active");
+        return;
+      }
 
       const isInDropdown = node.closest('[data-blockpages-dropdown-panel="true"]') !== null;
       const isHeader = !isInDropdown && nodeIsInBlockpagesHeaderChrome(node);
@@ -516,6 +653,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
             htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
           }
         } else {
+          if (activeEditableRef.current === htmlNode) {
+            activeEditableRef.current = null;
+          }
           node.removeAttribute("contenteditable");
           htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
           node.classList.remove("editable-text-active");
@@ -526,10 +666,15 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     };
 
     makeEditable(contentRoot);
-    contentRoot.addEventListener("click", handleTextClick, true);
+    contentRoot.addEventListener("mousedown", handleTextMouseDown, true);
+    contentRoot.addEventListener("focusin", handleTextFocusIn, true);
+    contentRoot.addEventListener("input", handleTextInput, true);
+    document.addEventListener("mouseup", handleTextMouseUp, true);
 
     let resyncTimer: number | null = null;
-    const contentObserver = new MutationObserver(() => {
+    const contentObserver = new MutationObserver((mutations) => {
+      if (isBlockpagesTextEditingActive()) return;
+      if (mutationsAreFromTextEditing(mutations)) return;
       if (resyncTimer) window.clearTimeout(resyncTimer);
       resyncTimer = window.setTimeout(() => makeEditable(contentRoot), 120);
     });
@@ -538,7 +683,10 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     return () => {
       contentObserver.disconnect();
       if (resyncTimer) window.clearTimeout(resyncTimer);
-      contentRoot.removeEventListener("click", handleTextClick, true);
+      contentRoot.removeEventListener("mousedown", handleTextMouseDown, true);
+      contentRoot.removeEventListener("focusin", handleTextFocusIn, true);
+      contentRoot.removeEventListener("input", handleTextInput, true);
+      document.removeEventListener("mouseup", handleTextMouseUp, true);
       const removeListeners = (node: Element) => {
         if (textTags.includes(node.tagName)) {
           const htmlNode = node as HTMLElement;
@@ -588,6 +736,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     const captureDevice =
       (canvasRoot.getAttribute("data-blockpages-device") as "desktop" | "tablet" | "mobile" | null) ?? "desktop";
 
+    finalizeCanvasBeforePreview(canvasRoot);
     const previewHtml = buildPreviewHtmlFromCanvas(canvasRoot, {
       captureDevice,
       appliedDividers,
@@ -700,6 +849,11 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
           >
             {isTextEditable && !isPreviewMode ? (
               <style>{`
+                [data-textblock-canvas] [contenteditable="true"] {
+                  user-select: text !important;
+                  -webkit-user-select: text !important;
+                  caret-color: auto !important;
+                }
                 [data-textblock-canvas] [contenteditable="true"]:hover {
                   outline: 1px dashed rgba(99, 229, 255, 0.7);
                   outline-offset: 2px;
@@ -708,6 +862,11 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                 [data-textblock-canvas] .editable-text-active {
                   outline: 2px dashed #63e5ff !important;
                   outline-offset: 4px;
+                }
+                [data-textblock-canvas][data-blockpages-text-editing="true"] .portfolio-reveal {
+                  opacity: 1 !important;
+                  transform: none !important;
+                  transition: none !important;
                 }
               `}</style>
             ) : null}
@@ -900,12 +1059,10 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                             isVideoEditingMode={isVideoEditingMode}
                             onEditVideo={onEditVideo}
                             sectionStyles={state.sectionStyles}
-                            onPreview={previewHandler}
                             isIconEditingMode={isIconEditingMode}
                             customIcons={customIcons}
                             onEditIcon={onEditIcon}
                             editingIconId={editingIconId}
-                            onSaveDraft={onSaveDraft}
                           />
                         </BlockpagesCanvasEnhancer>
                       ) : (

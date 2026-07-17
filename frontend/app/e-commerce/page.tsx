@@ -71,16 +71,16 @@ type CartItem = {
 };
 
 const buyProducts: BuyProduct[] = [
-  { id: "phone", name: "Phone", image: assetPath("/phone.webp"), badge: "", price: "$899.00", unitPriceCents: 899_00 },
-  { id: "audio", name: "Audio", image: assetPath("/audio.webp"), badge: "50%", price: "$149.00", originalPrice: "$298.00", unitPriceCents: 149_00 },
-  { id: "laptop", name: "Laptop", image: assetPath("/laptop.webp"), badge: "", price: "$1,299.00", unitPriceCents: 129_900 },
-  { id: "camera", name: "Camera", image: assetPath("/camera.webp"), badge: "", price: "$79.00", unitPriceCents: 79_00 },
-  { id: "television", name: "Television", image: assetPath("/television.webp"), badge: "", price: "$599.00", unitPriceCents: 599_00 },
-  { id: "tablet", name: "Tablet", image: assetPath("/tablet.webp"), badge: "", price: "$399.00", unitPriceCents: 399_00 },
-  { id: "watch", name: "Watch", image: assetPath("/watch.webp"), badge: "", price: "$199.00", unitPriceCents: 199_00 },
-  { id: "speaker", name: "Speaker", image: assetPath("/speaker.webp"), badge: "", price: "$89.00", unitPriceCents: 89_00 },
-  { id: "keyboard", name: "Keyboard", image: assetPath("/keyboard.webp"), badge: "", price: "$49.00", unitPriceCents: 49_00 },
-  { id: "mouse", name: "Mouse", image: assetPath("/mouse.webp"), badge: "", price: "$29.00", unitPriceCents: 29_00 },
+  { id: "phone", name: "Phone", image: assetPath("/phone.webp"), badge: "", price: "₹89,999.00", unitPriceCents: 89999_00 },
+  { id: "audio", name: "Audio", image: assetPath("/audio.webp"), badge: "50%", price: "₹1,250.00", originalPrice: "₹2,500.00", unitPriceCents: 1250_00 },
+  { id: "laptop", name: "Laptop", image: assetPath("/laptop.webp"), badge: "", price: "₹1,29,999.00", unitPriceCents: 129999_00 },
+  { id: "camera", name: "Camera", image: assetPath("/camera.webp"), badge: "", price: "₹79,000.00", unitPriceCents: 79000_00 },
+  { id: "television", name: "Television", image: assetPath("/television.webp"), badge: "", price: "₹59,999.00", unitPriceCents: 59999_00 },
+  { id: "tablet", name: "Tablet", image: assetPath("/tablet.webp"), badge: "", price: "₹69,999.00", unitPriceCents: 69999_00 },
+  { id: "watch", name: "Watch", image: assetPath("/watch.webp"), badge: "", price: "₹19,999.00", unitPriceCents: 19999_00 },
+  { id: "speaker", name: "Speaker", image: assetPath("/speaker.webp"), badge: "", price: "₹9,999.00", unitPriceCents: 9999_00 },
+  { id: "keyboard", name: "Keyboard", image: assetPath("/keyboard.webp"), badge: "", price: "₹1,999.00", unitPriceCents: 1999_00 },
+  { id: "mouse", name: "Mouse", image: assetPath("/mouse.webp"), badge: "", price: "₹999.00", unitPriceCents: 999_00 },
 ];
 const buyProductById = new Map(buyProducts.map((product) => [product.id, product]));
 
@@ -249,7 +249,7 @@ function formatUsd(cents: number): string {
   const parts = n.toFixed(2).split(".");
   const intPart = parts[0] ?? "0";
   const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return `$ ${withCommas}.${parts[1] ?? "00"}`;
+  return `₹ ${withCommas}.${parts[1] ?? "00"}`;
 }
 
 

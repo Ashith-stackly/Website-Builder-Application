@@ -1077,6 +1077,31 @@ export function bakeDraggableOverlayPositions(root: ParentNode) {
   commitOverlayTransformsToPosition(root);
 }
 
+/** Remove divider DOM that is no longer tracked in editor state (stale prod/localStorage artifacts). */
+export function scrubOrphanDividerDomFromLiveCanvas(
+  canvas: ParentNode | null,
+  activeDividerIds: string[] = []
+) {
+  if (typeof document === "undefined" || !canvas) return;
+
+  const activeIds = new Set(activeDividerIds);
+  const liveCanvas = canvas instanceof HTMLElement ? canvas : canvas.parentElement;
+  if (!liveCanvas) return;
+
+  liveCanvas
+    .querySelectorAll<HTMLElement>('[data-blockpages-overlay-kind="divider"]')
+    .forEach((overlay) => {
+      const overlayId = overlay.getAttribute("data-blockpages-overlay-id");
+      if (!overlayId || !activeIds.has(overlayId)) {
+        overlay.remove();
+      }
+    });
+
+  liveCanvas
+    .querySelectorAll('[data-blockpages-preview-divider="true"]')
+    .forEach((node) => node.remove());
+}
+
 export function readBlockpagesPreviewCaptureDevice(html: string): BlockpagesPreviewCaptureDevice | null {
   const match = html.match(/data-blockpages-capture-device="(desktop|tablet|mobile)"/);
   return match ? (match[1] as BlockpagesPreviewCaptureDevice) : null;

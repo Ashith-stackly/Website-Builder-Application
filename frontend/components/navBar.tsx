@@ -37,6 +37,13 @@ import { useBuilderStore } from "@/store/builderStore";
 import { useDesignStore } from "@/store/designStore";
 import { useProjectStore } from "@/store/projectStore";
 import { defaultUserSettings, readUserSettings, USER_SETTINGS_EVENT } from "@/lib/userSettings";
+import {
+  loadRazorpayCheckoutScript,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  openRazorpayCheckout,
+} from "@/lib/razorpayClient";
+import MockCheckoutModal from "@/components/MockCheckoutModal";
  
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
  
@@ -331,6 +338,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [cartItems, setCartItems] = useState<StoredCommerceItem[]>([]);
   const [activePanel, setActivePanel] = useState<"wishlist" | "cart" | null>(null);
   const [cartToast, setCartToast] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [checkoutProduct, setCheckoutProduct] = useState<{ title: string; price: number; image?: string; alt?: string; quantity?: number } | null>(null);
 
   const showCartToast = (message: string) => {
     setCartToast(message);
@@ -586,6 +595,66 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
   };
  
+  const handleCheckoutClick = () => {
+    if (cartItems.length === 0) return;
+    const firstItem = normalizeStoredItem(cartItems[0]);
+    const totalQty = cartItems.reduce((total, item) => total + (item.quantity || item.qty || 1), 0);
+    setCheckoutProduct({
+      title: cartItems.length === 1 ? firstItem.title : `Cart Checkout (${cartItems.length} Items)`,
+      price: cartSubtotal,
+      image: firstItem.image,
+      alt: firstItem.alt,
+      quantity: totalQty,
+    });
+  };
+
+  const executeCartPayment = async () => {
+    if (!checkoutProduct) return;
+    setCheckoutProduct(null);
+    setPaymentLoading(true);
+    try {
+      await loadRazorpayCheckoutScript();
+      const totalPaise = Math.round(checkoutProduct.price * 100);
+      const planName = checkoutProduct.title;
+
+      const order = await createRazorpayOrder({
+        amountPaise: totalPaise,
+        planName,
+        billingPeriod: "One-Time",
+      });
+
+      openRazorpayCheckout({
+        order,
+        planLabel: `Purchase of ${cartItems.length} items from Stackly`,
+        customerName: "Demo Customer",
+        customerEmail: "customer@example.com",
+        customerPhone: "9876543210",
+        onDismiss: () => setPaymentLoading(false),
+        onSuccess: async (response) => {
+          setPaymentLoading(true);
+          try {
+            const verified = await verifyRazorpayPayment(response);
+            if (!verified) throw new Error("Payment verification failed");
+
+            showCartToast("Payment Successful!");
+
+            window.localStorage.setItem("cartItems", "[]");
+            window.localStorage.setItem("cartCount", "0");
+            window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
+            setActivePanel(null);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Payment verification failed");
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not initialize payment");
+      setPaymentLoading(false);
+    }
+  };
+
   const toggleMenu = (menuName: "products" | "categories") => {
     setActiveMenu((currentMenu) => (currentMenu === menuName ? null : menuName));
     setIsProfileMenuOpen(false);
@@ -1045,7 +1114,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                         <div className="border-b border-white/5 bg-[#051a3d] py-2">
                           {items.map((item) => (
                             <Link key={`mobile-${title}-${item}`} href="/landing#categories" onClick={(event) => scrollLandingSection(event, "categories", true)} className="block px-14 py-3 text-[10px] text-gray-300 focus-visible:outline-none focus-visible:bg-white/10 focus-visible:text-white">
-                              {item}
+                          {item}
                             </Link>
                           ))}
                         </div>
@@ -1128,7 +1197,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               <FaXmark className="text-2xl" />
             </button>
           </div>
- 
+
           <div className={`flex-grow overflow-y-auto ${activePanel === "cart" ? "p-0" : "space-y-6 p-6"}`}>
             {(activePanel === "wishlist" ? wishlistItems : cartItems).length === 0 ? (
               <div className="py-20 text-center">
@@ -1142,47 +1211,48 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                 </p>
               </div>
             ) : activePanel === "cart" ? (
-              <div className="divide-y divide-gray-100 px-6 py-8">
+              <div className="divide-y divide-gray-100 px-4 py-6 sm:px-6">
                 {cartItems.map((storedItem) => {
                   const item = normalizeStoredItem(storedItem);
                   const title = storedItem.title || storedItem.name || item.title;
- 
+
                   return (
-                    <div key={`cart-${title}`} className="flex items-start gap-4 py-5 first:pt-0">
-                      <img src={assetPath(item.image)} alt={item.alt} className="h-[72px] w-24 flex-shrink-0 rounded-xl object-cover" />
+                    <div key={`cart-${title}`} className="relative flex items-start gap-3 py-4 first:pt-0">
+                      <img src={assetPath(item.image)} alt={item.alt} className="h-14 w-20 sm:h-[72px] sm:w-24 flex-shrink-0 rounded-xl object-cover" />
                       <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-base font-black uppercase tracking-wide text-[#06224C]">{item.title}</h3>
-                        <p className="mt-1 text-base font-black text-blue-600">
-                          ${item.price} x {item.quantity}
+                        <h3 className="truncate text-xs sm:text-base font-black uppercase tracking-wide text-[#06224C] pr-6">{item.title}</h3>
+                        <p className="mt-1 text-xs sm:text-base font-black text-blue-600">
+                          ₹ {item.price} x {item.quantity}
                         </p>
-                        <div className="mt-4 flex items-center gap-5">
+                        <div className="mt-2.5 flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => updateCartQuantity(title, -1)}
-                            disabled={item.quantity <= 1}
-                            className="flex h-9 w-9 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                            disabled={item.quantity <= 1 || paymentLoading}
+                            className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                             aria-label={`Decrease ${item.title} quantity`}
                           >
-                            <FaMinus />
+                            <FaMinus className="text-[10px]" />
                           </button>
-                          <span className="w-6 text-center text-lg font-black tabular-nums text-[#111827]">{item.quantity}</span>
+                          <span className="w-5 text-center text-xs sm:text-sm font-black tabular-nums text-[#111827]">{item.quantity}</span>
                           <button
                             type="button"
                             onClick={() => updateCartQuantity(title, 1)}
-                            className="flex h-9 w-9 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                            disabled={paymentLoading}
+                            className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                             aria-label={`Increase ${item.title} quantity`}
                           >
-                            <FaPlus />
+                            <FaPlus className="text-[10px]" />
                           </button>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeCartItem(title)}
-                        className="mt-5 text-gray-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
+                        className="absolute right-0 top-4 text-gray-400 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
                         aria-label={`Remove ${item.title} from cart`}
                       >
-                        <FaTrashCan className="text-xl" />
+                        <FaTrashCan className="text-base" />
                       </button>
                     </div>
                   );
@@ -1192,56 +1262,57 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               wishlistItems.map((storedItem) => {
                 const item = normalizeStoredItem(storedItem);
                 const title = storedItem.title || storedItem.name || item.title;
- 
+
                 return (
-                  <div key={`wishlist-${title}`} className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
-                    <img src={assetPath(item.image)} alt={item.alt} className="h-16 w-20 flex-shrink-0 rounded-xl object-cover" />
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-sm font-black text-[#06224C]">{item.title}</h3>
-                      <p className="text-xs italic text-gray-500">{item.type}</p>
-                      <p className="mt-1 text-sm font-black text-blue-600">
-                        {item.price ? `$ ${item.price}` : "Saved"}
+                  <div key={`wishlist-${title}`} className="relative flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm">
+                    <img src={assetPath(item.image)} alt={item.alt} className="h-12 w-16 flex-shrink-0 rounded-xl object-cover sm:h-16 sm:w-20" />
+                    <div className="min-w-0 flex-1 pr-6">
+                      <h3 className="truncate text-xs sm:text-sm font-black text-[#06224C]">{item.title}</h3>
+                      <p className="text-[10px] sm:text-xs italic text-gray-500">{item.type}</p>
+                      <p className="mt-1 text-xs sm:text-sm font-black text-blue-600">
+                        {item.price ? `₹ ${item.price}` : "Saved"}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
                       <button
                         type="button"
                         onClick={() => moveToCartFromWishlist(storedItem)}
-                        className="rounded-md bg-[#06224C] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-md transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
+                        className="rounded-md bg-[#06224C] px-2 py-1 sm:px-3 sm:py-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white shadow-md transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
                       >
                         Add to Cart
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => removeWishlistItem(title)}
-                        className="text-gray-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
-                        aria-label={`Remove ${item.title} from wishlist`}
-                      >
-                        <FaXmark />
-                      </button>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => removeWishlistItem(title)}
+                      className="absolute right-2 top-2 text-gray-400 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
+                      aria-label={`Remove ${item.title} from wishlist`}
+                    >
+                      <FaXmark className="text-sm" />
+                    </button>
                   </div>
                 );
               })
             )}
           </div>
- 
+
           {activePanel === "cart" ? (
-            <div className="border-t bg-gray-50 px-6 py-8">
-              <div className="mb-8 flex items-center justify-between">
-                <span className="text-sm font-black uppercase tracking-[0.28em] text-gray-500">Subtotal</span>
-                <span className="text-3xl font-black tabular-nums text-[#06224C]">${cartSubtotal.toFixed(2)}</span>
+            <div className="border-t bg-gray-50 p-4 sm:p-6">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs sm:text-sm font-black uppercase tracking-[0.12em] text-gray-500">Subtotal</span>
+                <span className="text-xl sm:text-2xl font-black tabular-nums text-[#06224C]">₹ {cartSubtotal.toFixed(2)}</span>
               </div>
               <button
                 type="button"
-                onClick={() => alert("Checkout is coming soon.")}
-                className="flex w-full items-center justify-center rounded-2xl bg-[#06224C] px-6 py-5 text-sm font-black uppercase tracking-[0.35em] text-white shadow-xl transition hover:bg-blue-900 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                disabled={paymentLoading || cartItems.length === 0}
+                onClick={handleCheckoutClick}
+                className="flex w-full items-center justify-center rounded-xl bg-[#06224C] px-4 py-2.5 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-white shadow-md transition hover:bg-blue-900 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Checkout Now
+                {paymentLoading ? "Processing..." : "Checkout Now"}
               </button>
             </div>
           ) : (
-            <div className="border-t bg-gray-50 p-6">
+            <div className="border-t bg-gray-50 p-4 sm:p-6">
               <p className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 Items saved in wishlist are not reserved.
               </p>
@@ -1257,6 +1328,17 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
         {cartToast}
       </div>
     )}
+
+    <MockCheckoutModal
+      isOpen={checkoutProduct !== null}
+      onClose={() => setCheckoutProduct(null)}
+      onSuccess={executeCartPayment}
+      productName={checkoutProduct?.title || ""}
+      productPrice={checkoutProduct?.price || 0}
+      productImage={checkoutProduct?.image}
+      productAlt={checkoutProduct?.alt}
+      quantity={checkoutProduct?.quantity}
+    />
     </>
   );
 }

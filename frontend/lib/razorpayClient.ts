@@ -1,23 +1,23 @@
 /** Client-side Razorpay Checkout — WBA uses static export + razorpay-api on :3001 in dev. */
-
+ 
 export type RazorpayPaymentSuccess = {
   razorpay_payment_id: string;
   razorpay_order_id: string;
   razorpay_signature: string;
 };
-
+ 
 export type RazorpayOrderResponse = {
   orderId: string;
   amount: number;
   currency: string;
   keyId: string;
 };
-
+ 
 export type RazorpayStatus = {
   ready: boolean;
   error?: string;
 };
-
+ 
 type RazorpayCheckoutOptions = {
   key: string;
   amount: number;
@@ -30,17 +30,17 @@ type RazorpayCheckoutOptions = {
   handler: (response: RazorpayPaymentSuccess) => void;
   modal?: { ondismiss?: () => void };
 };
-
+ 
 type RazorpayConstructor = new (options: RazorpayCheckoutOptions) => { open: () => void };
-
+ 
 declare global {
   interface Window {
     Razorpay?: RazorpayConstructor;
   }
 }
-
+ 
 const PLACEHOLDER_KEY_RE = /xxxx|your_secret|placeholder/i;
-
+ 
 export function getRazorpayConfigError(): string | null {
   const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
   if (!key.trim()) {
@@ -51,7 +51,7 @@ export function getRazorpayConfigError(): string | null {
   }
   return null;
 }
-
+ 
 /** True when Razorpay keys are missing/placeholder — use demo checkout for local UI testing. */
 export function isRazorpayDemoMode(): boolean {
   if (process.env.NEXT_PUBLIC_RAZORPAY_DEMO === "true") return true;
@@ -59,12 +59,12 @@ export function isRazorpayDemoMode(): boolean {
   if (!key.trim()) return true;
   return PLACEHOLDER_KEY_RE.test(key);
 }
-
+ 
 export function getRazorpaySetupHint(): string | null {
   if (!isRazorpayDemoMode()) return null;
   return "Demo mode: payment completes locally without Razorpay keys. Add real Test keys to .env.local for live checkout.";
 }
-
+ 
 /** Static export: payment API runs on port 3001 (npm run razorpay-api). */
 export function getRazorpayApiBase(): string {
   const fromEnv = process.env.NEXT_PUBLIC_RAZORPAY_API_BASE?.replace(/\/$/, "");
@@ -74,18 +74,18 @@ export function getRazorpayApiBase(): string {
   }
   return "";
 }
-
+ 
 function razorpayApiUrl(path: string): string {
   const base = getRazorpayApiBase();
   return base ? `${base}${path}` : path;
 }
-
+ 
 export function parseDisplayPriceToPaise(price: string): number {
   const n = Number.parseFloat(price.replace(/[^0-9.]/g, ""));
   if (!Number.isFinite(n) || n <= 0) return 0;
   return Math.round(n * 100);
 }
-
+ 
 export function formatInrFromDisplayPrice(price: string): string {
   const paise = parseDisplayPriceToPaise(price);
   if (paise <= 0) return "₹0";
@@ -95,7 +95,7 @@ export function formatInrFromDisplayPrice(price: string): string {
     maximumFractionDigits: 0,
   }).format(paise / 100);
 }
-
+ 
 export function loadRazorpayCheckoutScript(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (window.Razorpay) return Promise.resolve();
@@ -114,7 +114,7 @@ export function loadRazorpayCheckoutScript(): Promise<void> {
     document.body.appendChild(script);
   });
 }
-
+ 
 async function postRazorpayApi<T>(path: string, body: unknown): Promise<T> {
   let res: Response;
   try {
@@ -134,20 +134,31 @@ async function postRazorpayApi<T>(path: string, body: unknown): Promise<T> {
   }
   return data;
 }
-
+ 
 export async function createRazorpayOrder(payload: {
   amountPaise: number;
   planName: string;
   billingPeriod: string;
 }): Promise<RazorpayOrderResponse> {
+  if (isRazorpayDemoMode()) {
+    return {
+      orderId: `order_demo_${Math.random().toString(36).substring(2, 9)}`,
+      amount: payload.amountPaise,
+      currency: "INR",
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
+    };
+  }
   return postRazorpayApi<RazorpayOrderResponse>("/api/razorpay/create-order", payload);
 }
-
+ 
 export async function verifyRazorpayPayment(payload: RazorpayPaymentSuccess): Promise<boolean> {
+  if (isRazorpayDemoMode()) {
+    return true;
+  }
   const data = await postRazorpayApi<{ verified?: boolean }>("/api/razorpay/verify", payload);
   return Boolean(data.verified);
 }
-
+ 
 export function openRazorpayCheckout(options: {
   order: RazorpayOrderResponse;
   planLabel: string;
@@ -157,10 +168,53 @@ export function openRazorpayCheckout(options: {
   onSuccess: (response: RazorpayPaymentSuccess) => void;
   onDismiss?: () => void;
 }): void {
+  let completed = false;
+  let hasOpened = false;
+  let observer: MutationObserver | null = null;
+ 
+  const cleanup = () => {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+  };
+ 
+  const handleSuccess = (response: RazorpayPaymentSuccess) => {
+    if (completed) return;
+    completed = true;
+    cleanup();
+    options.onSuccess(response);
+  };
+ 
+  const handleDismiss = () => {
+    if (completed) return;
+    completed = true;
+    cleanup();
+    if (options.onDismiss) options.onDismiss();
+  };
+ 
+  if (isRazorpayDemoMode()) {
+    // Simulated demo checkout!
+    const confirmed = window.confirm(`[Demo Checkout] Proceed with payment for ${options.planLabel}?`);
+    if (confirmed) {
+      setTimeout(() => {
+        handleSuccess({
+          razorpay_payment_id: `pay_demo_${Math.random().toString(36).substring(2, 9)}`,
+          razorpay_order_id: options.order.orderId,
+          razorpay_signature: "signature_demo",
+        });
+      }, 500);
+    } else {
+      handleDismiss();
+    }
+    return;
+  }
+ 
   const Razorpay = window.Razorpay;
   if (!Razorpay) {
     throw new Error("Razorpay checkout is not loaded");
   }
+ 
   const rzp = new Razorpay({
     key: options.order.keyId,
     amount: options.order.amount,
@@ -174,8 +228,24 @@ export function openRazorpayCheckout(options: {
       contact: options.customerPhone.replace(/\D/g, "").slice(-10),
     },
     theme: { color: "#002147" },
-    handler: options.onSuccess,
-    modal: { ondismiss: options.onDismiss },
+    handler: handleSuccess,
+    modal: { ondismiss: handleDismiss },
   });
+ 
+  // Watch the DOM for .razorpay-container presence/removal as a robust fallback
+  if (typeof window !== "undefined" && typeof MutationObserver !== "undefined") {
+    observer = new MutationObserver(() => {
+      const container = document.querySelector(".razorpay-container");
+      if (container) {
+        hasOpened = true;
+      } else if (hasOpened && !container) {
+        handleDismiss();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+ 
   rzp.open();
 }
+ 
+ 
