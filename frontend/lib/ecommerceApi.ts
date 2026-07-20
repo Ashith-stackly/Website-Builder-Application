@@ -49,9 +49,10 @@ export async function createProduct(body: CreateProductBody): Promise<Product> {
 }
 
 export async function listProducts(workspaceId: string): Promise<Product[]> {
-  return ecommerceRequest<Product[]>(`/ecommerce/products/${encodeURIComponent(workspaceId)}`, {
+  const data = await ecommerceRequest<{ products: Product[] }>(`/ecommerce/products/${encodeURIComponent(workspaceId)}`, {
     method: "GET",
   });
+  return Array.isArray(data.products) ? data.products : [];
 }
 
 export async function getProduct(id: string): Promise<Product> {

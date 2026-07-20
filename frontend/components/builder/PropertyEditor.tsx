@@ -25,6 +25,7 @@ const SECTION_AI_BLOCKS = new Set([
   "accordion",
   "tabs",
   "pricing-table",
+  "product-collection",
   "testimonial",
   "footer",
   "form",

@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import SortableItem from "./SortableItem";
 import QuickInsertBar from "./QuickInsertBar";
 import ExportButton from "./ExportButton";
+import FreeformCanvas from "./FreeformCanvas";
 import ButtonComponent from "@/components/draggable/ButtonComponent";
 import IconComponent from "@/components/draggable/IconComponent";
 import { useBuilderStore } from "@/store/builderStore";
@@ -67,6 +68,7 @@ function Canvas({
   const saveDraft = useBuilderStore((s) => s.saveDraft);
   const markDirty = useBuilderStore((s) => s.markDirty);
   const canvasMode = useBuilderStore((s) => s.canvasMode);
+  const setCanvasMode = useBuilderStore((s) => s.setCanvasMode);
   const autoSaveEnabled = useDesignStore((s) => s.autoSaveEnabled);
   const tokens = useDesignStore((s) => s.tokens);
   const seo = useDesignStore((s) => s.seo);
@@ -388,6 +390,39 @@ function Canvas({
             <span className="hidden sm:inline">{label}</span>
           </button>
         ))}
+        <div className="mx-1 h-5 w-px bg-[#dbe3ef]" />
+        <div
+          role="group"
+          aria-label="Canvas layout mode"
+          className="flex items-center rounded-md border border-[#dbe3ef] bg-white p-0.5 shadow-sm"
+        >
+          <button
+            type="button"
+            title="Flow layout — the default responsive section editor"
+            aria-pressed={canvasMode === "flow"}
+            onClick={() => setCanvasMode("flow")}
+            className={`rounded px-2 py-1 text-[10px] font-bold transition ${
+              canvasMode === "flow"
+                ? "bg-[#0B1D40] text-white"
+                : "text-[#566583] hover:bg-slate-100 hover:text-[#0B1D40]"
+            }`}
+          >
+            Flow
+          </button>
+          <button
+            type="button"
+            title="Freeform layout — position and resize blocks on an absolute canvas"
+            aria-pressed={canvasMode === "freeform"}
+            onClick={() => setCanvasMode("freeform")}
+            className={`rounded px-2 py-1 text-[10px] font-bold transition ${
+              canvasMode === "freeform"
+                ? "bg-blue-600 text-white"
+                : "text-[#566583] hover:bg-slate-100 hover:text-[#0B1D40]"
+            }`}
+          >
+            Freeform
+          </button>
+        </div>
         <AnimatePresence>
           {viewport !== "desktop" && (
             <motion.span
@@ -404,6 +439,13 @@ function Canvas({
       </div>
 
       {/* ── Canvas drop zone ── */}
+      {canvasMode === "freeform" ? (
+        <FreeformCanvas
+          onAddComponent={(type) => storeAddComponent(type)}
+          dropRef={setNodeRef}
+          isDropTarget={isOver}
+        />
+      ) : (
       <div
         ref={setNodeRef}
         className={`flex flex-1 flex-col items-center overflow-y-auto px-3 py-4 transition sm:px-4 ${isOver ? "bg-blue-50/50" : "bg-[#f0f3f8]"}`}
@@ -532,6 +574,7 @@ function Canvas({
           )}
         </motion.div>
       </div>
+      )}
 
       <AssetManager open={isAssetsOpen} onClose={() => setIsAssetsOpen(false)} />
 

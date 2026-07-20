@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
-  <title>Stackly · Implementation Audit</title>
+  <title>Stackly - Implementation Audit</title>
   <meta name="description" content="A source-and-contract audit of the Stackly Website Builder. It tracks implemented, partial, and pending work across the current frontend and unified backend." />
   <meta name="theme-color" content="#0b1220" />
 
@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="assets/analysis.css" />
 </head>
 <body>
-  <!-- ============ SVG ICON SPRITE (line icons, 24×24, stroke=currentColor) ============ -->
+  <!-- ============ SVG ICON SPRITE (line icons, 24x24, stroke=currentColor) ============ -->
   <svg width="0" height="0" class="visually-hidden" aria-hidden="true" focusable="false">
     <defs>
       <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
@@ -63,9 +63,9 @@
 
       <div class="legend" aria-hidden="true">
         <p class="nav-label">Legend</p>
-        <div class="legend-row"><span class="lg-dot st-done"></span> Done — implemented in source</div>
-        <div class="legend-row"><span class="lg-dot st-partial"></span> Partial — integration still needed</div>
-        <div class="legend-row"><span class="lg-dot st-pending"></span> Pending — not found in source</div>
+        <div class="legend-row"><span class="lg-dot st-done"></span> Done - implemented in source</div>
+        <div class="legend-row"><span class="lg-dot st-partial"></span> Partial - integration still needed</div>
+        <div class="legend-row"><span class="lg-dot st-pending"></span> Pending - not found in source</div>
       </div>
 
       <div class="side-foot">
@@ -96,7 +96,7 @@
         <h1 id="projName" class="hero-title">Stackly</h1>
         <p class="hero-tag" id="projTagline"></p>
         <div class="hero-bar-head">
-          <span>Implementation coverage <span class="muted">(done 100% · partial 50%)</span></span>
+          <span>Implementation coverage <span class="muted">(done 100% - partial 50%)</span></span>
           <span id="deltaPill" class="delta-pill"></span>
         </div>
         <div id="overallBar" class="reveal"><!-- injected --></div>
@@ -114,7 +114,7 @@
 
       <section class="audit-note reveal" aria-label="Audit scope">
         <svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>
-        <p><strong>Audit scope:</strong> statuses are based on the source tree and frontend/backend contracts. External configuration (including server-side AI provider credentials), database connectivity, payment credentials, DNS, and hosted deployment were not run or verified here.</p>
+        <p><strong>Audit scope:</strong> statuses are based on the source tree and frontend/backend contracts. External configuration (including server-side AI provider credentials and the public analytics endpoint/origin policy), database connectivity, payment credentials, DNS, and hosted deployment were not run or verified here.</p>
       </section>
 
       <!-- What changed -->
@@ -150,7 +150,7 @@
         <div class="search-wrap">
           <label class="search-box">
             <svg class="ico search-ico" aria-hidden="true"><use href="#i-search"/></svg>
-            <input id="searchInput" type="search" placeholder="Search tasks, notes, paths…" aria-label="Search tasks, notes, and file paths" autocomplete="off" />
+            <input id="searchInput" type="search" placeholder="Search tasks, notes, paths..." aria-label="Search tasks, notes, and file paths" autocomplete="off" />
             <kbd class="search-kbd" aria-hidden="true">/</kbd>
           </label>
           <span id="searchCount" class="search-count" role="status" aria-live="polite"></span>
@@ -168,7 +168,7 @@
       </div>
 
       <footer class="page-foot">
-        Generated from the current Stackly source tree. “Done” means implemented in source; “partial” means a user flow still needs integration, production infrastructure, or runtime quality assurance.
+        Generated from the current Stackly source tree. "Done" means implemented in source; "partial" means a user flow still needs integration, production infrastructure, or runtime quality assurance.
       </footer>
     </main>
   </div>

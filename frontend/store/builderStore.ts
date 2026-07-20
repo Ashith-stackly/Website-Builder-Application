@@ -2,8 +2,8 @@
 
 import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
-import { arrayMove } from "@dnd-kit/sortable";
 import { generateHtml } from "@/lib/exportHtml";
+import { getFreeformDefaultHeight } from "@/lib/freeformLayout";
 import { autosaveProject, createProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
 import { featureItemDefaults } from "@/components/blocks/feature-item/spec";
 import { heroDefaults } from "@/components/blocks/hero/spec";
@@ -14,6 +14,7 @@ import { videoDefaults }    from "@/components/blocks/video/spec";
 import { socialLinksDefaults } from "@/components/draggable/SocialLinksComponent";
 import { countdownDefaults } from "@/components/draggable/CountdownComponent";
 import { pricingTableDefaults } from "@/components/draggable/PricingTableComponent";
+import { productCollectionDefaults } from "@/components/blocks/product-collection/spec";
 import { testimonialDefaults } from "@/components/draggable/TestimonialComponent";
 import { footerDefaults } from "@/components/draggable/FooterComponent";
 import { formDefaults } from "@/components/draggable/FormComponent";
@@ -31,9 +32,11 @@ import {
   orderComponents,
   moveInSiblings,
   reorderTreeComponents,
+  findParentOf,
+  isAncestorOf,
 } from "@/lib/treeHelpers";
 import { buildProjectJSON, downloadProjectJSON, parseProjectJSON } from "@/lib/jsonExportImport";
-import type { AILayoutSection, AILayoutSuggestion, BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
+import type { AILayoutSection, AILayoutSuggestion, BuilderComponent, BuilderRequirements, BuilderState, ComponentStyles, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
 import { useDesignStore } from "@/store/designStore";
 import type { DesignTokens } from "@/store/designStore";
 
@@ -175,6 +178,16 @@ const defaults: Record<ComponentType, ComponentDefault> = {
     styles: { color: "#0B1D40", backgroundColor: "#f7f9fc", padding: "40px 24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
     children: [],
   },
+  "product-collection": {
+    content: "",
+    props: {
+      ...productCollectionDefaults,
+      products: productCollectionDefaults.products.map((product) => ({ ...product })),
+      productIds: [...productCollectionDefaults.productIds],
+    },
+    styles: { color: "#0B1D40", backgroundColor: "#ffffff", padding: "40px 24px", margin: "0 0 16px", borderRadius: "8px", width: "100%" },
+    children: [],
+  },
   testimonial: {
     content: "",
     props: { ...testimonialDefaults },
@@ -270,9 +283,6 @@ const cleanAIText = (value: unknown, maxLength = 800): string | undefined => {
   return text ? text.slice(0, maxLength) : undefined;
 };
 
-const readAIString = (section: AILayoutSection, key: string, maxLength?: number) =>
-  cleanAIText(section.props?.[key], maxLength) ?? cleanAIText(section.contentHint, maxLength);
-
 const readAICtaLabel = (section: AILayoutSection) => {
   const explicit = cleanAIText(section.props?.ctaLabel, 80);
   if (explicit) return explicit;
@@ -354,6 +364,7 @@ const createAISectionComponent = (
       break;
     case "features":
     case "pricing-table":
+    case "product-collection":
     case "testimonial":
       component.props = {
         ...(component.props ?? {}),
@@ -599,7 +610,7 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
       return section as ComponentType;
     })
     .filter((section): section is ComponentType =>
-      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container", "video", "map", "accordion", "tabs", "spacer", "social-links", "countdown", "pricing-table", "testimonial", "footer", "form", "row"].includes(section),
+      ["navigation", "hero", "heading", "text", "button", "icon", "feature-item", "columns", "image", "input", "divider", "features", "gallery", "contact", "container", "video", "map", "accordion", "tabs", "spacer", "social-links", "countdown", "pricing-table", "product-collection", "testimonial", "footer", "form", "row"].includes(section),
     );
 
   return sectionTypes.map((type, index) => {
@@ -662,6 +673,7 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
 /* ─── History helpers ────────────────────────────────────────────────────── */
 
 const MAX_HISTORY = 50;
+const GROUP_MARKER_PROP = "__stacklyGroup";
 
 /** Push current components onto the history stack and clear redo future. */
 function captureHistory(
@@ -671,6 +683,112 @@ function captureHistory(
     history: [...state.history.slice(-(MAX_HISTORY - 1)), state.components],
     future: [],
   };
+}
+
+/**
+ * Explicitly entering freeform is the only time we seed positions for an
+ * existing flow page. Loading, importing, and previewing never mutate legacy
+ * documents, preserving backwards compatibility until the user opts in.
+ */
+function materializeFreeformFrames(components: BuilderComponent[]): BuilderComponent[] {
+  let nextY = 40;
+  return components.map((component) => {
+    const estimatedHeight = component.freeformSize?.height
+      ?? getFreeformDefaultHeight(component.type);
+    const position = component.position ?? { x: 40, y: nextY };
+    nextY = Math.max(nextY, position.y + estimatedHeight + 24);
+    return component.position ? component : { ...component, position };
+  });
+}
+
+/** Place click/quick-inserted roots beneath the current Freeform document. */
+function positionNewFreeformRoot(
+  component: BuilderComponent,
+  siblings: BuilderComponent[],
+): BuilderComponent {
+  let nextY = 40;
+  siblings.forEach((sibling, index) => {
+    const fallbackY = 40 + index * (getFreeformDefaultHeight(sibling.type) + 24);
+    const position = sibling.position ?? { x: 40, y: fallbackY };
+    const height = sibling.freeformSize?.height ?? getFreeformDefaultHeight(sibling.type);
+    nextY = Math.max(nextY, position.y + height + 24);
+  });
+  return { ...component, position: { x: 40, y: nextY } };
+}
+
+/** Freeform frames belong to top-level blocks; nested children retain flow layout. */
+function resolveFreeformSelectionId(components: BuilderComponent[], id: string | null): string | null {
+  if (!id) return null;
+  const root = components.find((component) =>
+    component.id === id || Boolean(findComponentById(component.children, id)),
+  );
+  return root?.id ?? null;
+}
+
+/** Offset a copied root just enough to make a Freeform duplicate discoverable. */
+function offsetFreeformCopy(component: BuilderComponent, offset = 24): BuilderComponent {
+  if (!component.position) return component;
+  return {
+    ...component,
+    position: {
+      x: Math.max(0, Math.round(component.position.x + offset)),
+      y: Math.max(0, Math.round(component.position.y + offset)),
+    },
+  };
+}
+
+/**
+ * Update selected nodes in one tree walk. Returning untouched array/object
+ * references keeps the large-page Freeform canvas from re-rendering branches
+ * that did not participate in a bulk style operation.
+ */
+function patchSelectedStyles(
+  components: BuilderComponent[],
+  selectedIds: Set<string>,
+  styles: Partial<ComponentStyles>,
+): BuilderComponent[] {
+  let changed = false;
+  const next = components.map((component) => {
+    const children = patchSelectedStyles(component.children, selectedIds, styles);
+    const isSelected = selectedIds.has(component.id);
+    if (!isSelected && children === component.children) return component;
+    changed = true;
+    return {
+      ...component,
+      ...(isSelected ? { styles: { ...component.styles, ...styles } } : {}),
+      children,
+    };
+  });
+  return changed ? next : components;
+}
+
+type FreeformPositionUpdate = { id: string; x: number; y: number };
+
+/** Apply a batch of drag coordinates in one immutable tree walk (no history). */
+function patchFreeformPositions(
+  components: BuilderComponent[],
+  positions: Map<string, Omit<FreeformPositionUpdate, "id">>,
+  snap = true,
+): BuilderComponent[] {
+  let changed = false;
+  const normalize = (value: number) => Math.max(
+    0,
+    snap ? Math.round(value / 8) * 8 : Math.round(value),
+  );
+  const next = components.map((component) => {
+    const children = patchFreeformPositions(component.children, positions, snap);
+    const position = positions.get(component.id);
+    if (!position && children === component.children) return component;
+    changed = true;
+    return {
+      ...component,
+      ...(position
+        ? { position: { x: normalize(position.x), y: normalize(position.y) } }
+        : {}),
+      children,
+    };
+  });
+  return changed ? next : components;
 }
 
 const STORAGE_KEY = "stackly-builder-draft";
@@ -730,7 +848,40 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setViewport: (v: Viewport) => set({ viewport: v }),
   canvasMode: "flow",
   toggleCanvasMode: () =>
-    set((state) => ({ canvasMode: state.canvasMode === "flow" ? "freeform" : "flow" })),
+    set((state) => {
+      const canvasMode = state.canvasMode === "flow" ? "freeform" : "flow";
+      if (canvasMode !== "freeform") return { canvasMode };
+      const components = materializeFreeformFrames(state.components);
+      const selectedComponentIds = [...new Set(
+        state.selectedComponentIds
+          .map((id) => resolveFreeformSelectionId(components, id))
+          .filter((id): id is string => Boolean(id)),
+      )];
+      return {
+        canvasMode,
+        components,
+        selectedComponentIds,
+        selectedComponentId: selectedComponentIds[0] ?? null,
+        selectedTextStyleTarget: null,
+      };
+    }),
+  setCanvasMode: (canvasMode) =>
+    set((state) => {
+      if (canvasMode !== "freeform") return { canvasMode };
+      const components = materializeFreeformFrames(state.components);
+      const selectedComponentIds = [...new Set(
+        state.selectedComponentIds
+          .map((id) => resolveFreeformSelectionId(components, id))
+          .filter((id): id is string => Boolean(id)),
+      )];
+      return {
+        canvasMode,
+        components,
+        selectedComponentIds,
+        selectedComponentId: selectedComponentIds[0] ?? null,
+        selectedTextStyleTarget: null,
+      };
+    }),
   setInlineEditing: (v) => set({ isInlineEditing: v }),
   addComponent: (type, parentId, afterId) =>
     set((state) => {
@@ -741,29 +892,55 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
           ...p,
           children: [...p.children, component],
         }));
+        const selectionId = state.canvasMode === "freeform"
+          ? resolveFreeformSelectionId(state.components, parentId)
+          : component.id;
 
-        return { ...captureHistory(state), components, selectedComponentId: component.id };
+        return {
+          ...captureHistory(state),
+          components,
+          selectedComponentId: selectionId,
+          selectedComponentIds: selectionId ? [selectionId] : [],
+          selectedTextStyleTarget: null,
+        };
       }
 
-      const component = createComponent(type, state.components.length);
+      const baseComponent = createComponent(type, state.components.length);
+      const component = state.canvasMode === "freeform"
+        ? positionNewFreeformRoot(baseComponent, state.components)
+        : baseComponent;
 
       if (afterId) {
         const result = insertAfterNodeById(state.components, afterId, component);
         const components = result ? orderComponents(result) : [...state.components, component];
+        const selectionId = state.canvasMode === "freeform"
+          ? resolveFreeformSelectionId(components, component.id)
+          : component.id;
 
-        return { ...captureHistory(state), components, selectedComponentId: component.id };
+        return {
+          ...captureHistory(state),
+          components,
+          selectedComponentId: selectionId,
+          selectedComponentIds: selectionId ? [selectionId] : [],
+          selectedTextStyleTarget: null,
+        };
       }
 
       return {
         ...captureHistory(state),
         components: [...state.components, component],
         selectedComponentId: component.id,
+        selectedComponentIds: [component.id],
+        selectedTextStyleTarget: null,
       };
     }),
   insertComponentBefore: (type, beforeId) =>
     set((state) => {
       const idx = state.components.findIndex((c) => c.id === beforeId);
-      const component = createComponent(type, 0);
+      const baseComponent = createComponent(type, 0);
+      const component = state.canvasMode === "freeform"
+        ? positionNewFreeformRoot(baseComponent, state.components)
+        : baseComponent;
 
       if (idx >= 0) {
         const next = [
@@ -771,7 +948,13 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
           component,
           ...state.components.slice(idx),
         ];
-        return { ...captureHistory(state), components: orderComponents(next), selectedComponentId: component.id };
+        return {
+          ...captureHistory(state),
+          components: orderComponents(next),
+          selectedComponentId: component.id,
+          selectedComponentIds: [component.id],
+          selectedTextStyleTarget: null,
+        };
       }
 
       // Fallback: append if beforeId not found at top level
@@ -779,6 +962,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         ...captureHistory(state),
         components: [...state.components, component],
         selectedComponentId: component.id,
+        selectedComponentIds: [component.id],
+        selectedTextStyleTarget: null,
       };
     }),
   updateComponent: (id, updates) =>
@@ -806,24 +991,57 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
       if (!source) return state;
 
-      const copy = deepCloneComponent(source);
+      const copy = state.canvasMode === "freeform"
+        ? offsetFreeformCopy(deepCloneComponent(source))
+        : deepCloneComponent(source);
       const components = insertAfterNodeById(state.components, id, copy);
 
       if (!components) return state;
+      const selectionId = state.canvasMode === "freeform"
+        ? resolveFreeformSelectionId(components, copy.id)
+        : copy.id;
 
-      return { ...captureHistory(state), components: orderComponents(components), selectedComponentId: copy.id };
+      return {
+        ...captureHistory(state),
+        components: orderComponents(components),
+        selectedComponentId: selectionId,
+        selectedComponentIds: selectionId ? [selectionId] : [],
+        selectedTextStyleTarget: null,
+      };
     }),
   deleteComponent: (id) =>
-    set((state) => ({
-      ...captureHistory(state),
-      components: orderComponents(deleteNodeById(state.components, id)),
-      selectedComponentId: state.selectedComponentId === id ? null : state.selectedComponentId,
-    })),
-  selectComponent: (id) => set({ selectedComponentId: id, selectedComponentIds: id ? [id] : [], selectedTextStyleTarget: null }),
-  selectTextStyleTarget: (target) => set({
-    selectedTextStyleTarget: target,
-    selectedComponentId: target?.componentId ?? null,
-    selectedComponentIds: target ? [target.componentId] : [],
+    set((state) => {
+      if (!findComponentById(state.components, id)) return state;
+      const remainingSelected = state.selectedComponentIds.filter(
+        (selectedId) => selectedId !== id && !isAncestorOf(state.components, id, selectedId),
+      );
+      return {
+        ...captureHistory(state),
+        components: orderComponents(deleteNodeById(state.components, id)),
+        selectedComponentId: remainingSelected[0] ?? null,
+        selectedComponentIds: remainingSelected,
+        selectedTextStyleTarget: null,
+      };
+    }),
+  selectComponent: (id) => set((state) => {
+    const selectionId = state.canvasMode === "freeform"
+      ? resolveFreeformSelectionId(state.components, id)
+      : id;
+    return {
+      selectedComponentId: selectionId,
+      selectedComponentIds: selectionId ? [selectionId] : [],
+      selectedTextStyleTarget: null,
+    };
+  }),
+  selectTextStyleTarget: (target) => set((state) => {
+    const selectionId = state.canvasMode === "freeform"
+      ? resolveFreeformSelectionId(state.components, target?.componentId ?? null)
+      : target?.componentId ?? null;
+    return {
+      selectedTextStyleTarget: state.canvasMode === "freeform" ? null : target,
+      selectedComponentId: selectionId,
+      selectedComponentIds: selectionId ? [selectionId] : [],
+    };
   }),
   reorderComponents: (activeId, overId) =>
     set((state) => {
@@ -832,25 +1050,46 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     }),
   loadStarterWebsite: () =>
     set((state) => {
-      const components: BuilderComponent[] = ["navigation", "hero", "features", "gallery", "contact"].map((type, index) =>
+      const generated: BuilderComponent[] = ["navigation", "hero", "features", "gallery", "contact"].map((type, index) =>
         createComponent(type as ComponentType, index),
       );
-      return { ...captureHistory(state), components, selectedComponentId: components[0]?.id || null };
+      const components = state.canvasMode === "freeform"
+        ? materializeFreeformFrames(generated)
+        : generated;
+      return {
+        ...captureHistory(state),
+        components,
+        selectedComponentId: components[0]?.id || null,
+        selectedComponentIds: components[0] ? [components[0].id] : [],
+        selectedTextStyleTarget: null,
+      };
     }),
   loadWebsiteFromRequirements: (requirements) =>
     set((state) => {
-      const components = createRequirementComponents(requirements);
-      return { ...captureHistory(state), components, selectedComponentId: components[0]?.id || null };
+      const generated = createRequirementComponents(requirements);
+      const components = state.canvasMode === "freeform"
+        ? materializeFreeformFrames(generated)
+        : generated;
+      return {
+        ...captureHistory(state),
+        components,
+        selectedComponentId: components[0]?.id || null,
+        selectedComponentIds: components[0] ? [components[0].id] : [],
+        selectedTextStyleTarget: null,
+      };
     }),
   applyAILayout: (suggestion) =>
     set((state) => {
-      const components = suggestion.sections
+      const generated = suggestion.sections
         .map((section, index) => createAISectionComponent(section, index, suggestion.colorPalette))
         .filter((component): component is BuilderComponent => component !== null)
         .map((component, index) => ({ ...component, order: index }));
 
       // Do not clear a working canvas for a malformed or empty response.
-      if (components.length === 0) return state;
+      if (generated.length === 0) return state;
+      const components = state.canvasMode === "freeform"
+        ? materializeFreeformFrames(generated)
+        : generated;
 
       return {
         ...captureHistory(state),
@@ -873,8 +1112,20 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       components: state.components.map((component) => applyTokensToComponent(component, tokens)),
     })),
   clearCanvas: () =>
-    set((state) => ({ ...captureHistory(state), components: [], selectedComponentId: null })),
-  exportHtml: () => generateHtml(get().components, useDesignStore.getState().seo, get().currentProjectId || undefined, useDesignStore.getState().tokens),
+    set((state) => ({
+      ...captureHistory(state),
+      components: [],
+      selectedComponentId: null,
+      selectedComponentIds: [],
+      selectedTextStyleTarget: null,
+    })),
+  exportHtml: () => generateHtml(
+    get().components,
+    useDesignStore.getState().seo,
+    get().currentProjectId || undefined,
+    useDesignStore.getState().tokens,
+    { canvasMode: get().canvasMode },
+  ),
   undo: () =>
     set((state) => {
       if (state.history.length === 0) return state;
@@ -884,6 +1135,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         future: [state.components, ...state.future.slice(0, MAX_HISTORY - 1)],
         components: prev,
         selectedComponentId: null,
+        selectedComponentIds: [],
+        selectedTextStyleTarget: null,
       };
     }),
   redo: () =>
@@ -895,6 +1148,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         future: state.future.slice(1),
         components: next,
         selectedComponentId: null,
+        selectedComponentIds: [],
+        selectedTextStyleTarget: null,
       };
     }),
   saveToLocalStorage: () => {
@@ -935,7 +1190,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         useDesignStore.getState().setSEO(builderData.seo);
       }
 
-      set((state) => ({
+      set(() => ({
         components: orderComponents(cloneComponentTree(components)),
         selectedComponentId: null,
         selectedTextStyleTarget: null,
@@ -1148,12 +1403,33 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   toggleSelectComponent: (id) =>
     set((state) => {
-      const ids = state.selectedComponentIds.includes(id)
-        ? state.selectedComponentIds.filter((i) => i !== id)
-        : [...state.selectedComponentIds, id];
+      const selectionId = state.canvasMode === "freeform"
+        ? resolveFreeformSelectionId(state.components, id)
+        : id;
+      if (!selectionId) return state;
+      const ids = state.selectedComponentIds.includes(selectionId)
+        ? state.selectedComponentIds.filter((i) => i !== selectionId)
+        : [...state.selectedComponentIds, selectionId];
       return {
         selectedComponentIds: ids,
-        selectedComponentId: ids.length === 1 ? ids[0] : ids.length === 0 ? null : state.selectedComponentId,
+        selectedComponentId: ids[0] ?? null,
+        selectedTextStyleTarget: null,
+      };
+    }),
+
+  setSelectedComponentIds: (ids) =>
+    set((state) => {
+      const selectedIds = [...new Set(
+        ids
+          .map((id) => state.canvasMode === "freeform"
+            ? resolveFreeformSelectionId(state.components, id)
+            : id)
+          .filter((id): id is string => Boolean(id)),
+      )].filter((id) => Boolean(findComponentById(state.components, id)));
+      return {
+        selectedComponentIds: selectedIds,
+        selectedComponentId: selectedIds[0] ?? null,
+        selectedTextStyleTarget: null,
       };
     }),
 
@@ -1183,21 +1459,193 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       }
       if (!clipData || clipData.length === 0) return state;
 
-      const cloned = clipData.map(deepCloneComponent);
+      const cloned = clipData
+        .map(deepCloneComponent)
+        // A copied Freeform root would otherwise land exactly on its source.
+        // Nested children keep their parent-local layout intact.
+        .map((component) => state.canvasMode === "freeform" && !parentId
+          ? offsetFreeformCopy(component)
+          : component);
 
       if (parentId) {
         const components = updateNodeById(state.components, parentId, (p) => ({
           ...p,
           children: [...p.children, ...cloned],
         }));
-        return { ...captureHistory(state), components, selectedComponentId: cloned[0]?.id ?? null, selectedComponentIds: cloned.map((c) => c.id) };
+        const selectionId = state.canvasMode === "freeform"
+          ? resolveFreeformSelectionId(state.components, parentId)
+          : cloned[0]?.id ?? null;
+        return {
+          ...captureHistory(state),
+          components,
+          selectedComponentId: selectionId,
+          selectedComponentIds: selectionId ? [selectionId] : [],
+          selectedTextStyleTarget: null,
+        };
       }
+
+      const components = orderComponents([...state.components, ...cloned]);
+      const selectedIds = state.canvasMode === "freeform"
+        ? [...new Set(cloned
+          .map((component) => resolveFreeformSelectionId(components, component.id))
+          .filter((id): id is string => Boolean(id)))]
+        : cloned.map((component) => component.id);
+      return {
+        ...captureHistory(state),
+        components,
+        selectedComponentId: selectedIds[0] ?? null,
+        selectedComponentIds: selectedIds,
+        selectedTextStyleTarget: null,
+      };
+    }),
+
+  duplicateSelectedComponents: () =>
+    set((state) => {
+      const selectedIds = [...new Set(state.selectedComponentIds)]
+        .filter((id) => Boolean(findComponentById(state.components, id)))
+        .filter((id) => !state.selectedComponentIds.some((candidate) => candidate !== id && isAncestorOf(state.components, candidate, id)));
+      if (selectedIds.length === 0) return state;
+
+      let components = state.components;
+      const copyIds: string[] = [];
+      for (const id of selectedIds) {
+        const source = findComponentById(components, id);
+        if (!source) continue;
+        const copy = state.canvasMode === "freeform"
+          ? offsetFreeformCopy(deepCloneComponent(source))
+          : deepCloneComponent(source);
+        const inserted = insertAfterNodeById(components, id, copy);
+        if (!inserted) continue;
+        components = inserted;
+        copyIds.push(copy.id);
+      }
+
+      if (copyIds.length === 0) return state;
+      const selectedCopyIds = state.canvasMode === "freeform"
+        ? [...new Set(copyIds
+          .map((id) => resolveFreeformSelectionId(components, id))
+          .filter((id): id is string => Boolean(id)))]
+        : copyIds;
+      return {
+        ...captureHistory(state),
+        components: orderComponents(components),
+        selectedComponentId: selectedCopyIds[0] ?? null,
+        selectedComponentIds: selectedCopyIds,
+        selectedTextStyleTarget: null,
+      };
+    }),
+
+  deleteSelectedComponents: () =>
+    set((state) => {
+      const selectedIds = [...new Set(state.selectedComponentIds)]
+        .filter((id) => Boolean(findComponentById(state.components, id)))
+        .filter((id) => !state.selectedComponentIds.some((candidate) => candidate !== id && isAncestorOf(state.components, candidate, id)));
+      if (selectedIds.length === 0) return state;
+
+      const components = selectedIds.reduce(
+        (tree, id) => deleteNodeById(tree, id),
+        state.components,
+      );
+      return {
+        ...captureHistory(state),
+        components: orderComponents(components),
+        selectedComponentId: null,
+        selectedComponentIds: [],
+        selectedTextStyleTarget: null,
+      };
+    }),
+
+  groupSelectedComponents: () =>
+    set((state) => {
+      // Flow grouping is safe because Container already supports nested blocks.
+      // Freeform keeps top-level absolute items independent, so grouping there
+      // would change the visual coordinate system; leave those pages untouched.
+      if (state.canvasMode !== "flow") return state;
+
+      const selectedIds = [...new Set(state.selectedComponentIds)]
+        .filter((id) => Boolean(findComponentById(state.components, id)));
+      if (selectedIds.length < 2) return state;
+      if (selectedIds.some((id) => selectedIds.some((candidate) => candidate !== id && isAncestorOf(state.components, candidate, id)))) {
+        return state;
+      }
+
+      const firstParent = findParentOf(state.components, selectedIds[0]);
+      const parentId = firstParent?.id ?? null;
+      const sameParent = selectedIds.every((id) => (findParentOf(state.components, id)?.id ?? null) === parentId);
+      if (!sameParent) return state;
+
+      const siblings = firstParent ? firstParent.children : state.components;
+      const selectedSet = new Set(selectedIds);
+      const selected = siblings.filter((component) => selectedSet.has(component.id));
+      if (selected.length < 2) return state;
+
+      const firstIndex = siblings.findIndex((component) => selectedSet.has(component.id));
+      const selectedIndexes = siblings
+        .map((component, index) => selectedSet.has(component.id) ? index : -1)
+        .filter((index) => index >= 0);
+      if (selectedIndexes.some((index, offset) => index !== firstIndex + offset)) return state;
+      const group = createComponent("container", firstIndex);
+      group.props = {
+        ...(group.props ?? {}),
+        __stacklyLayerName: "Group",
+        [GROUP_MARKER_PROP]: true,
+      };
+      group.children = selected.map((component, index) => ({ ...component, order: index }));
+
+      const replacement = [
+        ...siblings.slice(0, firstIndex).filter((component) => !selectedSet.has(component.id)),
+        group,
+        ...siblings.slice(firstIndex).filter((component) => !selectedSet.has(component.id)),
+      ].map((component, index) => ({ ...component, order: index }));
+
+      const components = parentId
+        ? updateNodeById(state.components, parentId, (parent) => ({ ...parent, children: replacement }))
+        : replacement;
 
       return {
         ...captureHistory(state),
-        components: orderComponents([...state.components, ...cloned]),
-        selectedComponentId: cloned[0]?.id ?? null,
-        selectedComponentIds: cloned.map((c) => c.id),
+        components,
+        selectedComponentId: group.id,
+        selectedComponentIds: [group.id],
+        selectedTextStyleTarget: null,
+      };
+    }),
+
+  ungroupComponent: (id) =>
+    set((state) => {
+      // Grouping has a parent-local flow coordinate system. Flattening that
+      // structure while the parent is an absolute Freeform item would change
+      // its visual placement, so keep the operation in the safe Flow mode.
+      if (state.canvasMode !== "flow") return state;
+      const group = findComponentById(state.components, id);
+      if (
+        !group
+        || group.type !== "container"
+        || group.children.length === 0
+        || group.props?.[GROUP_MARKER_PROP] !== true
+      ) return state;
+
+      const parent = findParentOf(state.components, id);
+      const siblings = parent ? parent.children : state.components;
+      const index = siblings.findIndex((component) => component.id === id);
+      if (index < 0) return state;
+
+      const replacement = [
+        ...siblings.slice(0, index),
+        ...group.children,
+        ...siblings.slice(index + 1),
+      ].map((component, childIndex) => ({ ...component, order: childIndex }));
+      const components = parent
+        ? updateNodeById(state.components, parent.id, (node) => ({ ...node, children: replacement }))
+        : replacement;
+      const selectedIds = group.children.map((child) => child.id);
+
+      return {
+        ...captureHistory(state),
+        components,
+        selectedComponentId: selectedIds[0] ?? null,
+        selectedComponentIds: selectedIds,
+        selectedTextStyleTarget: null,
       };
     }),
 
@@ -1205,7 +1653,12 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     set((state) => {
       const comp = findComponentById(state.components, id);
       if (!comp) return state;
-      const currentZ = parseInt(comp.styles.zIndex || "0", 10);
+      const styleZ = parseInt(comp.styles.zIndex || "", 10);
+      const currentZ = Number.isFinite(styleZ)
+        ? styleZ
+        : Number.isFinite(comp.zIndex)
+          ? comp.zIndex!
+          : 0;
       let newZ: number;
       switch (direction) {
         case "front":    newZ = 999; break;
@@ -1222,27 +1675,87 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       };
     }),
 
-  moveComponent: (id, x, y) =>
+  moveComponent: (id, x, y, options) =>
     set((state) => ({
-      components: updateNodeById(state.components, id, (c) => ({
-        ...c,
-        position: {
-          x: Math.round(x / 8) * 8,  // snap to 8px grid
-          y: Math.round(y / 8) * 8,
-        },
-      })),
+      components: patchFreeformPositions(
+        state.components,
+        new Map([[id, { x, y }]]),
+        options?.snap !== false,
+      ),
     })),
 
-  resizeComponent: (id, width, height) =>
+  moveComponents: (positions, options) =>
+    set((state) => {
+      const nextPositions = new Map(
+        positions
+          .filter((position) => Number.isFinite(position.x) && Number.isFinite(position.y))
+          .map((position) => [position.id, { x: position.x, y: position.y }]),
+      );
+      if (nextPositions.size === 0) return state;
+      const components = patchFreeformPositions(
+        state.components,
+        nextPositions,
+        options?.snap !== false,
+      );
+      return components === state.components ? state : { components };
+    }),
+
+  resizeComponent: (id, width, height, options) =>
     set((state) => ({
       components: updateNodeById(state.components, id, (c) => ({
         ...c,
         freeformSize: {
-          width: Math.max(120, Math.round(width / 8) * 8),
-          height: Math.max(40, Math.round(height / 8) * 8),
+          width: Math.max(120, options?.snap === false ? Math.round(width) : Math.round(width / 8) * 8),
+          height: Math.max(40, options?.snap === false ? Math.round(height) : Math.round(height / 8) * 8),
         },
       })),
     })),
+
+  beginFreeformInteraction: () =>
+    set((state) => ({
+      ...captureHistory(state),
+    })),
+
+  nudgeSelectedComponents: (x, y) =>
+    set((state) => {
+      const selectedIds = [...new Set(state.selectedComponentIds)]
+        .filter((id) => {
+          const component = findComponentById(state.components, id);
+          const isFreeformRoot = state.canvasMode !== "freeform"
+            || state.components.some((root) => root.id === id);
+          return Boolean(component && !component.locked && isFreeformRoot);
+        });
+      if (selectedIds.length === 0 || (x === 0 && y === 0)) return state;
+      const positions = new Map(
+        selectedIds.flatMap((id) => {
+          const component = findComponentById(state.components, id);
+          if (!component) return [];
+          const position = component.position ?? { x: 40, y: 40 };
+          return [[id, { x: position.x + x, y: position.y + y }] as const];
+        }),
+      );
+      const components = patchFreeformPositions(state.components, positions, false);
+      return {
+        ...captureHistory(state),
+        components,
+      };
+    }),
+
+  applyStylesToSelected: (styles) =>
+    set((state) => {
+      if (Object.keys(styles).length === 0) return state;
+      const selectedIds = new Set(
+        state.selectedComponentIds.filter((id) => {
+          const component = findComponentById(state.components, id);
+          return Boolean(component && !component.locked);
+        }),
+      );
+      if (selectedIds.size === 0) return state;
+
+      const components = patchSelectedStyles(state.components, selectedIds, styles);
+      if (components === state.components) return state;
+      return { ...captureHistory(state), components };
+    }),
 
   toggleLock: (id) =>
     set((state) => ({

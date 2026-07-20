@@ -6,7 +6,7 @@ import {
   AlignLeft, Clock, Contact, FileText, Globe, GripVertical, Heading1, Heart,
   Home, Image, Images, LayoutGrid, LayoutTemplate, Layers, List, MapPin, Menu,
   Minus, MousePointerSquareDashed, PanelsTopLeft, Play, Search, Share2,
-  Sparkles, Star, Table, TextCursorInput, Type
+  ShoppingBag, Sparkles, Star, Table, TextCursorInput, Type
 } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import { AILayoutDialog } from "./AILayoutDialog";
@@ -39,6 +39,7 @@ const BLOCK_COLORS: Record<ComponentType, string> = {
   "social-links": "bg-cyan-400/20 text-cyan-200",
   countdown: "bg-orange-400/20 text-orange-200",
   "pricing-table": "bg-emerald-400/20 text-emerald-200",
+  "product-collection": "bg-fuchsia-400/20 text-fuchsia-200",
   testimonial: "bg-yellow-400/20 text-yellow-200",
   footer: "bg-indigo-400/20 text-indigo-200",
   form: "bg-violet-400/20 text-violet-200",
@@ -53,6 +54,7 @@ const paletteItems: Array<{ type: ComponentType; label: string; group: PaletteGr
   { type: "gallery", label: "Gallery", group: "Website Sections", icon: Images },
   { type: "contact", label: "Contact", group: "Website Sections", icon: Contact },
   { type: "pricing-table", label: "Pricing", group: "Website Sections", icon: Table },
+  { type: "product-collection", label: "Products", group: "Website Sections", icon: ShoppingBag },
   { type: "testimonial", label: "Testimonials", group: "Website Sections", icon: Heart },
   { type: "footer", label: "Footer", group: "Website Sections", icon: AlignLeft },
  

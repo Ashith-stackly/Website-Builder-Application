@@ -335,11 +335,11 @@ const MODULES = [
   },
   {
     id: "m10", num: 10, name: "Analytics Dashboard",
-    blurb: "An event-ingestion API, MongoDB aggregation, basic generated tracking script, and dashboard are implemented. Manually downloaded HTML omits the workspace ID and several displayed dimensions are currently derived presentation data.",
+    blurb: "An event-ingestion API, MongoDB aggregation, generated-site tracker, and dashboard are implemented. Saved-project HTML and downloaded HTML now carry the same valid workspace ID, while previews and drafts remain excluded from tracking. Hosted origin/CORS configuration remains a deployment concern.",
     tasks: [
-      { t: "Track page views (basic tracking script)", s: "partial",
-        p: ["frontend/lib/exportHtml.ts", "backend/src/routes/analyticsRoutes.js"],
-        note: "Generated HTML posts page views to /api/analytics/event when a workspace ID is supplied; manual download export omits that ID and therefore tracking." },
+      { t: "Track page views (basic tracking script)", s: "done",
+        p: ["frontend/lib/analyticsTracking.ts", "frontend/lib/exportHtml.ts", "frontend/components/builder/ExportButton.tsx", "frontend/components/builder/PreviewModal.tsx", "backend/src/routes/analyticsRoutes.js"],
+        note: "Generated pages automatically post one page view per route/load with workspace ID, path, privacy-safe referrer, timestamp, and session ID. Saved exports now receive the active workspace ID; missing or invalid IDs omit the tracker safely, and preview/draft documents are excluded." },
       { t: "Store analytics data", s: "done",
         p: ["backend/src/models/AnalyticsEvent.js", "backend/src/services/analyticsService.js"],
         note: "Events are persisted with indexes and a 90-day retention policy." },

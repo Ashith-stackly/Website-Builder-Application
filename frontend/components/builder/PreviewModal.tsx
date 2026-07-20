@@ -31,7 +31,10 @@ export function PreviewModal({
     `})();` +
     `<\/script>`;
 
-  const previewDoc = srcDoc.replace("</head>", PREVIEW_INJECTIONS + "</head>");
+  // The analytics tracker is an inline head script in generated HTML. Put the
+  // preview marker at the start of the head so it is visible before that script
+  // can run; preview traffic must never become production analytics.
+  const previewDoc = srcDoc.replace("<head>", "<head>" + PREVIEW_INJECTIONS);
 
   return (
     <motion.div

@@ -3,6 +3,11 @@ const Product = require('../models/Product');
 const Workspace = require('../models/Workspace');
 const ApiError = require('../utils/ApiError');
 
+function normalizedQuantity(value) {
+  const quantity = Number(value);
+  return Number.isSafeInteger(quantity) && quantity >= 1 ? quantity : null;
+}
+
 async function verifyWorkspaceExists(workspaceId) {
   const exists = await Workspace.exists({ _id: workspaceId, status: { $ne: 'deleted' } });
   if (!exists) throw ApiError.notFound('Workspace not found');
@@ -39,9 +44,9 @@ async function getCart(userId, workspaceId) {
 async function addItem(userId, workspaceId, productId, quantity = 1) {
   await verifyWorkspaceExists(workspaceId);
 
-  quantity = Math.floor(Number(quantity));
-  if (!Number.isFinite(quantity) || quantity < 1) {
-    throw ApiError.badRequest('Quantity must be at least 1');
+  quantity = normalizedQuantity(quantity);
+  if (quantity === null) {
+    throw ApiError.badRequest('Quantity must be a whole number of at least 1');
   }
 
   const product = await Product.findOne({ _id: productId, workspaceId, status: 'active' }).lean();
@@ -50,6 +55,9 @@ async function addItem(userId, workspaceId, productId, quantity = 1) {
   // Upsert cart document, then add or update item
   let cart = await Cart.findOne({ userId, workspaceId });
   if (!cart) {
+    if (quantity > product.inventory) {
+      throw ApiError.badRequest(`Only ${product.inventory} item(s) are available`);
+    }
     cart = await Cart.create({
       userId,
       workspaceId,
@@ -82,8 +90,9 @@ async function addItem(userId, workspaceId, productId, quantity = 1) {
 async function updateItem(userId, workspaceId, itemId, quantity) {
   await verifyWorkspaceExists(workspaceId);
 
-  if (!Number.isFinite(quantity) || quantity < 1) {
-    throw ApiError.badRequest('Quantity must be at least 1');
+  quantity = normalizedQuantity(quantity);
+  if (quantity === null) {
+    throw ApiError.badRequest('Quantity must be a whole number of at least 1');
   }
 
   const cart = await Cart.findOne({ userId, workspaceId });

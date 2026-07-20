@@ -22,6 +22,7 @@ import SpacerComponent from "@/components/draggable/SpacerComponent";
 import SocialLinksComponent from "@/components/draggable/SocialLinksComponent";
 import CountdownComponent from "@/components/draggable/CountdownComponent";
 import PricingTableComponent from "@/components/draggable/PricingTableComponent";
+import ProductCollectionComponent from "@/components/draggable/ProductCollectionComponent";
 import TestimonialComponent from "@/components/draggable/TestimonialComponent";
 import FooterComponent from "@/components/draggable/FooterComponent";
 import FormComponent from "@/components/draggable/FormComponent";
@@ -66,6 +67,7 @@ export const componentRegistry: Record<ComponentType, BuilderRenderer> = {
   "social-links": SocialLinksComponent,
   countdown: CountdownComponent,
   "pricing-table": PricingTableComponent,
+  "product-collection": ProductCollectionComponent,
   testimonial: TestimonialComponent,
   footer: FooterComponent,
   form: FormComponent,

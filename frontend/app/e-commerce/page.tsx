@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Footer from "@/components/Footer";
 import { assetPath, routePath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
@@ -11,12 +11,21 @@ import { Heart, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   loadRazorpayCheckoutScript,
-  createRazorpayOrder,
-  verifyRazorpayPayment,
   openRazorpayCheckout,
   isRazorpayDemoMode,
-  getRazorpaySetupHint
 } from "@/lib/razorpayClient";
+import {
+  addStoreCartItem,
+  clearStoreCart,
+  createStoreCheckout,
+  getPublicStoreProducts,
+  getStoreCart,
+  hasStorefrontSession as hasAuthenticatedStorefrontSession,
+  removeStoreCartItem,
+  updateStoreCartItem,
+  verifyStoreCheckoutPayment,
+} from "@/lib/storefrontApi";
+import type { Product } from "@/types/ecommerce";
 
 const buyCategoryNavClass =
   "buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
@@ -31,19 +40,19 @@ const buyCategories = [
   { label: "New Arrivals" },
 ];
 
-const buyAllSubCategories: Array<{ key: string; label: string; productIds: string[] }> = [
-  { key: "mobiles", label: "Mobiles", productIds: ["phone"] },
-  { key: "audio", label: "Audio", productIds: ["audio", "speaker"] },
-  { key: "laptops", label: "Laptops", productIds: ["laptop"] },
-  { key: "cameras", label: "Cameras", productIds: ["camera"] },
-  { key: "televisions", label: "Televisions", productIds: ["television"] },
-  { key: "tablets", label: "Tablets", productIds: ["tablet"] },
-  { key: "wearables", label: "Wearables", productIds: ["watch"] },
-  { key: "accessories", label: "Accessories", productIds: ["keyboard", "mouse"] },
+const buyAllSubCategories: Array<{ key: string; label: string; keywords: string[] }> = [
+  { key: "mobiles", label: "Mobiles", keywords: ["mobile", "phone", "smartphone"] },
+  { key: "audio", label: "Audio", keywords: ["audio", "headphone", "speaker", "earbud"] },
+  { key: "laptops", label: "Laptops", keywords: ["laptop", "notebook", "computer"] },
+  { key: "cameras", label: "Cameras", keywords: ["camera", "lens", "photography"] },
+  { key: "televisions", label: "Televisions", keywords: ["television", "tv", "display"] },
+  { key: "tablets", label: "Tablets", keywords: ["tablet", "ipad"] },
+  { key: "wearables", label: "Wearables", keywords: ["wearable", "watch", "fitness"] },
+  { key: "accessories", label: "Accessories", keywords: ["accessory", "keyboard", "mouse", "charger"] },
 ];
 
-const buyAllSubCategorySets = new Map(
-  buyAllSubCategories.map((entry) => [entry.key, new Set(entry.productIds)])
+const buyAllSubCategoryKeywords = new Map(
+  buyAllSubCategories.map((entry) => [entry.key, entry.keywords])
 );
 
 type BuyFeatureIconType = "responsive" | "secure" | "shipping" | "transparent";
@@ -63,26 +72,53 @@ type BuyProduct = {
   price: string;
   originalPrice?: string;
   unitPriceCents: number;
+  currency: string;
+  category?: string;
+  inventory: number;
+  createdAt?: string;
 };
 
 type CartItem = {
+  itemId: string;
   product: BuyProduct;
   qty: number;
 };
 
-const buyProducts: BuyProduct[] = [
-  { id: "phone", name: "Phone", image: assetPath("/phone.webp"), badge: "", price: "₹89,999.00", unitPriceCents: 89999_00 },
-  { id: "audio", name: "Audio", image: assetPath("/audio.webp"), badge: "50%", price: "₹1,250.00", originalPrice: "₹2,500.00", unitPriceCents: 1250_00 },
-  { id: "laptop", name: "Laptop", image: assetPath("/laptop.webp"), badge: "", price: "₹1,29,999.00", unitPriceCents: 129999_00 },
-  { id: "camera", name: "Camera", image: assetPath("/camera.webp"), badge: "", price: "₹79,000.00", unitPriceCents: 79000_00 },
-  { id: "television", name: "Television", image: assetPath("/television.webp"), badge: "", price: "₹59,999.00", unitPriceCents: 59999_00 },
-  { id: "tablet", name: "Tablet", image: assetPath("/tablet.webp"), badge: "", price: "₹69,999.00", unitPriceCents: 69999_00 },
-  { id: "watch", name: "Watch", image: assetPath("/watch.webp"), badge: "", price: "₹19,999.00", unitPriceCents: 19999_00 },
-  { id: "speaker", name: "Speaker", image: assetPath("/speaker.webp"), badge: "", price: "₹9,999.00", unitPriceCents: 9999_00 },
-  { id: "keyboard", name: "Keyboard", image: assetPath("/keyboard.webp"), badge: "", price: "₹1,999.00", unitPriceCents: 1999_00 },
-  { id: "mouse", name: "Mouse", image: assetPath("/mouse.webp"), badge: "", price: "₹999.00", unitPriceCents: 999_00 },
-];
-const buyProductById = new Map(buyProducts.map((product) => [product.id, product]));
+function formatStorePrice(amount: number, currency = "INR"): string {
+  try {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
+}
+
+function toBuyProduct(product: Product): BuyProduct {
+  const currency = product.currency || "INR";
+  const hasSale = typeof product.salePrice === "number" && product.salePrice >= 0 && product.salePrice < product.price;
+  const activePrice = hasSale ? product.salePrice! : product.price;
+  const discountPercent = hasSale && product.price > 0
+    ? Math.round(((product.price - activePrice) / product.price) * 100)
+    : 0;
+
+  return {
+    id: product._id,
+    name: product.name,
+    image: product.images?.find((image) => Boolean(image?.trim()))?.trim() || "",
+    badge: discountPercent > 0 ? `${discountPercent}%` : "",
+    price: formatStorePrice(activePrice, currency),
+    originalPrice: hasSale ? formatStorePrice(product.price, currency) : undefined,
+    unitPriceCents: Math.round(activePrice * 100),
+    currency,
+    category: product.category,
+    inventory: product.inventory,
+    createdAt: product.createdAt,
+  };
+}
 
 const buyCategorySpotlights = [
   { title: "Smartphones", subtitle: "Flagship cameras, all-day power, and smooth displays.", image: assetPath("/phone.webp"), subCategoryKey: "mobiles", accent: "from-[#e0f2fe] to-[#f8fafc]" },
@@ -100,7 +136,7 @@ type BuyShoppingStepIcon = "browse" | "cart" | "checkout";
 
 const buyShoppingSteps: Array<{ icon: BuyShoppingStepIcon; title: string; description: string }> = [
   { icon: "browse", title: "Choose gear", description: "Filter by category, compare essentials, and save favorites for later." },
-  { icon: "cart", title: "Add license", description: "Pick quantity, review the cart, and keep every selected item synced locally." },
+  { icon: "cart", title: "Add to cart", description: "Pick quantity, review the cart, and keep each selection securely saved to your account." },
   { icon: "checkout", title: "Checkout fast", description: "Move from product discovery to a focused purchase flow without page clutter." },
 ];
 
@@ -111,12 +147,6 @@ const buyTestimonials = [
 ];
 
 const buyBrandPartners = ["NovaTech", "PulseAudio", "SkyLens", "VoltWare", "PixelBay"];
-const buyUpdateProducts = [
-  { name: "Tablet", image: assetPath("/tablet.webp") },
-  { name: "Watch", image: assetPath("/watch.webp") },
-  { name: "Keyboard", image: assetPath("/keyboard.webp") },
-];
-
 type BuyBlogPost = {
   title: string;
   category: string;
@@ -206,12 +236,8 @@ const buyBlogPosts: BuyBlogPost[] = [
     ],
   },
 ];
-const BUYSCREEN_CART_STORAGE_KEY = "buyscreenCartItemsV1";
 const BUYSCREEN_FAVORITES_STORAGE_KEY = "buyscreenFavoriteIdsV1";
 const STORAGE_SYNC_EVENT = "stackly-storage-change";
-
-const bestSellerIds = new Set(["phone", "laptop", "television", "camera", "audio"]);
-const newArrivalIds = new Set(["watch", "speaker", "keyboard", "mouse", "tablet"]);
 
 const licenseBullets = [
   "Quality checked by Stackly before delivery.",
@@ -244,12 +270,8 @@ function getCarouselColumnCount(widthPx: number): number {
   return Math.max(1, Math.min(5, n));
 }
 
-function formatUsd(cents: number): string {
-  const n = cents / 100;
-  const parts = n.toFixed(2).split(".");
-  const intPart = parts[0] ?? "0";
-  const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return `₹ ${withCommas}.${parts[1] ?? "00"}`;
+function formatStoreCents(cents: number, currency = "INR"): string {
+  return formatStorePrice(cents / 100, currency);
 }
 
 
@@ -414,6 +436,10 @@ export default function ECommercePage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isEmbeddedPreview = searchParams.get(BUY_PREVIEW_QUERY_KEY) === "embed";
+  const requestedStorefrontWorkspaceId =
+    searchParams.get("workspaceId")?.trim() ||
+    process.env.NEXT_PUBLIC_ECOMMERCE_WORKSPACE_ID?.trim() ||
+    "default";
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<BuyPreviewDevice>("desktop");
@@ -430,10 +456,17 @@ export default function ECommercePage() {
   const [isTopHeaderProfileMenuOpen, setIsTopHeaderProfileMenuOpen] = useState(false);
   const [activeTopHeaderItem, setActiveTopHeaderItem] = useState("Home");
   const [showHeroScrollNote, setShowHeroScrollNote] = useState(false);
-  const [hasLoadedCart, setHasLoadedCart] = useState(false);
   const [hasLoadedFavorites, setHasLoadedFavorites] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [products, setProducts] = useState<BuyProduct[]>([]);
+  const [isProductsLoading, setIsProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
+  const [resolvedStorefrontWorkspaceId, setResolvedStorefrontWorkspaceId] = useState<string | null>(null);
+  const [hasStorefrontSession, setHasStorefrontSession] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [isCartMutating, setIsCartMutating] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -445,7 +478,7 @@ export default function ECommercePage() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
-  const [paymentSuccessDetails, setPaymentSuccessDetails] = useState<{ paymentId: string; orderId: string; amount: number } | null>(null);
+  const [paymentSuccessDetails, setPaymentSuccessDetails] = useState<{ paymentId: string; orderId: string; amount: number; currency: string } | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const contentStartRef = useRef<HTMLDivElement | null>(null);
   const allCategoriesWrapRef = useRef<HTMLDivElement | null>(null);
@@ -481,44 +514,81 @@ export default function ECommercePage() {
   const productsTouchStartYRef = useRef<number | null>(null);
   const [carouselCols, setCarouselCols] = useState(3);
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(BUYSCREEN_CART_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return;
-      const restored: CartItem[] = parsed
-        .map((entry) => {
-          if (!entry || typeof entry !== "object") return null;
-          const productId = typeof entry.productId === "string" ? entry.productId : "";
-          const qty = typeof entry.qty === "number" ? Math.floor(entry.qty) : 0;
-          if (!productId || qty <= 0) return null;
-          const product = buyProductById.get(productId);
-          if (!product) return null;
-          return { product, qty };
-        })
-        .filter((entry): entry is CartItem => entry !== null);
-      if (restored.length) setCartItems(restored);
-    } catch {
-      // Ignore malformed storage and keep default empty cart.
-    } finally {
-      setHasLoadedCart(true);
+  const applyServerCart = useCallback((cart: Awaited<ReturnType<typeof getStoreCart>>) => {
+    setCartItems(
+      cart.items.map((item) => ({
+        itemId: String(item._id),
+        product: toBuyProduct(item.product),
+        qty: item.quantity,
+      })),
+    );
+  }, []);
+
+  const refreshStoreCart = useCallback(async () => {
+    if (!hasStorefrontSession || !resolvedStorefrontWorkspaceId) {
+      setCartItems([]);
+      return;
     }
+    const cart = await getStoreCart(resolvedStorefrontWorkspaceId);
+    applyServerCart(cart);
+  }, [applyServerCart, hasStorefrontSession, resolvedStorefrontWorkspaceId]);
+
+  useEffect(() => {
+    const syncSession = () => setHasStorefrontSession(hasAuthenticatedStorefrontSession());
+    syncSession();
+    window.addEventListener("storage", syncSession);
+    window.addEventListener(STORAGE_SYNC_EVENT, syncSession);
+    return () => {
+      window.removeEventListener("storage", syncSession);
+      window.removeEventListener(STORAGE_SYNC_EVENT, syncSession);
+    };
   }, []);
 
   useEffect(() => {
-    if (!hasLoadedCart) return;
-    try {
-      const serializable = cartItems.map((item) => ({
-        productId: item.product.id,
-        qty: item.qty,
-      }));
-      window.localStorage.setItem(BUYSCREEN_CART_STORAGE_KEY, JSON.stringify(serializable));
-      window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
-    } catch {
-      // Ignore storage write failures.
+    const controller = new AbortController();
+    setResolvedStorefrontWorkspaceId(null);
+    setProducts([]);
+    setProductsError(null);
+    setIsProductsLoading(true);
+
+    void getPublicStoreProducts(requestedStorefrontWorkspaceId, controller.signal)
+      .then((response) => {
+        setProducts(response.products.map(toBuyProduct));
+        setResolvedStorefrontWorkspaceId(response.workspaceId);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setProductsError(error instanceof Error ? error.message : "Unable to load products.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsProductsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [requestedStorefrontWorkspaceId]);
+
+  useEffect(() => {
+    if (!hasStorefrontSession || !resolvedStorefrontWorkspaceId) {
+      setCartItems([]);
+      setIsCartLoading(false);
+      return;
     }
-  }, [cartItems, hasLoadedCart]);
+
+    const controller = new AbortController();
+    setCartError(null);
+    setIsCartLoading(true);
+    void getStoreCart(resolvedStorefrontWorkspaceId, controller.signal)
+      .then(applyServerCart)
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setCartError(error instanceof Error ? error.message : "Unable to load your cart.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsCartLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [applyServerCart, hasStorefrontSession, resolvedStorefrontWorkspaceId]);
 
   useEffect(() => {
     try {
@@ -526,7 +596,7 @@ export default function ECommercePage() {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return;
-      const restored = parsed.filter((id): id is string => typeof id === "string" && buyProductById.has(id));
+      const restored = parsed.filter((id): id is string => typeof id === "string");
       if (restored.length) setFavoriteProductIds(restored);
     } catch {
       // Ignore malformed storage and keep default empty favorites.
@@ -545,16 +615,25 @@ export default function ECommercePage() {
     }
   }, [favoriteProductIds, hasLoadedFavorites]);
 
+  const buyProductById = useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
+    [products],
+  );
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
-  const categoryFilteredProducts = buyProducts.filter((product) => {
+  const categoryFilteredProducts = products.filter((product) => {
     if (activeSubCategoryKey) {
-      const subSet = buyAllSubCategorySets.get(activeSubCategoryKey);
-      if (subSet) return subSet.has(product.id);
+      const keywords = buyAllSubCategoryKeywords.get(activeSubCategoryKey);
+      if (keywords) {
+        const searchableProductText = `${product.name} ${product.category ?? ""}`.toLowerCase();
+        return keywords.some((keyword) => searchableProductText.includes(keyword));
+      }
     }
     if (activeCategoryLabel === "All Categories" || activeCategoryLabel === "Products") return true;
     if (activeCategoryLabel === "Limited Sale") return Boolean(product.badge);
-    if (activeCategoryLabel === "Best Seller") return bestSellerIds.has(product.id);
-    if (activeCategoryLabel === "New Arrivals") return newArrivalIds.has(product.id);
+    if (activeCategoryLabel === "New Arrivals") {
+      const createdAt = product.createdAt ? Date.parse(product.createdAt) : Number.NaN;
+      return Number.isFinite(createdAt) && createdAt >= Date.now() - 30 * 24 * 60 * 60 * 1000;
+    }
     return true;
   });
   const searchFilteredProducts = normalizedSearchQuery
@@ -574,14 +653,11 @@ export default function ECommercePage() {
   const favoriteProducts = favoriteProductIds
     .map((id) => buyProductById.get(id))
     .filter((product): product is BuyProduct => Boolean(product));
+  const dealProduct = products.find((product) => Boolean(product.badge)) ?? products[0];
+  const updateProducts = products.slice(0, 3);
 
   const closeLicenseModal = useCallback(() => {
     setLicenseProduct(null);
-    setLicenseQty(1);
-  }, []);
-
-  const openLicenseModal = useCallback((product: BuyProduct) => {
-    setLicenseProduct(product);
     setLicenseQty(1);
   }, []);
 
@@ -596,24 +672,112 @@ export default function ECommercePage() {
     }, 2200);
   }, []);
 
-  const confirmLicensePurchase = useCallback(() => {
-    if (!licenseProduct) return;
-    const addedQty = licenseQty;
-    const productName = licenseProduct.name;
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.product.id === licenseProduct.id);
-      if (existing) {
-        return prev.map((item) => (item.product.id === licenseProduct.id ? { ...item, qty: item.qty + licenseQty } : item));
-      }
-      return [...prev, { product: licenseProduct, qty: licenseQty }];
-    });
-    showActionToast(`${productName} added to cart (${addedQty})`);
-    closeLicenseModal();
-  }, [licenseProduct, licenseQty, closeLicenseModal, showActionToast]);
-
-  const removeCartItem = useCallback((productId: string) => {
-    setCartItems((prev) => prev.filter((item) => item.product.id !== productId));
+  const promptCartSignIn = useCallback(() => {
+    setCartError("Sign in to add products and access your saved cart.");
+    setIsCartOpen(true);
   }, []);
+
+  const addToCart = useCallback(async (product: BuyProduct, quantity: number): Promise<boolean> => {
+    if (!hasStorefrontSession || !resolvedStorefrontWorkspaceId) {
+      promptCartSignIn();
+      return false;
+    }
+    if (product.inventory < quantity) {
+      setCartError(product.inventory > 0 ? `Only ${product.inventory} item(s) are available.` : `${product.name} is out of stock.`);
+      return false;
+    }
+    if (cartItems[0] && cartItems[0].product.currency !== product.currency) {
+      setCartError("Your cart can only contain products in one currency at a time.");
+      return false;
+    }
+
+    setIsCartMutating(true);
+    setCartError(null);
+    try {
+      await addStoreCartItem(resolvedStorefrontWorkspaceId, product.id, quantity);
+      await refreshStoreCart();
+      showActionToast(`${product.name} added to cart (${quantity})`);
+      return true;
+    } catch (error) {
+      setCartError(error instanceof Error ? error.message : "Unable to add this product to your cart.");
+      return false;
+    } finally {
+      setIsCartMutating(false);
+    }
+  }, [cartItems, hasStorefrontSession, promptCartSignIn, refreshStoreCart, resolvedStorefrontWorkspaceId, showActionToast]);
+
+  const openLicenseModal = useCallback((product: BuyProduct) => {
+    if (!hasStorefrontSession || !resolvedStorefrontWorkspaceId) {
+      promptCartSignIn();
+      return;
+    }
+    if (product.inventory < 1) {
+      showActionToast(`${product.name} is out of stock`);
+      return;
+    }
+    setLicenseProduct(product);
+    setLicenseQty(1);
+  }, [hasStorefrontSession, promptCartSignIn, resolvedStorefrontWorkspaceId, showActionToast]);
+
+  const confirmLicensePurchase = useCallback(async () => {
+    if (!licenseProduct) return;
+    const added = await addToCart(licenseProduct, licenseQty);
+    if (added) closeLicenseModal();
+  }, [addToCart, closeLicenseModal, licenseProduct, licenseQty]);
+
+  const updateCartQuantity = useCallback(async (item: CartItem, quantity: number) => {
+    if (quantity < 1) return;
+    if (!resolvedStorefrontWorkspaceId) {
+      promptCartSignIn();
+      return;
+    }
+    setIsCartMutating(true);
+    setCartError(null);
+    try {
+      await updateStoreCartItem(resolvedStorefrontWorkspaceId, item.itemId, quantity);
+      await refreshStoreCart();
+    } catch (error) {
+      setCartError(error instanceof Error ? error.message : "Unable to update your cart.");
+    } finally {
+      setIsCartMutating(false);
+    }
+  }, [promptCartSignIn, refreshStoreCart, resolvedStorefrontWorkspaceId]);
+
+  const removeCartItem = useCallback(async (item: CartItem) => {
+    if (!resolvedStorefrontWorkspaceId) {
+      promptCartSignIn();
+      return;
+    }
+    setIsCartMutating(true);
+    setCartError(null);
+    try {
+      await removeStoreCartItem(resolvedStorefrontWorkspaceId, item.itemId);
+      await refreshStoreCart();
+      showActionToast(`${item.product.name} removed from cart`);
+    } catch (error) {
+      setCartError(error instanceof Error ? error.message : "Unable to remove this product from your cart.");
+    } finally {
+      setIsCartMutating(false);
+    }
+  }, [promptCartSignIn, refreshStoreCart, resolvedStorefrontWorkspaceId, showActionToast]);
+
+  const clearCart = useCallback(async () => {
+    if (!resolvedStorefrontWorkspaceId) {
+      promptCartSignIn();
+      return;
+    }
+    setIsCartMutating(true);
+    setCartError(null);
+    try {
+      await clearStoreCart(resolvedStorefrontWorkspaceId);
+      await refreshStoreCart();
+      showActionToast("Cart cleared");
+    } catch (error) {
+      setCartError(error instanceof Error ? error.message : "Unable to clear your cart.");
+    } finally {
+      setIsCartMutating(false);
+    }
+  }, [promptCartSignIn, refreshStoreCart, resolvedStorefrontWorkspaceId, showActionToast]);
 
   const toggleFavorite = useCallback(
     (product: BuyProduct) => {
@@ -932,62 +1096,58 @@ export default function ECommercePage() {
   const lineTotalCents = licenseProduct ? licenseProduct.unitPriceCents * licenseQty : 0;
   const cartTotalCents = cartItems.reduce((sum, item) => sum + item.product.unitPriceCents * item.qty, 0);
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
+  const cartCurrency = cartItems[0]?.product.currency ?? "INR";
 
   const handleCheckout = async () => {
-    setPaymentLoading(true);
-    setPaymentError(null);
-
-    if (isRazorpayDemoMode()) {
-      try {
-        await new Promise((r) => window.setTimeout(r, 900));
-        setPaymentSuccessDetails({
-          paymentId: `pay_demo_${Math.random().toString(36).substring(2, 9)}`,
-          orderId: `order_demo_${Math.random().toString(36).substring(2, 9)}`,
-          amount: cartTotalCents,
-        });
-        setPaymentSuccess("Payment Successful!");
-        setCartItems([]);
-        setIsCartOpen(false);
-      } catch (e) {
-        setPaymentError("Demo checkout failed");
-      } finally {
-        setPaymentLoading(false);
-      }
+    if (!hasStorefrontSession || !resolvedStorefrontWorkspaceId) {
+      setPaymentError("Sign in to complete checkout.");
+      return;
+    }
+    if (!cartItems.length) {
+      setPaymentError("Your cart is empty.");
       return;
     }
 
-    try {
-      await loadRazorpayCheckoutScript();
+    setPaymentLoading(true);
+    setPaymentError(null);
 
-      const order = await createRazorpayOrder({
-        amountPaise: cartTotalCents,
-        planName: "E-Commerce Purchase",
-        billingPeriod: "One-Time",
+    try {
+      const checkout = await createStoreCheckout({
+        workspaceId: resolvedStorefrontWorkspaceId,
+        items: cartItems.map((item) => ({
+          productId: item.product.id,
+          quantity: item.qty,
+        })),
       });
 
-      setPaymentLoading(false);
+      if (!isRazorpayDemoMode()) {
+        await loadRazorpayCheckoutScript();
+      }
 
       openRazorpayCheckout({
-        order,
-        planLabel: `Purchase of ${cartItems.length} items from Curated Tech Store`,
-        customerName: "Demo Customer",
-        customerEmail: "customer@example.com",
-        customerPhone: "9876543210",
+        order: checkout.payment,
+        planLabel: `Purchase of ${cartItems.length} item${cartItems.length === 1 ? "" : "s"} from your store`,
+        customerName: "",
+        customerEmail: "",
+        customerPhone: "",
         onDismiss: () => setPaymentLoading(false),
         onSuccess: async (response) => {
           setPaymentLoading(true);
           try {
-            const verified = await verifyRazorpayPayment(response);
-            if (!verified) throw new Error("Payment verification failed");
+            const verified = await verifyStoreCheckoutPayment({
+              ...response,
+              orderId: checkout.order._id,
+            });
+            if (!verified.verified) throw new Error(verified.message || "Payment verification failed");
 
-            // Payment success handling
+            await refreshStoreCart();
             setPaymentSuccessDetails({
               paymentId: response.razorpay_payment_id,
-              orderId: response.razorpay_order_id,
-              amount: cartTotalCents,
+              orderId: checkout.order._id,
+              amount: checkout.payment.amount,
+              currency: checkout.payment.currency,
             });
             setPaymentSuccess("Payment Successful!");
-            setCartItems([]);
             setIsCartOpen(false);
           } catch (e) {
             setPaymentError(e instanceof Error ? e.message : "Payment failed");
@@ -1878,7 +2038,7 @@ export default function ECommercePage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
-                    {formatUsd(lineTotalCents)}
+                    {formatStoreCents(lineTotalCents, licenseProduct.currency)}
                   </p>
                   <button
                     type="button"
@@ -1907,7 +2067,7 @@ export default function ECommercePage() {
                   className="justify-self-start flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90 disabled:opacity-40 sm:h-9 sm:w-9"
                   style={{ backgroundColor: NAVY }}
                   aria-label="Decrease quantity"
-                  disabled={licenseQty <= 1}
+                  disabled={licenseQty <= 1 || isCartMutating}
                   onClick={() => setLicenseQty((q) => Math.max(1, q - 1))}
                 >
                   <span className="text-lg font-light leading-none">−</span>
@@ -1917,10 +2077,11 @@ export default function ECommercePage() {
                 </div>
                 <button
                   type="button"
-                  className="justify-self-end flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90 sm:h-9 sm:w-9"
+                  className="justify-self-end flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90 disabled:opacity-40 sm:h-9 sm:w-9"
                   style={{ backgroundColor: NAVY }}
                   aria-label="Increase quantity"
-                  onClick={() => setLicenseQty((q) => q + 1)}
+                  disabled={licenseQty >= licenseProduct.inventory || isCartMutating}
+                  onClick={() => setLicenseQty((q) => Math.min(licenseProduct.inventory, q + 1))}
                 >
                   <span className="text-lg font-light leading-none">+</span>
                 </button>
@@ -1928,11 +2089,12 @@ export default function ECommercePage() {
 
               <button
                 type="button"
-                className="mt-6 w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-95 sm:text-base"
+                className="mt-6 w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
                 style={{ backgroundColor: NAVY }}
-                onClick={confirmLicensePurchase}
+                disabled={isCartMutating}
+                onClick={() => void confirmLicensePurchase()}
               >
-                Confirm To Buy
+                {isCartMutating ? "Adding…" : "Confirm To Buy"}
               </button>
             </div>
           </div>
@@ -1953,7 +2115,9 @@ export default function ECommercePage() {
                   Your cart
                 </h2>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
+                  <p className="text-sm font-bold tabular-nums text-[#06224C]">
+                    {hasStorefrontSession ? formatStoreCents(cartTotalCents, cartCurrency) : "Sign in required"}
+                  </p>
                   <button
                     type="button"
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
@@ -1966,10 +2130,33 @@ export default function ECommercePage() {
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4 sm:px-8 sm:pb-8">
-              {cartItems.length ? (
+              {cartError ? (
+                <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                  <span>{cartError}</span>
+                </div>
+              ) : null}
+              {!hasStorefrontSession ? (
+                <div className="rounded-xl border border-dashed border-[#bfdbfe] bg-[#eff6ff] px-4 py-5 text-sm text-[#1d4ed8]">
+                  <p className="font-semibold">Sign in to use your cart.</p>
+                  <p className="mt-1 text-xs leading-relaxed text-[#475569]">Your cart is securely stored with your Stackly account.</p>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/login")}
+                    className="mt-4 rounded-lg bg-[#06224C] px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-900"
+                  >
+                    Sign in
+                  </button>
+                </div>
+              ) : isCartLoading ? (
+                <div className="flex items-center gap-2 rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#64748b]">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading your cart…
+                </div>
+              ) : cartItems.length ? (
                 <div className="space-y-3">
                   {cartItems.map((item) => (
-                    <div key={item.product.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e5e7eb] bg-[#fafafa] px-3 py-2.5">
+                    <div key={item.itemId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e5e7eb] bg-[#fafafa] px-3 py-2.5">
                       <div className="min-w-0 flex-1">
                         <p className="break-words text-sm font-semibold text-[#111827]">{item.product.name}</p>
                         <p className="text-xs text-[#6b7280]">
@@ -1977,11 +2164,33 @@ export default function ECommercePage() {
                         </p>
                       </div>
                       <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
-                        <span className="text-sm font-bold tabular-nums text-[#111827]">{formatUsd(item.product.unitPriceCents * item.qty)}</span>
+                        <div className="flex items-center overflow-hidden rounded-md border border-[#cbd5e1] bg-white">
+                          <button
+                            type="button"
+                            aria-label={`Decrease ${item.product.name} quantity`}
+                            disabled={isCartMutating || item.qty <= 1}
+                            onClick={() => void updateCartQuantity(item, item.qty - 1)}
+                            className="h-7 w-7 text-sm font-bold text-[#06224C] transition hover:bg-[#eff6ff] disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            −
+                          </button>
+                          <span className="min-w-7 px-1 text-center text-xs font-bold tabular-nums text-[#111827]">{item.qty}</span>
+                          <button
+                            type="button"
+                            aria-label={`Increase ${item.product.name} quantity`}
+                            disabled={isCartMutating || item.qty >= item.product.inventory}
+                            onClick={() => void updateCartQuantity(item, item.qty + 1)}
+                            className="h-7 w-7 text-sm font-bold text-[#06224C] transition hover:bg-[#eff6ff] disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="text-sm font-bold tabular-nums text-[#111827]">{formatStoreCents(item.product.unitPriceCents * item.qty, item.product.currency)}</span>
                         <button
                           type="button"
-                          onClick={() => removeCartItem(item.product.id)}
-                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                          disabled={isCartMutating}
+                          onClick={() => void removeCartItem(item)}
+                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                           Remove
                         </button>
@@ -1997,9 +2206,19 @@ export default function ECommercePage() {
             </div>
             {cartItems.length > 0 && (
               <div className="shrink-0 border-t border-[#eef2f7] bg-gray-50 p-6 sm:p-8">
-                <div className="mb-6 flex items-center justify-between">
-                  <span className="text-sm font-black uppercase tracking-[0.28em] text-gray-500">Subtotal</span>
-                  <span className="text-2xl font-black tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</span>
+                <div className="mb-6 flex items-center justify-between gap-3">
+                  <div>
+                    <span className="block text-sm font-black uppercase tracking-[0.28em] text-gray-500">Subtotal</span>
+                    <button
+                      type="button"
+                      disabled={isCartMutating}
+                      onClick={() => void clearCart()}
+                      className="mt-1 text-xs font-semibold text-[#dc2626] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Clear cart
+                    </button>
+                  </div>
+                  <span className="text-2xl font-black tabular-nums text-[#06224C]">{formatStoreCents(cartTotalCents, cartCurrency)}</span>
                 </div>
                 {paymentError && (
                   <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 p-3 text-[12px] font-semibold text-red-600 border border-red-100">
@@ -2007,14 +2226,9 @@ export default function ECommercePage() {
                     <span>{paymentError}</span>
                   </div>
                 )}
-                {isRazorpayDemoMode() && (
-                  <div className="mb-4 rounded-xl bg-amber-50/60 p-3 text-[11px] font-bold text-amber-700 border border-amber-100">
-                    {getRazorpaySetupHint() || "Demo Mode: Payment completes locally without keys."}
-                  </div>
-                )}
                 <button
                   type="button"
-                  disabled={paymentLoading}
+                  disabled={paymentLoading || isCartMutating}
                   onClick={handleCheckout}
                   className="flex w-full items-center justify-center rounded-2xl bg-[#06224C] px-6 py-4 text-sm font-black uppercase tracking-[0.35em] text-white shadow-xl transition hover:bg-blue-900 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
                 >
@@ -2071,18 +2285,13 @@ export default function ECommercePage() {
                       <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
                         <button
                           type="button"
+                          disabled={isCartMutating}
                           onClick={() => {
-                            setCartItems((prev) => {
-                              const existing = prev.find((item) => item.product.id === product.id);
-                              if (existing) {
-                                return prev.map((item) => (item.product.id === product.id ? { ...item, qty: item.qty + 1 } : item));
-                              }
-                              return [...prev, { product, qty: 1 }];
+                            void addToCart(product, 1).then((added) => {
+                              if (added) removeFavoriteProduct(product.id);
                             });
-                            removeFavoriteProduct(product.id);
-                            showActionToast(`${product.name} added to cart`);
                           }}
-                          className="w-full rounded-md bg-[#06224C] px-3 py-1 text-xs font-semibold text-white hover:bg-blue-900 sm:w-auto"
+                          className="w-full rounded-md bg-[#06224C] px-3 py-1 text-xs font-semibold text-white hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                           Add to Cart
                         </button>
@@ -2182,7 +2391,7 @@ export default function ECommercePage() {
                       </span>
                       <span className="min-w-0 leading-tight">
                         <span className="block text-[11px] font-semibold sm:text-xs">Cart</span>
-                        <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{cartItems.length ? formatUsd(cartTotalCents) : "Empty"}</span>
+                        <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{cartItems.length ? formatStoreCents(cartTotalCents, cartCurrency) : "Empty"}</span>
                       </span>
                     </button>
                     <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsFavoritesOpen(true)}>
@@ -2407,7 +2616,10 @@ export default function ECommercePage() {
                         <button
                           type="button"
                           className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-white/10"
-                          onClick={() => openLicenseModal(buyProductById.get("audio") ?? buyProducts[0])}
+                          disabled={!dealProduct}
+                          onClick={() => {
+                            if (dealProduct) openLicenseModal(dealProduct);
+                          }}
                         >
                           Add Deal Item
                         </button>
@@ -2432,7 +2644,8 @@ export default function ECommercePage() {
                     </div>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-full border border-[#fecaca] bg-[#fff7ed] px-4 py-2 text-sm font-black text-[#ff664f] transition duration-300 hover:-translate-y-0.5 hover:bg-[#ff664f] hover:text-white"
+                      disabled={isProductsLoading || !products.length}
+                      className="inline-flex items-center gap-2 rounded-full border border-[#fecaca] bg-[#fff7ed] px-4 py-2 text-sm font-black text-[#ff664f] transition duration-300 hover:-translate-y-0.5 hover:bg-[#ff664f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={() => setShowAllProducts((prev) => !prev)}
                     >
                       {showAllProducts ? "Carousel View" : "View All"}
@@ -2445,7 +2658,7 @@ export default function ECommercePage() {
                   </div>
 
                   <div className="buyscreen-products-row flex items-center gap-2 sm:gap-4">
-                    {!showAllProducts && !isSearching ? (
+                    {!showAllProducts && !isSearching && totalProducts > 1 ? (
                       <button
                         type="button"
                         className="buyscreen-products-arrow shrink-0 self-center"
@@ -2490,9 +2703,7 @@ export default function ECommercePage() {
                               >
                                 <div
                                   className="absolute inset-3 rounded-lg bg-[#f8fafc] bg-contain bg-center bg-no-repeat transition duration-500 group-hover:scale-105"
-                                  style={{
-                                    backgroundImage: `url('${product.image}')`,
-                                  }}
+                                  style={product.image ? { backgroundImage: `url('${product.image}')` } : undefined}
                                 />
                                 <div className="buyscreen-product-hover-actions pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden justify-center px-1 pb-2 pt-6 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 lg:flex">
                                   <div className="pointer-events-auto flex flex-nowrap items-center justify-center gap-[12px] overflow-hidden whitespace-nowrap">
@@ -2540,7 +2751,7 @@ export default function ECommercePage() {
                         ))}
                       </div>
                     </div>
-                    {!showAllProducts && !isSearching ? (
+                    {!showAllProducts && !isSearching && totalProducts > 1 ? (
                       <button
                         type="button"
                         className="buyscreen-products-arrow shrink-0 self-center"
@@ -2557,9 +2768,18 @@ export default function ECommercePage() {
                   {isCarouselMode && totalProducts > 1 ? (
                     <p className="mt-3 text-center text-[11px] font-medium text-[#6b7280] lg:hidden">Swipe for more products</p>
                   ) : null}
-                  {!displayedProducts.length ? (
+                  {isProductsLoading ? (
+                    <p className="mt-4 flex items-center gap-2 rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#64748b]">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading catalog…
+                    </p>
+                  ) : productsError ? (
+                    <p role="alert" className="mt-4 rounded-lg border border-red-100 bg-red-50 px-4 py-4 text-sm text-red-700">
+                      {productsError}
+                    </p>
+                  ) : !displayedProducts.length ? (
                     <p className="mt-4 rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#6b7280]">
-                      No products found for &quot;{searchQuery}&quot;.
+                      {isSearching ? `No products found for “${searchQuery}”.` : "No products are available in this collection yet."}
                     </p>
                   ) : null}
                 </section>
@@ -2684,12 +2904,20 @@ export default function ECommercePage() {
                       </form>
                     </div>
                     <div className="buyscreen-update-art grid grid-cols-3 items-stretch gap-2 rounded-[1.5rem] bg-[#f8fafc] p-3 sm:gap-3 sm:p-4">
-                      {buyUpdateProducts.map((product) => (
+                      {updateProducts.map((product) => (
                         <div key={product.name} className="buyscreen-update-product flex h-full w-full flex-col items-center justify-between rounded-2xl border border-[#e7edf5] bg-white p-2 shadow-sm sm:p-3">
-                          <Image src={product.image} alt={product.name} width={100} height={100} className="h-16 w-full shrink-0 object-contain sm:h-20" unoptimized />
+                          <div
+                            role="img"
+                            aria-label={`${product.name} product image`}
+                            className="h-16 w-full shrink-0 rounded-lg bg-contain bg-center bg-no-repeat sm:h-20"
+                            style={product.image ? { backgroundImage: `url('${product.image}')` } : undefined}
+                          />
                           <p className="mt-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#64748b] sm:text-[10px]">{product.name}</p>
                         </div>
                       ))}
+                      {!updateProducts.length ? (
+                        <p className="col-span-3 self-center px-3 text-center text-xs font-semibold text-[#64748b]">Catalog products will appear here.</p>
+                      ) : null}
                     </div>
                   </div>
                 </section>
@@ -3021,7 +3249,7 @@ export default function ECommercePage() {
               </div>
               <div className="flex justify-between">
                 <span>Amount Paid</span>
-                <span className="text-[#06224C] font-bold">{formatUsd(paymentSuccessDetails.amount)}</span>
+                <span className="text-[#06224C] font-bold">{formatStoreCents(paymentSuccessDetails.amount, paymentSuccessDetails.currency)}</span>
               </div>
             </div>
 

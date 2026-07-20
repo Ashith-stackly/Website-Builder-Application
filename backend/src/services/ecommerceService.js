@@ -2,6 +2,32 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Workspace = require('../models/Workspace');
 const ApiError = require('../utils/ApiError');
+const checkoutService = require('./checkoutService');
+
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+const MAX_PAGE_NUMBER = 10000;
+const PRODUCT_ID_PATTERN = /^[a-f\d]{24}$/i;
+const PUBLIC_PRODUCT_FIELDS = 'name slug description price currency images category inventory status salePrice sku createdAt updatedAt';
+
+function boundedPositiveInteger(value, fallback, maximum) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) return fallback;
+  return Math.min(parsed, maximum);
+}
+
+function requestedProductIds(value) {
+  const rawIds = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(',')
+      : [];
+
+  return [...new Set(rawIds
+    .map((id) => String(id).trim())
+    .filter((id) => PRODUCT_ID_PATTERN.test(id)))]
+    .slice(0, MAX_PAGE_SIZE);
+}
 
 function generateSlug(name) {
   return name
@@ -76,13 +102,18 @@ async function queryProducts(workspaceId, query = {}, publicOnly = true) {
   if (publicOnly) filter.status = 'active';
   else if (query.status) filter.status = query.status;
   if (query.category) filter.category = query.category;
+  const productIds = requestedProductIds(query.ids);
+  if (productIds.length) filter._id = { $in: productIds };
 
-  const page = Number(query.page || 1);
-  const limit = Number(query.limit || 20);
+  const page = boundedPositiveInteger(query.page, 1, MAX_PAGE_NUMBER);
+  const limit = boundedPositiveInteger(query.limit, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
   const skip = (page - 1) * limit;
 
+  const productsQuery = Product.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit);
+  if (publicOnly) productsQuery.select(PUBLIC_PRODUCT_FIELDS);
+
   const [products, total] = await Promise.all([
-    Product.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
+    productsQuery.lean(),
     Product.countDocuments(filter),
   ]);
 
@@ -128,18 +159,22 @@ async function deleteProduct(userId, productId) {
 
 // ─── Orders ────────────────────────────────────────────────
 
-async function createOrder(body) {
-  const order = await Order.create({
-    workspaceId: body.workspaceId,
-    userId: body.userId || undefined,
-    items: body.items || [],
-    totalAmount: body.totalAmount,
-    currency: body.currency || 'INR',
-    customerEmail: body.customerEmail || '',
-    customerName: body.customerName || '',
-    shippingAddress: body.shippingAddress || {},
-  });
-  return order.toObject();
+async function createOrder(userId, body) {
+  // This is a compatibility alias for the original public storefront endpoint.
+  // Never persist client-supplied totals, product snapshots, payment fields, or
+  // user IDs: checkout resolves active products and prices on the server.
+  const request = body || {};
+  const checkoutBody = {
+    workspaceId: request.workspaceId,
+    items: request.items,
+    billingDetails: request.billingDetails,
+    shippingAddress: request.shippingAddress,
+    customerEmail: request.customerEmail,
+    customerName: request.customerName,
+    orderNotes: request.orderNotes,
+  };
+
+  return checkoutService.createCheckoutOrder(userId, checkoutBody);
 }
 
 async function listOrders(userId, workspaceId, query = {}) {
