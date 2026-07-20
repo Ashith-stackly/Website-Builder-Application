@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
-  <title>Stackly · Codebase Analysis &amp; Sprint Status</title>
-  <meta name="description" content="A living, module-by-module analysis of the Stackly Website Builder — done / partial / pending across the frontend and the new test/ backends, with real file paths and API endpoints." />
+  <title>Stackly · Implementation Audit</title>
+  <meta name="description" content="A source-and-contract audit of the Stackly Website Builder. It tracks implemented, partial, and pending work across the current frontend and unified backend." />
   <meta name="theme-color" content="#0b1220" />
 
   <!-- Bootstrap 5 grid (utilities only; visuals are token-driven) -->
@@ -63,15 +63,14 @@
 
       <div class="legend" aria-hidden="true">
         <p class="nav-label">Legend</p>
-        <div class="legend-row"><span class="lg-dot st-done"></span> Done — shipped &amp; working</div>
-        <div class="legend-row"><span class="lg-dot st-partial"></span> Partial — exists, not fully wired</div>
-        <div class="legend-row"><span class="lg-dot st-pending"></span> Pending — not started</div>
+        <div class="legend-row"><span class="lg-dot st-done"></span> Done — implemented in source</div>
+        <div class="legend-row"><span class="lg-dot st-partial"></span> Partial — integration still needed</div>
+        <div class="legend-row"><span class="lg-dot st-pending"></span> Pending — not found in source</div>
       </div>
 
       <div class="side-foot">
-        Sources: <code>implementation_plan.md</code>,
-        <code>stackly_project_context.md</code>, the consolidated backend
-        &amp; the live source tree. Updated 16 Jul 2026.
+        Sources: the current <code>frontend/</code> and <code>backend/</code>
+        source trees. Audit date: 20 Jul 2026.
       </div>
     </aside>
 
@@ -83,7 +82,7 @@
         </button>
         <span class="gen-date" id="genDate"></span>
         <div class="topbar-actions">
-          <a class="doc-link" href="manager_project_overview.docx" download>Manager brief <span aria-hidden="true">↓</span></a>
+          <a class="doc-link" href="manager_project_overview.docx" download>Archived manager brief <span aria-hidden="true">↓</span></a>
           <button id="themeToggle" class="icon-btn" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle theme (T)">
             <svg class="ico ico-sun" aria-hidden="true"><use href="#i-sun"/></svg>
             <svg class="ico ico-moon" aria-hidden="true"><use href="#i-moon"/></svg>
@@ -97,7 +96,7 @@
         <h1 id="projName" class="hero-title">Stackly</h1>
         <p class="hero-tag" id="projTagline"></p>
         <div class="hero-bar-head">
-          <span>Overall delivery <span class="muted">(done 100% · partial 50%)</span></span>
+          <span>Implementation coverage <span class="muted">(done 100% · partial 50%)</span></span>
           <span id="deltaPill" class="delta-pill"></span>
         </div>
         <div id="overallBar" class="reveal"><!-- injected --></div>
@@ -108,13 +107,18 @@
         <div>
           <p class="eyebrow">For management</p>
           <h2 id="managerBriefHead">Project setup and module delivery overview</h2>
-          <p>A concise, shareable explanation of the product, working model, delivery status, and next priorities.</p>
+          <p>A concise project overview from 11 Jul 2026. Use this dashboard for the current source-and-contract audit.</p>
         </div>
-        <a class="brief-cta" href="manager_project_overview.docx" download>Download Word brief <span aria-hidden="true">→</span></a>
+        <a class="brief-cta" href="manager_project_overview.docx" download>Download archived brief <span aria-hidden="true">→</span></a>
       </section>
 
-      <!-- What's new -->
-      <section id="whatsNew" class="whats-new reveal" aria-label="What changed this pass"><!-- injected --></section>
+      <section class="audit-note reveal" aria-label="Audit scope">
+        <svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>
+        <p><strong>Audit scope:</strong> statuses are based on the source tree and frontend/backend contracts. External configuration, database connectivity, payment credentials, DNS, and hosted deployment were not run or verified here.</p>
+      </section>
+
+      <!-- What changed -->
+      <section id="whatsNew" class="whats-new reveal" aria-label="Current source audit"><!-- injected --></section>
 
       <!-- KPI cards -->
       <div class="row g-3 kpi-row reveal" id="kpiRow"><!-- injected --></div>
@@ -164,8 +168,7 @@
       </div>
 
       <footer class="page-foot">
-        Generated from the live Stackly source tree. “Done” means implemented and verified in the active module;
-        “partial” means the capability exists but still needs consolidation, API wiring, or a user-facing surface.
+        Generated from the current Stackly source tree. “Done” means implemented in source; “partial” means a user flow still needs integration, production infrastructure, or runtime quality assurance.
       </footer>
     </main>
   </div>

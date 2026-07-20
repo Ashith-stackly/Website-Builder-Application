@@ -302,6 +302,18 @@ code, .path, kbd { font-family: var(--font-mono); font-variant-numeric: tabular-
 }
 .brief-cta:hover { background: var(--accent-strong); transform: translateY(-1px); }
 
+/* ---- Audit scope -------------------------------------------------------- */
+.audit-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 0 0 var(--sp-lg); padding: 11px 14px;
+  border: 1px solid color-mix(in oklch, var(--accent) 28%, var(--border));
+  border-radius: var(--r-md); background: color-mix(in oklch, var(--accent-soft) 55%, var(--surface));
+  color: var(--text-muted); font-size: 12.5px; line-height: 1.55;
+}
+.audit-note .ico { flex: none; width: 17px; height: 17px; margin-top: 1px; color: var(--accent); }
+.audit-note p { margin: 0; }
+.audit-note strong { color: var(--text); }
+
 /* ---- KPI cards ----------------------------------------------------------- */
 .kpi-row { margin-bottom: var(--sp-lg); }
 .kpi {
