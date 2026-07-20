@@ -6,6 +6,7 @@ import {
   Settings,
   Blocks,
   ShoppingBag,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ export const primaryNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Projects", href: "/dashboard/projects", icon: FolderKanban },
   { label: "Products", href: "/dashboard/products", icon: ShoppingBag },
+  { label: "Orders", href: "/dashboard/orders", icon: ClipboardList },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Templates", href: "/templates", icon: LayoutTemplate },
   { label: "Builder", href: "/builder", icon: Blocks, external: true },

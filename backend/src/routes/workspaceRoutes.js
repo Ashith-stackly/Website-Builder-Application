@@ -1,3 +1,14 @@
+/**
+ * DEPRECATED — Workspace routes.
+ *
+ * These routes operate on the same Workspace collection as /api/projects.
+ * The /api/projects routes (projectRoutes.js) are the canonical API and
+ * should be used by new frontend code.
+ *
+ * These routes are retained for backward compatibility with the builder
+ * (which still uses workspace/:id/state). They should be consolidated
+ * into projectRoutes in a future sprint.
+ */
 const express = require('express');
 const authenticate = require('../middleware/auth');
 const validate = require('../middleware/validate');

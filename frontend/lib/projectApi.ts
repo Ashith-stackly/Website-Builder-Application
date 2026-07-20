@@ -198,3 +198,38 @@ export async function getProjectAnalytics(
   });
 }
 
+/* ─── Dashboard summary (single-call) ──────────────────────────────── */
+
+export interface DashboardSummaryProject {
+  _id: string;
+  projectName: string;
+  category: string;
+  status: string;
+  updatedAt: string;
+  createdAt: string;
+}
+
+export interface DashboardSummary {
+  projects: {
+    total: number;
+    active: number;
+    archived: number;
+    published: number;
+  };
+  analytics: {
+    totalViews: number;
+    uniqueVisitors: number;
+    todayViews: number;
+    weeklyViews: number;
+  };
+  recentProjects: DashboardSummaryProject[];
+}
+
+export async function getDashboardSummary(
+  signal?: AbortSignal,
+): Promise<DashboardSummary> {
+  return projectRequest<DashboardSummary>("/dashboard/summary", {
+    method: "GET",
+    signal,
+  });
+}

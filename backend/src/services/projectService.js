@@ -1,5 +1,7 @@
 const Workspace = require('../models/Workspace');
+const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
+const { getProjectLimit } = require('../constants/plans');
 
 // Fields to exclude from list views — builderData/htmlContent are large blobs the
 // dashboard list does not need.
@@ -50,6 +52,20 @@ async function listProjects(userId) {
 }
 
 async function createProject(userId, body) {
+  // ── Plan-based project limit enforcement ────────────────────────────
+  const user = await User.findById(userId).select('plan role').lean();
+  if (user && user.role !== 'admin') {
+    const limit = getProjectLimit(user.plan || 'free');
+    if (limit !== -1) {
+      const currentCount = await Workspace.countDocuments({ userId, status: { $ne: 'deleted' } });
+      if (currentCount >= limit) {
+        throw ApiError.forbidden(
+          `Your "${user.plan || 'free'}" plan allows a maximum of ${limit} projects. Upgrade your plan to create more.`
+        );
+      }
+    }
+  }
+
   const doc = await Workspace.create({
     userId,
     projectName: body.projectName,

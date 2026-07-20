@@ -290,7 +290,7 @@ const MODULES = [
         p: ["backend/src/services/checkoutService.js", "lib/razorpayClient.ts"], note: "Razorpay wired for both subscriptions and (server-side) product checkout; product checkout not surfaced client-side." },
       { t: "Store order details", s: "partial",
         p: ["backend/src/models/Order.js"], note: "Order model (items, totals, razorpay fields, shipping/billing) exists; no client flow writes to it yet." },
-      { t: "Create order management dashboard", s: "pending", p: [], note: "No merchant order dashboard UI." },
+      { t: "Create order management dashboard", s: "done", p: ["app/dashboard/orders/page.tsx", "lib/ecommerceApi.ts"], note: "Fully interactive merchant order operations dashboard with order tracking, status update flows, address logs, and financial totals." },
     ],
   },
 

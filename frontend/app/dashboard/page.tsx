@@ -12,7 +12,6 @@ import {
   FolderKanban,
   Globe,
   Users,
-  HardDrive,
   Clock,
   MoreHorizontal,
   Pencil,
@@ -34,7 +33,7 @@ import {
   hoverLift,
 } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
-import { getProjectAnalytics } from "@/lib/projectApi";
+import { getDashboardSummary, type DashboardSummary } from "@/lib/projectApi";
 import { useCountUp, useClickOutside } from "@/lib/hooks";
 import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
@@ -81,11 +80,28 @@ export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("there");
 
-  const [visitors, setVisitors] = useState(0);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const fetchSummary = useCallback(async (signal?: AbortSignal) => {
+    setSummaryLoading(true);
+    setSummaryError(null);
+    try {
+      const data = await getDashboardSummary(signal);
+      setSummary(data);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      setSummaryError(err instanceof Error ? err.message : "Failed to load dashboard data.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
+    void fetchSummary(controller.signal);
     try {
       const raw = window.localStorage.getItem("stacklyUserSettings");
       if (raw) {
@@ -96,35 +112,7 @@ export default function DashboardPage() {
       /* ignore */
     }
     return () => controller.abort();
-  }, [loadProjects]);
-
-  useEffect(() => {
-    if (projects.length === 0) {
-      setVisitors(0);
-      return;
-    }
-
-    let active = true;
-    const fetchAll = async () => {
-      try {
-        const promises = projects.map((p) =>
-          getProjectAnalytics(p.id, 30).catch(() => ({ uniqueVisitors: 0 }))
-        );
-        const results = await Promise.all(promises);
-        if (active) {
-          const sum = results.reduce((acc, res) => acc + (res?.uniqueVisitors ?? 0), 0);
-          setVisitors(sum);
-        }
-      } catch (err) {
-        console.error("Dashboard overview analytics load error:", err);
-      }
-    };
-
-    void fetchAll();
-    return () => {
-      active = false;
-    };
-  }, [projects]);
+  }, [loadProjects, fetchSummary]);
 
   // Open the create flow from the sidebar / command palette (?new=1).
   useEffect(() => {
@@ -137,15 +125,13 @@ export default function DashboardPage() {
   const hasProjects = projects.length > 0;
 
   const stats = useMemo(() => {
-    const published = projects.filter((p) => p.status === "published").length;
-    const blocks = projects.reduce((acc, p) => acc + (p.components?.length ?? 0), 0);
     return [
-      { label: "Projects", value: projects.length, icon: FolderKanban, tone: TILE_TONES[0], sub: "in this workspace" },
-      { label: "Published", value: published, icon: Globe, tone: TILE_TONES[3], sub: "live sites" },
-      { label: "Visitors", value: visitors, icon: Users, tone: TILE_TONES[1], sub: "last 30 days" },
-      { label: "Blocks built", value: blocks, icon: Blocks, tone: TILE_TONES[2], sub: "across projects" },
+      { label: "Projects", value: summary?.projects.total ?? projects.length, icon: FolderKanban, tone: TILE_TONES[0], sub: "in this workspace" },
+      { label: "Published", value: summary?.projects.published ?? 0, icon: Globe, tone: TILE_TONES[3], sub: "live sites" },
+      { label: "Visitors", value: summary?.analytics.uniqueVisitors ?? 0, icon: Users, tone: TILE_TONES[1], sub: "last 30 days" },
+      { label: "Total Views", value: summary?.analytics.totalViews ?? 0, icon: TrendingUp, tone: TILE_TONES[2], sub: "last 30 days" },
     ];
-  }, [projects, visitors]);
+  }, [summary, projects.length]);
 
   const progress = Math.min(100, 20 + projects.length * 12);
 
@@ -222,7 +208,7 @@ export default function DashboardPage() {
         {/* ── Stat row ── */}
         <motion.section variants={gridContainer} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {stats.map((s) => (
-            <StatTile key={s.label} {...s} loading={isLoading} />
+            <StatTile key={s.label} {...s} loading={isLoading || summaryLoading} />
           ))}
         </motion.section>
 
