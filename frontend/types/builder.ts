@@ -596,6 +596,8 @@ export interface BuilderState {
   saveHtml: (signal?: AbortSignal) => Promise<boolean>;
   /** Create a project on first save, then autosave builder data + HTML. */
   saveDraft: (signal?: AbortSignal) => Promise<boolean>;
+  /** Save the newest JSON/HTML and sync the publish-compatible workspace state. */
+  prepareForPublish: () => Promise<string>;
   /** Reset builder state after logout. */
   resetBuilder: () => void;
   /** Active editing viewport. */

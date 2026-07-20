@@ -13,6 +13,12 @@ import {
   type ProjectApiProject,
 } from "@/lib/projectApi";
 import type { Project, ProjectSort, ProjectSortKey, ProjectSortOrder } from "@/types/project";
+import { useBuilderStore } from "@/store/builderStore";
+
+type EditableProjectUpdates = Partial<Pick<
+  Project,
+  "name" | "description" | "category" | "style" | "sections" | "status"
+>>;
 
 function sortProjects(projects: Project[], sort: ProjectSort): Project[] {
   const sorted = [...projects];
@@ -49,16 +55,36 @@ function mapApiProject(project: ProjectApiProject): Project {
   };
 }
 
+function toProjectUpdatePayload(updates: EditableProjectUpdates) {
+  const payload: Parameters<typeof apiUpdateProject>[1] = {};
+  if (typeof updates.name !== "undefined") payload.projectName = updates.name;
+  if (typeof updates.description !== "undefined") payload.description = updates.description;
+  if (typeof updates.category !== "undefined") payload.category = updates.category;
+  if (typeof updates.style !== "undefined") payload.style = updates.style;
+  if (typeof updates.sections !== "undefined") payload.sections = updates.sections;
+  if (typeof updates.status !== "undefined") payload.status = updates.status;
+  return payload;
+}
+
+function getProjectUpdateError(error: unknown): string {
+  if (isProjectConnectionError(error)) {
+    return "Unable to reach the project service. Your settings have not been saved.";
+  }
+  return error instanceof Error ? error.message : "Unable to save project settings.";
+}
+
 interface ProjectState {
   projects: Project[];
   searchQuery: string;
   sort: ProjectSort;
   isLoading: boolean;
+  updatingProjectId: string | null;
   error: string | null;
 
   loadProjects: (signal?: AbortSignal) => Promise<void>;
   createProject: (data: Pick<Project, "name" | "category" | "style" | "sections">) => Project;
-  updateProject: (id: string, updates: Partial<Project>) => void;
+  /** Persists only changed editable fields, then replaces local data with the server record. */
+  updateProject: (id: string, updates: EditableProjectUpdates) => Promise<Project>;
   deleteProject: (id: string) => void;
   duplicateProject: (id: string) => void;
   renameProject: (id: string, name: string) => void;
@@ -76,6 +102,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   searchQuery: "",
   sort: { key: "updatedAt", order: "desc" },
   isLoading: false,
+  updatingProjectId: null,
   error: null,
 
   loadProjects: async (signal) => {
@@ -118,12 +145,37 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     return project;
   },
 
-  updateProject: (id, updates) => {
-    set({
-      projects: get().projects.map((p) =>
-        p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p,
-      ),
-    });
+  updateProject: async (id, updates) => {
+    const existing = get().projects.find((project) => project.id === id);
+    if (!existing) {
+      throw new Error("This project could not be found. Refresh the dashboard and try again.");
+    }
+
+    const payload = toProjectUpdatePayload(updates);
+    if (Object.keys(payload).length === 0) return existing;
+
+    set({ updatingProjectId: id, error: null });
+    try {
+      const updated = mapApiProject(await apiUpdateProject(id, payload));
+      set((state) => ({
+        projects: state.projects.map((project) => project.id === id ? updated : project),
+        updatingProjectId: null,
+        error: null,
+      }));
+
+      // Keep an open builder's title in sync without marking its canvas dirty.
+      if (useBuilderStore.getState().currentProjectId === id) {
+        useBuilderStore.setState({ currentProjectName: updated.name });
+      }
+      return updated;
+    } catch (error) {
+      const message = getProjectUpdateError(error);
+      set((state) => ({
+        updatingProjectId: state.updatingProjectId === id ? null : state.updatingProjectId,
+        error: message,
+      }));
+      throw new Error(message);
+    }
   },
 
   deleteProject: (id) => {
@@ -180,24 +232,9 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   renameProject: (id, name) => {
-    // Optimistic rename; restore the snapshot if the backend rejects it.
-    const snapshot = get().projects;
-    set({
-      projects: snapshot.map((p) =>
-        p.id === id ? { ...p, name, updatedAt: new Date().toISOString() } : p,
-      ),
-      error: null,
-    });
-
-    void apiUpdateProject(id, { projectName: name }).catch((error) => {
-      set({
-        projects: snapshot,
-        error: isProjectConnectionError(error)
-          ? "Unable to reach the project service. The name was not changed."
-          : error instanceof Error
-            ? error.message
-            : "Unable to rename this project.",
-      });
+    void get().updateProject(id, { name }).catch(() => {
+      // The store holds a user-safe error for dashboard surfaces. Rename is a
+      // fire-and-forget card action, so it deliberately does not duplicate UI.
     });
   },
 
@@ -215,6 +252,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       searchQuery: "",
       sort: { key: "updatedAt", order: "desc" },
       isLoading: false,
+      updatingProjectId: null,
       error: null,
     });
   },

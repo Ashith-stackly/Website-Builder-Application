@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateHtml } from "@/lib/exportHtml";
 import { getFreeformDefaultHeight } from "@/lib/freeformLayout";
 import { autosaveProject, createProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
+import { saveWorkspaceState } from "@/lib/publishApi";
 import { featureItemDefaults } from "@/components/blocks/feature-item/spec";
 import { heroDefaults } from "@/components/blocks/hero/spec";
 import { navigationDefaults } from "@/components/blocks/navigation/spec";
@@ -1369,6 +1370,49 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         });
       }
       return false;
+    }
+  },
+  prepareForPublish: async () => {
+    const beforeSave = get();
+    if (beforeSave.components.length === 0) {
+      throw new Error("Add at least one block before publishing your website.");
+    }
+
+    const saved = await get().saveDraft();
+    if (!saved) {
+      throw new Error(get().saveError || "Unable to save the latest builder changes.");
+    }
+
+    // A user can make a final edit while the draft request is in flight. Take a
+    // fresh snapshot after it completes and persist it when it differs, so the
+    // deployment never receives stale JSON, HTML, or design tokens.
+    const latest = get();
+    const workspaceId = latest.currentProjectId;
+    if (!workspaceId) {
+      throw new Error("A workspace could not be created for this website.");
+    }
+
+    const latestBuilderData = buildProjectData(latest);
+    const latestHtml = latest.exportHtml();
+    const initialSnapshot = JSON.stringify(buildProjectData(beforeSave));
+    const latestSnapshot = JSON.stringify(latestBuilderData);
+
+    try {
+      if (initialSnapshot !== latestSnapshot) {
+        await autosaveProject(workspaceId, {
+          builderData: latestBuilderData,
+          htmlContent: latestHtml,
+        });
+      }
+      await saveWorkspaceState(workspaceId, {
+        builderData: latestBuilderData,
+        htmlContent: latestHtml,
+      });
+      return workspaceId;
+    } catch (error) {
+      const message = getSaveErrorMessage(error, "Unable to prepare this website for publishing.");
+      set({ saveStatus: "error", saveError: message, isSaving: false });
+      throw new Error(message);
     }
   },
   resetBuilder: () => {

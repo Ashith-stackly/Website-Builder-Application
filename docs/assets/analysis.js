@@ -1,6 +1,6 @@
 /* ============================================================================
    Stackly codebase analysis dashboard
-   Source-and-contract audit: 20 July 2026
+   Source-and-contract audit: 21 July 2026
 
    Status meanings:
    - done: the requested capability is implemented in the source tree.
@@ -9,13 +9,13 @@
    - pending: no implementation was found for the requested capability.
    ========================================================================== */
 
-const AUDIT_DATE = "20 Jul 2026";
+const AUDIT_DATE = "21 Jul 2026";
 
 const WHATSNEW = {
-  title: "Builder, commerce, analytics, and AI modules reconciled",
+  title: "Workspace settings and publishing frontend reconciled",
   body:
-    "This pass updates the dashboard after the Module 4 freeform builder work, the Module 8 storefront checkout work, the Module 10 analytics tracker/dashboard work, and the Module 11 AI assistant. " +
-    "The main remaining source gaps are templates, hosted publishing, domains/SSL, Google Analytics as an optional integration, and a few local-only settings flows."
+    "This pass updates the dashboard after the Module 2 project settings persistence work and the Module 7 publishing frontend work, alongside the already completed Module 4 freeform builder, Module 8 storefront checkout, Module 10 analytics, and Module 11 AI assistant work. " +
+    "The main remaining source gaps are templates, hosted S3 deployment, domains/SSL, GitHub OAuth, production payment/provider configuration, and Google Analytics as an optional integration."
 };
 
 const PROJECT = {
@@ -94,7 +94,7 @@ const MODULES = [
   },
   {
     id: "m2", num: 2, name: "Workspace & Dashboard",
-    blurb: "The authenticated project dashboard, CRUD API, duplicate flow, and builder autosave are implemented. The project settings form still only updates Zustand state locally.",
+    blurb: "The authenticated project dashboard, CRUD API, duplicate flow, builder autosave, and project settings persistence are implemented. Settings now save changed editable fields through the existing project API and sync the active builder title after the server response.",
     tasks: [
       { t: "Design dashboard UI", s: "done",
         p: ["frontend/app/dashboard/page.tsx", "frontend/components/dashboard/ProjectGrid.tsx"],
@@ -114,9 +114,9 @@ const MODULES = [
       { t: "Implement duplicate project feature", s: "done",
         p: ["frontend/store/projectStore.ts"],
         note: "Duplicate is a client-composed get → create → autosave flow; it is not a dedicated /api/projects duplicate endpoint." },
-      { t: "Add project settings page", s: "partial",
-        p: ["frontend/components/dashboard/ProjectSettingsForm.tsx"],
-        note: "The settings screen exists, but its save action mutates local Zustand state rather than PUT /api/projects/:id." },
+      { t: "Add project settings page", s: "done",
+        p: ["frontend/app/dashboard/settings/page.tsx", "frontend/components/dashboard/ProjectSettingsForm.tsx", "frontend/store/projectStore.ts", "frontend/lib/projectApi.ts"],
+        note: "The existing settings screen now validates editable fields, warns on unsaved changes, sends only changed name/category/style fields through PUT /api/projects/:id, updates state after the server response, and syncs the active builder project name." },
       { t: "Handle project state persistence", s: "done",
         p: ["frontend/store/builderStore.ts", "backend/src/routes/projectRoutes.js"],
         note: "Builder data and generated HTML are persisted through autosave and save-html routes." },
@@ -248,7 +248,7 @@ const MODULES = [
   },
   {
     id: "m7", num: 7, name: "Publishing System",
-    blurb: "HTML/CSS export and deployment records exist, but publishing is not yet a hosted deployment. The current publish service saves a JSON snapshot and also expects WorkspaceState, which the active builder does not create.",
+    blurb: "The builder now has a publish dialog that saves the latest JSON/HTML, syncs publish-compatible workspace state, calls the existing publish API, and shows deployment status/history. Hosted S3 deployment and real asset hosting remain infrastructure gaps.",
     tasks: [
       { t: "Convert JSON layout → static HTML", s: "done",
         p: ["frontend/lib/exportHtml.ts", "frontend/store/builderStore.ts"],
@@ -257,20 +257,22 @@ const MODULES = [
         p: ["frontend/lib/exportHtml.ts", "frontend/components/draggable/componentStyles.ts"],
         note: "Generated HTML includes base, component, and responsive CSS." },
       { t: "Bundle assets (images, scripts)", s: "partial",
-        p: ["frontend/components/builder/ExportButton.tsx", "frontend/store/assetStore.ts"],
-        note: "Manual HTML export embeds local images where possible, but there is no deployable shared asset bundle or CDN pipeline." },
+        p: ["frontend/components/builder/ExportButton.tsx", "frontend/store/assetStore.ts", "frontend/lib/publishApi.ts"],
+        note: "Manual HTML export embeds local images where possible and publish saves generated JSON/HTML state, but there is no deployable shared asset bundle or CDN pipeline yet." },
       { t: "Build deployment service (Lambda/API)", s: "partial",
-        p: ["backend/src/routes/publishRoutes.js", "backend/src/services/publishService.js"],
-        note: "Deployment records and API routes exist, but publish stores a JSON snapshot and fails for active builder projects without a WorkspaceState document." },
+        p: ["backend/src/routes/publishRoutes.js", "backend/src/services/publishService.js", "frontend/lib/publishApi.ts", "frontend/store/builderStore.ts"],
+        note: "Deployment records and API routes exist, and the frontend now prepares the WorkspaceState expected by the service before publishing. The backend still stores snapshots rather than deploying hosted artifacts." },
       { t: "Deploy site to S3 bucket", s: "pending",
         p: [], note: "No S3 static-site upload or hosting implementation was found." },
-      { t: "Implement Publish button", s: "pending",
-        p: ["frontend/components/builder/Canvas.tsx"], note: "The active builder has Export/Save controls but no call to /api/publish." },
-      { t: "Show deployment status (loading/success/fail)", s: "pending",
-        p: [], note: "No builder status dialog or deployment UI consumes deployment states." },
+      { t: "Implement Publish button", s: "done",
+        p: ["frontend/components/builder/Canvas.tsx", "frontend/components/builder/PublishDialog.tsx", "frontend/lib/publishApi.ts"],
+        note: "The builder exposes a Publish action that opens a dialog, saves the latest draft, syncs workspace state, calls POST /api/publish/:workspaceId, and surfaces the published URL when available." },
+      { t: "Show deployment status (loading/success/fail)", s: "done",
+        p: ["frontend/components/builder/PublishDialog.tsx", "frontend/lib/publishApi.ts"],
+        note: "The publish dialog renders loading, saving, success, failure, retry, copy/open-site, and deployment-history states." },
       { t: "Store deployment versions", s: "partial",
-        p: ["backend/src/models/Deployment.js", "backend/src/services/publishService.js"],
-        note: "Versioned Deployment documents are stored, but they do not represent deployed hosted artifacts." },
+        p: ["backend/src/models/Deployment.js", "backend/src/services/publishService.js", "frontend/components/builder/PublishDialog.tsx"],
+        note: "Versioned Deployment documents are stored and the frontend lists recent deployment history, but versions still do not represent hosted S3 artifacts." },
       { t: "Implement rollback to previous version", s: "partial",
         p: ["backend/src/services/publishService.js"], note: "The backend can create a rollback record; there is no UI or actual hosting target to roll back." },
     ],
@@ -420,9 +422,9 @@ const MOD_APIS = {
     { m: "POST", path: "/api/domain/:workspaceId/verify-dns", be: "scaffold" },
   ],
   m7: [
-    { m: "POST", path: "/api/publish/:workspaceId", be: "scaffold" },
-    { m: "GET", path: "/api/publish/:workspaceId/deployments", be: "scaffold" },
-    { m: "POST", path: "/api/publish/:workspaceId/rollback/:deploymentId", be: "scaffold" },
+    { m: "POST", path: "/api/publish/:workspaceId", be: "source" },
+    { m: "GET", path: "/api/publish/:workspaceId/deployments", be: "source" },
+    { m: "POST", path: "/api/publish/:workspaceId/rollback/:deploymentId", be: "source" },
   ],
   m8: [
     { m: "GET", path: "/api/ecommerce/store/:workspaceId/products", be: "source" },

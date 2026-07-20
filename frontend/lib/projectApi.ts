@@ -60,11 +60,15 @@ function getDefaultErrorMessage(status: number): string {
     case 400:
       return "The project request is invalid. Please check your changes and try again.";
     case 401:
-      return "Please log in again to access your projects.";
+      return "Your session has expired. Please log in again to update this project.";
     case 403:
-      return "You do not have permission to access this project.";
+      return "You do not have permission to update this project.";
     case 404:
       return "This project could not be found.";
+    case 409:
+      return "This project was changed elsewhere. Refresh it and try your changes again.";
+    case 422:
+      return "One or more project settings are invalid. Please review the highlighted fields.";
     case 500:
       return "The project service is having trouble. Please try again shortly.";
     default:
@@ -85,8 +89,13 @@ async function projectRequest<T>(path: string, init: RequestInit): Promise<T> {
   const data = (await response.json().catch(() => ({}))) as ApiErrorBody & T;
 
   if (!response.ok) {
-    const message =
-      data.message || data.errors?.join(", ") || getDefaultErrorMessage(response.status);
+    // Keep authorization and server failures deliberately generic. The API can
+    // return implementation-specific messages, but settings UI should only
+    // expose actionable, user-safe feedback.
+    const shouldUseSafeMessage = [401, 403, 404, 409, 422, 500].includes(response.status);
+    const message = shouldUseSafeMessage
+      ? getDefaultErrorMessage(response.status)
+      : data.message || data.errors?.join(", ") || getDefaultErrorMessage(response.status);
     throw new Error(message);
   }
 
