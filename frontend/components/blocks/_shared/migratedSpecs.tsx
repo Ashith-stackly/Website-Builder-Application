@@ -62,7 +62,7 @@ import TestimonialComponent, { testimonialDefaults } from "@/components/draggabl
 import FooterComponent, { footerDefaults } from "@/components/draggable/FooterComponent";
 import FormComponent, { formDefaults } from "@/components/draggable/FormComponent";
 import RowComponent, { rowDefaults, ROW_LAYOUTS } from "@/components/draggable/RowComponent";
-import { ContentField, contentInputClass } from "@/components/builder/PanelFields";
+import { ContentField, contentInputClass, TextareaField } from "@/components/builder/PanelFields";
 import { DropZone } from "@/components/assets/DropZone";
 import { ImagePicker } from "@/components/assets/ImagePicker";
 import { useAssetStore } from "@/store/assetStore";
@@ -104,16 +104,7 @@ function TextContentPanel({
   };
 
   if (multiline) {
-    return (
-      <label className="block">
-        <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">{label}</span>
-        <textarea
-          className={`${contentInputClass} min-h-[120px] resize-none`}
-          onChange={(event) => update(event.target.value)}
-          value={data.content}
-        />
-      </label>
-    );
+    return <TextareaField label={label} minHeight="min-h-[120px]" value={data.content} onChange={update} />;
   }
 
   return <ContentField label={label} value={data.content} onChange={update} />;
@@ -432,10 +423,11 @@ function GalleryPanel({ data, component, setContent, setProp }: PanelProps<Galle
                 </div>
               </div>
               <div className="p-2">
-                <input
-                  className={contentInputClass}
+                <ContentField
+                  field={`gallery${index + 1}Caption`}
+                  label={`Image ${index + 1} caption`}
                   value={item.caption}
-                  onChange={(event) => updateCaption(index, event.target.value)}
+                  onChange={(value) => updateCaption(index, value)}
                   placeholder="Caption"
                 />
               </div>

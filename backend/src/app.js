@@ -19,6 +19,7 @@ const ecommerceRoutes = require('./routes/ecommerceRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const checkoutRoutes = require('./routes/checkoutRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 const paymentController = require('./controllers/paymentController');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
@@ -93,6 +94,7 @@ app.use('/api/ecommerce', ecommerceRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/checkout', checkoutRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

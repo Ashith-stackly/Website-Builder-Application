@@ -17,6 +17,7 @@ export const useBuilderActions = () =>
       reorderComponents: s.reorderComponents,
       loadStarterWebsite: s.loadStarterWebsite,
       loadWebsiteFromRequirements: s.loadWebsiteFromRequirements,
+      applyAILayout: s.applyAILayout,
       clearCanvas: s.clearCanvas,
       undo: s.undo,
       redo: s.redo,

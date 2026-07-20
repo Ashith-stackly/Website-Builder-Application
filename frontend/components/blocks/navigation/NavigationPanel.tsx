@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { ImagePicker } from "@/components/assets/ImagePicker";
 import { useAssetStore } from "@/store/assetStore";
-import { ContentField, contentInputClass } from "@/components/builder/PanelFields";
+import { ContentField } from "@/components/builder/PanelFields";
 import type { PanelProps } from "@/lib/blockRegistry";
 import type { NavLink, NavigationProps } from "@/types/builder";
 
@@ -113,17 +113,20 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
         <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">Nav Links</span>
         <div className="space-y-2">
           {data.links.map((link, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input
-                className={`${contentInputClass} flex-1`}
-                value={link.label}
-                onChange={(e) => updateLink(i, { label: e.target.value })}
-                placeholder="Link label"
-              />
+            <div key={i} className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <ContentField
+                  field={`navLink${i + 1}`}
+                  label={`Link ${i + 1}`}
+                  value={link.label}
+                  onChange={(value) => updateLink(i, { label: value })}
+                  placeholder="Link label"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => removeLink(i)}
-                className="shrink-0 rounded p-1 text-[#566583] transition hover:bg-red-50 hover:text-red-500"
+                className="mt-7 shrink-0 rounded p-1 text-[#566583] transition hover:bg-red-50 hover:text-red-500"
                 aria-label="Remove link"
               >
                 <X size={14} />

@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { contentInputClass } from "@/components/builder/PanelFields";
+import { ContentField, TextareaField } from "@/components/builder/PanelFields";
 import type { PanelProps } from "@/lib/blockRegistry";
 import type { FeatureRecord, FeaturesProps } from "@/types/builder";
 
@@ -24,27 +24,31 @@ export function FeaturesPanel({ data, setProp }: PanelProps<FeaturesProps>) {
       <span className="block text-[13px] font-bold text-[#0B1D40]">Features</span>
       {data.items.map((item, i) => (
         <div key={i} className="space-y-2 rounded-xl border border-[#dbe3ef] p-3">
-          <div className="flex items-center gap-2">
-            <span className="shrink-0 text-[11px] font-bold text-[#566583]">#{i + 1}</span>
-            <input
-              className={`${contentInputClass} flex-1 py-1.5`}
-              value={item.title}
-              onChange={(e) => updateItem(i, { title: e.target.value })}
-              placeholder="Feature title"
-            />
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <ContentField
+                field={`feature${i + 1}Title`}
+                label={`Feature ${i + 1} title`}
+                value={item.title}
+                onChange={(value) => updateItem(i, { title: value })}
+                placeholder="Feature title"
+              />
+            </div>
             <button
               type="button"
               onClick={() => removeItem(i)}
-              className="shrink-0 rounded p-1 text-[#566583] transition hover:bg-red-50 hover:text-red-500"
+              className="mt-7 shrink-0 rounded p-1 text-[#566583] transition hover:bg-red-50 hover:text-red-500"
               aria-label="Remove feature"
             >
               <X size={14} />
             </button>
           </div>
-          <textarea
-            className={`${contentInputClass} min-h-[56px] resize-none text-[13px]`}
+          <TextareaField
+            field={`feature${i + 1}Description`}
+            label={`Feature ${i + 1} description`}
+            minHeight="min-h-[56px]"
             value={item.description}
-            onChange={(e) => updateItem(i, { description: e.target.value })}
+            onChange={(value) => updateItem(i, { description: value })}
             placeholder="Feature description"
           />
         </div>

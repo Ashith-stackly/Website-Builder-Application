@@ -10,11 +10,12 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Image as ImageIcon, Info, Search, Trash2, Upload, X,
+  Check, Image as ImageIcon, Info, Pencil, Search, Sparkles, Trash2, Upload, WandSparkles, X,
 } from "lucide-react";
 import { useAssetStore } from "@/store/assetStore";
 import { AssetCard } from "./AssetCard";
 import { DropZone } from "./DropZone";
+import { AIImageGeneratorDialog } from "./AIImageGenerator";
 import { formatBytes } from "@/lib/assetUtils";
 import { staggerContainer } from "@/lib/motion";
 import type { Asset } from "@/types/assets";
@@ -25,15 +26,19 @@ interface AssetManagerProps {
 }
 
 export function AssetManager({ open, onClose }: AssetManagerProps) {
-  const { assets, isLoading, uploadProgress, loadAssets, uploadFiles, deleteAsset } =
+  const { assets, isLoading, uploadProgress, loadAssets, uploadFiles, deleteAsset, renameAsset } =
     useAssetStore();
 
   const [search,   setSearch]   = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [focused,  setFocused]  = useState<Asset | null>(null);
+  const [aiMode,   setAiMode]   = useState<"generate" | "placeholder" | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameError, setRenameError] = useState("");
 
   useEffect(() => {
-    if (open) { loadAssets(); setSearch(""); setSelected(new Set()); }
+    if (open) void loadAssets();
   }, [open, loadAssets]);
 
   const filtered = assets.filter((a) =>
@@ -42,16 +47,30 @@ export function AssetManager({ open, onClose }: AssetManagerProps) {
 
   const totalSize = assets.reduce((s, a) => s + a.size, 0);
 
+  const closeManager = () => {
+    setSearch("");
+    setSelected(new Set());
+    setFocused(null);
+    setAiMode(null);
+    setIsRenaming(false);
+    setRenameError("");
+    onClose();
+  };
+
   const toggleSelect = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
 
   const handleCardClick = (asset: Asset) => {
     toggleSelect(asset.id);
     setFocused(asset);
+    setRenameValue(asset.name);
+    setIsRenaming(false);
+    setRenameError("");
   };
 
   const deleteSelected = async () => {
@@ -66,7 +85,23 @@ export function AssetManager({ open, onClose }: AssetManagerProps) {
     setSelected((prev) => { const next = new Set(prev); next.delete(id); return next; });
   };
 
+  const saveRename = async () => {
+    if (!focused) return;
+    try {
+      const renamed = await renameAsset(focused.id, renameValue);
+      if (renamed) {
+        setFocused(renamed);
+        setRenameValue(renamed.name);
+        setIsRenaming(false);
+        setRenameError("");
+      }
+    } catch (error) {
+      setRenameError(error instanceof Error ? error.message : "Unable to rename this asset.");
+    }
+  };
+
   return (
+    <>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -75,7 +110,7 @@ export function AssetManager({ open, onClose }: AssetManagerProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+          onMouseDown={(e) => { if (e.target === e.currentTarget) closeManager(); }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -98,7 +133,7 @@ export function AssetManager({ open, onClose }: AssetManagerProps) {
                   </span>
                 </div>
                 <button
-                  onClick={onClose}
+                  onClick={closeManager}
                   className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
                   type="button"
                 >
@@ -117,6 +152,23 @@ export function AssetManager({ open, onClose }: AssetManagerProps) {
                     className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-9 pr-3 text-[12px] outline-none transition focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
                   />
                 </div>
+
+                <button
+                  onClick={() => setAiMode("generate")}
+                  type="button"
+                  className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[11px] font-bold text-violet-800 transition hover:border-violet-300 hover:bg-violet-100"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Generate</span>
+                </button>
+                <button
+                  onClick={() => setAiMode("placeholder")}
+                  type="button"
+                  className="hidden items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-bold text-sky-800 transition hover:border-sky-300 hover:bg-sky-100 md:flex"
+                >
+                  <WandSparkles className="h-3.5 w-3.5" />
+                  Placeholder
+                </button>
 
                 <AnimatePresence>
                   {selected.size > 0 && (
@@ -229,10 +281,36 @@ export function AssetManager({ open, onClose }: AssetManagerProps) {
                       />
                     </div>
 
-                    {/* Name */}
-                    <p className="mb-3 break-all text-[12px] font-bold leading-tight text-gray-800">
-                      {focused.name}
-                    </p>
+                    {/* Name / rename */}
+                    <div className="mb-3 flex items-start gap-1.5">
+                      {isRenaming ? (
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={(event) => { setRenameValue(event.target.value); setRenameError(""); }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") void saveRename();
+                            if (event.key === "Escape") { setRenameValue(focused.name); setIsRenaming(false); }
+                          }}
+                          maxLength={120}
+                          aria-label="Asset name"
+                          className="min-w-0 flex-1 rounded-md border border-blue-300 bg-white px-2 py-1 text-[11px] font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-100"
+                        />
+                      ) : (
+                        <p className="min-w-0 flex-1 break-all text-[12px] font-bold leading-tight text-gray-800">
+                          {focused.name}
+                        </p>
+                      )}
+                      {isRenaming ? (
+                        <>
+                          <button onClick={() => void saveRename()} type="button" aria-label="Save asset name" className="rounded p-1 text-emerald-600 transition hover:bg-emerald-50"><Check className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => { setRenameValue(focused.name); setIsRenaming(false); }} type="button" aria-label="Cancel rename" className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"><X className="h-3.5 w-3.5" /></button>
+                        </>
+                      ) : (
+                        <button onClick={() => { setRenameValue(focused.name); setIsRenaming(true); }} type="button" aria-label="Rename asset" className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"><Pencil className="h-3.5 w-3.5" /></button>
+                      )}
+                    </div>
+                    {renameError && <p className="-mt-2 mb-3 text-[10px] font-medium text-red-600">{renameError}</p>}
 
                     {/* Metadata */}
                     <div className="space-y-2 text-[11px]">
@@ -282,5 +360,17 @@ export function AssetManager({ open, onClose }: AssetManagerProps) {
         </motion.div>
       )}
     </AnimatePresence>
+      <AIImageGeneratorDialog
+        open={open && aiMode !== null}
+        initialMode={aiMode ?? "generate"}
+        onClose={() => setAiMode(null)}
+        onSaved={({ asset }) => {
+          setFocused(asset);
+          setRenameValue(asset.name);
+          setIsRenaming(false);
+          setSearch("");
+        }}
+      />
+    </>
   );
 }

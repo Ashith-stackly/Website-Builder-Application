@@ -9,7 +9,8 @@ import {
   Sparkles, Star, Table, TextCursorInput, Type
 } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
-import type { ComponentType } from "@/types/builder";
+import { AILayoutDialog } from "./AILayoutDialog";
+import type { AILayoutSuggestion, ComponentType } from "@/types/builder";
 import { staggerContainer, staggerChild } from "@/lib/motion";
  
 type PaletteGroup = "Website Sections" | "Basic Blocks" | "Advanced Blocks";
@@ -127,13 +128,16 @@ export default function ComponentPalette({
   className = "w-[248px]",
   onAdd,
   onLoadStarter,
+  onApplyAILayout,
 }: {
   className?: string;
   onAdd: (type: ComponentType) => void;
   onLoadStarter: () => void;
+  onApplyAILayout: (suggestion: AILayoutSuggestion) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<PaletteGroup>("Website Sections");
+  const [isAILayoutOpen, setIsAILayoutOpen] = useState(false);
  
   const filtered = paletteItems.filter(
     (item) =>
@@ -194,6 +198,16 @@ export default function ComponentPalette({
  
       {/* ── Block grid ── */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-3 [scrollbar-width:thin] [scrollbar-color:#1A315E_transparent]">
+        <motion.button
+          whileHover={{ scale: 1.02, y: -1 }}
+          whileTap={{ scale: 0.97 }}
+          className="mb-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-gradient-to-br from-violet-600/25 to-fuchsia-600/15 px-3 py-2.5 text-[12px] font-bold text-violet-100 shadow-[0_0_20px_rgba(139,92,246,0.12)] transition hover:border-violet-300/60 hover:text-white"
+          onClick={() => setIsAILayoutOpen(true)}
+          type="button"
+        >
+          <Sparkles className="h-3.5 w-3.5 text-violet-300" />
+          AI Layout Assistant
+        </motion.button>
         {/* Starter CTA */}
         <motion.button
           whileHover={{ scale: 1.02, y: -1 }}
@@ -234,6 +248,11 @@ export default function ComponentPalette({
           Click to add · Drag to reorder
         </p>
       </div>
+      <AILayoutDialog
+        open={isAILayoutOpen}
+        onClose={() => setIsAILayoutOpen(false)}
+        onApply={onApplyAILayout}
+      />
     </aside>
   );
 }

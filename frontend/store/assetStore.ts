@@ -32,8 +32,23 @@ interface AssetActions {
   /** Upload one or more File objects, returning the created Asset records. */
   uploadFiles: (files: File[]) => Promise<Asset[]>;
 
+  /**
+   * Persist a generated image URL (including data URLs) into the same local
+   * asset library used by uploads. This means generated visuals remain
+   * reusable in the builder, JSON export, preview, and published HTML.
+   */
+  saveGeneratedImage: (input: {
+    imageUrl: string;
+    name?: string;
+    mimeType?: string;
+    tags?: string[];
+  }, signal?: AbortSignal) => Promise<Asset>;
+
   /** Delete an asset from IndexedDB and in-memory state. */
   deleteAsset: (id: string) => Promise<void>;
+
+  /** Rename an asset without changing its stored blob or stable asset id. */
+  renameAsset: (id: string, name: string) => Promise<Asset | null>;
 
   /**
    * Resolve an asset id → object URL.
@@ -120,6 +135,48 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
     return uploaded;
   },
 
+  async saveGeneratedImage(input, signal) {
+    const imageUrl = input.imageUrl.trim();
+    if (!imageUrl) throw new Error("The generated image did not include a URL.");
+
+    // The API returns a data URL by default. HTTPS is also supported for a
+    // future CDN-backed provider; other schemes are deliberately rejected.
+    if (!/^data:image\//i.test(imageUrl) && !/^https:\/\//i.test(imageUrl)) {
+      throw new Error("The generated image URL is not supported.");
+    }
+
+    const response = await fetch(imageUrl, { signal });
+    if (!response.ok) throw new Error("Unable to download the generated image.");
+
+    const blob = await response.blob();
+    const mimeType = input.mimeType || blob.type || "image/png";
+    if (!mimeType.startsWith("image/")) {
+      throw new Error("The AI response was not an image.");
+    }
+
+    const safeName = (input.name || "ai-generated-image")
+      .replace(/[^a-z0-9._-]+/gi, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "ai-generated-image";
+    const extension = mimeType === "image/svg+xml"
+      ? "svg"
+      : mimeType.split("/")[1]?.replace("jpeg", "jpg") || "png";
+    const file = new File([blob], safeName.includes(".") ? safeName : `${safeName}.${extension}`, { type: mimeType });
+    const [asset] = await get().uploadFiles([file]);
+
+    if (!asset) throw new Error("The generated image could not be added to your library.");
+
+    const tags = Array.from(new Set(["ai-generated", ...(input.tags ?? [])]));
+    const storedBlob = await dbGetBlob(asset.id);
+    const taggedAsset: Asset = { ...asset, tags };
+    if (storedBlob) await dbPutAsset(taggedAsset, storedBlob);
+    set((state) => ({
+      assets: state.assets.map((existing) => existing.id === taggedAsset.id ? taggedAsset : existing),
+    }));
+
+    return taggedAsset;
+  },
+
   /* ── deleteAsset ─────────────────────────────────────────────────────── */
   async deleteAsset(id: string) {
     await dbDeleteAsset(id);
@@ -133,6 +190,24 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
         Object.entries(s.objectUrls).filter(([k]) => k !== id),
       ),
     }));
+  },
+
+  async renameAsset(id, name) {
+    const trimmed = name.replace(/[\u0000-\u001F]/g, "").trim().slice(0, 120);
+    if (!trimmed) throw new Error("Give the asset a name before saving it.");
+
+    const existing = get().assets.find((asset) => asset.id === id);
+    if (!existing) return null;
+
+    const blob = await dbGetBlob(id);
+    if (!blob) return null;
+
+    const renamed: Asset = { ...existing, name: trimmed };
+    await dbPutAsset(renamed, blob);
+    set((state) => ({
+      assets: state.assets.map((asset) => asset.id === id ? renamed : asset),
+    }));
+    return renamed;
   },
 
   /* ── getUrl ──────────────────────────────────────────────────────────── */

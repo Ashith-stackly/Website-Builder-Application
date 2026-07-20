@@ -17,10 +17,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, Upload, X, Link as LinkIcon } from "lucide-react";
+import { Search, Sparkles, Upload, X, Link as LinkIcon } from "lucide-react";
 import { useAssetStore } from "@/store/assetStore";
 import { AssetCard } from "./AssetCard";
 import { DropZone } from "./DropZone";
+import { AIGenerateImageForm, type GeneratedAssetDetails } from "./AIImageGenerator";
 import { staggerContainer } from "@/lib/motion";
 import type { Asset } from "@/types/assets";
 
@@ -36,7 +37,7 @@ interface ImagePickerProps {
   onSelectMultiple?: (selections: Array<{ url: string; assetId?: string }>) => void;
 }
 
-type PickerTab = "library" | "upload" | "url";
+type PickerTab = "library" | "upload" | "url" | "ai";
 
 export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "single", onSelectMultiple }: ImagePickerProps) {
   const { assets, loadAssets, uploadFiles, deleteAsset, getUrl } = useAssetStore();
@@ -51,7 +52,7 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
   const isMulti = mode === "multiple";
 
   useEffect(() => {
-    if (open) { loadAssets(); setSearch(""); setTab("library"); setMultiSelectedIds(new Set()); }
+    if (open) void loadAssets();
   }, [open, loadAssets]);
 
   useEffect(() => {
@@ -61,6 +62,15 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
   const filtered = assets.filter((a) =>
     a.name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const closePicker = () => {
+    setSearch("");
+    setTab("library");
+    setSelectedId(null);
+    setMultiSelectedIds(new Set());
+    setUrlInput(currentUrl ?? "");
+    onClose();
+  };
 
   /* Single-select from library */
   const handleAssetSelect = async (asset: Asset) => {
@@ -93,7 +103,7 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
     }
     if (uploaded[0]) {
       const url = await getUrl(uploaded[0].id);
-      if (url) { onSelect(url, uploaded[0].id); onClose(); }
+      if (url) { onSelect(url, uploaded[0].id); closePicker(); }
     }
     setTab("library");
   };
@@ -107,18 +117,34 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
       if (url) selections.push({ url, assetId: id });
     }
     onSelectMultiple(selections);
-    onClose();
+    closePicker();
   };
 
   /* Confirm external URL */
   const confirmUrl = () => {
     const trimmed = urlInput.trim();
-    if (trimmed) { onSelect(trimmed); onClose(); }
+    if (trimmed) { onSelect(trimmed); closePicker(); }
+  };
+
+  /* Save the generated file first, then select it through the normal asset
+     path. Consumers receive an assetId and convert it to a data URL for
+     JSON/export, just as they do for uploaded images. */
+  const handleGeneratedAsset = async ({ asset }: GeneratedAssetDetails) => {
+    if (isMulti) {
+      setMultiSelectedIds((prev) => new Set(prev).add(asset.id));
+      setTab("library");
+      return;
+    }
+
+    const url = await getUrl(asset.id);
+    if (url) onSelect(url, asset.id);
+    closePicker();
   };
 
   const TABS: { id: PickerTab; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "library", label: "Library",  Icon: Search   },
     { id: "upload",  label: "Upload",   Icon: Upload   },
+    { id: "ai",      label: "AI Create", Icon: Sparkles },
     { id: "url",     label: "URL",      Icon: LinkIcon },
   ];
 
@@ -131,7 +157,7 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
           className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+          onMouseDown={(e) => { if (e.target === e.currentTarget) closePicker(); }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.93, y: 20 }}
@@ -144,7 +170,7 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
             <div className="flex flex-shrink-0 items-center justify-between border-b px-5 py-4">
               <h2 className="text-[15px] font-bold text-gray-900">Media Library</h2>
               <button
-                onClick={onClose}
+                onClick={closePicker}
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
                 type="button"
               >
@@ -180,6 +206,13 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
               {tab === "upload" && (
                 <div className="flex flex-1 items-center justify-center p-8">
                   <DropZone onFiles={handleUpload} className="w-full max-w-md" />
+                </div>
+              )}
+
+              {/* AI image / placeholder tab */}
+              {tab === "ai" && (
+                <div className="flex-1 overflow-y-auto [scrollbar-width:thin]">
+                  <AIGenerateImageForm compact onSaved={handleGeneratedAsset} />
                 </div>
               )}
 
@@ -239,11 +272,11 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
                           {search ? `No results for "${search}"` : "No images yet"}
                         </p>
                         <button
-                          onClick={() => setTab("upload")}
+                          onClick={() => setTab("ai")}
                           type="button"
                           className="rounded-lg bg-blue-600 px-4 py-2 text-[12px] font-bold text-white hover:bg-blue-700"
                         >
-                          Upload Images
+                          Create with AI
                         </button>
                       </div>
                     ) : (
@@ -286,7 +319,7 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
                   </button>
                 )}
                 <button
-                  onClick={onClose}
+                  onClick={closePicker}
                   type="button"
                   className="rounded-lg px-4 py-2 text-[12px] font-semibold text-gray-500 hover:bg-gray-100"
                 >

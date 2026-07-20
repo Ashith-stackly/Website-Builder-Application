@@ -356,14 +356,14 @@ const MODULES = [
   },
   {
     id: "m11", num: 11, name: "AI Content Assistant",
-    blurb: "Only future-facing AI metadata is present in block specifications. No provider, API, editor action, image flow, or layout suggestion implementation was found.",
+    blurb: "A server-side, provider-abstracted AI assistant now powers copy, image/placeholder, and layout workflows. It keeps credentials off the client, validates and rate-limits requests, and writes results through the existing builder history and asset paths. Configure a server-side provider key to enable live OpenAI generation; the local placeholder and layout suggestion flows remain available without one.",
     tasks: [
-      { t: "Integrate AI text generation API", s: "pending", p: ["frontend/lib/blockRegistry.ts"], note: "Block specs expose AI hints, but no API client or backend route exists." },
-      { t: "Add Generate Text button in editor", s: "pending", p: ["frontend/components/builder/PropertyEditor.tsx"], note: "No generation control is implemented in editor panels." },
-      { t: "Generate content for sections (hero, about, etc.)", s: "pending", p: [], note: "No content-generation workflow was found." },
-      { t: "Integrate AI image generation API", s: "pending", p: [], note: "No image-generation provider or backend route was found." },
-      { t: "Add image placeholder generator", s: "pending", p: ["frontend/components/assets/AssetManager.tsx"], note: "The asset manager has no AI placeholder generation flow." },
-      { t: "Suggest layouts based on content type", s: "pending", p: ["frontend/store/builderStore.ts"], note: "Starter layouts are deterministic templates, not AI suggestions." },
+      { t: "Integrate AI text generation API", s: "done", p: ["backend/src/routes/aiRoutes.js", "backend/src/services/ai/AIProviderFactory.js", "backend/src/services/ai/PromptBuilder.js", "frontend/lib/aiApi.ts"], note: "Authenticated text generation uses a provider abstraction, the server-safe BlockSpec AI catalog, input validation, rate limits, cancellation, and per-user caching." },
+      { t: "Add Generate Text button in editor", s: "done", p: ["frontend/components/builder/PropertyEditor.tsx", "frontend/components/builder/PanelFields.tsx", "frontend/components/builder/AIAssistDialog.tsx"], note: "Shared editor fields gain an animated Generate Text action with preview, replace, insert, regenerate, cancellation, and error handling." },
+      { t: "Generate content for sections (hero, about, etc.)", s: "done", p: ["backend/src/services/ai/PromptBuilder.js", "frontend/components/builder/AIAssistDialog.tsx"], note: "Supported section panels can request coordinated fields; the dialog maps reviewed output back through each existing field setter so history, autosave, preview, and export stay synchronized." },
+      { t: "Integrate AI image generation API", s: "done", p: ["backend/src/services/ai/OpenAIProvider.js", "backend/src/services/ai/ImageProvider.js", "frontend/components/assets/AIImageGenerator.tsx"], note: "Provider-backed generation returns a storable image URL/data URL and persists it through the existing IndexedDB asset pipeline." },
+      { t: "Add image placeholder generator", s: "done", p: ["backend/src/services/ai/ImageProvider.js", "frontend/components/assets/AssetManager.tsx"], note: "A deterministic server-side SVG placeholder flow creates relevant reusable assets without needing an external image key." },
+      { t: "Suggest layouts based on content type", s: "done", p: ["backend/src/services/ai/LayoutSuggestion.js", "frontend/components/builder/AILayoutDialog.tsx", "frontend/store/builderStore.ts"], note: "The user reviews a business-aware layout proposal before applying it as one validated, undoable builder change." },
     ],
   },
 ];
@@ -440,7 +440,11 @@ const MOD_APIS = {
     { m: "POST", path: "/api/analytics/event", be: "source" },
     { m: "GET", path: "/api/analytics/:workspaceId", be: "source" },
   ],
-  m11: [],
+  m11: [
+    { m: "POST", path: "/api/ai/generate-text", be: "source" },
+    { m: "POST", path: "/api/ai/generate-image", be: "source" },
+    { m: "POST", path: "/api/ai/suggest-layout", be: "source" },
+  ],
 };
 
 const RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;

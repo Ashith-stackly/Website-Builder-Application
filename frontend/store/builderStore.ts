@@ -33,7 +33,7 @@ import {
   reorderTreeComponents,
 } from "@/lib/treeHelpers";
 import { buildProjectJSON, downloadProjectJSON, parseProjectJSON } from "@/lib/jsonExportImport";
-import type { BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
+import type { AILayoutSection, AILayoutSuggestion, BuilderComponent, BuilderRequirements, BuilderState, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
 import { useDesignStore } from "@/store/designStore";
 import type { DesignTokens } from "@/store/designStore";
 
@@ -257,6 +257,135 @@ const createComponent = (type: ComponentType, order: number): BuilderComponent =
     children: defaults[type].children.map(deepCloneComponent),
     order,
   };
+
+  return component;
+};
+
+const isKnownComponentType = (value: unknown): value is ComponentType =>
+  typeof value === "string" && Object.prototype.hasOwnProperty.call(defaults, value);
+
+const cleanAIText = (value: unknown, maxLength = 800): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const text = value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
+  return text ? text.slice(0, maxLength) : undefined;
+};
+
+const readAIString = (section: AILayoutSection, key: string, maxLength?: number) =>
+  cleanAIText(section.props?.[key], maxLength) ?? cleanAIText(section.contentHint, maxLength);
+
+const readAICtaLabel = (section: AILayoutSection) => {
+  const explicit = cleanAIText(section.props?.ctaLabel, 80);
+  if (explicit) return explicit;
+  const cta = section.props?.cta;
+  return cta && typeof cta === "object" && !Array.isArray(cta)
+    ? cleanAIText((cta as Record<string, unknown>).label, 80)
+    : undefined;
+};
+
+const safePaletteColor = (value: unknown): string | undefined =>
+  typeof value === "string" && /^#[0-9a-f]{3,8}$/i.test(value.trim())
+    ? value.trim()
+    : undefined;
+
+/**
+ * Map a reviewed, server-validated layout suggestion onto existing block
+ * defaults. The AI is intentionally not allowed to write arbitrary props or
+ * component trees; this preserves renderer compatibility and makes one
+ * layout application a single undoable builder action.
+ */
+const createAISectionComponent = (
+  section: AILayoutSection,
+  order: number,
+  palette?: AILayoutSuggestion["colorPalette"],
+): BuilderComponent | null => {
+  if (!isKnownComponentType(section.type)) return null;
+
+  const component = createComponent(section.type, order);
+  const title = cleanAIText(section.props?.title, 160)
+    ?? cleanAIText(section.props?.heading, 160)
+    ?? cleanAIText(section.label, 160);
+  const description = cleanAIText(section.props?.description, 600)
+    ?? cleanAIText(section.contentHint, 600);
+  const ctaLabel = readAICtaLabel(section);
+  const primary = safePaletteColor(palette?.primary);
+  const background = safePaletteColor(palette?.background);
+  const text = safePaletteColor(palette?.text);
+
+  if (background && !["navigation", "hero", "footer", "image", "video", "map", "spacer", "divider"].includes(component.type)) {
+    component.styles = { ...component.styles, backgroundColor: background };
+  }
+  if (text && !["hero", "footer", "image", "video", "map", "spacer", "divider"].includes(component.type)) {
+    component.styles = { ...component.styles, color: text };
+  }
+  if (primary && component.type === "button") {
+    component.styles = { ...component.styles, backgroundColor: primary };
+  }
+  if (primary && component.type === "hero") {
+    component.styles = { ...component.styles, backgroundColor: primary, color: "#ffffff" };
+  }
+  if (primary && component.type === "footer") {
+    component.styles = { ...component.styles, backgroundColor: primary, color: "#ffffff" };
+  }
+
+  switch (component.type) {
+    case "heading":
+    case "text":
+    case "input":
+    case "feature-item":
+      component.content = title ?? description ?? component.content;
+      break;
+    case "button":
+      component.content = ctaLabel ?? title ?? component.content;
+      break;
+    case "hero":
+      component.props = {
+        ...(component.props ?? {}),
+        ...(title ? { title } : {}),
+        ...(description ? { description } : {}),
+        ...(ctaLabel ? { cta: { label: ctaLabel, href: "#contact" } } : {}),
+      };
+      break;
+    case "navigation":
+      component.props = {
+        ...(component.props ?? {}),
+        ...(title ? { brand: title } : {}),
+        ...(ctaLabel ? { cta: { label: ctaLabel, href: "#contact" } } : {}),
+      };
+      break;
+    case "features":
+    case "pricing-table":
+    case "testimonial":
+      component.props = {
+        ...(component.props ?? {}),
+        ...(title ? { heading: title } : {}),
+      };
+      break;
+    case "contact":
+      component.props = {
+        ...(component.props ?? {}),
+        ...(title ? { title } : {}),
+        ...(description ? { description } : {}),
+        ...(ctaLabel ? { cta: { label: ctaLabel, href: "#contact" } } : {}),
+      };
+      break;
+    case "form":
+      component.props = {
+        ...(component.props ?? {}),
+        ...(title ? { heading: title } : {}),
+        ...(description ? { description } : {}),
+        ...(ctaLabel ? { submitLabel: ctaLabel } : {}),
+      };
+      break;
+    case "footer":
+      component.props = {
+        ...(component.props ?? {}),
+        ...(title ? { brand: title } : {}),
+        ...(description ? { tagline: description } : {}),
+      };
+      break;
+    default:
+      break;
+  }
 
   return component;
 };
@@ -712,6 +841,24 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     set((state) => {
       const components = createRequirementComponents(requirements);
       return { ...captureHistory(state), components, selectedComponentId: components[0]?.id || null };
+    }),
+  applyAILayout: (suggestion) =>
+    set((state) => {
+      const components = suggestion.sections
+        .map((section, index) => createAISectionComponent(section, index, suggestion.colorPalette))
+        .filter((component): component is BuilderComponent => component !== null)
+        .map((component, index) => ({ ...component, order: index }));
+
+      // Do not clear a working canvas for a malformed or empty response.
+      if (components.length === 0) return state;
+
+      return {
+        ...captureHistory(state),
+        components,
+        selectedComponentId: components[0]?.id ?? null,
+        selectedComponentIds: components[0] ? [components[0].id] : [],
+        selectedTextStyleTarget: null,
+      };
     }),
   loadComponents: (components) =>
     set((state) => ({

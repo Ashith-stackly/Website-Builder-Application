@@ -464,6 +464,34 @@ export interface BuilderRequirements {
   sections: string[];
 }
 
+/**
+ * A deliberately small, validated client-side representation of a layout
+ * returned by the AI layout endpoint.  The server may include richer hints,
+ * but only known component types and the content fields below are applied to
+ * the canvas.  Keeping this boundary explicit prevents an AI response from
+ * injecting arbitrary builder state.
+ */
+export interface AILayoutSection {
+  type: ComponentType;
+  label?: string;
+  purpose?: string;
+  contentHint?: string;
+  props?: Record<string, unknown>;
+}
+
+export interface AILayoutSuggestion {
+  title?: string;
+  rationale?: string;
+  sections: AILayoutSection[];
+  colorPalette?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    background?: string;
+    text?: string;
+  };
+}
+
 export interface BuilderState {
   components: BuilderComponent[];
   selectedComponentId: string | null;
@@ -487,6 +515,8 @@ export interface BuilderState {
   reorderComponents: (activeId: string, overId: string) => void;
   loadStarterWebsite: () => void;
   loadWebsiteFromRequirements: (requirements: BuilderRequirements) => void;
+  /** Replace the canvas with a reviewed AI layout in one undoable change. */
+  applyAILayout: (suggestion: AILayoutSuggestion) => void;
   loadComponents: (components: BuilderComponent[]) => void;
   applyDesignTokens: (tokens: {
     colors: { primary: string; secondary: string; accent: string; background: string; text: string };
