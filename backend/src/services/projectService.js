@@ -10,6 +10,30 @@ const LIST_PROJECTION = '-components -designTokens -builderData -htmlContent -__
 const ACTIVE_FILTER = (userId, id) => ({ _id: id, userId, status: { $ne: 'deleted' } });
 
 /**
+ * Enforce the same per-user project capacity for every project creation path.
+ * Template cloning ultimately creates a Workspace too, so it must use this
+ * canonical project-limit check rather than bypass it.
+ */
+async function assertProjectCapacity(userId, knownUser) {
+  const user = knownUser || await User.findById(userId).select('plan role').lean();
+  if (!user || user.role === 'admin') return;
+
+  const plan = user.plan || 'free';
+  const limit = getProjectLimit(plan);
+  if (limit === -1) return;
+
+  const currentCount = await Workspace.countDocuments({
+    userId,
+    status: { $ne: 'deleted' },
+  });
+  if (currentCount >= limit) {
+    throw ApiError.forbidden(
+      `Your "${plan}" plan allows a maximum of ${limit} projects. Upgrade your plan to create more.`
+    );
+  }
+}
+
+/**
  * Map a Workspace document to the frontend `ProjectApiProject` shape
  * (see frontend/lib/projectApi.ts). `builderData` falls back to top-level
  * components/designTokens for workspaces created before this field existed.
@@ -53,18 +77,7 @@ async function listProjects(userId) {
 
 async function createProject(userId, body) {
   // ── Plan-based project limit enforcement ────────────────────────────
-  const user = await User.findById(userId).select('plan role').lean();
-  if (user && user.role !== 'admin') {
-    const limit = getProjectLimit(user.plan || 'free');
-    if (limit !== -1) {
-      const currentCount = await Workspace.countDocuments({ userId, status: { $ne: 'deleted' } });
-      if (currentCount >= limit) {
-        throw ApiError.forbidden(
-          `Your "${user.plan || 'free'}" plan allows a maximum of ${limit} projects. Upgrade your plan to create more.`
-        );
-      }
-    }
-  }
+  await assertProjectCapacity(userId);
 
   const doc = await Workspace.create({
     userId,
@@ -144,6 +157,7 @@ async function deleteProject(userId, id) {
 
 module.exports = {
   toProject,
+  assertProjectCapacity,
   listProjects,
   createProject,
   getProject,

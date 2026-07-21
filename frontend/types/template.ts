@@ -1,37 +1,61 @@
 import type { BuilderComponent, SEOMetadata } from "@/types/builder";
 import type { DesignTokens } from "@/store/designStore";
+import type { ProjectApiProject } from "@/lib/projectApi";
 
-// ── Template Categories ────────────────────────────────────────────────
-
-/** Supported template categories */
+// Template categories are API values, not presentation labels. Keeping the
+// lowercase values here makes listing filters and persisted templates match.
 export type TemplateCategory =
-  | "All"
-  | "Portfolio"
-  | "Blog"
-  | "E-Commerce"
-  | "Restaurant"
-  | "Construction";
+  | "portfolio"
+  | "blog"
+  | "store"
+  | "business"
+  | "restaurant";
 
-export const TEMPLATE_CATEGORIES: readonly TemplateCategory[] = [
-  "All",
-  "Portfolio",
-  "Blog",
-  "E-Commerce",
-  "Restaurant",
-  "Construction",
-] as const;
+export type TemplateCategoryFilter = "all" | TemplateCategory;
 
-// ── Template Types ─────────────────────────────────────────────────────
+export const TEMPLATE_CATEGORIES = [
+  { value: "all", label: "All" },
+  { value: "portfolio", label: "Portfolio" },
+  { value: "blog", label: "Blog" },
+  { value: "store", label: "Store" },
+  { value: "business", label: "Business" },
+  { value: "restaurant", label: "Restaurant" },
+] as const satisfies ReadonlyArray<{
+  value: TemplateCategoryFilter;
+  label: string;
+}>;
 
-/** Template builder data — same shape as Project.builderData */
+export const TEMPLATE_CATEGORY_LABELS: Record<TemplateCategory, string> = {
+  portfolio: "Portfolio",
+  blog: "Blog",
+  store: "Store",
+  business: "Business",
+  restaurant: "Restaurant",
+};
+
+export function getTemplateCategoryLabel(category: TemplateCategory): string {
+  return TEMPLATE_CATEGORY_LABELS[category];
+}
+
+// Same serializable builder document used by a saved project. It is returned
+// on template detail and copied unchanged into the user's project on clone.
 export interface TemplateBuilderData {
   schemaVersion?: number;
+  projectName?: string;
+  canvasMode?: "flow" | "freeform";
   components: BuilderComponent[];
   designTokens?: DesignTokens;
   seo?: SEOMetadata;
 }
 
-/** Template list item (returned by GET /api/templates) */
+export interface TemplatePage {
+  id: string;
+  name: string;
+  path: string;
+}
+
+// Lightweight record returned by the catalog endpoint. Large Builder JSON is
+// deliberately omitted until a user opens one preview.
 export interface TemplateListItem {
   _id: string;
   name: string;
@@ -43,40 +67,47 @@ export interface TemplateListItem {
   isPremium: boolean;
   tags: string[];
   usageCount: number;
-  createdAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-/** Full template with builderData (returned by GET /api/templates/:id) */
 export interface Template extends TemplateListItem {
-  builderData: TemplateBuilderData;
   sections: string[];
+  pages: TemplatePage[];
+  builderData: TemplateBuilderData;
+  componentCount: number;
 }
 
-// ── API Response Types ─────────────────────────────────────────────────
+export interface TemplatePagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
 
-/** Response from GET /api/templates */
 export interface TemplateListResponse {
-  success: boolean;
+  success: true;
   templates: TemplateListItem[];
+  pagination: TemplatePagination;
 }
 
-/** Response from GET /api/templates/:id */
 export interface TemplateDetailResponse {
-  success: boolean;
+  success: true;
   template: Template;
 }
 
-/** Response from POST /api/templates/:id/clone */
 export interface CloneTemplateResponse {
-  success: boolean;
+  success: true;
+  message: string;
   projectId: string;
+  workspaceId: string;
+  project: ProjectApiProject;
+  builderData: TemplateBuilderData;
+  template: TemplateListItem;
 }
 
-// ── Query Parameters ───────────────────────────────────────────────────
-
-/** Optional filters for the template list endpoint */
 export interface TemplateQueryParams {
-  category?: TemplateCategory;
+  category?: TemplateCategoryFilter;
   search?: string;
   isPremium?: boolean;
 }

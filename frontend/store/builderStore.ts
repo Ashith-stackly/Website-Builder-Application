@@ -451,7 +451,14 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
     margin: "0 0 20px",
   };
 
-  const categoryKey = category.toLowerCase();
+  // Persisted template categories use the API value "store", while the
+  // original requirements flow used the display value "E-Commerce".
+  // Normalize both to the existing storefront starter without changing the
+  // Builder's component architecture.
+  const rawCategoryKey = category.toLowerCase().trim();
+  const categoryKey = ["store", "ecommerce", "e-commerce"].includes(rawCategoryKey)
+    ? "e-commerce"
+    : rawCategoryKey;
 
   const templates: Record<string, () => BuilderComponent[]> = {
     "e-commerce": () => [

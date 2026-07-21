@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useDeferredValue } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,8 +19,8 @@ import Footer from "@/components/Footer";
 import { fadeUp, staggerContainer, scaleIn } from "@/lib/motion";
 import { assetPath } from "@/lib/paths";
 import { getTemplates, cloneTemplate, isTemplateConnectionError } from "@/lib/templateApi";
-import { TEMPLATE_CATEGORIES } from "@/types/template";
-import type { TemplateListItem, TemplateCategory } from "@/types/template";
+import { TEMPLATE_CATEGORIES, getTemplateCategoryLabel } from "@/types/template";
+import type { TemplateListItem, TemplateCategoryFilter } from "@/types/template";
 
 // ── Animation Variants ─────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ const FALLBACK_TEMPLATES: TemplateListItem[] = [
     _id: "tpl_portfolio_1",
     name: "Creative Portfolio",
     slug: "creative-portfolio",
-    category: "Portfolio",
+    category: "portfolio",
     style: "Modern",
     description: "A stunning portfolio template with hero, features, gallery, and contact sections. Perfect for creatives and agencies.",
     thumbnail: "/landing-optimized/port.webp",
@@ -46,7 +46,7 @@ const FALLBACK_TEMPLATES: TemplateListItem[] = [
     _id: "tpl_blog_1",
     name: "Modern Blog",
     slug: "modern-blog",
-    category: "Blog",
+    category: "blog",
     style: "Minimal",
     description: "A clean and readable blog template with navigation, hero banner, features grid, and newsletter signup.",
     thumbnail: "/landing-optimized/bloggg.webp",
@@ -59,7 +59,7 @@ const FALLBACK_TEMPLATES: TemplateListItem[] = [
     _id: "tpl_ecommerce_1",
     name: "E-Commerce Store",
     slug: "ecommerce-store",
-    category: "E-Commerce",
+    category: "store",
     style: "Bold",
     description: "A fully featured e-commerce template with product showcases, pricing tables, testimonials, and checkout-ready sections.",
     thumbnail: "/landing-optimized/ecommerce.webp",
@@ -72,7 +72,7 @@ const FALLBACK_TEMPLATES: TemplateListItem[] = [
     _id: "tpl_restaurant_1",
     name: "Restaurant & Café",
     slug: "restaurant-cafe",
-    category: "Restaurant",
+    category: "restaurant",
     style: "Modern",
     description: "An appetizing restaurant template with menu showcases, gallery, reservation prompts, and location details.",
     thumbnail: "/landing-optimized/foodd03.webp",
@@ -83,14 +83,14 @@ const FALLBACK_TEMPLATES: TemplateListItem[] = [
   },
   {
     _id: "tpl_construction_1",
-    name: "Construction Co.",
-    slug: "construction-co",
-    category: "Construction",
-    style: "Bold",
-    description: "A robust construction company template with project showcases, service features, testimonials, and contact forms.",
-    thumbnail: "/landing-optimized/construction02.webp",
+    name: "Business Professional",
+    slug: "business-professional",
+    category: "business",
+    style: "Modern",
+    description: "A professional business template with service highlights, trust signals, and a focused contact path.",
+    thumbnail: "/landing-optimized/business09.webp",
     isPremium: false,
-    tags: ["construction", "building", "contractor", "services"],
+    tags: ["business", "corporate", "services", "professional"],
     usageCount: 980,
     createdAt: "2026-04-12T00:00:00.000Z",
   },
@@ -110,33 +110,40 @@ export default function TemplatesPage() {
 
   // ── State ──────────────────────────────────────────────────────────
   const [templates, setTemplates] = useState<TemplateListItem[]>([]);
-  const [activeCategory, setActiveCategory] = useState<TemplateCategory>("All");
+  const [activeCategory, setActiveCategory] = useState<TemplateCategoryFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [cloneSuccess, setCloneSuccess] = useState<string | null>(null);
+  // Let a short burst of typing settle before a new list request. The effect
+  // below aborts the previous request, preventing stale results from winning.
+  const deferredSearchQuery = useDeferredValue(searchQuery.trim());
 
   // ── Fetch Templates ────────────────────────────────────────────────
-  const fetchTemplates = useCallback(async () => {
+  const fetchTemplates = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
     setError(null);
 
     try {
       const data = await getTemplates({
         category: activeCategory,
-        search: searchQuery || undefined,
-      });
+        search: deferredSearchQuery || undefined,
+      }, signal);
+      if (signal?.aborted) return;
       setTemplates(data);
     } catch (err: unknown) {
+      if (signal?.aborted || (err instanceof DOMException && err.name === "AbortError")) {
+        return;
+      }
       // Fall back to static templates when backend is unreachable
       if (isTemplateConnectionError(err)) {
         const filtered = FALLBACK_TEMPLATES.filter((t) => {
-          const matchesCategory = activeCategory === "All" || t.category === activeCategory;
+          const matchesCategory = activeCategory === "all" || t.category === activeCategory;
           const matchesSearch =
-            !searchQuery ||
-            t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            t.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+            !deferredSearchQuery ||
+            t.name.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+            t.tags.some((tag) => tag.toLowerCase().includes(deferredSearchQuery.toLowerCase()));
           return matchesCategory && matchesSearch;
         });
         setTemplates(filtered);
@@ -146,13 +153,13 @@ export default function TemplatesPage() {
         );
       }
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, deferredSearchQuery]);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchTemplates();
+    void fetchTemplates(controller.signal);
     return () => controller.abort();
   }, [fetchTemplates]);
 
@@ -175,6 +182,9 @@ export default function TemplatesPage() {
 
     try {
       const result = await cloneTemplate(templateId);
+      if (!result.projectId) {
+        throw new Error("The template service did not return a project to open.");
+      }
       setCloneSuccess(`"${templateName}" cloned successfully!`);
       // Navigate to the builder with the new project
       setTimeout(() => {
@@ -182,13 +192,9 @@ export default function TemplatesPage() {
       }, 1200);
     } catch (err: unknown) {
       if (isTemplateConnectionError(err)) {
-        // Fallback: navigate to builder with template query params
-        const template = templates.find((t) => t._id === templateId);
-        if (template) {
-          router.push(
-            `/builder?projectName=${encodeURIComponent(template.name)}&category=${encodeURIComponent(template.category)}&style=${encodeURIComponent(template.style)}&sections=navigation,hero,features,contact,footer`
-          );
-        }
+        setError(
+          "We could not reach the template service, so your private copy was not created. Check your connection and try again."
+        );
       } else {
         setError(
           err instanceof Error
@@ -275,20 +281,20 @@ export default function TemplatesPage() {
       {/* ── Category Filter Tabs ──────────────────────────────────── */}
       <section className="sticky top-0 z-30 border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-4 py-3 md:justify-center md:gap-3 md:px-8">
-          {TEMPLATE_CATEGORIES.map((category) => {
-            const isActive = activeCategory === category;
+          {TEMPLATE_CATEGORIES.map(({ value, label }) => {
+            const isActive = activeCategory === value;
             return (
               <button
-                key={category}
+                key={value}
                 type="button"
-                onClick={() => setActiveCategory(category)}
+                onClick={() => setActiveCategory(value)}
                 className={`whitespace-nowrap rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
                   isActive
                     ? "bg-[#06224C] text-white shadow-md"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#06224C]"
                 }`}
               >
-                {category}
+                {label}
               </button>
             );
           })}
@@ -329,7 +335,7 @@ export default function TemplatesPage() {
               </div>
               <button
                 type="button"
-                onClick={() => { setError(null); fetchTemplates(); }}
+                onClick={() => { setError(null); void fetchTemplates(); }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-200"
               >
                 <FaRotateRight className="text-[10px]" /> Retry
@@ -377,11 +383,11 @@ export default function TemplatesPage() {
             <p className="mb-6 max-w-sm text-sm text-gray-500">
               {searchQuery
                 ? `No templates match "${searchQuery}". Try a different search term.`
-                : `No templates available in the "${activeCategory}" category yet.`}
+                : `No templates available in the "${activeCategory === "all" ? "all" : getTemplateCategoryLabel(activeCategory)}" category yet.`}
             </p>
             <button
               type="button"
-              onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
+              onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}
               className="inline-flex items-center gap-2 rounded-xl bg-[#06224C] px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-blue-900"
             >
               View All Templates
@@ -420,7 +426,7 @@ export default function TemplatesPage() {
                   )}
                   {/* Category badge */}
                   <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-[#06224C] shadow-sm backdrop-blur-sm">
-                    {template.category}
+                    {getTemplateCategoryLabel(template.category)}
                   </div>
                 </div>
 

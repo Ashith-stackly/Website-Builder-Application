@@ -177,13 +177,27 @@ Query params: `page`, `limit`
 ### GET /template/list
 List templates. Public, no auth required.
 
-Query params: `category`, `search`, `page`, `limit`
+Query params: `category`, `search`, `isPremium`, `page`, `limit`
+
+Categories use persisted lowercase values: `portfolio`, `blog`, `store`,
+`business`, and `restaurant`.
+
+**Response:** `{ "success": true, "templates": [...], "pagination": { "page": 1, "limit": 20, "total": 5, "pages": 1 } }`
 
 ### GET /template/:idOrSlug
-Get template details. Public.
+Get normalized template details by Mongo ID or slug. Public.
+
+**Response:** `{ "success": true, "template": { "_id": "...", "name": "...", "category": "store", "thumbnail": "...", "isPremium": false, "pages": [...], "sections": [...], "componentCount": 6, "builderData": { "schemaVersion": 1, "components": [...], "designTokens": {}, "seo": {}, "canvasMode": "flow" } } }`
 
 ### POST /template/:id/use 🔒
-Clone template into a new workspace. Returns the created workspace.
+Clone a shared template into a new user-owned project. The canonical projects
+API and legacy workspace API refer to the same Workspace record.
+
+**Response:** `{ "success": true, "message": "Project created from template", "projectId": "...", "workspaceId": "...", "project": { "builderData": {} }, "builderData": {}, "template": {} }`
+
+The clone stores the full Builder JSON on both the project and its workspace
+state, enforces authenticated ownership, project limits, and premium-template
+access, and never mutates the shared source template.
 
 ---
 

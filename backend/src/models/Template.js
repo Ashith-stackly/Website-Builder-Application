@@ -40,6 +40,25 @@ const templateSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    // Canonical Builder document. The legacy top-level components and
+    // designTokens remain for existing records and older consumers.
+    builderData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    // Templates currently contain a single editable homepage, but storing
+    // explicit page metadata keeps the public contract ready for multi-page
+    // templates without changing the clone workflow later.
+    pages: {
+      type: [
+        {
+          id: { type: String, required: true },
+          name: { type: String, required: true },
+          path: { type: String, required: true },
+        },
+      ],
+      default: () => [{ id: 'home', name: 'Home', path: '/' }],
+    },
     sections: [{ type: String }],
     style: {
       type: String,

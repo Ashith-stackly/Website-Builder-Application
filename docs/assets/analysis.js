@@ -12,10 +12,10 @@
 const AUDIT_DATE = "21 Jul 2026";
 
 const WHATSNEW = {
-  title: "Workspace settings and publishing frontend reconciled",
+  title: "Completed module work reconciled",
   body:
-    "This pass updates the dashboard after the Module 2 project settings persistence work and the Module 7 publishing frontend work, alongside the already completed Module 4 freeform builder, Module 8 storefront checkout, Module 10 analytics, and Module 11 AI assistant work. " +
-    "The main remaining source gaps are templates, hosted S3 deployment, domains/SSL, GitHub OAuth, production payment/provider configuration, and Google Analytics as an optional integration."
+    "This documentation pass captures the latest completed work across Module 2 dashboard/project settings, Module 3 template library, Module 4 drag-and-drop builder, Module 7 publishing frontend, Module 8 e-commerce, Module 10 analytics, and Module 11 AI assistant. " +
+    "The main remaining gaps are Module 6 hosting/domain infrastructure, GitHub OAuth, profile/billing UI integration, production payment/provider configuration, and optional Google Analytics."
 };
 
 const PROJECT = {
@@ -124,32 +124,32 @@ const MODULES = [
   },
   {
     id: "m3", num: 3, name: "Template Library",
-    blurb: "The database model, five seed records, listing UI, and backend use-template flow exist, but the current template client and backend disagree on paths, field names, categories, and clone response shapes.",
+    blurb: "The Template Library now uses one normalized API contract from catalog through preview, clone, dashboard visibility, and Builder loading. Five seeded templates contain editable Builder JSON, and existing empty seed records are backfilled safely.",
     tasks: [
-      { t: "Design template data structure (JSON schema)", s: "partial",
-        p: ["backend/src/models/Template.js", "frontend/types/template.ts"],
-        note: "Both sides define template shapes, but the backend exposes premium/components/designTokens while the frontend expects isPremium/builderData." },
-      { t: "Create 3–5 base templates (Portfolio, Blog, Store)", s: "partial",
+      { t: "Design template data structure (JSON schema)", s: "done",
+        p: ["backend/src/models/Template.js", "frontend/types/template.ts", "backend/src/services/templateService.js"],
+        note: "The public contract standardizes lowercase category values, thumbnail, isPremium, pages, sections, component count, and complete builderData while preserving legacy stored components/designTokens as a read fallback." },
+      { t: "Create 3–5 base templates (Portfolio, Blog, Store)", s: "done",
         p: ["backend/src/services/templateService.js", "backend/scripts/seed-templates.js"],
-        note: "Five seed records exist, including store, portfolio, and blog, but their components arrays are empty rather than complete builder layouts." },
+        note: "Five base templates now seed editable navigation, hero, features, gallery, contact, and footer Builder documents with thumbnails; rerunning the idempotent seed backfills old empty records without overwriting authored data." },
       { t: "Build template listing UI", s: "done",
-        p: ["frontend/app/templates/page.tsx"],
-        note: "A searchable, categorized template marketplace UI and local fallback cards are implemented." },
+        p: ["frontend/app/templates/page.tsx", "frontend/lib/templateApi.ts"],
+        note: "The searchable catalog uses GET /api/template/list, aborts stale filter/search requests, and retains thumbnail-only offline browsing." },
       { t: "Implement template category filter", s: "done",
         p: ["frontend/app/templates/page.tsx", "frontend/types/template.ts"],
-        note: "Category and search controls are present in the UI; backend category values still need normalization." },
-      { t: "Create template preview page", s: "partial",
-        p: ["frontend/app/templates/preview/TemplatePreviewClient.tsx"],
-        note: "The preview page exists, but the current backend contract cannot supply the builderData it expects; it falls back to a thumbnail." },
-      { t: "Implement Use Template functionality", s: "partial",
-        p: ["frontend/lib/templateApi.ts", "backend/src/routes/templateRoutes.js"],
-        note: "The client calls /api/templates/:id/clone, while the backend exposes POST /api/template/:id/use." },
-      { t: "Clone template into user project", s: "partial",
-        p: ["backend/src/services/templateService.js", "frontend/lib/templateApi.ts"],
-        note: "The backend creates a Workspace, but its response is { workspace } while the client expects { projectId }." },
+        note: "The UI displays labels separately from persisted lowercase API values, so store/business/restaurant filters match backend data exactly." },
+      { t: "Create template preview page", s: "done",
+        p: ["frontend/app/templates/preview/TemplatePreviewClient.tsx", "frontend/lib/exportHtml.ts"],
+        note: "Preview renders returned builderData with its SEO, design tokens, and canvas mode; it shows thumbnail only when no Builder document exists and displays pages, components, metadata, and sections." },
+      { t: "Implement Use Template functionality", s: "done",
+        p: ["frontend/lib/templateApi.ts", "backend/src/routes/templateRoutes.js", "backend/src/controllers/templateController.js"],
+        note: "The single canonical endpoint is authenticated POST /api/template/:id/use; obsolete plural /templates and /clone client paths are removed." },
+      { t: "Clone template into user project", s: "done",
+        p: ["backend/src/services/templateService.js", "backend/src/services/projectService.js", "frontend/store/builderStore.ts"],
+        note: "Clone creates a user-owned Workspace/Project, stores full Builder JSON in both Workspace and WorkspaceState, returns projectId/workspaceId/project/template metadata, checks plan capacity and premium access, then opens the Builder through its normal project loader." },
       { t: "Store templates in database/storage", s: "done",
         p: ["backend/src/models/Template.js", "backend/src/services/templateService.js"],
-        note: "Template persistence, list/query service, and seed script are implemented in MongoDB." },
+        note: "MongoDB templates persist normalized Builder data and explicit page metadata; the seed path is idempotent and backfills missing starter documents." },
     ],
   },
   {

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
-  <title>Stackly - Implementation Audit</title>
-  <meta name="description" content="A source-and-contract audit of the Stackly Website Builder. It tracks implemented, partial, and pending work across the current frontend and unified backend." />
+  <title>Stackly - Module Delivery Audit</title>
+  <meta name="description" content="Current module delivery dashboard for the Stackly Website Builder, covering completed work, partial integrations, pending infrastructure, and frontend/backend contracts." />
   <meta name="theme-color" content="#0b1220" />
 
   <!-- Bootstrap 5 grid (utilities only; visuals are token-driven) -->
@@ -54,7 +54,7 @@
         <div class="brand-mark" aria-hidden="true">S</div>
         <div class="brand-txt">
           <div class="brand-name">Stackly</div>
-          <div class="brand-sub">Codebase Analysis</div>
+          <div class="brand-sub">Module Delivery Audit</div>
         </div>
       </div>
 
@@ -70,7 +70,7 @@
 
       <div class="side-foot">
         Sources: the current <code>frontend/</code> and <code>backend/</code>
-        source trees. Audit date: 21 Jul 2026.
+        source trees. Last updated: 21 Jul 2026.
       </div>
     </aside>
 
@@ -114,7 +114,7 @@
 
       <section class="audit-note reveal" aria-label="Audit scope">
         <svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>
-        <p><strong>Audit scope:</strong> statuses are based on the source tree and frontend/backend contracts. External configuration (including server-side AI provider credentials and the public analytics endpoint/origin policy), database connectivity, payment credentials, DNS, S3 hosting, and live domain routing were not run or verified here.</p>
+        <p><strong>Audit scope:</strong> statuses are based on completed source work and frontend/backend contracts. External configuration (including server-side AI provider credentials, analytics origin policy, payment keys, DNS, S3 hosting, SSL, and live domain routing) still requires environment-level verification.</p>
       </section>
 
       <!-- What changed -->
@@ -168,7 +168,7 @@
       </div>
 
       <footer class="page-foot">
-        Generated from the current Stackly source tree. "Done" means implemented in source; "partial" means a user flow still needs integration, production infrastructure, or runtime quality assurance.
+        Generated from the current Stackly source tree after the latest module completion pass. "Done" means implemented in source; "partial" means a user flow still needs integration, production infrastructure, or runtime quality assurance.
       </footer>
     </main>
   </div>
