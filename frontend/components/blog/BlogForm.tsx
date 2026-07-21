@@ -44,7 +44,7 @@ export default function BlogForm({
     initialData?.featuredImage ?? ""
   );
   const [status, setStatus] = useState<"draft" | "published">(
-    initialData?.status ?? "draft"
+    initialData?.status === "published" ? "published" : "draft"
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const submitGuardRef = useRef(false);

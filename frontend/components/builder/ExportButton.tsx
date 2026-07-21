@@ -1,126 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { Download } from "lucide-react";
-import { downloadHtml } from "@/lib/exportHtml";
-import { useAssetStore } from "@/store/assetStore";
+import { AlertCircle, Download, Loader2 } from "lucide-react";
+import { createStandaloneHtml } from "@/lib/deploymentPackage";
 import { useBuilderStore } from "@/store/builderStore";
-import { useDesignStore } from "@/store/designStore";
-import { blobToDataUrl } from "@/lib/assetUtils";
-import type { BuilderComponent } from "@/types/builder";
 
-async function srcToDataUrl(src: string): Promise<string> {
-  if (!src || src.startsWith("data:") || src.startsWith("blob:")) return src;
-
-  try {
-    const response = await fetch(src);
-    if (!response.ok) return src;
-    const blob = await response.blob();
-    if (!blob.type.startsWith("image/")) return src;
-    return blobToDataUrl(blob);
-  } catch {
-    return src;
-  }
+function downloadStandaloneHtml(html: string, filename = "stackly-page.html") {
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
-async function embedGalleryContent(content: string): Promise<string> {
-  const lines = content.split("\n");
-  const embedded = await Promise.all(
-    lines.map(async (line) => {
-      const [rawSrc = "", ...rest] = line.split("|");
-      const src = rawSrc.trim();
-      if (!src) return line;
-      const dataUrl = await srcToDataUrl(src);
-      return [dataUrl, ...rest].join("|");
-    }),
-  );
-
-  return embedded.join("\n");
-}
-
-async function embedPropImages(
-  props: BuilderComponent["props"],
-  getDataUrl: (id: string) => Promise<string | null>,
-): Promise<BuilderComponent["props"]> {
-  if (!props) return props;
-
-  const media = props?.media;
-  let nextProps = props;
-
-  if (
-    media &&
-    typeof media === "object" &&
-    !Array.isArray(media) &&
-    "src" in media &&
-    typeof media.src === "string"
-  ) {
-    nextProps = {
-      ...nextProps,
-      media: {
-        ...media,
-        src: await srcToDataUrl(media.src),
-      },
-    };
-  }
-
-  if (typeof nextProps.logoUrl === "string" && nextProps.logoUrl) {
-    const logoAssetId = typeof nextProps.logoAssetId === "string" ? nextProps.logoAssetId : "";
-    const logoDataUrl = logoAssetId ? await getDataUrl(logoAssetId) : null;
-
-    nextProps = {
-      ...nextProps,
-      logoUrl: logoDataUrl || await srcToDataUrl(nextProps.logoUrl),
-    };
-  }
-
-  return nextProps;
-}
-
-async function embedImageAssets(
-  components: BuilderComponent[],
-  getDataUrl: (id: string) => Promise<string | null>,
-): Promise<BuilderComponent[]> {
-  return Promise.all(
-    components.map(async (component) => {
-      const assetId = component.props?.assetId;
-      const dataUrl = typeof assetId === "string" ? await getDataUrl(assetId) : null;
-      const content =
-        component.type === "gallery"
-          ? await embedGalleryContent(component.content)
-          : component.type === "image"
-            ? dataUrl || await srcToDataUrl(component.content)
-            : component.content;
-
-      return {
-        ...component,
-        content: dataUrl || content,
-        props: await embedPropImages(component.props, getDataUrl),
-        children: await embedImageAssets(component.children, getDataUrl),
-      };
-    }),
-  );
-}
-
-export default function ExportButton({ components }: { components: BuilderComponent[] }) {
+/**
+ * A single-file download remains convenient for local handoff. It is now
+ * derived from the same manifest-backed deployment package used by Publish,
+ * so it cannot silently leave object URLs or unresolved local files behind.
+ */
+export default function ExportButton() {
   const [isExporting, setIsExporting] = useState(false);
-  const getDataUrl = useAssetStore((s) => s.getDataUrl);
-  const seo = useDesignStore((s) => s.seo);
-  const tokens = useDesignStore((s) => s.tokens);
-  const workspaceId = useBuilderStore((s) => s.currentProjectId);
-  const canvasMode = useBuilderStore((s) => s.canvasMode);
+  const [error, setError] = useState<string | null>(null);
+  const prepareDeploymentPackage = useBuilderStore((state) => state.prepareDeploymentPackage);
 
   const handleExport = async () => {
     if (isExporting) return;
     setIsExporting(true);
+    setError(null);
     try {
-      downloadHtml(
-        await embedImageAssets(components, getDataUrl),
-        seo,
-        undefined,
-        tokens,
-        workspaceId ?? undefined,
-        { canvasMode },
-      );
+      const deploymentPackage = await prepareDeploymentPackage();
+      if (deploymentPackage.errors.length > 0) {
+        throw new Error(deploymentPackage.errors[0].message);
+      }
+      downloadStandaloneHtml(await createStandaloneHtml(deploymentPackage));
+    } catch (exportError) {
+      setError(exportError instanceof Error ? exportError.message : "Unable to prepare a complete export package.");
     } finally {
       setIsExporting(false);
     }
@@ -128,13 +46,14 @@ export default function ExportButton({ components }: { components: BuilderCompon
 
   return (
     <button
-      className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition hover:bg-[#152B52] active:scale-95"
+      className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition hover:bg-[#152B52] active:scale-95 disabled:cursor-wait disabled:opacity-70"
       disabled={isExporting}
-      onClick={handleExport}
+      onClick={() => void handleExport()}
+      title={error || "Prepare a validated standalone HTML export"}
       type="button"
     >
-      <span className="hidden lg:inline">{isExporting ? "Exporting" : "Export"}</span>
-      <Download className="h-[14px] w-[14px]" />
+      {isExporting ? <Loader2 className="h-[14px] w-[14px] animate-spin" /> : error ? <AlertCircle className="h-[14px] w-[14px] text-amber-300" /> : <Download className="h-[14px] w-[14px]" />}
+      <span className="hidden lg:inline">{isExporting ? "Preparing" : error ? "Fix assets" : "Export"}</span>
     </button>
   );
 }

@@ -78,6 +78,8 @@ async function login({ email, mobile, password }) {
   if (!user || !(await user.comparePassword(password))) {
     throw ApiError.unauthorized('Invalid credentials');
   }
+  user.lastLoginAt = new Date();
+  await user.save();
   return authResponse(user);
 }
 
@@ -198,6 +200,8 @@ async function refresh(refreshToken) {
   const decoded = verifyRefreshToken(refreshToken);
   const user = await User.findById(decoded.sub);
   if (!user) throw ApiError.unauthorized('User not found');
+  user.lastLoginAt = new Date();
+  await user.save();
   return authResponse(user, 'Token refreshed');
 }
 
@@ -244,6 +248,9 @@ async function googleCallback(code) {
     user.isEmailVerified = true;
     await user.save();
   }
+
+  user.lastLoginAt = new Date();
+  await user.save();
 
   return oauthRedirectUrl(user);
 }

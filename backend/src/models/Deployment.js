@@ -48,5 +48,6 @@ const deploymentSchema = new mongoose.Schema(
 
 deploymentSchema.index({ workspaceId: 1, version: -1 });
 deploymentSchema.index({ workspaceId: 1, status: 1 });
+deploymentSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Deployment', deploymentSchema);

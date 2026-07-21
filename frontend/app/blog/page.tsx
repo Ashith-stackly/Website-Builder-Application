@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { Suspense, useState, useRef, useCallback, useEffect } from "react";
 import { flushSync } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,7 @@ import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
+import PublicBlogListing from "@/components/blog/PublicBlogListing";
 
 const START_BLOGGING_HREF = "/blog/manage/create";
 
@@ -617,6 +618,26 @@ const hireProfessionalDetails = {
 };
 
 export default function BlogPage() {
+  const blockpagesEditor = useBlockpagesEditor();
+
+  if (blockpagesEditor?.enabled) {
+    return <BlogMarketingTemplate />;
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-slate-50">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+        </main>
+      }
+    >
+      <PublicBlogListing />
+    </Suspense>
+  );
+}
+
+function BlogMarketingTemplate() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const router = useRouter();

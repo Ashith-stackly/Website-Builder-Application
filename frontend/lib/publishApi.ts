@@ -1,4 +1,5 @@
 import type { ProjectBuilderData } from "@/lib/projectApi";
+import type { SerializedDeploymentPackage } from "@/lib/deploymentPackage";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
@@ -30,6 +31,13 @@ type ApiErrorBody = {
   message?: string;
   errors?: string[];
 };
+
+export class PublishApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "PublishApiError";
+  }
+}
 
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -66,8 +74,9 @@ async function publishRequest<T>(path: string, init: RequestInit): Promise<T> {
 
   const body = (await response.json().catch(() => ({}))) as ApiErrorBody & T;
   if (!response.ok) {
-    throw new Error(
+    throw new PublishApiError(
       body.message || body.errors?.join(", ") || getErrorMessage(response.status),
+      response.status,
     );
   }
 
@@ -82,23 +91,69 @@ async function publishRequest<T>(path: string, init: RequestInit): Promise<T> {
  */
 export async function saveWorkspaceState(
   workspaceId: string,
-  data: { builderData: ProjectBuilderData; htmlContent: string },
+  data: {
+    builderData: ProjectBuilderData;
+    htmlContent: string;
+    deploymentPackage?: SerializedDeploymentPackage;
+  },
   signal?: AbortSignal,
 ): Promise<void> {
+  const deploymentPackage = data.deploymentPackage;
   await publishRequest(`/workspace/${encodeURIComponent(workspaceId)}/state`, {
     method: "PUT",
     body: JSON.stringify({
       builderData: data.builderData,
-      pageData: { htmlContent: data.htmlContent },
+      // Existing backend state accepts arbitrary pageData. Keeping the
+      // deployment package here preserves the established API contract while
+      // giving future deployment workers everything they need except upload
+      // bytes (which deliberately stay in the browser until an upload API
+      // exists).
+      pageData: {
+        htmlContent: data.htmlContent,
+        ...(deploymentPackage ? {
+          cssContent: deploymentPackage.stylesCss,
+          javascriptContent: deploymentPackage.scriptsJs,
+          builderJson: deploymentPackage.builderJson,
+          assetManifest: deploymentPackage.assetManifest,
+          referencedAssets: deploymentPackage.referencedAssets,
+          deploymentMetadata: deploymentPackage.metadata,
+          deploymentPackageVersion: deploymentPackage.schemaVersion,
+          deploymentValidation: deploymentPackage.validation,
+        } : {}),
+      },
     }),
     signal,
   });
 }
 
-export async function publishSite(workspaceId: string, signal?: AbortSignal): Promise<Deployment> {
+/**
+ * The backend currently publishes from WorkspaceState. Sending the same
+ * serializable snapshot in this optional body is forward-compatible with a
+ * future deployment service and harmless to the established endpoint.
+ */
+export async function publishSite(
+  workspaceId: string,
+  deploymentPackage?: SerializedDeploymentPackage,
+  signal?: AbortSignal,
+): Promise<Deployment> {
   const response = await publishRequest<{ message: string; deployment: Deployment }>(
     `/publish/${encodeURIComponent(workspaceId)}`,
-    { method: "POST", signal },
+    {
+      method: "POST",
+      ...(deploymentPackage ? {
+        body: JSON.stringify({
+          workspaceId,
+          builderData: deploymentPackage.builderData,
+          html: deploymentPackage.indexHtml,
+          css: deploymentPackage.stylesCss,
+          javascript: deploymentPackage.scriptsJs,
+          assetManifest: deploymentPackage.assetManifest,
+          referencedAssets: deploymentPackage.referencedAssets,
+          metadata: deploymentPackage.metadata,
+        }),
+      } : {}),
+      signal,
+    },
   );
   return response.deployment;
 }
@@ -120,6 +175,18 @@ export async function getActiveDeployment(
   const response = await publishRequest<{ deployment: Deployment | null }>(
     `/publish/${encodeURIComponent(workspaceId)}/active`,
     { method: "GET", signal },
+  );
+  return response.deployment;
+}
+
+export async function rollbackDeployment(
+  workspaceId: string,
+  deploymentId: string,
+  signal?: AbortSignal,
+): Promise<Deployment> {
+  const response = await publishRequest<{ message: string; deployment: Deployment }>(
+    `/publish/${encodeURIComponent(workspaceId)}/rollback/${encodeURIComponent(deploymentId)}`,
+    { method: "POST", signal },
   );
   return response.deployment;
 }

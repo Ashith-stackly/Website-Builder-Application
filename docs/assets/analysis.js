@@ -12,10 +12,10 @@
 const AUDIT_DATE = "21 Jul 2026";
 
 const WHATSNEW = {
-  title: "Completed module work reconciled",
+  title: "Blog setup completed",
   body:
-    "This documentation pass captures the latest completed work across Module 2 dashboard/project settings, Module 3 template library, Module 4 drag-and-drop builder, Module 7 publishing frontend, Module 8 e-commerce, Module 10 analytics, and Module 11 AI assistant. " +
-    "The main remaining gaps are Module 6 hosting/domain infrastructure, GitHub OAuth, profile/billing UI integration, production payment/provider configuration, and optional Google Analytics."
+    "This documentation pass captures the latest completed work across Module 2 dashboard/project settings, Module 3 template library, Module 4 drag-and-drop builder, Module 7 publishing frontend, Module 8 e-commerce, Module 9 Blog & SEO, Module 10 analytics, and Module 11 AI assistant. " +
+    "Module 9 now has live workspace-scoped public listings, static-safe post links, authenticated CRUD sync, safer public APIs, sitemap XML output, and runtime SEO metadata. The main remaining gaps are Module 6 hosting/domain infrastructure, GitHub OAuth, profile/billing UI integration, production payment/provider configuration, and optional Google Analytics."
 };
 
 const PROJECT = {
@@ -34,6 +34,8 @@ const PROJECT = {
   entry: [
     ["Frontend", "frontend/app/"],
     ["Builder", "frontend/components/builder/"],
+    ["Blog CMS", "frontend/app/blog/manage/"],
+    ["Public blog", "frontend/components/blog/PublicBlogListing.tsx"],
     ["State", "frontend/store/"],
     ["API clients", "frontend/lib/"],
     ["Backend app", "backend/src/app.js"],
@@ -311,29 +313,29 @@ const MODULES = [
   },
   {
     id: "m9", num: 9, name: "Blog & SEO",
-    blurb: "Workspace-scoped blog CRUD and editor screens are present. Public publishing, clean generated slug routes, sitemap delivery, and crawler-ready metadata remain incomplete under static export.",
+    blurb: "Workspace-scoped blog CRUD, public listing, static-safe post routing, SEO fields, sitemap output, and metadata updates are implemented. Pretty runtime URLs and deployed site-root sitemap wiring depend on hosting/publish infrastructure because the frontend is a static export.",
     tasks: [
       { t: "Create blog post schema", s: "done",
-        p: ["backend/src/models/BlogPost.js", "frontend/types/blog.ts"], note: "Posts include title, content, status, cover image, tags, and SEO fields." },
+        p: ["backend/src/models/BlogPost.js", "frontend/types/blog.ts"], note: "Posts include title, content, excerpt, author, status, cover image, category, tags, publishedAt, and SEO fields." },
       { t: "Build blog editor UI", s: "done",
         p: ["frontend/components/blog/BlogForm.tsx", "frontend/app/blog/manage/"], note: "Create, edit, and management views are implemented." },
       { t: "Implement post creation/edit/delete", s: "done",
-        p: ["backend/src/routes/blogRoutes.js", "frontend/lib/blogApi.ts"], note: "Authenticated blog CRUD calls align with the active /api/blog routes." },
-      { t: "Generate slug-based URLs", s: "partial",
-        p: ["backend/src/services/blogService.js", "frontend/app/blog/[slug]/page.tsx"],
-        note: "Backend slugs are generated, but the frontend public route needs workspaceId context and static export cannot pre-generate arbitrary new post slugs." },
+        p: ["backend/src/routes/blogRoutes.js", "frontend/lib/blogApi.ts", "frontend/lib/blogEvents.ts"], note: "Authenticated blog CRUD calls align with the active /api/blog routes, and create/update/delete actions notify live blog views to refresh." },
+      { t: "Generate slug-based URLs", s: "done",
+        p: ["backend/src/services/blogService.js", "frontend/lib/blogApi.ts", "frontend/app/blog/[slug]/page.tsx", "frontend/app/blog/post/page.tsx"],
+        note: "Backend slugs are generated per workspace and public links use the static-export-safe /blog/post?workspaceId=...&slug=... route. Pretty /blog/:slug URLs remain a hosting/rewrite concern because posts are database-driven." },
       { t: "Add SEO metadata fields (title, description)", s: "done",
         p: ["frontend/components/blog/BlogForm.tsx", "backend/src/models/BlogPost.js"],
         note: "The editor persists SEO title, description, and keywords." },
-      { t: "Generate sitemap.xml", s: "partial",
+      { t: "Generate sitemap.xml", s: "done",
         p: ["backend/src/services/blogService.js", "backend/src/routes/blogRoutes.js"],
-        note: "The backend emits per-workspace XML at /api/blog/sitemap/:workspaceId; it is not integrated as a deployed site-root sitemap.xml." },
-      { t: "Add Open Graph/meta tags", s: "partial",
-        p: ["frontend/lib/exportHtml.ts", "frontend/components/blog/BlogSeoHead.tsx"],
-        note: "Exported pages include OG tags, but blog metadata is injected after hydration and is not reliably crawler-ready." },
-      { t: "Implement blog listing page", s: "partial",
-        p: ["frontend/app/blog/page.tsx", "frontend/lib/blogApi.ts"],
-        note: "The route is a marketing page rather than a live listing of a workspace's published posts." },
+        note: "The backend emits per-workspace XML at /api/blog/sitemap/:workspaceId with escaped static-safe blog URLs and public-workspace checks. Deployment as a site-root sitemap.xml belongs to the hosting/publishing layer." },
+      { t: "Add Open Graph/meta tags", s: "done",
+        p: ["frontend/components/blog/BlogSeoHead.tsx", "frontend/app/blog/layout.tsx", "frontend/app/blog/post/layout.tsx"],
+        note: "Static fallback metadata is present and loaded posts update title, description, canonical URL, Open Graph, Twitter, published time, and modified time tags on the client." },
+      { t: "Implement blog listing page", s: "done",
+        p: ["frontend/app/blog/page.tsx", "frontend/components/blog/PublicBlogListing.tsx", "frontend/lib/blogApi.ts"],
+        note: "The normal /blog route now renders live published posts with search, category chips, pagination, empty/error/loading states, and workspace-scoped static-safe links while preserving the old marketing template for Builder preview." },
     ],
   },
   {
@@ -440,6 +442,7 @@ const MOD_APIS = {
   m9: [
     { m: "POST", path: "/api/blog/post", be: "source" },
     { m: "GET", path: "/api/blog/posts/:workspaceId", be: "source" },
+    { m: "GET", path: "/api/blog/public/:workspaceId", be: "source" },
     { m: "GET", path: "/api/blog/public/:workspaceId/:slug", be: "source" },
     { m: "GET", path: "/api/blog/sitemap/:workspaceId", be: "source" },
   ],

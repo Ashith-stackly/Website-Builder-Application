@@ -63,5 +63,6 @@ const blogPostSchema = new mongoose.Schema(
 // Slug must be unique within a workspace
 blogPostSchema.index({ workspaceId: 1, slug: 1 }, { unique: true });
 blogPostSchema.index({ workspaceId: 1, status: 1, publishedAt: -1 });
+blogPostSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('BlogPost', blogPostSchema);

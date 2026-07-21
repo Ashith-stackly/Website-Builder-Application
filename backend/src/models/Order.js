@@ -111,5 +111,6 @@ const orderSchema = new mongoose.Schema(
 
 orderSchema.index({ workspaceId: 1, createdAt: -1 });
 orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

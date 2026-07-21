@@ -44,6 +44,14 @@ async function getPublicPost(req, res, next) {
   }
 }
 
+async function listPublicPosts(req, res, next) {
+  try {
+    res.json(await blogService.listPublishedPosts(req.params.workspaceId, req.query));
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updatePost(req, res, next) {
   try {
     const post = await blogService.updatePost(req.user._id, req.params.id, req.body);
@@ -72,4 +80,14 @@ async function generateSitemap(req, res, next) {
   }
 }
 
-module.exports = { createPost, listPosts, getPost, getPostBySlug, getPublicPost, updatePost, deletePost, generateSitemap };
+module.exports = {
+  createPost,
+  listPosts,
+  getPost,
+  getPostBySlug,
+  getPublicPost,
+  listPublicPosts,
+  updatePost,
+  deletePost,
+  generateSitemap,
+};

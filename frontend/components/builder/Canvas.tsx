@@ -18,6 +18,7 @@ import IconComponent from "@/components/draggable/IconComponent";
 import { useBuilderStore } from "@/store/builderStore";
 import { useDesignStore } from "@/store/designStore";
 import { useBuilderUiStore } from "@/store/builderUiStore";
+import { summarizeDeploymentPackage } from "@/lib/deploymentPackage";
 import type { BuilderComponent, ComponentType, Viewport } from "@/types/builder";
 import { VIEWPORT_WIDTHS } from "@/types/builder";
 import { staggerContainer } from "@/lib/motion";
@@ -67,6 +68,7 @@ function Canvas({
   const loadProject = useBuilderStore((s) => s.loadProject);
   const autosave = useBuilderStore((s) => s.autosave);
   const saveDraft = useBuilderStore((s) => s.saveDraft);
+  const prepareDeploymentPackage = useBuilderStore((s) => s.prepareDeploymentPackage);
   const prepareForPublish = useBuilderStore((s) => s.prepareForPublish);
   const markDirty = useBuilderStore((s) => s.markDirty);
   const canvasMode = useBuilderStore((s) => s.canvasMode);
@@ -198,6 +200,11 @@ function Canvas({
     useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
     return prepareForPublish();
   }, [currentProjectName, prepareForPublish, projectName]);
+
+  const handleInspectPublishPackage = useCallback(async () => {
+    const deploymentPackage = await prepareDeploymentPackage();
+    return summarizeDeploymentPackage(deploymentPackage);
+  }, [prepareDeploymentPackage]);
 
   /* ── Backend autosave after a 5-second debounce ── */
   useEffect(() => {
@@ -369,7 +376,7 @@ function Canvas({
             );
           })()}
 
-          <ExportButton components={components} />
+          <ExportButton />
           <motion.button
             type="button"
             title={components.length ? "Publish website" : "Add a block before publishing"}
@@ -605,6 +612,7 @@ function Canvas({
         websiteName={seo.title?.trim() || projectName.trim() || currentProjectName || "My Website"}
         onClose={() => setIsPublishOpen(false)}
         onPreparePublish={handlePreparePublish}
+        onInspectPackage={handleInspectPublishPackage}
       />
 
       {/* ── Tools dropdown (portal to escape stacking context) ── */}

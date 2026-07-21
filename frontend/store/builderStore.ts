@@ -3,6 +3,12 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 import { generateHtml } from "@/lib/exportHtml";
+import {
+  createDeploymentPackage,
+  serializeDeploymentPackage,
+  summarizeDeploymentPackage,
+  type DeploymentPackage,
+} from "@/lib/deploymentPackage";
 import { getFreeformDefaultHeight } from "@/lib/freeformLayout";
 import { autosaveProject, createProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
 import { saveWorkspaceState } from "@/lib/publishApi";
@@ -39,6 +45,7 @@ import {
 import { buildProjectJSON, downloadProjectJSON, parseProjectJSON } from "@/lib/jsonExportImport";
 import type { AILayoutSection, AILayoutSuggestion, BuilderComponent, BuilderRequirements, BuilderState, ComponentStyles, ComponentType, FeatureRecord, Viewport } from "@/types/builder";
 import { useDesignStore } from "@/store/designStore";
+import { useAssetStore } from "@/store/assetStore";
 import type { DesignTokens } from "@/store/designStore";
 
 type ComponentDefault = Pick<BuilderComponent, "content" | "styles" | "children"> & {
@@ -828,6 +835,27 @@ function buildProjectData(state: BuilderState): ProjectBuilderData {
   };
 }
 
+/**
+ * Build a publish-only snapshot from the current canvas. It intentionally does
+ * not mutate `components`: local asset ids/data URLs remain available to the
+ * editor while the deployment copy is rewritten to stable `assets/...` paths.
+ */
+async function buildDeploymentPackageForState(state: BuilderState): Promise<DeploymentPackage> {
+  const assetStore = useAssetStore.getState();
+  await assetStore.loadAssets();
+  const latestAssets = useAssetStore.getState();
+
+  return createDeploymentPackage({
+    builderData: buildProjectData(state),
+    workspaceId: state.currentProjectId,
+    projectName: state.currentProjectName,
+    assetResolver: {
+      assets: latestAssets.assets,
+      getDataUrl: latestAssets.getDataUrl,
+    },
+  });
+}
+
 function getSaveErrorMessage(error: unknown, fallback: string): string {
   if (isProjectConnectionError(error)) {
     return "Unable to reach the project service. Your work is still on the canvas.";
@@ -1134,6 +1162,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     useDesignStore.getState().tokens,
     { canvasMode: get().canvasMode },
   ),
+  prepareDeploymentPackage: async () => buildDeploymentPackageForState(get()),
   undo: () =>
     set((state) => {
       if (state.history.length === 0) return state;
@@ -1405,6 +1434,15 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     const latestSnapshot = JSON.stringify(latestBuilderData);
 
     try {
+      const deploymentPackage = await buildDeploymentPackageForState(latest);
+      if (deploymentPackage.errors.length > 0) {
+        const firstError = deploymentPackage.errors[0];
+        throw new Error(
+          `Fix ${deploymentPackage.errors.length} asset issue${deploymentPackage.errors.length === 1 ? "" : "s"} before publishing. ${firstError.message}`,
+        );
+      }
+      const serializedPackage = serializeDeploymentPackage(deploymentPackage);
+
       if (initialSnapshot !== latestSnapshot) {
         await autosaveProject(workspaceId, {
           builderData: latestBuilderData,
@@ -1412,10 +1450,18 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         });
       }
       await saveWorkspaceState(workspaceId, {
-        builderData: latestBuilderData,
-        htmlContent: latestHtml,
+        // WorkspaceState is publish-only compatibility data. Store the
+        // rewritten deployment copy here while the editable Workspace keeps
+        // its local asset ids/data URLs through the regular draft save.
+        builderData: serializedPackage.builderData,
+        htmlContent: serializedPackage.indexHtml,
+        deploymentPackage: serializedPackage,
       });
-      return workspaceId;
+      return {
+        workspaceId,
+        deploymentPackage: serializedPackage,
+        summary: summarizeDeploymentPackage(deploymentPackage),
+      };
     } catch (error) {
       const message = getSaveErrorMessage(error, "Unable to prepare this website for publishing.");
       set({ saveStatus: "error", saveError: message, isSaving: false });

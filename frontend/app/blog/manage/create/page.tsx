@@ -5,18 +5,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { BlogFormData } from "@/types/blog";
 import { createBlog, isBlogConnectionError } from "@/lib/blogApi";
+import { notifyBlogChanged } from "@/lib/blogEvents";
 import BlogForm from "@/components/blog/BlogForm";
-import BlogToast from "@/components/blog/BlogToast";
 
 export default function CreateBlogPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const workspaceId = searchParams.get("workspaceId") || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
 
   const handleSubmit = useCallback(
     async (data: BlogFormData) => {
@@ -25,11 +21,8 @@ export default function CreateBlogPage() {
       try {
         if (!workspaceId) throw new Error("Select a project before creating a blog post.");
         await createBlog({ ...data, workspaceId });
-        setToast({ message: "Blog post created successfully!", type: "success" });
-        // Redirect after a brief delay so the user sees the toast
-        window.setTimeout(() => {
-          router.push(`/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}`);
-        }, 1200);
+        notifyBlogChanged(workspaceId);
+        router.push(`/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}&created=1`);
       } catch (err) {
         setIsSubmitting(false);
         if (isBlogConnectionError(err)) {
@@ -62,21 +55,21 @@ export default function CreateBlogPage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-          <BlogForm
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            submitLabel="Create Blog Post"
-          />
-        </div>
+        {!workspaceId ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
+            <p className="text-red-700 font-semibold text-base">Select a project before creating a blog post.</p>
+            <Link href="/blog/manage" className="mt-4 inline-flex rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white no-underline">Back to Blog Management</Link>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+            <BlogForm
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              submitLabel="Create Blog Post"
+            />
+          </div>
+        )}
       </div>
-
-      {/* Toast */}
-      <BlogToast
-        message={toast?.message ?? null}
-        type={toast?.type}
-        onDismiss={() => setToast(null)}
-      />
     </main>
   );
 }

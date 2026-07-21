@@ -4,8 +4,9 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { BlogListItem } from "@/types/blog";
-import { getBlogs, deleteBlog, isBlogConnectionError } from "@/lib/blogApi";
+import { getBlogs, deleteBlog, getPublicBlogPath, isBlogConnectionError } from "@/lib/blogApi";
 import { getProjects, type ProjectApiProject } from "@/lib/projectApi";
+import { notifyBlogChanged } from "@/lib/blogEvents";
 import BlogDeleteDialog from "@/components/blog/BlogDeleteDialog";
 import BlogToast from "@/components/blog/BlogToast";
 
@@ -31,6 +32,22 @@ export default function BlogManagePage() {
   } | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const created = searchParams.get("created");
+    const updated = searchParams.get("updated");
+    if (!created && !updated) return;
+
+    setToast({
+      message: created ? "Blog post created successfully." : "Blog post updated successfully.",
+      type: "success",
+    });
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("created");
+    params.delete("updated");
+    router.replace(`/blog/manage${params.toString() ? `?${params.toString()}` : ""}`);
+  }, [router, searchParams]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,6 +111,7 @@ export default function BlogManagePage() {
       await deleteBlog(deleteTarget._id);
       setDeleteTarget(null);
       setToast({ message: "Blog post deleted successfully.", type: "success" });
+      notifyBlogChanged(workspaceId);
       // Optimistic refresh
       setBlogs((prev) => prev.filter((b) => b._id !== deleteTarget._id));
     } catch (err) {
@@ -252,9 +270,10 @@ export default function BlogManagePage() {
                   <div className="flex items-center gap-2 shrink-0">
                     {blog.status === "published" && (
                       <Link
-                      href={`/blog/post?workspaceId=${encodeURIComponent(workspaceId)}&slug=${encodeURIComponent(blog.slug)}`}
+                        href={getPublicBlogPath(workspaceId, blog.slug)}
                         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors no-underline cursor-pointer"
                         target="_blank"
+                        rel="noopener noreferrer"
                       >
                         View
                       </Link>
