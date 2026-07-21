@@ -16,7 +16,7 @@ const VALID_TYPES: ReadonlySet<string> = new Set<ComponentType>([
   "navigation", "hero", "heading", "text", "button", "icon", "feature-item",
   "columns", "image", "input", "divider", "features", "gallery", "contact",
   "container", "video", "map", "accordion", "tabs", "spacer", "social-links",
-  "countdown", "pricing-table", "testimonial", "footer", "form", "row",
+  "countdown", "pricing-table", "product-collection", "testimonial", "footer", "form", "row",
 ]);
 
 /* ─── Export schema ───────────────────────────────────────────────────── */

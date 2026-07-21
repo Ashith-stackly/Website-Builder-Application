@@ -58,8 +58,8 @@ async function deleteProduct(req, res, next) {
 
 async function createOrder(req, res, next) {
   try {
-    const order = await ecommerceService.createOrder(req.body);
-    res.status(201).json({ message: 'Order created', order });
+    const result = await ecommerceService.createOrder(req.user?._id, req.body);
+    res.status(201).json({ message: 'Order created', ...result });
   } catch (err) {
     next(err);
   }

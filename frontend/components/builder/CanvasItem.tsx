@@ -34,7 +34,7 @@ function CanvasItem({
   const viewport = useBuilderStore((s) => s.viewport) as Viewport;
   const [isEditing, setIsEditing] = useState(false);
   const isInlineEditable = component.type === "heading" || component.type === "text" || component.type === "button";
-  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery" || component.type === "pricing-table" || component.type === "testimonial" || component.type === "footer" || component.type === "accordion" || component.type === "tabs" || component.type === "form" || component.type === "row";
+  const isSectionComponent = component.type === "contact" || component.type === "hero" || component.type === "navigation" || component.type === "features" || component.type === "gallery" || component.type === "pricing-table" || component.type === "product-collection" || component.type === "testimonial" || component.type === "footer" || component.type === "accordion" || component.type === "tabs" || component.type === "form" || component.type === "row";
   const isLocked = component.locked ?? false;
   const isHidden = component.hidden ?? false;
 

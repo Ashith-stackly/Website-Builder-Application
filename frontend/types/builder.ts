@@ -24,6 +24,7 @@ export type ComponentType =
   | "social-links"
   | "countdown"
   | "pricing-table"
+  | "product-collection"
   | "testimonial"
   | "footer"
   | "form"
@@ -330,6 +331,59 @@ export interface PricingTableProps {
   tiers: PricingTier[];
 }
 
+/**
+ * Editor-local catalog record for the Product Collection block.
+ *
+ * These records are intentionally presentation data, not database products:
+ * they never fetch, mutate, or reserve inventory. A future commerce binding
+ * can map a real product to the optional `id` without changing the renderer's
+ * content schema.
+ */
+export interface ProductMock {
+  id?: string;
+  name: string;
+  price: string;
+  compareAtPrice?: string;
+  description?: string;
+  image: string;
+  alt?: string;
+  badge?: string;
+  ctaLabel?: string;
+}
+
+/**
+ * Configurable catalog section used inside the builder before a live commerce
+ * catalog is connected. All values are safe mock/sample data stored with the
+ * document JSON.
+ */
+export interface ProductCollectionProps {
+  schemaVersion?: number;
+  heading?: string;
+  subheading?: string;
+  products: ProductMock[];
+  columns?: 2 | 3 | 4;
+  variant?: "grid" | "featured" | "carousel" | "collection" | "category" | "best-sellers" | "latest" | "single";
+  /** The display category/hint. It does not issue a catalog query in the editor. */
+  category?: string;
+  /** How a future published-site runtime may resolve a live catalog. */
+  selection?: "manual" | "category" | "best-sellers" | "latest";
+  /** Real product identifiers passed only to the published catalog runtime. */
+  productIds?: string[];
+  /** Upper bound a future runtime should render; the editor applies it to mock cards too. */
+  limit?: number;
+  sort?: "manual" | "newest" | "price-asc" | "price-desc" | "best-selling";
+  /** Show sample category/filter controls. This never queries catalog data in the editor. */
+  showFilters?: boolean;
+  pagination?: boolean;
+  showPrices?: boolean;
+  showBadges?: boolean;
+  ctaLabel?: string;
+  emptyStateLabel?: string;
+}
+
+/** Fully normalized Product Collection props returned by the block reader. */
+export type ProductCollectionData = Required<ProductCollectionProps>;
+
 export interface TestimonialItem {
   quote: string;
   name: string;
@@ -403,7 +457,7 @@ export interface SEOMetadata {
  */
 export const SECTION_TYPES: ReadonlySet<ComponentType> = new Set([
   "navigation", "hero", "features", "gallery", "contact", "container", "columns",
-  "pricing-table", "testimonial", "footer", "accordion", "tabs", "form", "row",
+  "pricing-table", "product-collection", "testimonial", "footer", "accordion", "tabs", "form", "row",
 ]);
 
 export interface BuilderComponent {
@@ -464,6 +518,34 @@ export interface BuilderRequirements {
   sections: string[];
 }
 
+/**
+ * A deliberately small, validated client-side representation of a layout
+ * returned by the AI layout endpoint.  The server may include richer hints,
+ * but only known component types and the content fields below are applied to
+ * the canvas.  Keeping this boundary explicit prevents an AI response from
+ * injecting arbitrary builder state.
+ */
+export interface AILayoutSection {
+  type: ComponentType;
+  label?: string;
+  purpose?: string;
+  contentHint?: string;
+  props?: Record<string, unknown>;
+}
+
+export interface AILayoutSuggestion {
+  title?: string;
+  rationale?: string;
+  sections: AILayoutSection[];
+  colorPalette?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    background?: string;
+    text?: string;
+  };
+}
+
 export interface BuilderState {
   components: BuilderComponent[];
   selectedComponentId: string | null;
@@ -487,6 +569,8 @@ export interface BuilderState {
   reorderComponents: (activeId: string, overId: string) => void;
   loadStarterWebsite: () => void;
   loadWebsiteFromRequirements: (requirements: BuilderRequirements) => void;
+  /** Replace the canvas with a reviewed AI layout in one undoable change. */
+  applyAILayout: (suggestion: AILayoutSuggestion) => void;
   loadComponents: (components: BuilderComponent[]) => void;
   applyDesignTokens: (tokens: {
     colors: { primary: string; secondary: string; accent: string; background: string; text: string };
@@ -512,6 +596,8 @@ export interface BuilderState {
   saveHtml: (signal?: AbortSignal) => Promise<boolean>;
   /** Create a project on first save, then autosave builder data + HTML. */
   saveDraft: (signal?: AbortSignal) => Promise<boolean>;
+  /** Save the newest JSON/HTML and sync the publish-compatible workspace state. */
+  prepareForPublish: () => Promise<string>;
   /** Reset builder state after logout. */
   resetBuilder: () => void;
   /** Active editing viewport. */
@@ -521,6 +607,8 @@ export interface BuilderState {
   /** Canvas layout mode: flow (stacked) or freeform (absolute positioning). */
   canvasMode: "flow" | "freeform";
   toggleCanvasMode: () => void;
+  /** Select a canvas mode; entering Freeform explicitly seeds only missing root positions. */
+  setCanvasMode: (mode: "flow" | "freeform") => void;
 
   /* ── Wix-style freeform editing ─────────────────────────────────── */
 
@@ -528,6 +616,8 @@ export interface BuilderState {
   selectedComponentIds: string[];
   /** Toggle a component in/out of the multi-selection. */
   toggleSelectComponent: (id: string) => void;
+  /** Replace the current multi-selection (used by marquee/layers selection). */
+  setSelectedComponentIds: (ids: string[]) => void;
 
   /** Clipboard for copy/paste. */
   clipboard: BuilderComponent[] | null;
@@ -535,13 +625,29 @@ export interface BuilderState {
   copyComponents: () => void;
   /** Paste clipboard components onto the canvas. */
   pasteComponents: (parentId?: string | null) => void;
+  /** Duplicate every selected component in one undoable operation. */
+  duplicateSelectedComponents: () => void;
+  /** Delete every selected component in one undoable operation. */
+  deleteSelectedComponents: () => void;
+  /** Wrap same-parent flow selections in a container. */
+  groupSelectedComponents: () => void;
+  /** Replace a grouping container with its children. */
+  ungroupComponent: (id: string) => void;
 
   /** Move a component's layer order (z-index). */
   moveLayer: (id: string, direction: "front" | "back" | "forward" | "backward") => void;
   /** Freeform-move a component to (x, y) within its parent. */
-  moveComponent: (id: string, x: number, y: number) => void;
+  moveComponent: (id: string, x: number, y: number, options?: { snap?: boolean }) => void;
+  /** Move multiple Freeform components in one render-safe, no-history update. */
+  moveComponents: (positions: Array<{ id: string; x: number; y: number }>, options?: { snap?: boolean }) => void;
   /** Resize a component to width × height (px). */
-  resizeComponent: (id: string, width: number, height: number) => void;
+  resizeComponent: (id: string, width: number, height: number, options?: { snap?: boolean }) => void;
+  /** Capture one history snapshot before a pointer-driven freeform interaction. */
+  beginFreeformInteraction: () => void;
+  /** Move all selected freeform components by an exact pixel delta. */
+  nudgeSelectedComponents: (x: number, y: number) => void;
+  /** Apply a visual style patch to every unlocked selected component at once. */
+  applyStylesToSelected: (styles: Partial<ComponentStyles>) => void;
   /** Toggle the locked state of a component. */
   toggleLock: (id: string) => void;
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Download } from "lucide-react";
 import { downloadHtml } from "@/lib/exportHtml";
 import { useAssetStore } from "@/store/assetStore";
+import { useBuilderStore } from "@/store/builderStore";
 import { useDesignStore } from "@/store/designStore";
 import { blobToDataUrl } from "@/lib/assetUtils";
 import type { BuilderComponent } from "@/types/builder";
@@ -105,12 +106,21 @@ export default function ExportButton({ components }: { components: BuilderCompon
   const getDataUrl = useAssetStore((s) => s.getDataUrl);
   const seo = useDesignStore((s) => s.seo);
   const tokens = useDesignStore((s) => s.tokens);
+  const workspaceId = useBuilderStore((s) => s.currentProjectId);
+  const canvasMode = useBuilderStore((s) => s.canvasMode);
 
   const handleExport = async () => {
     if (isExporting) return;
     setIsExporting(true);
     try {
-      downloadHtml(await embedImageAssets(components, getDataUrl), seo, undefined, tokens);
+      downloadHtml(
+        await embedImageAssets(components, getDataUrl),
+        seo,
+        undefined,
+        tokens,
+        workspaceId ?? undefined,
+        { canvasMode },
+      );
     } finally {
       setIsExporting(false);
     }

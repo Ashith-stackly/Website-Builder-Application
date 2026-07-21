@@ -44,6 +44,10 @@ async function publishSite(userId, workspaceId) {
     },
   });
 
+  // Stamp the workspace so the dashboard can identify published projects
+  // without querying the Deployment collection.
+  await Workspace.updateOne({ _id: workspaceId }, { $set: { publishedAt: new Date() } });
+
   return deployment.toObject();
 }
 

@@ -46,6 +46,7 @@ import { spacerSpec }      from "@/components/blocks/spacer/spec";
 import { socialLinksSpec } from "@/components/blocks/social-links/spec";
 import { countdownSpec }   from "@/components/blocks/countdown/spec";
 import { pricingTableSpec } from "@/components/blocks/pricing-table/spec";
+import { productCollectionSpec } from "@/components/blocks/product-collection/spec";
 import { testimonialSpec } from "@/components/blocks/testimonial/spec";
 import { footerSpec }      from "@/components/blocks/footer/spec";
 import { formSpec }        from "@/components/blocks/form/spec";
@@ -179,6 +180,7 @@ export const blockRegistry: Partial<Record<ComponentType, BlockSpec<any>>> = {
   "social-links": socialLinksSpec,
   countdown:      countdownSpec,
   "pricing-table": pricingTableSpec,
+  "product-collection": productCollectionSpec,
   testimonial:    testimonialSpec,
   footer:         footerSpec,
   form:           formSpec,

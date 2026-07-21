@@ -6,6 +6,15 @@ import type { LucideIcon } from "lucide-react";
 import type { BuilderComponent, ComponentStyles, SEOMetadata } from "@/types/builder";
 import type { DesignTokens } from "@/store/designStore";
 import { escapeHtml } from "@/lib/htmlUtils";
+import { buildAnalyticsTrackingScript } from "@/lib/analyticsTracking";
+import { buildStorefrontRuntimeScript } from "@/lib/storefrontRuntime";
+import {
+  buildFreeformResponsiveCss,
+  getFreeformCanvasMinHeight,
+  isFreeformHtmlExport,
+  wrapFreeformExportComponent,
+} from "@/lib/freeformExport";
+import type { HtmlExportLayoutOptions } from "@/lib/freeformExport";
 
 const styleToString = (styles: ComponentStyles) =>
   Object.entries(styles)
@@ -92,12 +101,17 @@ const renderIconSvg = (name: string, styles: ComponentStyles) => {
   }));
 };
 
-const renderComponent = (component: BuilderComponent): string => {
+type ComponentRenderOptions = {
+  /** A root freeform item owns its position, so it must not also use the legacy floating wrapper. */
+  freeformRoot?: boolean;
+};
+
+const renderComponent = (component: BuilderComponent, options: ComponentRenderOptions = {}): string => {
   // Skip hidden components in export
   if (component.hidden) return "";
   const styleAttr = componentAttr(component);
   const content = escapeHtml(component.content);
-  const children = component.children.map(renderComponent).join("\n");
+  const children = component.children.map((child) => renderComponent(child)).join("\n");
 
   // ── Registry path ────────────────────────────────────────────────────────────
   // All migrated blocks delegate export to spec.exportHtml(data, styleAttr, children).
@@ -113,7 +127,7 @@ const renderComponent = (component: BuilderComponent): string => {
     case "text":
       return `<p${styleAttr}>${content}</p>`;
     case "button":
-      if (isFloatingComponent(component)) {
+      if (isFloatingComponent(component) && !options.freeformRoot) {
         return floatingWrapper(component, `<button${styleAttr}>${content}</button>`);
       }
       return `<button${styleAttr}>${content}</button>`;
@@ -136,7 +150,7 @@ const renderComponent = (component: BuilderComponent): string => {
     case "spacer":
       return `<div${componentAttr(component, { ...component.styles, height: String(component.props?.height || component.content || "60px") })}></div>`;
     case "icon":
-      if (isFloatingComponent(component)) {
+      if (isFloatingComponent(component) && !options.freeformRoot) {
         return floatingWrapper(component, `<span${styleAttr}>${renderIconSvg(component.content || "Star", component.styles)}</span>`);
       }
       return `<span${styleAttr}>${renderIconSvg(component.content || "Star", component.styles)}</span>`;
@@ -228,11 +242,27 @@ const collectResponsiveCss = (components: BuilderComponent[]): string => {
   ].filter(Boolean).join("\n");
 };
 
-export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, workspaceId?: string, tokens?: DesignTokens) => {
-  const body = components
+const hasProductCollection = (components: BuilderComponent[]): boolean =>
+  components.some((component) =>
+    component.type === "product-collection" || hasProductCollection(component.children || []),
+  );
+
+export const generateHtml = (
+  components: BuilderComponent[],
+  seo?: SEOMetadata,
+  workspaceId?: string,
+  tokens?: DesignTokens,
+  layout?: HtmlExportLayoutOptions,
+) => {
+  const isFreeformLayout = isFreeformHtmlExport(layout);
+  const orderedComponents = components
     .slice()
-    .sort((a, b) => a.order - b.order)
-    .map(renderComponent)
+    .sort((a, b) => a.order - b.order);
+  const body = orderedComponents
+    .map((component, index) => {
+      const rendered = renderComponent(component, { freeformRoot: isFreeformLayout });
+      return isFreeformLayout ? wrapFreeformExportComponent(component, rendered, index) : rendered;
+    })
     .join("\n");
 
   /* ── SEO meta tags ───────────────────────────────────────────────── */
@@ -255,37 +285,48 @@ export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, 
     ? "\n    " + ogTags.join("\n    ")
     : "";
   const responsiveCss = collectResponsiveCss(components);
+  const freeformCss = isFreeformLayout ? buildFreeformResponsiveCss(orderedComponents) : "";
+  const freeformMainAttr = isFreeformLayout
+    ? ` class="stackly-freeform-canvas" style="--stackly-freeform-min-height:${getFreeformCanvasMinHeight(orderedComponents)}px"`
+    : "";
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
-  const trackingScript = workspaceId
+  const trackingScript = buildAnalyticsTrackingScript({
+    workspaceId,
+    apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api",
+  });
+  const includesProductCollection = hasProductCollection(components);
+  const productCollectionCss = includesProductCollection
     ? `
-    <script>
-      (function() {
-        try {
-          var wsId = ${JSON.stringify(workspaceId)};
-          var apiBase = ${JSON.stringify(apiBaseUrl)};
-          if (window.__stackly_preview) return;
-          var sessionKey = "stackly_session_id";
-          var sessionId = sessionStorage.getItem(sessionKey);
-          if (!sessionId) {
-            sessionId = 's_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
-            sessionStorage.setItem(sessionKey, sessionId);
-          }
-          var payload = {
-            workspaceId: wsId,
-            eventType: "page_view",
-            path: window.location.pathname || "/",
-            referrer: document.referrer || "",
-            userAgent: navigator.userAgent || "",
-            sessionId: sessionId
-          };
-          var xhr = new XMLHttpRequest();
-          xhr.open("POST", apiBase + "/analytics/event", true);
-          xhr.setRequestHeader("Content-Type", "application/json");
-          xhr.send(JSON.stringify(payload));
-        } catch(e) {}
-      })();
-    </script>`
+      /* Product Collection: sample fallback and live catalog hydration */
+      .stackly-product-collection { width: 100%; }
+      .stackly-product-header { margin-bottom: 16px; }
+      .stackly-product-heading { margin: 0; }
+      .stackly-product-subheading { margin: 8px 0 0; color: #566583; line-height: 1.55; }
+      .stackly-product-grid { display: grid; grid-template-columns: repeat(var(--stackly-product-columns, 3), minmax(0, 1fr)); gap: 18px; }
+      .stackly-product-grid--carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+      .stackly-product-grid--carousel .stackly-product-card { min-width: min(280px, 82vw); scroll-snap-align: start; }
+      .stackly-product-card { display: flex; min-width: 0; flex-direction: column; overflow: hidden; border: 1px solid #dbe3ef; border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgba(15,35,75,.04); }
+      .stackly-product-image-wrap { position: relative; background: #f4f7fb; }
+      .stackly-product-image-wrap img, .stackly-product-card > img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #f4f7fb; }
+      .stackly-product-copy, .stackly-product-card-body { display: flex; flex: 1; flex-direction: column; gap: 10px; padding: 16px; }
+      .stackly-product-card h3 { margin: 0; font-size: 1.05rem; }
+      .stackly-product-description { margin: 0; color: #566583; line-height: 1.5; }
+      .stackly-product-price { margin: 0; font-size: 1.05rem; font-weight: 800; }
+      .stackly-product-price s, .stackly-product-compare { margin-left: 8px; color: #7c8799; font-size: .85rem; font-weight: 500; }
+      .stackly-product-badge { position: relative; align-self: flex-start; display: inline-flex; border-radius: 999px; background: #eaf1ff; color: #174ea6; padding: 4px 8px; font-size: .75rem; font-weight: 700; }
+      .stackly-product-image-wrap .stackly-product-badge { position: absolute; left: 12px; top: 12px; z-index: 1; }
+      .stackly-product-card button { margin-top: auto; }
+      .stackly-product-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+      .stackly-product-status { min-height: 1.2em; margin: 10px 0; color: #566583; font-size: .9rem; }
+      .stackly-product-pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+      @media (max-width: 640px) { .stackly-product-grid { grid-template-columns: 1fr; } }
+    `
+    : "";
+  const storefrontRuntimeScript = includesProductCollection
+    ? buildStorefrontRuntimeScript({
+      workspaceId,
+      apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api",
+    })
     : "";
 
   return `<!doctype html>
@@ -293,12 +334,13 @@ export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${pageTitle}</title>${metaDesc}${ogBlock}${trackingScript}
+    <title>${pageTitle}</title>${metaDesc}${ogBlock}${trackingScript}${storefrontRuntimeScript}
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; font-family: ${escapeHtml(tokens?.typography?.fontFamily || 'Arial, Helvetica, sans-serif')}; background: ${escapeHtml(tokens?.colors?.background || '#ffffff')}; color: ${escapeHtml(tokens?.colors?.text || '#0B1D40')}; }
       main { width: min(960px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0; }
       main { position: relative; min-height: 680px; display: flex; flex-direction: column; gap: 12px; }
+${freeformCss}
       .stackly-floating { position: absolute; margin: 0 !important; width: max-content; max-width: calc(100% - 8px); }
       .stackly-floating > * { margin: 0 !important; }
       .stackly-floating svg { display: block; }
@@ -423,6 +465,8 @@ export const generateHtml = (components: BuilderComponent[], seo?: SEOMetadata, 
       .footer-divider { border: 0; border-top: 1px solid rgba(255,255,255,.1); margin: 24px 0; width: 100%; }
       .footer-copyright { text-align: center; color: rgba(255,255,255,.4); font-size: 12px; margin: 0; }
 
+${productCollectionCss}
+
       @media (max-width: 768px) {
         main { width: min(100%, calc(100% - 24px)); padding: 24px 0; }
         h1 { font-size: min(32px, 7vw); line-height: 1.15; }
@@ -451,15 +495,28 @@ ${responsiveCss ? `${responsiveCss}\n` : ""}    </style>
         btn.setAttribute('aria-expanded', menu && menu.classList.contains('open') ? 'true' : 'false');
       }
     </script>
-    <main>
+    <main${freeformMainAttr}>
 ${body}
     </main>
   </body>
 </html>`;
 };
 
-export const downloadHtml = (components: BuilderComponent[], seo?: SEOMetadata, filename = "stackly-page.html", tokens?: DesignTokens) => {
-  const html = generateHtml(components, seo, undefined, tokens);
+/**
+ * Download an exported page. A saved builder project is backed by a Workspace,
+ * so carrying its id into `generateHtml` retains the same public analytics
+ * tracker used by saved HTML and any deployment serving that generated document.
+ * Unsaved exports intentionally omit it.
+ */
+export const downloadHtml = (
+  components: BuilderComponent[],
+  seo?: SEOMetadata,
+  filename = "stackly-page.html",
+  tokens?: DesignTokens,
+  workspaceId?: string,
+  layout?: HtmlExportLayoutOptions,
+) => {
+  const html = generateHtml(components, seo, workspaceId, tokens, layout);
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

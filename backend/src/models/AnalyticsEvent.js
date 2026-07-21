@@ -39,12 +39,17 @@ const analyticsEventSchema = new mongoose.Schema({
   timestamp: {
     type: Date,
     default: Date.now,
-    index: true,
+    // Indexed via the TTL schema.index() below — do NOT add `index: true` here.
   },
 });
 
 // Compound index for per-workspace daily aggregation queries
 analyticsEventSchema.index({ workspaceId: 1, timestamp: -1 });
 analyticsEventSchema.index({ workspaceId: 1, eventType: 1, timestamp: -1 });
+
+// TTL index — auto-expire raw events after 90 days.
+// Long-term data should be retained via pre-aggregated daily rollups
+// (see AnalyticsDailySummary — future implementation).
+analyticsEventSchema.index({ timestamp: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
 module.exports = mongoose.model('AnalyticsEvent', analyticsEventSchema);

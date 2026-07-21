@@ -72,6 +72,12 @@ const workspaceSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // Timestamp of the most recent successful publish/deployment.
+    // Set by publishService when a deployment completes.
+    publishedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

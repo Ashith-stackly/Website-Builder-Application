@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState, useMemo, useLayoutEffect, type ReactNode } from "react";
-import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, RefreshCw, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
+import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, RefreshCw, Rocket, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { AssetManager } from "@/components/assets/AssetManager";
@@ -11,6 +11,8 @@ import { createPortal } from "react-dom";
 import SortableItem from "./SortableItem";
 import QuickInsertBar from "./QuickInsertBar";
 import ExportButton from "./ExportButton";
+import PublishDialog from "./PublishDialog";
+import FreeformCanvas from "./FreeformCanvas";
 import ButtonComponent from "@/components/draggable/ButtonComponent";
 import IconComponent from "@/components/draggable/IconComponent";
 import { useBuilderStore } from "@/store/builderStore";
@@ -65,8 +67,10 @@ function Canvas({
   const loadProject = useBuilderStore((s) => s.loadProject);
   const autosave = useBuilderStore((s) => s.autosave);
   const saveDraft = useBuilderStore((s) => s.saveDraft);
+  const prepareForPublish = useBuilderStore((s) => s.prepareForPublish);
   const markDirty = useBuilderStore((s) => s.markDirty);
   const canvasMode = useBuilderStore((s) => s.canvasMode);
+  const setCanvasMode = useBuilderStore((s) => s.setCanvasMode);
   const autoSaveEnabled = useDesignStore((s) => s.autoSaveEnabled);
   const tokens = useDesignStore((s) => s.tokens);
   const seo = useDesignStore((s) => s.seo);
@@ -105,6 +109,7 @@ function Canvas({
   const [editingName, setEditingName] = useState(false);
   const [isAssetsOpen, setIsAssetsOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
   const toolsBtnRef = useRef<HTMLButtonElement>(null);
@@ -188,6 +193,11 @@ function Canvas({
     savedTimer.current = setTimeout(() => setSaved(false), 2200);
     setLastSavedAt(Date.now());
   };
+
+  const handlePreparePublish = useCallback(async () => {
+    useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
+    return prepareForPublish();
+  }, [currentProjectName, prepareForPublish, projectName]);
 
   /* ── Backend autosave after a 5-second debounce ── */
   useEffect(() => {
@@ -360,6 +370,19 @@ function Canvas({
           })()}
 
           <ExportButton components={components} />
+          <motion.button
+            type="button"
+            title={components.length ? "Publish website" : "Add a block before publishing"}
+            aria-label="Publish website"
+            disabled={components.length === 0}
+            onClick={() => setIsPublishOpen(true)}
+            whileHover={components.length ? { y: -1 } : undefined}
+            whileTap={components.length ? { scale: 0.97 } : undefined}
+            className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 text-[12px] font-extrabold text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-45 sm:px-3"
+          >
+            <Rocket className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Publish</span>
+          </motion.button>
         </div>
       </div>
 
@@ -388,6 +411,39 @@ function Canvas({
             <span className="hidden sm:inline">{label}</span>
           </button>
         ))}
+        <div className="mx-1 h-5 w-px bg-[#dbe3ef]" />
+        <div
+          role="group"
+          aria-label="Canvas layout mode"
+          className="flex items-center rounded-md border border-[#dbe3ef] bg-white p-0.5 shadow-sm"
+        >
+          <button
+            type="button"
+            title="Flow layout — the default responsive section editor"
+            aria-pressed={canvasMode === "flow"}
+            onClick={() => setCanvasMode("flow")}
+            className={`rounded px-2 py-1 text-[10px] font-bold transition ${
+              canvasMode === "flow"
+                ? "bg-[#0B1D40] text-white"
+                : "text-[#566583] hover:bg-slate-100 hover:text-[#0B1D40]"
+            }`}
+          >
+            Flow
+          </button>
+          <button
+            type="button"
+            title="Freeform layout — position and resize blocks on an absolute canvas"
+            aria-pressed={canvasMode === "freeform"}
+            onClick={() => setCanvasMode("freeform")}
+            className={`rounded px-2 py-1 text-[10px] font-bold transition ${
+              canvasMode === "freeform"
+                ? "bg-blue-600 text-white"
+                : "text-[#566583] hover:bg-slate-100 hover:text-[#0B1D40]"
+            }`}
+          >
+            Freeform
+          </button>
+        </div>
         <AnimatePresence>
           {viewport !== "desktop" && (
             <motion.span
@@ -404,6 +460,13 @@ function Canvas({
       </div>
 
       {/* ── Canvas drop zone ── */}
+      {canvasMode === "freeform" ? (
+        <FreeformCanvas
+          onAddComponent={(type) => storeAddComponent(type)}
+          dropRef={setNodeRef}
+          isDropTarget={isOver}
+        />
+      ) : (
       <div
         ref={setNodeRef}
         className={`flex flex-1 flex-col items-center overflow-y-auto px-3 py-4 transition sm:px-4 ${isOver ? "bg-blue-50/50" : "bg-[#f0f3f8]"}`}
@@ -532,8 +595,17 @@ function Canvas({
           )}
         </motion.div>
       </div>
+      )}
 
       <AssetManager open={isAssetsOpen} onClose={() => setIsAssetsOpen(false)} />
+      <PublishDialog
+        open={isPublishOpen}
+        workspaceId={currentProjectId}
+        projectName={projectName.trim() || currentProjectName || "My Website"}
+        websiteName={seo.title?.trim() || projectName.trim() || currentProjectName || "My Website"}
+        onClose={() => setIsPublishOpen(false)}
+        onPreparePublish={handlePreparePublish}
+      />
 
       {/* ── Tools dropdown (portal to escape stacking context) ── */}
       {typeof document !== "undefined" && createPortal(

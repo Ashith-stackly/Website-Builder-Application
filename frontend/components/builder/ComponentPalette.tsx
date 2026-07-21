@@ -6,10 +6,11 @@ import {
   AlignLeft, Clock, Contact, FileText, Globe, GripVertical, Heading1, Heart,
   Home, Image, Images, LayoutGrid, LayoutTemplate, Layers, List, MapPin, Menu,
   Minus, MousePointerSquareDashed, PanelsTopLeft, Play, Search, Share2,
-  Sparkles, Star, Table, TextCursorInput, Type
+  ShoppingBag, Sparkles, Star, Table, TextCursorInput, Type
 } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
-import type { ComponentType } from "@/types/builder";
+import { AILayoutDialog } from "./AILayoutDialog";
+import type { AILayoutSuggestion, ComponentType } from "@/types/builder";
 import { staggerContainer, staggerChild } from "@/lib/motion";
  
 type PaletteGroup = "Website Sections" | "Basic Blocks" | "Advanced Blocks";
@@ -38,6 +39,7 @@ const BLOCK_COLORS: Record<ComponentType, string> = {
   "social-links": "bg-cyan-400/20 text-cyan-200",
   countdown: "bg-orange-400/20 text-orange-200",
   "pricing-table": "bg-emerald-400/20 text-emerald-200",
+  "product-collection": "bg-fuchsia-400/20 text-fuchsia-200",
   testimonial: "bg-yellow-400/20 text-yellow-200",
   footer: "bg-indigo-400/20 text-indigo-200",
   form: "bg-violet-400/20 text-violet-200",
@@ -52,6 +54,7 @@ const paletteItems: Array<{ type: ComponentType; label: string; group: PaletteGr
   { type: "gallery", label: "Gallery", group: "Website Sections", icon: Images },
   { type: "contact", label: "Contact", group: "Website Sections", icon: Contact },
   { type: "pricing-table", label: "Pricing", group: "Website Sections", icon: Table },
+  { type: "product-collection", label: "Products", group: "Website Sections", icon: ShoppingBag },
   { type: "testimonial", label: "Testimonials", group: "Website Sections", icon: Heart },
   { type: "footer", label: "Footer", group: "Website Sections", icon: AlignLeft },
  
@@ -127,13 +130,16 @@ export default function ComponentPalette({
   className = "w-[248px]",
   onAdd,
   onLoadStarter,
+  onApplyAILayout,
 }: {
   className?: string;
   onAdd: (type: ComponentType) => void;
   onLoadStarter: () => void;
+  onApplyAILayout: (suggestion: AILayoutSuggestion) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<PaletteGroup>("Website Sections");
+  const [isAILayoutOpen, setIsAILayoutOpen] = useState(false);
  
   const filtered = paletteItems.filter(
     (item) =>
@@ -194,6 +200,16 @@ export default function ComponentPalette({
  
       {/* ── Block grid ── */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-3 [scrollbar-width:thin] [scrollbar-color:#1A315E_transparent]">
+        <motion.button
+          whileHover={{ scale: 1.02, y: -1 }}
+          whileTap={{ scale: 0.97 }}
+          className="mb-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-gradient-to-br from-violet-600/25 to-fuchsia-600/15 px-3 py-2.5 text-[12px] font-bold text-violet-100 shadow-[0_0_20px_rgba(139,92,246,0.12)] transition hover:border-violet-300/60 hover:text-white"
+          onClick={() => setIsAILayoutOpen(true)}
+          type="button"
+        >
+          <Sparkles className="h-3.5 w-3.5 text-violet-300" />
+          AI Layout Assistant
+        </motion.button>
         {/* Starter CTA */}
         <motion.button
           whileHover={{ scale: 1.02, y: -1 }}
@@ -234,6 +250,11 @@ export default function ComponentPalette({
           Click to add · Drag to reorder
         </p>
       </div>
+      <AILayoutDialog
+        open={isAILayoutOpen}
+        onClose={() => setIsAILayoutOpen(false)}
+        onApply={onApplyAILayout}
+      />
     </aside>
   );
 }

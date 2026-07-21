@@ -5,6 +5,8 @@ const Product = require('../models/Product');
 const Workspace = require('../models/Workspace');
 const ApiError = require('../utils/ApiError');
 
+const PRODUCT_ID_PATTERN = /^[a-f\d]{24}$/i;
+
 function isPlaceholderRazorpayValue(value) {
   return !value || /xxxx|your[_-]|placeholder|demo/i.test(value);
 }
@@ -19,6 +21,11 @@ function hasRazorpayConfig() {
 async function verifyWorkspaceExists(workspaceId) {
   const exists = await Workspace.exists({ _id: workspaceId, status: { $ne: 'deleted' } });
   if (!exists) throw ApiError.notFound('Workspace not found');
+}
+
+function normalizedQuantity(value) {
+  const quantity = Number(value);
+  return Number.isSafeInteger(quantity) && quantity >= 1 ? quantity : null;
 }
 
 /**
@@ -40,7 +47,10 @@ async function createCheckoutOrder(userId, body = {}) {
   let currency = '';
 
   function addProduct(product, quantity) {
-    const qty = Math.max(1, Math.floor(Number(quantity) || 1));
+    const qty = normalizedQuantity(quantity);
+    if (qty === null) {
+      throw ApiError.badRequest('Each checkout quantity must be a whole number of at least 1');
+    }
     if (product.inventory < qty) {
       throw ApiError.badRequest(`${product.name} only has ${product.inventory} item(s) available`);
     }
@@ -59,19 +69,37 @@ async function createCheckoutOrder(userId, body = {}) {
   }
 
   if (directItems && Array.isArray(directItems) && directItems.length > 0) {
-    // Items provided directly in request body
+    // Aggregate duplicate product lines before validating stock. Without this,
+    // two individually-valid lines could together exceed inventory.
+    if (directItems.length > 100) {
+      throw ApiError.badRequest('A checkout can contain at most 100 products');
+    }
+    const quantitiesByProduct = new Map();
     for (const item of directItems) {
+      const productId = typeof item?.productId === 'string' ? item.productId.trim() : '';
+      const quantity = normalizedQuantity(item?.quantity);
+      if (!PRODUCT_ID_PATTERN.test(productId) || quantity === null) {
+        throw ApiError.badRequest('Checkout items require a valid product and whole-number quantity');
+      }
+      quantitiesByProduct.set(productId, (quantitiesByProduct.get(productId) || 0) + quantity);
+    }
+
+    if (quantitiesByProduct.size > 100) {
+      throw ApiError.badRequest('A checkout can contain at most 100 products');
+    }
+
+    for (const [productId, quantity] of quantitiesByProduct) {
       const product = await Product.findOne({
-        _id: item.productId,
+        _id: productId,
         workspaceId,
         status: 'active',
       }).lean();
 
       if (!product) {
-        throw ApiError.badRequest(`Product ${item.productId} not found or not active`);
+        throw ApiError.badRequest(`Product ${productId} not found or not active`);
       }
 
-      addProduct(product, item.quantity);
+      addProduct(product, quantity);
     }
   } else {
     // Fall back to user's cart

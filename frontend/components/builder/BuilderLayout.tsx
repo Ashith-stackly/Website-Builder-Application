@@ -40,7 +40,7 @@ const collisionDetectionStrategy: CollisionDetection = (args) => {
 };
 
 export default function BuilderLayout() {
-  const { components, selectedComponentId, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, clearCanvas, undo, redo, exportHtml, saveDraft, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock } = useBuilder();
+  const { components, selectedComponentId, selectedComponentIds, canvasMode, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, deleteSelectedComponents, duplicateSelectedComponents, groupSelectedComponents, ungroupComponent, nudgeSelectedComponents, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, applyAILayout, clearCanvas, undo, redo, exportHtml, saveDraft, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock } = useBuilder();
   const [activePaletteType, setActivePaletteType] = useState<ComponentType | null>(null);
   const [activeCanvasType, setActiveCanvasType] = useState<ComponentType | null>(null);
   const [isLeftOpen, setIsLeftOpen] = useState(false);
@@ -65,15 +65,25 @@ export default function BuilderLayout() {
       const isMac = navigator.platform.toUpperCase().includes("MAC");
       const ctrl = isMac ? e.metaKey : e.ctrlKey;
 
+      // Let text fields and inline editable content keep their native history,
+      // clipboard, and navigation behavior.
+      if (inInput) return;
+
       if (ctrl) {
         if (e.key === "z" && !e.shiftKey)         { e.preventDefault(); undo(); return; }
         if ((e.key === "z" && e.shiftKey) || e.key === "y") { e.preventDefault(); redo(); return; }
         if (e.key === "s")                         { e.preventDefault(); void saveDraft(); return; }
-        if (e.key === "d" && selectedComponentId) { e.preventDefault(); duplicateComponent(selectedComponentId); return; }
-        if (e.key === "c" && !inInput)             { e.preventDefault(); copyComponents(); return; }
-        if (e.key === "v" && !inInput)             { e.preventDefault(); pasteComponents(); return; }
-        if (e.key === "x" && !inInput && selectedComponentId) {
-          e.preventDefault(); copyComponents(); deleteComponent(selectedComponentId); return;
+        if (e.key === "d" && selectedComponentIds.length) { e.preventDefault(); duplicateSelectedComponents(); return; }
+        if (e.key === "c")             { e.preventDefault(); copyComponents(); return; }
+        if (e.key === "v")             { e.preventDefault(); pasteComponents(); return; }
+        if (e.key === "x" && selectedComponentIds.length) {
+          e.preventDefault(); copyComponents(); deleteSelectedComponents(); return;
+        }
+        if (e.key.toLowerCase() === "g" && e.shiftKey && selectedComponentId) {
+          e.preventDefault(); ungroupComponent(selectedComponentId); return;
+        }
+        if (e.key.toLowerCase() === "g" && selectedComponentIds.length > 1) {
+          e.preventDefault(); groupSelectedComponents(); return;
         }
         /* Ctrl+Shift+L → Toggle lock */
         if (e.key === "L" && e.shiftKey && selectedComponentId) {
@@ -86,11 +96,24 @@ export default function BuilderLayout() {
       }
 
       if (!inInput) {
-        if ((e.key === "Delete" || e.key === "Backspace") && selectedComponentId) {
-          e.preventDefault(); deleteComponent(selectedComponentId);
+        if ((e.key === "Delete" || e.key === "Backspace") && selectedComponentIds.length) {
+          e.preventDefault(); deleteSelectedComponents(); return;
         }
         if (e.key === "Escape" && selectedComponentId) {
-          selectComponent(null);
+          selectComponent(null); return;
+        }
+        if (canvasMode === "freeform" && selectedComponentIds.length) {
+          const distance = e.shiftKey ? 10 : 1;
+          const delta = e.key === "ArrowLeft" ? [-distance, 0]
+            : e.key === "ArrowRight" ? [distance, 0]
+              : e.key === "ArrowUp" ? [0, -distance]
+                : e.key === "ArrowDown" ? [0, distance]
+                  : null;
+          if (delta) {
+            e.preventDefault();
+            nudgeSelectedComponents(delta[0], delta[1]);
+            return;
+          }
         }
         /* Arrow Up → select previous sibling */
         if (e.key === "ArrowUp" && !ctrl) {
@@ -116,7 +139,7 @@ export default function BuilderLayout() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isInlineEditing, selectedComponentId, components, undo, redo, saveDraft, duplicateComponent, deleteComponent, selectComponent, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock]);
+  }, [canvasMode, components, copyComponents, deleteSelectedComponents, deleteComponent, duplicateComponent, duplicateSelectedComponents, groupSelectedComponents, hideComponent, isInlineEditing, moveComponentDown, moveComponentUp, nudgeSelectedComponents, pasteComponents, redo, saveDraft, selectedComponentId, selectedComponentIds, selectComponent, toggleLock, undo, ungroupComponent]);
   const selectedComponent = selectedComponentId ? findByIdDeep(components, selectedComponentId) : null;
 
   useEffect(() => {
@@ -213,7 +236,7 @@ export default function BuilderLayout() {
           </button>
 
           <div className="hidden lg:flex">
-            <ComponentPalette onAdd={addComponent} onLoadStarter={loadStarterWebsite} />
+            <ComponentPalette onAdd={addComponent} onLoadStarter={loadStarterWebsite} onApplyAILayout={applyAILayout} />
           </div>
 
           <AnimatePresence>
@@ -235,7 +258,7 @@ export default function BuilderLayout() {
                   className="absolute bottom-0 left-0 flex h-[65vh] max-h-[800px] w-full flex-col overflow-hidden rounded-t-3xl bg-[#0A193A] shadow-2xl"
                 >
                   <div className="mx-auto mt-3 h-1 w-10 flex-shrink-0 rounded-full bg-white/20" />
-                  <ComponentPalette className="w-full flex-1 rounded-none border-0" onAdd={(type) => { addComponent(type); setIsLeftOpen(false); }} onLoadStarter={() => { loadStarterWebsite(); setIsLeftOpen(false); }} />
+                  <ComponentPalette className="w-full flex-1 rounded-none border-0" onAdd={(type) => { addComponent(type); setIsLeftOpen(false); }} onLoadStarter={() => { loadStarterWebsite(); setIsLeftOpen(false); }} onApplyAILayout={(suggestion) => { applyAILayout(suggestion); setIsLeftOpen(false); }} />
                 </motion.div>
               </motion.div>
             )}

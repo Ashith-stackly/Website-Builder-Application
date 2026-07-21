@@ -1,187 +1,109 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Lock, LockOpen, Trash2, ArrowUp, ArrowDown } from "lucide-react";
-import { useBuilderStore } from "@/store/builderStore";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Copy, Lock, LockOpen, Trash2 } from "lucide-react";
 import { componentRegistry } from "@/lib/componentRegistry";
+import { useBuilderStore } from "@/store/builderStore";
+import { useBuilderUiStore } from "@/store/builderUiStore";
 import type { BuilderComponent, Viewport } from "@/types/builder";
+import {
+  alignFreeformFrame,
+  clampFrameToBounds,
+  FREEFORM_MIN_HEIGHT,
+  FREEFORM_MIN_WIDTH,
+  getFreeformFrame,
+  snapToGrid,
+  type FreeformFrame,
+  type FreeformGuide,
+} from "./freeformGeometry";
 
-const SNAP = 8; // grid snap in px
-const MIN_W = 120;
-const MIN_H = 40;
-
-function snap(v: number) {
-  return Math.round(v / SNAP) * SNAP;
-}
-
-type ResizeHandle =
-  | "nw" | "n" | "ne"
-  | "w"         | "e"
-  | "sw" | "s" | "se";
+type ResizeHandle = "nw" | "n" | "ne" | "w" | "e" | "sw" | "s" | "se";
 
 const HANDLES: ResizeHandle[] = ["nw", "n", "ne", "w", "e", "sw", "s", "se"];
 
 const HANDLE_CLASSES: Record<ResizeHandle, string> = {
-  nw: "-top-1.5 -left-1.5 cursor-nw-resize",
-  n:  "-top-1.5 left-1/2 -translate-x-1/2 cursor-n-resize",
-  ne: "-top-1.5 -right-1.5 cursor-ne-resize",
-  w:  "top-1/2 -translate-y-1/2 -left-1.5 cursor-w-resize",
-  e:  "top-1/2 -translate-y-1/2 -right-1.5 cursor-e-resize",
+  nw: "-left-1.5 -top-1.5 cursor-nw-resize",
+  n: "-top-1.5 left-1/2 -translate-x-1/2 cursor-n-resize",
+  ne: "-right-1.5 -top-1.5 cursor-ne-resize",
+  w: "-left-1.5 top-1/2 -translate-y-1/2 cursor-w-resize",
+  e: "-right-1.5 top-1/2 -translate-y-1/2 cursor-e-resize",
   sw: "-bottom-1.5 -left-1.5 cursor-sw-resize",
-  s:  "-bottom-1.5 left-1/2 -translate-x-1/2 cursor-s-resize",
+  s: "-bottom-1.5 left-1/2 -translate-x-1/2 cursor-s-resize",
   se: "-bottom-1.5 -right-1.5 cursor-se-resize",
 };
 
 interface FreeformItemProps {
   component: BuilderComponent;
-  /** Other components – used for alignment guide calculation */
-  siblings: BuilderComponent[];
+  index: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  zoom: number;
+  onGuidesChange: (guides: FreeformGuide[]) => void;
 }
 
-export default function FreeformItem({ component, siblings }: FreeformItemProps) {
+function FreeformItem({
+  component,
+  index,
+  canvasWidth,
+  canvasHeight,
+  zoom,
+  onGuidesChange,
+}: FreeformItemProps) {
   const Renderer = componentRegistry[component.type];
-  const isSelected = useBuilderStore((s) => s.selectedComponentId === component.id);
-  const selectComponent = useBuilderStore((s) => s.selectComponent);
-  const moveComponent  = useBuilderStore((s) => s.moveComponent);
-  const resizeComponent = useBuilderStore((s) => s.resizeComponent);
-  const duplicateComponent = useBuilderStore((s) => s.duplicateComponent);
-  const deleteComponent = useBuilderStore((s) => s.deleteComponent);
-  const toggleLock = useBuilderStore((s) => s.toggleLock);
-  const moveLayer = useBuilderStore((s) => s.moveLayer);
-  const updateComponent = useBuilderStore((s) => s.updateComponent);
-  const viewport = useBuilderStore((s) => s.viewport) as Viewport;
+  const selectedComponentIds = useBuilderStore((state) => state.selectedComponentIds);
+  const selectedComponentId = useBuilderStore((state) => state.selectedComponentId);
+  const selectComponent = useBuilderStore((state) => state.selectComponent);
+  const toggleSelectComponent = useBuilderStore((state) => state.toggleSelectComponent);
+  const beginFreeformInteraction = useBuilderStore((state) => state.beginFreeformInteraction);
+  const moveComponent = useBuilderStore((state) => state.moveComponent);
+  const moveComponents = useBuilderStore((state) => state.moveComponents);
+  const resizeComponent = useBuilderStore((state) => state.resizeComponent);
+  const updateComponent = useBuilderStore((state) => state.updateComponent);
+  const duplicateComponent = useBuilderStore((state) => state.duplicateComponent);
+  const deleteComponent = useBuilderStore((state) => state.deleteComponent);
+  const toggleLock = useBuilderStore((state) => state.toggleLock);
+  const moveLayer = useBuilderStore((state) => state.moveLayer);
+  const viewport = useBuilderStore((state) => state.viewport) as Viewport;
+  const snapEnabled = useBuilderUiStore((state) => state.snapToGrid);
+  const gridSize = useBuilderUiStore((state) => state.gridSize);
 
+  const isSelected = selectedComponentIds.includes(component.id);
+  const isPrimarySelection = selectedComponentId === component.id;
   const isLocked = component.locked ?? false;
-
-  // Position from component data (freeform)
-  const posX = component.position?.x ?? 40;
-  const posY = component.position?.y ?? 40;
-  const width  = component.freeformSize?.width  ?? 640;
-  const height = component.freeformSize?.height ?? null; // null = auto
-
-  // Local state during drag/resize
-  const [pos, setPos] = useState({ x: posX, y: posY });
-  const [size, setSize] = useState({ w: width, h: height ?? 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-  const [guides, setGuides] = useState<{ x?: number; y?: number }>({});
-
-  // Sync position from store (e.g. after undo) without cascading render effects.
-  useEffect(() => {
-    const id = window.setTimeout(() => setPos({ x: posX, y: posY }), 0);
-    return () => window.clearTimeout(id);
-  }, [posX, posY]);
-
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      setSize((current) => ({ w: width, h: height ?? current.h }));
-    }, 0);
-    return () => window.clearTimeout(id);
-  }, [width, height]);
-
-  const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 });
-  const resizeStart = useRef({ mx: 0, my: 0, pw: 0, ph: 0, px: 0, py: 0, handle: "se" as ResizeHandle });
+  const pageBounds = useMemo(
+    () => ({ width: canvasWidth, height: canvasHeight }),
+    [canvasHeight, canvasWidth],
+  );
+  const sourceFrame = useMemo(
+    () => getFreeformFrame(component, index, canvasWidth),
+    [canvasWidth, component, index],
+  );
+  const [frame, setFrame] = useState<FreeformFrame>(sourceFrame);
+  const [isInteracting, setIsInteracting] = useState(false);
+  const frameRef = useRef(sourceFrame);
+  const interactionRef = useRef(false);
   const itemRef = useRef<HTMLDivElement>(null);
+  const scale = zoom / 100;
+  const snapValue = useCallback(
+    (value: number) => (snapEnabled ? snapToGrid(value, gridSize) : Math.round(value)),
+    [gridSize, snapEnabled],
+  );
 
-  /* ─── DRAG to reposition ─────────────────────────────────────── */
-  const onDragMouseDown = useCallback((e: React.MouseEvent) => {
-    if (isLocked || e.button !== 0) return;
-    e.stopPropagation();
-    e.preventDefault();
-    selectComponent(component.id);
-    setIsDragging(true);
-    dragStart.current = { mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y };
+  const setLocalFrame = useCallback((next: FreeformFrame) => {
+    frameRef.current = next;
+    setFrame(next);
+  }, []);
 
-    const onMove = (mv: MouseEvent) => {
-      const dx = mv.clientX - dragStart.current.mx;
-      const dy = mv.clientY - dragStart.current.my;
-      const nx = snap(dragStart.current.px + dx);
-      const ny = snap(Math.max(0, dragStart.current.py + dy));
-      setPos({ x: nx, y: ny });
-
-      // Compute snap guides vs siblings
-      const newGuides: { x?: number; y?: number } = {};
-      for (const sib of siblings) {
-        if (sib.id === component.id) continue;
-        const sx = sib.position?.x ?? 0;
-        const sy = sib.position?.y ?? 0;
-        const sw = sib.freeformSize?.width ?? 640;
-        if (Math.abs(nx - sx) < 8) newGuides.x = sx;
-        if (Math.abs(ny - sy) < 8) newGuides.y = sy;
-        if (Math.abs(nx + size.w - (sx + sw)) < 8) newGuides.x = sx + sw - size.w;
-      }
-      setGuides(newGuides);
-    };
-
-    const onUp = (uv: MouseEvent) => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      setIsDragging(false);
-      setGuides({});
-      const dx = uv.clientX - dragStart.current.mx;
-      const dy = uv.clientY - dragStart.current.my;
-      const fx = snap(dragStart.current.px + dx);
-      const fy = snap(Math.max(0, dragStart.current.py + dy));
-      moveComponent(component.id, fx, fy);
-    };
-
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  }, [isLocked, pos, size.w, component.id, selectComponent, moveComponent, siblings]);
-
-  /* ─── RESIZE ─────────────────────────────────────────────────── */
-  const onResizeMouseDown = useCallback((e: React.MouseEvent, handle: ResizeHandle) => {
-    if (isLocked || e.button !== 0) return;
-    e.stopPropagation();
-    e.preventDefault();
-    setIsResizing(true);
-    const el = itemRef.current;
-    const currentH = el ? el.getBoundingClientRect().height : (size.h || 200);
-    resizeStart.current = {
-      mx: e.clientX, my: e.clientY,
-      pw: size.w, ph: currentH,
-      px: pos.x, py: pos.y,
-      handle,
-    };
-
-    const onMove = (mv: MouseEvent) => {
-      const { mx, my, pw, ph, px, py, handle } = resizeStart.current;
-      const dx = mv.clientX - mx;
-      const dy = mv.clientY - my;
-      let nw = pw, nh = ph, nx = px, ny = py;
-
-      if (handle.includes("e")) nw = snap(Math.max(MIN_W, pw + dx));
-      if (handle.includes("w")) { nw = snap(Math.max(MIN_W, pw - dx)); nx = snap(px + pw - nw); }
-      if (handle.includes("s")) nh = snap(Math.max(MIN_H, ph + dy));
-      if (handle.includes("n")) { nh = snap(Math.max(MIN_H, ph - dy)); ny = snap(py + ph - nh); }
-
-      setPos({ x: nx, y: ny });
-      setSize({ w: nw, h: nh });
-    };
-
-    const onUp = () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      setIsResizing(false);
-      // Get final from state via ref pattern
-      const el2 = itemRef.current;
-      const finalH = el2 ? el2.getBoundingClientRect().height : resizeStart.current.ph;
-      resizeComponent(component.id, size.w, size.h || finalH);
-      moveComponent(component.id, pos.x, pos.y);
-    };
-
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  }, [isLocked, size, pos, component.id, resizeComponent, moveComponent]);
-
-  /* ─── Content inline-edit handler for Renderer ──────────────── */
-  const handleUpdate = useCallback((content: string | null) => {
-    if (content !== null) updateComponent(component.id, { content });
-  }, [component.id, updateComponent]);
-
-  const handlePatch = useCallback((patch: Partial<BuilderComponent>) => {
-    updateComponent(component.id, patch);
-  }, [component.id, updateComponent]);
+  // Imports, undo/redo, breakpoint changes, and sibling group moves replace
+  // the component frame in the store. Schedule the visual sync after React's
+  // commit so a pointer interaction never gets overwritten mid-drag.
+  useEffect(() => {
+    if (isInteracting) return;
+    const timeout = window.setTimeout(() => {
+      if (!interactionRef.current) setLocalFrame(sourceFrame);
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [isInteracting, setLocalFrame, sourceFrame]);
 
   const viewportComponent = useMemo(() => {
     if (viewport === "desktop" || !component.responsiveStyles) return component;
@@ -190,113 +112,264 @@ export default function FreeformItem({ component, siblings }: FreeformItemProps)
     return { ...component, styles: { ...component.styles, ...overrides } };
   }, [component, viewport]);
 
+  const beginDrag = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (isLocked || event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!isSelected) selectComponent(component.id);
+    const startPointer = { x: event.clientX, y: event.clientY };
+    const startFrame = frameRef.current;
+    const selectedIds = selectedComponentIds.includes(component.id)
+      ? selectedComponentIds
+      : [component.id];
+    // Read the latest tree once at pointer-down. We deliberately do not pass
+    // the complete sibling array through every item render: untouched blocks
+    // can then stay memoized during a large multi-block drag.
+    const currentComponents = useBuilderStore.getState().components;
+    const siblingFrames = currentComponents
+      .filter((sibling) => sibling.id !== component.id && !selectedIds.includes(sibling.id))
+      .map((sibling, siblingIndex) => getFreeformFrame(sibling, siblingIndex, canvasWidth));
+    const movableItems = currentComponents
+      .map((sibling, siblingIndex) => ({
+        component: sibling,
+        frame: sibling.id === component.id
+          ? startFrame
+          : getFreeformFrame(sibling, siblingIndex, canvasWidth),
+      }))
+      .filter(({ component: sibling }) => selectedIds.includes(sibling.id) && !sibling.locked);
+    let moved = false;
+    let animationFrame = 0;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const dx = (moveEvent.clientX - startPointer.x) / scale;
+      const dy = (moveEvent.clientY - startPointer.y) / scale;
+      if (!moved && Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
+      if (!moved) {
+        moved = true;
+        interactionRef.current = true;
+        setIsInteracting(true);
+        beginFreeformInteraction();
+        document.body.style.cursor = "grabbing";
+        document.body.style.userSelect = "none";
+      }
+
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(() => {
+        const snapped = clampFrameToBounds({
+          ...startFrame,
+          x: snapValue(startFrame.x + dx),
+          y: snapValue(startFrame.y + dy),
+        }, pageBounds);
+        const aligned = alignFreeformFrame(snapped, siblingFrames, pageBounds);
+        setLocalFrame(aligned.frame);
+        onGuidesChange(aligned.guides);
+        const deltaX = aligned.frame.x - startFrame.x;
+        const deltaY = aligned.frame.y - startFrame.y;
+        moveComponents(
+          movableItems
+            .filter(({ component: sibling }) => sibling.id !== component.id)
+            .map(({ component: sibling, frame: siblingFrame }) => ({
+              id: sibling.id,
+              x: siblingFrame.x + deltaX,
+              y: siblingFrame.y + deltaY,
+            })),
+          { snap: false },
+        );
+      });
+    };
+
+    const onUp = () => {
+      cancelAnimationFrame(animationFrame);
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      onGuidesChange([]);
+      if (moved) {
+        const deltaX = frameRef.current.x - startFrame.x;
+        const deltaY = frameRef.current.y - startFrame.y;
+        moveComponents(
+          movableItems.map(({ component: sibling, frame: siblingFrame }) => ({
+            id: sibling.id,
+            x: siblingFrame.x + deltaX,
+            y: siblingFrame.y + deltaY,
+          })),
+          { snap: false },
+        );
+      }
+      setIsInteracting(false);
+      interactionRef.current = false;
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp, { once: true });
+  }, [beginFreeformInteraction, canvasWidth, component.id, isLocked, isSelected, moveComponents, onGuidesChange, pageBounds, scale, selectComponent, selectedComponentIds, setLocalFrame, snapValue]);
+
+  const beginResize = useCallback((event: React.PointerEvent<HTMLDivElement>, handle: ResizeHandle) => {
+    if (isLocked || event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!isSelected) selectComponent(component.id);
+
+    const measuredHeight = itemRef.current?.offsetHeight ?? frameRef.current.height;
+    const startFrame = { ...frameRef.current, height: measuredHeight };
+    const startPointer = { x: event.clientX, y: event.clientY };
+    let changed = false;
+    let animationFrame = 0;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const dx = (moveEvent.clientX - startPointer.x) / scale;
+      const dy = (moveEvent.clientY - startPointer.y) / scale;
+      if (!changed && Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
+      if (!changed) {
+        changed = true;
+        interactionRef.current = true;
+        setIsInteracting(true);
+        beginFreeformInteraction();
+        document.body.style.userSelect = "none";
+      }
+
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(() => {
+        let next = { ...startFrame };
+        if (handle.includes("e")) next.width = snapValue(Math.max(FREEFORM_MIN_WIDTH, startFrame.width + dx));
+        if (handle.includes("s")) next.height = snapValue(Math.max(FREEFORM_MIN_HEIGHT, startFrame.height + dy));
+        if (handle.includes("w")) {
+          next.width = snapValue(Math.max(FREEFORM_MIN_WIDTH, startFrame.width - dx));
+          next.x = snapValue(startFrame.x + startFrame.width - next.width);
+        }
+        if (handle.includes("n")) {
+          next.height = snapValue(Math.max(FREEFORM_MIN_HEIGHT, startFrame.height - dy));
+          next.y = snapValue(startFrame.y + startFrame.height - next.height);
+        }
+        next = clampFrameToBounds(next, pageBounds);
+        setLocalFrame(next);
+      });
+    };
+
+    const onUp = () => {
+      cancelAnimationFrame(animationFrame);
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.body.style.userSelect = "";
+      if (changed) {
+        moveComponent(component.id, frameRef.current.x, frameRef.current.y, { snap: false });
+        resizeComponent(component.id, frameRef.current.width, frameRef.current.height, { snap: false });
+      }
+      setIsInteracting(false);
+      interactionRef.current = false;
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp, { once: true });
+  }, [beginFreeformInteraction, component.id, isLocked, isSelected, moveComponent, pageBounds, resizeComponent, scale, selectComponent, setLocalFrame, snapValue]);
+
+  const handleItemPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || isLocked) return;
+    event.stopPropagation();
+    if (event.shiftKey) {
+      toggleSelectComponent(component.id);
+      return;
+    }
+    if (!isSelected || selectedComponentIds.length > 1) selectComponent(component.id);
+  }, [component.id, isLocked, isSelected, selectComponent, selectedComponentIds.length, toggleSelectComponent]);
+
+  const zIndexFromStyles = Number.parseInt(component.styles.zIndex ?? "", 10);
+  const zIndex = Number.isFinite(zIndexFromStyles)
+    ? zIndexFromStyles
+    : component.zIndex ?? index + 1;
+
   if (!Renderer) return null;
 
-  const zIndex = component.zIndex ?? 1;
-
   return (
-    <>
-      {/* Snap guide lines */}
-      {isDragging && guides.x !== undefined && (
-        <div
-          className="pointer-events-none absolute top-0 bottom-0 z-[9998] w-px bg-blue-500"
-          style={{ left: guides.x }}
-        />
-      )}
-      {isDragging && guides.y !== undefined && (
-        <div
-          className="pointer-events-none absolute left-0 right-0 z-[9998] h-px bg-blue-500"
-          style={{ top: guides.y }}
-        />
-      )}
+    <div
+      ref={itemRef}
+      data-freeform-item={component.id}
+      className={`group absolute rounded-xl ${isLocked ? "opacity-80" : ""} ${component.hidden ? "opacity-40" : ""}`}
+      style={{
+        left: frame.x,
+        top: frame.y,
+        width: frame.width,
+        height: component.freeformSize ? frame.height : undefined,
+        zIndex: isSelected ? zIndex + 100 : zIndex,
+        userSelect: isInteracting ? "none" : undefined,
+      }}
+      onPointerDown={handleItemPointerDown}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div
+        data-freeform-control
+        className={`absolute -top-8 left-0 right-0 flex items-center justify-between gap-1 rounded-t-lg px-2 py-1 transition-all duration-150 ${
+          isSelected
+            ? "bg-blue-600 opacity-100"
+            : "bg-[#0B1D40] opacity-0 group-hover:opacity-100"
+        }`}
+        style={{ zIndex: 10 }}
+        onPointerDown={beginDrag}
+      >
+        <span className="cursor-grab select-none truncate text-[10px] font-bold uppercase tracking-widest text-white/80 active:cursor-grabbing">
+          ⠿ {component.type}
+        </span>
+        {isPrimarySelection && (
+          <div className="flex items-center gap-1" onPointerDown={(event) => event.stopPropagation()}>
+            <ActionButton title="Bring forward" onClick={() => moveLayer(component.id, "forward")}>
+              <ArrowUp className="h-3 w-3" />
+            </ActionButton>
+            <ActionButton title="Send backward" onClick={() => moveLayer(component.id, "backward")}>
+              <ArrowDown className="h-3 w-3" />
+            </ActionButton>
+            <ActionButton title="Duplicate" onClick={() => duplicateComponent(component.id)}>
+              <Copy className="h-3 w-3" />
+            </ActionButton>
+            <ActionButton title={isLocked ? "Unlock" : "Lock"} onClick={() => toggleLock(component.id)}>
+              {isLocked ? <LockOpen className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            </ActionButton>
+            <ActionButton title="Delete" onClick={() => deleteComponent(component.id)} danger>
+              <Trash2 className="h-3 w-3" />
+            </ActionButton>
+          </div>
+        )}
+      </div>
 
       <div
-        ref={itemRef}
-        className={`absolute group ${isLocked ? "opacity-80" : ""}`}
-        style={{
-          left: pos.x,
-          top: pos.y,
-          width: size.w,
-          height: size.h ? size.h : undefined,
-          zIndex: isSelected ? zIndex + 100 : zIndex,
-          userSelect: isDragging || isResizing ? "none" : undefined,
-        }}
-        onClick={(e) => { e.stopPropagation(); selectComponent(component.id); }}
+        className={`pointer-events-none absolute inset-0 rounded-xl transition-all duration-150 ${
+          isSelected
+            ? "ring-2 ring-blue-500 shadow-[0_0_0_4px_rgba(59,130,246,0.15)]"
+            : "ring-1 ring-transparent group-hover:ring-blue-300"
+        }`}
+        style={{ zIndex: 5 }}
+      />
+
+      <div
+        className={`h-full min-h-[40px] w-full overflow-hidden rounded-xl bg-white ${
+          isInteracting ? "pointer-events-none" : ""
+        }`}
       >
-        {/* Drag handle — top bar shown on hover/select */}
-        <div
-          className={`absolute -top-8 left-0 right-0 flex items-center justify-between gap-1 rounded-t-lg px-2 py-1 transition-all duration-150 ${
-            isSelected
-              ? "bg-blue-600 opacity-100"
-              : "bg-[#0B1D40] opacity-0 group-hover:opacity-100"
-          }`}
-          style={{ zIndex: 10 }}
-          onMouseDown={onDragMouseDown}
-        >
-          <span className="truncate text-[10px] font-bold uppercase tracking-widest text-white/80 cursor-grab active:cursor-grabbing select-none">
-            ⠿ {component.type}
-          </span>
-          {isSelected && (
-            <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
-              <ActionBtn title="Move Up" onClick={() => moveLayer(component.id, "forward")}>
-                <ArrowUp className="h-3 w-3" />
-              </ActionBtn>
-              <ActionBtn title="Move Down" onClick={() => moveLayer(component.id, "backward")}>
-                <ArrowDown className="h-3 w-3" />
-              </ActionBtn>
-              <ActionBtn title="Duplicate" onClick={() => duplicateComponent(component.id)}>
-                <Copy className="h-3 w-3" />
-              </ActionBtn>
-              <ActionBtn title={isLocked ? "Unlock" : "Lock"} onClick={() => toggleLock(component.id)}>
-                {isLocked ? <LockOpen className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-              </ActionBtn>
-              <ActionBtn title="Delete" onClick={() => deleteComponent(component.id)} danger>
-                <Trash2 className="h-3 w-3" />
-              </ActionBtn>
-            </div>
-          )}
-        </div>
-
-        {/* Selection border */}
-        <div
-          className={`absolute inset-0 rounded-xl pointer-events-none transition-all duration-150 ${
-            isSelected
-              ? "ring-2 ring-blue-500 shadow-[0_0_0_4px_rgba(59,130,246,0.15)]"
-              : "ring-1 ring-transparent group-hover:ring-blue-300"
-          }`}
-          style={{ zIndex: 5 }}
+        <Renderer
+          component={viewportComponent}
+          isEditing={false}
+          onUpdate={(content) => {
+            if (content !== null) updateComponent(component.id, { content });
+          }}
+          onPatch={(patch) => updateComponent(component.id, patch)}
         />
-
-        {/* Content renderer */}
-        <div
-          className={`w-full h-full min-h-[40px] overflow-hidden rounded-xl bg-white ${
-            isDragging || isResizing ? "pointer-events-none" : ""
-          }`}
-          onDoubleClick={(e) => { e.stopPropagation(); }}
-        >
-          <Renderer
-            component={viewportComponent}
-            isEditing={false}
-            onUpdate={handleUpdate}
-            onPatch={handlePatch}
-          />
-        </div>
-
-        {/* Resize handles — shown when selected */}
-        {isSelected && !isLocked && HANDLES.map((handle) => (
-          <div
-            key={handle}
-            className={`absolute h-3 w-3 rounded-full border-2 border-blue-500 bg-white shadow-md transition-opacity ${HANDLE_CLASSES[handle]}`}
-            style={{ zIndex: 20 }}
-            onMouseDown={(e) => onResizeMouseDown(e, handle)}
-          />
-        ))}
       </div>
-    </>
+
+      {isPrimarySelection && !isLocked && HANDLES.map((handle) => (
+        <div
+          key={handle}
+          data-freeform-control
+          className={`absolute h-3 w-3 rounded-full border-2 border-blue-500 bg-white shadow-md transition-transform hover:scale-125 ${HANDLE_CLASSES[handle]}`}
+          style={{ zIndex: 20 }}
+          onPointerDown={(event) => beginResize(event, handle)}
+        />
+      ))}
+    </div>
   );
 }
 
-function ActionBtn({
+function ActionButton({
   children,
   onClick,
   title,
@@ -309,9 +382,13 @@ function ActionBtn({
 }) {
   return (
     <button
+      data-freeform-control
       type="button"
       title={title}
-      onClick={onClick}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
       className={`flex h-5 w-5 items-center justify-center rounded transition ${
         danger
           ? "text-red-300 hover:bg-red-500/20 hover:text-red-200"
@@ -322,3 +399,5 @@ function ActionBtn({
     </button>
   );
 }
+
+export default memo(FreeformItem);

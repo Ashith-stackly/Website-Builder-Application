@@ -9,6 +9,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:analytics": "node scripts/test-analytics-tracking.mjs",
+    "test:ecommerce": "node scripts/test-storefront-runtime.mjs",
+    "test:freeform-export": "node scripts/test-freeform-export.mjs",
+    "test:freeform-geometry": "node scripts/test-freeform-geometry.mjs",
+    "test:publish": "node scripts/test-publish-workflow.mjs",
+    "test:project-settings": "node scripts/test-project-settings.mjs",
     "deploy": "next build && gh-pages -d out"
   },
   "dependencies": {

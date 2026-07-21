@@ -8,7 +8,8 @@ import type { LucideIcon } from "lucide-react";
 import type { BuilderComponent } from "@/types/builder";
 import { blockRegistry } from "@/lib/blockRegistry";
 import { ICON_NAMES } from "@/components/draggable/IconComponent";
-import { ContentField, contentInputClass } from "@/components/builder/PanelFields";
+import { ContentField, contentInputClass, TextareaField } from "@/components/builder/PanelFields";
+import { AIAssistProvider, AIGenerateSectionButton } from "@/components/builder/AIAssistDialog";
 import { StyleTab } from "./panel/StyleTab";
 import { EffectsTab } from "./panel/EffectsTab";
 import LayersPanel from "./LayersPanel";
@@ -16,6 +17,58 @@ import { ImagePanel } from "@/components/blocks/image/ImagePanel";
 import { ROW_LAYOUTS } from "@/components/draggable/RowComponent";
 
 type Tab = "content" | "style" | "effects" | "layers";
+
+const SECTION_AI_BLOCKS = new Set([
+  "hero",
+  "contact",
+  "features",
+  "accordion",
+  "tabs",
+  "pricing-table",
+  "product-collection",
+  "testimonial",
+  "footer",
+  "form",
+  "navigation",
+  // These single-purpose blocks serve as common About/CTA sections in
+  // existing templates; the same section flow is useful even with one field.
+  "heading",
+  "text",
+  "button",
+  "feature-item",
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+/**
+ * Only accept generated values that preserve the current block's top-level
+ * shape. This keeps a provider response from turning a typed array/object
+ * field into a scalar and allows one history-safe `onUpdate` for FAQ, feature,
+ * testimonial, pricing, and form section payloads.
+ */
+function getCompatibleSectionProps(
+  current: unknown,
+  generatedFields?: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!isRecord(current) || !generatedFields) return {};
+
+  const patch: Record<string, unknown> = {};
+  for (const [key, nextValue] of Object.entries(generatedFields)) {
+    if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+    if (!(key in current)) continue;
+
+    const currentValue = current[key];
+    const compatible =
+      (typeof currentValue === "string" && typeof nextValue === "string") ||
+      (Array.isArray(currentValue) && Array.isArray(nextValue)) ||
+      (isRecord(currentValue) && isRecord(nextValue));
+
+    if (compatible) patch[key] = nextValue;
+  }
+  return patch;
+}
 
 const TABS: Array<{ id: Tab; label: string; Icon: LucideIcon }> = [
   { id: "content",  label: "Content",  Icon: SquareMousePointer },
@@ -59,12 +112,31 @@ export default function PropertyEditor({
         onUpdate(component.id, { props: { [key]: value } });
       const Panel = spec.Panel;
       return (
-        <Panel
-          component={component}
-          data={data}
-          setContent={(content) => onUpdate(component.id, { content })}
-          setProp={setProp}
-        />
+        <AIAssistProvider
+          blockType={component.type}
+          description={spec.ai?.description}
+          onSectionGenerated={(_generatedText, generatedFields) => {
+            const props = getCompatibleSectionProps(data, generatedFields);
+            if (Object.keys(props).length > 0) {
+              onUpdate(component.id, { props });
+            }
+          }}
+        >
+          {SECTION_AI_BLOCKS.has(component.type) && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-violet-100 bg-violet-50/70 px-3 py-2.5">
+              <span className="text-[11px] font-semibold leading-4 text-violet-900">
+                Create a coordinated draft for this section.
+              </span>
+              <AIGenerateSectionButton label={spec.label} />
+            </div>
+          )}
+          <Panel
+            component={component}
+            data={data}
+            setContent={(content) => onUpdate(component.id, { content })}
+            setProp={setProp}
+          />
+        </AIAssistProvider>
       );
     }
 
@@ -196,16 +268,14 @@ export default function PropertyEditor({
     }
 
     return (
-      <label className="block">
-        <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">
-          {component.type === "input" ? "Placeholder Text" : "Text Content"}
-        </span>
-        <textarea
-          className={`${contentInputClass} min-h-[92px] resize-none`}
-          onChange={(e) => onUpdate(component.id, { content: e.target.value })}
+      <AIAssistProvider blockType={component.type}>
+        <TextareaField
+          label={component.type === "input" ? "Placeholder Text" : "Text Content"}
+          minHeight="min-h-[92px]"
+          onChange={(value) => onUpdate(component.id, { content: value })}
           value={component.content}
         />
-      </label>
+      </AIAssistProvider>
     );
   };
 

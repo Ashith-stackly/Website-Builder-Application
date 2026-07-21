@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   Save,
@@ -11,7 +11,10 @@ import {
   Palette,
   Layers,
   Calendar,
+  Check,
+  CircleAlert,
   FolderOpen,
+  Loader2,
 } from "lucide-react";
 import { fadeUp, staggerContainer, staggerChild } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
@@ -26,28 +29,62 @@ const styleOptions = ["Modern", "Minimal", "Bold"];
 
 export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormProps) {
   const router = useRouter();
-  const { getProjectById, updateProject, deleteProject } = useProjectStore();
-  const [project, setProject] = useState<Project | null>(null);
+  const project = useProjectStore((state) => state.projects.find((candidate) => candidate.id === projectId));
+  const isLoading = useProjectStore((state) => state.isLoading);
+  const updatingProjectId = useProjectStore((state) => state.updatingProjectId);
+  const updateProject = useProjectStore((state) => state.updateProject);
+  const deleteProject = useProjectStore((state) => state.deleteProject);
   const [formData, setFormData] = useState({
     name: "",
     category: "",
     style: "",
   });
-  const [saved, setSaved] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "success" | "error">("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [hydratedProjectId, setHydratedProjectId] = useState<string | null>(null);
+  const isSaving = updatingProjectId === projectId;
+  const isHydrated = hydratedProjectId === project?.id;
 
   useEffect(() => {
-    const p = getProjectById(projectId);
-    if (p) {
-      const id = window.setTimeout(() => {
-        setProject(p);
-        setFormData({ name: p.name, category: p.category, style: p.style });
-      }, 0);
-      return () => window.clearTimeout(id);
-    }
-  }, [projectId, getProjectById]);
+    if (!project || hydratedProjectId === project.id) return;
+    // Project data arrives asynchronously from the dashboard store. Defer the
+    // one-time hydration so editing state is never reset by later store syncs.
+    const timer = window.setTimeout(() => {
+      setFormData({ name: project.name, category: project.category, style: project.style });
+      setHydratedProjectId(project.id);
+      setSaveState("idle");
+      setSaveError(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [hydratedProjectId, project]);
+
+  const isDirty = useMemo(() => {
+    if (!project || !isHydrated) return false;
+    return formData.name.trim() !== project.name
+      || formData.category !== project.category
+      || formData.style !== project.style;
+  }, [formData, isHydrated, project]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [isDirty]);
 
   if (!project) {
+    if (isLoading) {
+      return (
+        <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="mt-3 text-sm font-semibold text-slate-500">Loading project settings…</p>
+        </div>
+      );
+    }
     return (
       <motion.div
         variants={fadeUp}
@@ -68,17 +105,45 @@ export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormPr
     );
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedName = formData.name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName) {
+      setSaveState("error");
+      setSaveError("Project name is required.");
+      return;
+    }
+    if (trimmedName.length > 100) {
+      setSaveState("error");
+      setSaveError("Project name must be 100 characters or fewer.");
+      return;
+    }
+    if (formData.category.length > 80 || formData.style.length > 80) {
+      setSaveState("error");
+      setSaveError("Category and style must be 80 characters or fewer.");
+      return;
+    }
+    if (!isDirty || isSaving) return;
 
-    updateProject(project.id, {
-      name: trimmedName,
-      category: formData.category,
-      style: formData.style,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    const changes: Partial<Pick<Project, "name" | "category" | "style">> = {};
+    if (trimmedName !== project.name) changes.name = trimmedName;
+    if (formData.category !== project.category) changes.category = formData.category;
+    if (formData.style !== project.style) changes.style = formData.style;
+
+    setSaveState("idle");
+    setSaveError(null);
+    try {
+      const savedProject = await updateProject(project.id, changes);
+      setFormData({
+        name: savedProject.name,
+        category: savedProject.category,
+        style: savedProject.style,
+      });
+      setSaveState("success");
+      window.setTimeout(() => setSaveState("idle"), 2400);
+    } catch (error) {
+      setSaveState("error");
+      setSaveError(error instanceof Error ? error.message : "Unable to save project settings.");
+    }
   };
 
   const handleDelete = () => {
@@ -132,7 +197,7 @@ export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormPr
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-sm font-medium text-[#06224C] outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
-              maxLength={40}
+              maxLength={100}
             />
           </div>
 
@@ -144,6 +209,7 @@ export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormPr
               {categoryOptions.map((cat) => (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => setFormData({ ...formData, category: cat })}
                   className={`rounded-xl border-2 px-3 py-2 text-xs font-bold transition-all ${
                     formData.category === cat
@@ -165,6 +231,7 @@ export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormPr
               {styleOptions.map((style) => (
                 <button
                   key={style}
+                  type="button"
                   onClick={() => setFormData({ ...formData, style })}
                   className={`rounded-xl border-2 px-3 py-2 text-xs font-bold transition-all ${
                     formData.style === style
@@ -179,6 +246,20 @@ export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormPr
           </div>
         </div>
       </motion.div>
+
+      <AnimatePresence initial={false}>
+        {isDirty && saveState !== "success" ? (
+          <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="text-xs font-bold text-amber-600">
+            You have unsaved changes.
+          </motion.p>
+        ) : null}
+        {saveState === "error" && saveError ? (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} role="alert" className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{saveError}</span>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/* Info Card */}
       <motion.div
@@ -223,19 +304,22 @@ export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormPr
       {/* Actions */}
       <motion.div variants={staggerChild} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <motion.button
-          onClick={handleSave}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={`flex items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white shadow-lg transition-all ${
-            saved ? "bg-green-500" : "bg-[#06224C] hover:bg-blue-900"
+          type="button"
+          disabled={isSaving || !isDirty}
+          onClick={() => void handleSave()}
+          whileHover={!isSaving && isDirty ? { scale: 1.02 } : undefined}
+          whileTap={!isSaving && isDirty ? { scale: 0.98 } : undefined}
+          className={`flex items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+            saveState === "success" ? "bg-green-500" : "bg-[#06224C] hover:bg-blue-900"
           }`}
         >
-          <Save className="h-4 w-4" />
-          {saved ? "Saved!" : "Save Changes"}
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : saveState === "success" ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+          {isSaving ? "Saving…" : saveState === "success" ? "Saved!" : "Save Changes"}
         </motion.button>
 
         {!confirmDelete ? (
           <button
+            type="button"
             onClick={() => setConfirmDelete(true)}
             className="flex items-center justify-center gap-2 rounded-xl border border-red-200 px-6 py-3 text-sm font-bold text-red-500 transition-all hover:bg-red-50"
           >
@@ -245,12 +329,14 @@ export default function ProjectSettingsForm({ projectId }: ProjectSettingsFormPr
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-red-500">Are you sure?</span>
             <button
+              type="button"
               onClick={handleDelete}
               className="rounded-xl bg-red-500 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-red-600"
             >
               Yes, Delete
             </button>
             <button
+              type="button"
               onClick={() => setConfirmDelete(false)}
               className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500 transition-all hover:bg-slate-50"
             >
