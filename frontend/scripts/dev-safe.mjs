@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 const PROJECT_ROOT = process.cwd();
 const LOCK_PATH = resolve(PROJECT_ROOT, ".next", "dev", "lock");
-const PORTS = [3000, 3001];
+const PORTS = [3000];
 
 function execText(command) {
   try {

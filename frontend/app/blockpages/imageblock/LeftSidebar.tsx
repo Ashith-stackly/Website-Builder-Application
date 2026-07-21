@@ -109,7 +109,6 @@ export default function LeftSidebar({
   const activeSectionId = textBlockState?.activeSectionId ?? defaultSectionId;
   const [activeTab, setActiveTab] = useState('Blocks');
   const [openCategories, setOpenCategories] = useState<number[]>([0, 1, 2]);
-  const [subTab, setSubTab] = useState<'all' | 'next'>('all');
   const [isOpen, setIsOpen] = useState(false);
   const [mobileOverlayTab, setMobileOverlayTab] = useState('Typography');
   const [mobileView, setMobileView] = useState<'Blocks' | 'Blocks Adjust' | 'Pages' | 'Button'>('Blocks');
@@ -1342,25 +1341,6 @@ export default function LeftSidebar({
                               );
                             })}
                           </div>
-
-                          {idx === 0 && !searchQuery && (
-                            <div className="mt-4 bg-[#F6F4EB] rounded-[8px] p-[3px] flex items-center" title="Work in progress">
-                              <button
-                                onClick={() => { setSubTab('all'); alert('Work in progress'); }}
-                                title="Work in progress"
-                                className={`flex-[1.5] text-[11px] font-semibold py-[6px] rounded-[6px] transition-colors cursor-pointer ${subTab === 'all' ? 'bg-white text-[#517AA5] shadow-sm' : 'text-[#8495A5] hover:text-[#517AA5] bg-transparent'}`}
-                              >
-                                All Bosie
-                              </button>
-                              <button
-                                onClick={() => { setSubTab('next'); alert('Work in progress'); }}
-                                title="Work in progress"
-                                className={`flex-1 text-[11px] font-semibold py-[6px] rounded-[6px] transition-colors cursor-pointer ${subTab === 'next' ? 'bg-white text-[#517AA5] shadow-sm' : 'text-[#8495A5] hover:text-[#517AA5] bg-transparent'}`}
-                              >
-                                Next
-                              </button>
-                            </div>
-                          )}
                         </>
                       )}
                     </div>

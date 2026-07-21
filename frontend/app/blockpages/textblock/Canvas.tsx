@@ -2,7 +2,6 @@
  
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown, Eye, Redo2, Save, Send, Undo2, Check, AlertTriangle, Loader2 } from "lucide-react";
-import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
 import { routePath } from "@/lib/paths";
 import { getBlockpagesTemplateLabel } from "@/lib/blockpagesTemplates";
 import { BlockpagesEditorProvider } from "@/lib/blockpagesEditorContext";
@@ -164,7 +163,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   onPendingDividerScrollComplete,
 }: TextCanvasProps) {
   const isPreviewMode = false;
-  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
+  const previewDevice: PreviewDevice = "desktop";
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const activeEditableRef = useRef<HTMLElement | null>(null);
@@ -882,15 +881,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               ${hiddenElementsCss}
             `}</style>
             <div className="relative flex min-h-0 flex-1 flex-col">
-              <div
-                className={`mx-auto w-full min-w-0 flex-1 transition-all duration-500 ease-in-out ${
-                  previewDevice === "mobile"
-                    ? "max-w-[375px] rounded-[2rem] border-8 border-slate-800 bg-white shadow-xl"
-                    : previewDevice === "tablet"
-                      ? "max-w-[768px] rounded-[2rem] border-8 border-slate-800 bg-white shadow-xl"
-                      : "max-w-full"
-                }`}
-              >
+              <div className="mx-auto w-full min-w-0 max-w-full flex-1">
                 <div
                   data-textblock-canvas
                   data-blockpages-template={template}
@@ -1103,37 +1094,6 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     )}
                     </BlockpagesEditorProvider>
                   </div>
-                </div>
-              </div>
-              <div
-                data-builder-chrome="true"
-                className="pointer-events-none absolute bottom-4 left-1/2 z-[130] -translate-x-1/2"
-              >
-                <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDevice("desktop")}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "desktop" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
-                    title="Desktop View"
-                  >
-                    <FaLaptop size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDevice("tablet")}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "tablet" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
-                    title="Tablet View"
-                  >
-                    <FaTabletAlt size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDevice("mobile")}
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition sm:h-9 sm:w-9 ${previewDevice === "mobile" ? "border-[#06224C] bg-gray-50 text-[#06224C] ring-2 ring-[#06224C]" : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"}`}
-                    title="Mobile View"
-                  >
-                    <FaMobileAlt size={14} />
-                  </button>
                 </div>
               </div>
             </div>
