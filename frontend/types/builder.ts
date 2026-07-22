@@ -1,4 +1,9 @@
 import type { CSSProperties } from "react";
+import type {
+  DeploymentPackage,
+  DeploymentPackageSummary,
+  SerializedDeploymentPackage,
+} from "@/lib/deploymentPackage";
 
 export type ComponentType =
   | "navigation"
@@ -596,8 +601,14 @@ export interface BuilderState {
   saveHtml: (signal?: AbortSignal) => Promise<boolean>;
   /** Create a project on first save, then autosave builder data + HTML. */
   saveDraft: (signal?: AbortSignal) => Promise<boolean>;
+  /** Build and validate a deployment-only copy without changing the editable project. */
+  prepareDeploymentPackage: () => Promise<DeploymentPackage>;
   /** Save the newest JSON/HTML and sync the publish-compatible workspace state. */
-  prepareForPublish: () => Promise<string>;
+  prepareForPublish: () => Promise<{
+    workspaceId: string;
+    deploymentPackage: SerializedDeploymentPackage;
+    summary: DeploymentPackageSummary;
+  }>;
   /** Reset builder state after logout. */
   resetBuilder: () => void;
   /** Active editing viewport. */

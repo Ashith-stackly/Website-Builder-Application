@@ -8,6 +8,9 @@ interface BlogSeoHeadProps {
   seoDescription?: string;
   seoKeywords?: string[];
   featuredImage?: string;
+  canonicalUrl?: string;
+  publishedAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -23,55 +26,79 @@ export default function BlogSeoHead({
   seoDescription,
   seoKeywords,
   featuredImage,
+  canonicalUrl,
+  publishedAt,
+  updatedAt,
 }: BlogSeoHeadProps) {
   useEffect(() => {
+    const previousTitle = document.title;
     const pageTitle = seoTitle?.trim() || title;
     const fullTitle = `${pageTitle} | Stackly Blog`;
     const description = seoDescription?.trim() || "";
     const keywords = seoKeywords?.join(", ") || "";
 
-    // Set document title
     document.title = fullTitle;
 
-    // Helper to set or create a meta tag
     const setMeta = (
       attr: "name" | "property",
       key: string,
-      content: string
+      content?: string
     ) => {
-      if (!content) return;
       let el = document.querySelector<HTMLMetaElement>(
         `meta[${attr}="${key}"]`
       );
+      if (!content) {
+        if (el?.dataset.stacklyBlogSeo === "true") el.remove();
+        return;
+      }
       if (!el) {
         el = document.createElement("meta");
         el.setAttribute(attr, key);
         document.head.appendChild(el);
       }
+      el.dataset.stacklyBlogSeo = "true";
       el.setAttribute("content", content);
     };
 
-    // Standard meta
-    if (description) setMeta("name", "description", description);
-    if (keywords) setMeta("name", "keywords", keywords);
+    const setCanonical = (href?: string) => {
+      let el = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!href) {
+        if (el?.dataset.stacklyBlogSeo === "true") el.remove();
+        return;
+      }
+      if (!el) {
+        el = document.createElement("link");
+        el.rel = "canonical";
+        document.head.appendChild(el);
+      }
+      el.dataset.stacklyBlogSeo = "true";
+      el.href = href;
+    };
 
-    // Open Graph
+    setCanonical(canonicalUrl);
+
+    setMeta("name", "description", description);
+    setMeta("name", "keywords", keywords);
     setMeta("property", "og:title", pageTitle);
-    if (description) setMeta("property", "og:description", description);
+    setMeta("property", "og:description", description);
     setMeta("property", "og:type", "article");
-    if (featuredImage) setMeta("property", "og:image", featuredImage);
+    setMeta("property", "og:image", featuredImage);
+    setMeta("property", "og:url", canonicalUrl);
+    setMeta("property", "article:published_time", publishedAt);
+    setMeta("property", "article:modified_time", updatedAt);
 
-    // Twitter Card
     setMeta("name", "twitter:card", "summary_large_image");
     setMeta("name", "twitter:title", pageTitle);
-    if (description) setMeta("name", "twitter:description", description);
-    if (featuredImage) setMeta("name", "twitter:image", featuredImage);
+    setMeta("name", "twitter:description", description);
+    setMeta("name", "twitter:image", featuredImage);
 
-    // Cleanup: restore default title on unmount
     return () => {
-      document.title = "Stackly | Drag and Drop Website Builder";
+      document.title = previousTitle;
+      document
+        .querySelectorAll('[data-stackly-blog-seo="true"]')
+        .forEach((element) => element.remove());
     };
-  }, [title, seoTitle, seoDescription, seoKeywords, featuredImage]);
+  }, [title, seoTitle, seoDescription, seoKeywords, featuredImage, canonicalUrl, publishedAt, updatedAt]);
 
   return null;
 }

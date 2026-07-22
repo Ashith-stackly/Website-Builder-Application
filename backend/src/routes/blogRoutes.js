@@ -5,6 +5,7 @@ const blogController = require('../controllers/blogController');
 const router = express.Router();
 
 // Public post delivery for the generated slug URL. Only published posts are exposed.
+router.get('/public/:workspaceId', blogController.listPublicPosts);
 router.get('/public/:workspaceId/:slug', blogController.getPublicPost);
 router.get('/sitemap/:workspaceId', blogController.generateSitemap);
 

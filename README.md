@@ -95,38 +95,117 @@ cd frontend && npm install && cd ..
 
 ---
 
-## Environment variables
+## Environment Setup
 
-Copy each `.env.example` and fill in real values.
+To run the Website Builder Application locally or prepare it for production, copy the template files and fill in the required configuration variables.
 
-### Backend — `backend/.env`  (see `backend/.env.example` for the full list)
+### Copy Configuration Files
 
-| Group | Keys |
-|-------|------|
-| Server | `PORT`, `NODE_ENV`, `FRONTEND_URL`, `API_BASE_URL`, `CORS_ORIGINS` |
-| MongoDB | `MONGODB_URI`, `MONGODB_DNS_SERVERS` |
-| JWT | `JWT_SECRET`, `JWT_EXPIRES_IN`, `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRES_IN` |
-| Google OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
-| Email / SMTP | `EMAIL_DELIVERY_MODE`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_NAME`, `SMTP_FROM_EMAIL` |
-| SMS | `SMS_PROVIDER`, `TWILIO_*`, `TEXTLOCAL_*` |
-| Razorpay | `PAYMENT_PRIMARY_PROVIDER`, `RAZORPAY_MODE`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` |
-| Stripe (optional) | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID` |
-| AWS S3 (uploads) | `AWS_S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
-| E-commerce | `ECOMMERCE_TAX_RATE`, `ECOMMERCE_SHIPPING_COST`, `ECOMMERCE_WORKSPACE_ID` |
-| Auth policy | `EMAIL_DOMAIN_WHITELIST_ENABLED`, `EMAIL_DOMAIN_WHITELIST`, `PASSWORD_HISTORY_DEPTH` |
+#### Linux/macOS
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+```
 
-### Frontend — `frontend/.env.local`  (see `frontend/.env.example`)
-
-| Key | Purpose |
-|-----|---------|
-| `NEXT_PUBLIC_API_BASE_URL` | Backend API base (default `http://localhost:5000/api`) |
-| `NEXT_PUBLIC_BASE_PATH` | Optional sub-path when hosting under a prefix |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client id (match backend) |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Razorpay public key |
-| `NEXT_PUBLIC_RAZORPAY_API_BASE` | Razorpay dev API helper base (`http://localhost:3001`) |
-| `NEXT_PUBLIC_RAZORPAY_DEMO` | `true` to run Razorpay in demo mode |
+#### Windows (Command Prompt / PowerShell)
+```cmd
+copy backend\.env.example backend\.env
+copy frontend\.env.example frontend\.env.local
+```
 
 ---
+
+### Backend Environment Variables (`backend/.env`)
+
+| Variable | Required | Default | Purpose / Description |
+|---|---|---|---|
+| **Server** | | | |
+| `PORT` | No | `5000` | Port the Express API server listens on. |
+| `NODE_ENV` | No | `development` | Runtime environment (`development`, `production`, `test`). |
+| `FRONTEND_URL` | No | `http://localhost:3000` | URL of the frontend app (used for CORS and auth redirects). |
+| `API_BASE_URL` | No | `http://localhost:5000/api` | Base URL of this backend API. |
+| `CORS_ORIGINS` | No | `http://localhost:3000` | Comma-separated list of allowed CORS origins. |
+| `APP_DOMAIN` | No | `localhost` | Domain name under which subdomains are resolved locally. |
+| `PUBLIC_APP_DOMAIN` | No | `localhost` | Production domain name for subdomain resolution. |
+| **MongoDB** | | | |
+| `MONGODB_URI` | **Yes** | — | MongoDB connection URL (local instance or MongoDB Atlas). |
+| `MONGODB_DNS_SERVERS` | No | `8.8.8.8,1.1.1.1` | Override DNS servers to resolve MongoDB Atlas cluster SRV records. |
+| **JWT** | | | |
+| `JWT_SECRET` | **Yes** | — | Private key for signing access JSON Web Tokens. |
+| `JWT_EXPIRES_IN` | No | `7d` | Lifetime duration of JWT access tokens. |
+| `JWT_REFRESH_SECRET`| **Yes** | — | Private key for signing session refresh tokens. |
+| `JWT_REFRESH_EXPIRES_IN`| No| `30d` | Lifetime duration of JWT refresh tokens. |
+| **Google OAuth** | | | |
+| `GOOGLE_CLIENT_ID` | No | — | Google Cloud OAuth Client ID (for Google login integration). |
+| `GOOGLE_CLIENT_SECRET` | No | — | Google Cloud OAuth Client Secret. |
+| `GOOGLE_CALLBACK_URL` | No | `http://localhost:5000/api/auth/google/callback` | Redirect callback URL configured in Google Developer Console. |
+| **GitHub OAuth** | | | |
+| `GITHUB_CLIENT_ID` | No | — | GitHub OAuth Client ID (optional - future implementation). |
+| `GITHUB_CLIENT_SECRET` | No | — | GitHub OAuth Client Secret (optional - future implementation). |
+| **Email / SMTP** | | | |
+| `EMAIL_DELIVERY_MODE` | No | `console` | OTP delivery mode: `smtp` for real emails, `console` to print to terminal. |
+| `SMTP_HOST` | No | — | SMTP mail server hostname. |
+| `SMTP_PORT` | No | `587` | SMTP mail server port. |
+| `SMTP_SECURE` | No | `false` | Enable SMTP SSL/TLS connection (`true` for port 465). |
+| `SMTP_USER` | No | — | SMTP service username/email. |
+| `SMTP_PASS` | No | — | SMTP service password. |
+| `SMTP_FROM_NAME` | No | `Stackly` | Sender name shown in outgoing emails. |
+| `SMTP_FROM_EMAIL` | No | — | Sender email address. Defaults to `SMTP_USER`. |
+| `TEST_EMAIL_TO` | No | — | Custom email address for running backend email test scripts. |
+| **SMS** | | | |
+| `SMS_PROVIDER` | No | `mock` | SMS gateway provider (`mock`, `twilio`, or `textlocal`). |
+| `TWILIO_ACCOUNT_SID` | No | — | Twilio account identifier. |
+| `TWILIO_AUTH_TOKEN` | No | — | Twilio authorization token. |
+| `TWILIO_FROM_NUMBER` | No | — | Twilio phone number. |
+| `TEXTLOCAL_API_KEY` | No | — | Textlocal API key. |
+| `TEXTLOCAL_SENDER` | No | — | Textlocal sender name. |
+| **Razorpay Payment** | | | |
+| `PAYMENT_PRIMARY_PROVIDER` | No | `razorpay` | Primary payment gateway driver. |
+| `RAZORPAY_MODE` | No | `test` | Razorpay transaction mode (`test` or `live`). |
+| `RAZORPAY_KEY_ID` | **Yes** | `rzp_test_Sx4RHrkl9mpz0s` | Razorpay public key ID. |
+| `RAZORPAY_KEY_SECRET` | **Yes** | `JGQNY14J8H0Rs6RvoPe7LyOs` | Razorpay private secret key. |
+| **Stripe Payment** | | | |
+| `STRIPE_SECRET_KEY` | No | — | Stripe secret API key (optional gateway). |
+| `STRIPE_WEBHOOK_SECRET` | No | — | Stripe webhook verification secret. |
+| `STRIPE_PRICE_ID` | No | — | Stripe default plan price ID. |
+| **AWS S3 Storage** | | | |
+| `AWS_S3_BUCKET` | No | — | S3 bucket name for user asset uploads and static site hosting. |
+| `AWS_REGION` | No | `us-east-1` | AWS S3 deployment region. |
+| `AWS_ACCESS_KEY_ID` | No | — | AWS IAM user access key. |
+| `AWS_SECRET_ACCESS_KEY` | No | — | AWS IAM user secret key. |
+| **Auth Policy & Whitelists** | | | |
+| `EMAIL_DOMAIN_WHITELIST_ENABLED` | No | `false` | Restrict user signup to approved email domains if `true`. |
+| `EMAIL_DOMAIN_WHITELIST` | No | `gmail.com,yahoo.com,outlook.com,hotmail.com` | Comma-separated list of allowed domains. |
+| `PASSWORD_HISTORY_DEPTH` | No | `3` | Number of previous passwords stored to prevent immediate reuse. |
+| **AI Content Assistant** | | | |
+| `AI_PROVIDER` | No | `openai` | Text model provider (`openai`, `mock`, or `disabled`). |
+| `OPENAI_API_KEY` | No | — | OpenAI API key. |
+| `OPENAI_TEXT_MODEL` | No | `gpt-4.1-mini` | Model for text prompt completion. |
+| `IMAGE_PROVIDER` | No | `openai` | Image model provider (`openai`, `mock`, or `disabled`). |
+| `OPENAI_IMAGE_MODEL` | No | `gpt-image-1` | Model for image generation. |
+| `OPENAI_API_BASE_URL` | No | `https://api.openai.com/v1` | Custom OpenAI base URL for enterprise/self-hosted endpoints. |
+| `AI_REQUEST_TIMEOUT_MS` | No | `30000` | Timeout in milliseconds for AI requests. |
+| `AI_RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limiter tracking window. |
+| `AI_TEXT_RATE_LIMIT_MAX` | No | `20` | Max text helper requests per user in the window. |
+| `AI_IMAGE_RATE_LIMIT_MAX` | No | `6` | Max image helper requests per user in the window. |
+| `AI_LAYOUT_RATE_LIMIT_MAX` | No | `30` | Max layout helper requests per user in the window. |
+
+---
+
+### Frontend Environment Variables (`frontend/.env.local`)
+
+| Variable | Required | Default | Purpose / Description |
+|---|---|---|---|
+| `NEXT_PUBLIC_API_BASE_URL` | No | `http://localhost:5000/api` | Browser-accessible base URL for the backend API. |
+| `NEXT_PUBLIC_BASE_PATH` | No | — | Subdirectory prefix if deployed under a path (e.g. GitHub Pages `/Website-Builder-Application`). |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | **Yes** | `rzp_test_Sx4RHrkl9mpz0s` | Razorpay public Key ID (must match backend). |
+| `NEXT_PUBLIC_RAZORPAY_API_BASE` | No | `http://localhost:3001` | Local fallback proxy URL for mock static transactions helper. |
+| `NEXT_PUBLIC_RAZORPAY_DEMO` | No | `false` | Set to `true` to run checkout in client-side mock demo mode. |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | No | — | Google client ID for front-end authentication login button. |
+| `NEXT_PUBLIC_ECOMMERCE_WORKSPACE_ID` | No | — | Override key for default e-commerce workspace storefront loaded by app. |
+
+---
+
 
 ## Running locally
 

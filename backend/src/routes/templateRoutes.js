@@ -4,23 +4,23 @@ const templateController = require('../controllers/templateController');
 
 const router = express.Router();
 
-// Public — template listing
+// Public template catalog.
 router.get('/list', templateController.listTemplates);
 
-// Auth required — template wishlist (must be before /:idOrSlug to avoid route conflict)
+// Authenticated template wishlist and cart routes must precede the dynamic
+// template route below so their literal paths are never interpreted as slugs.
 router.get('/wishlist', authenticate, templateController.getWishlist);
 router.post('/wishlist/:templateId', authenticate, templateController.addToWishlist);
 router.delete('/wishlist/:templateId', authenticate, templateController.removeFromWishlist);
 
-// Auth required — template cart (must be before /:idOrSlug to avoid route conflict)
 router.get('/cart', authenticate, templateController.getCart);
 router.post('/cart/:templateId', authenticate, templateController.addToCart);
 router.delete('/cart/:templateId', authenticate, templateController.removeFromCart);
 
-// Public — get single template (catch-all parameterized route — must be last)
-router.get('/:idOrSlug', templateController.getTemplate);
-
-// Auth required — use template
+// The existing clone endpoint is canonical; no parallel clone route is kept.
 router.post('/:id/use', authenticate, templateController.useTemplate);
+
+// Public template details by Mongo id or slug. Keep this catch-all last.
+router.get('/:idOrSlug', templateController.getTemplate);
 
 module.exports = router;

@@ -9,8 +9,8 @@ import {
   updateBlog,
   isBlogConnectionError,
 } from "@/lib/blogApi";
+import { notifyBlogChanged } from "@/lib/blogEvents";
 import BlogForm from "@/components/blog/BlogForm";
-import BlogToast from "@/components/blog/BlogToast";
 
 export default function EditBlogPage() {
   const router = useRouter();
@@ -23,10 +23,6 @@ export default function EditBlogPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -69,14 +65,8 @@ export default function EditBlogPage() {
 
       try {
         await updateBlog(blog._id, data);
-        setToast({
-          message: "Blog post updated successfully!",
-          type: "success",
-        });
-        // Redirect after a brief delay so the user sees the toast
-        window.setTimeout(() => {
-          router.push(`/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}`);
-        }, 1200);
+        notifyBlogChanged(workspaceId);
+        router.push(`/blog/manage?workspaceId=${encodeURIComponent(workspaceId)}&updated=1`);
       } catch (err) {
         setIsSubmitting(false);
         if (isBlogConnectionError(err)) {
@@ -152,13 +142,6 @@ export default function EditBlogPage() {
           </div>
         )}
       </div>
-
-      {/* Toast */}
-      <BlogToast
-        message={toast?.message ?? null}
-        type={toast?.type}
-        onDismiss={() => setToast(null)}
-      />
     </main>
   );
 }

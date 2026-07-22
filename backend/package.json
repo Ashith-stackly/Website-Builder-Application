@@ -11,6 +11,7 @@
     "dev": "node --watch server.js",
     "test:email": "node scripts/send-test-email.js",
     "test:ai": "node scripts/test-ai-services.js",
+    "test:templates": "node scripts/test-template-service.js",
     "seed-templates": "node scripts/seed-templates.js",
     "seed-store": "node scripts/seed-store.js"
   },

@@ -39,8 +39,15 @@ function getDefaultErrorMessage(status: number): string {
       return "You do not have permission to perform this action.";
     case 404:
       return "The requested template was not found.";
+    case 409:
+      return "This template is temporarily unavailable. Please try again.";
+    case 422:
+      return "The template request could not be completed. Please try again.";
+    case 429:
+      return "Too many template requests were made. Please wait a moment and try again.";
     case 500:
-      return "Server error. Please try again later.";
+    case 503:
+      return "The template service is temporarily unavailable. Please try again later.";
     default:
       return "An unexpected error occurred.";
   }
@@ -83,7 +90,7 @@ export function isTemplateConnectionError(error: unknown): boolean {
 // ── API Functions ──────────────────────────────────────────────────────
 
 /**
- * GET /api/templates
+ * GET /api/template/list
  * Fetches the template list, optionally filtered by category, search, or premium status.
  */
 export async function getTemplates(
@@ -91,7 +98,7 @@ export async function getTemplates(
   signal?: AbortSignal
 ): Promise<TemplateListItem[]> {
   const query = new URLSearchParams();
-  if (params?.category && params.category !== "All") {
+  if (params?.category && params.category !== "all") {
     query.set("category", params.category);
   }
   if (params?.search) {
@@ -101,7 +108,7 @@ export async function getTemplates(
     query.set("isPremium", String(params.isPremium));
   }
   const qs = query.toString();
-  const path = `/templates${qs ? `?${qs}` : ""}`;
+  const path = `/template/list${qs ? `?${qs}` : ""}`;
 
   const result = await templateRequest<TemplateListResponse>(path, {
     method: "GET",
@@ -112,7 +119,7 @@ export async function getTemplates(
 }
 
 /**
- * GET /api/templates/:id
+ * GET /api/template/:idOrSlug
  * Fetches a single template with its full builderData (components, tokens, SEO).
  */
 export async function getTemplate(
@@ -120,7 +127,7 @@ export async function getTemplate(
   signal?: AbortSignal
 ): Promise<Template> {
   const result = await templateRequest<TemplateDetailResponse>(
-    `/templates/${encodeURIComponent(id)}`,
+    `/template/${encodeURIComponent(id)}`,
     { method: "GET", signal }
   );
 
@@ -128,16 +135,17 @@ export async function getTemplate(
 }
 
 /**
- * POST /api/templates/:id/clone
- * Clones a template into a new user project. Requires authentication.
- * Returns the new project ID on success.
+ * POST /api/template/:id/use
+ * Clones a template into a new user-owned project. Requires authentication.
+ * The response contains canonical project and workspace IDs (the same record),
+ * the stored Builder JSON, and template metadata for an immediate handoff.
  */
 export async function cloneTemplate(
   id: string,
   signal?: AbortSignal
 ): Promise<CloneTemplateResponse> {
   return templateRequest<CloneTemplateResponse>(
-    `/templates/${encodeURIComponent(id)}/clone`,
+    `/template/${encodeURIComponent(id)}/use`,
     {
       method: "POST",
       headers: authHeaders(),

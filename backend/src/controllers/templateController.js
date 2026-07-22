@@ -11,7 +11,7 @@ async function listTemplates(req, res, next) {
 async function getTemplate(req, res, next) {
   try {
     const template = await templateService.getTemplate(req.params.idOrSlug);
-    res.json({ template });
+    res.json({ success: true, template });
   } catch (err) {
     next(err);
   }
@@ -19,8 +19,18 @@ async function getTemplate(req, res, next) {
 
 async function useTemplate(req, res, next) {
   try {
-    const workspace = await templateService.useTemplate(req.user._id, req.params.id);
-    res.status(201).json({ message: 'Project created from template', workspace });
+    const result = await templateService.useTemplate(req.user._id, req.params.id);
+    res.status(201).json({
+      success: true,
+      message: 'Project created from template',
+      projectId: result.project._id,
+      // A project is backed by the same Workspace record. Keep both names in
+      // the public response while the legacy workspace API remains available.
+      workspaceId: result.workspaceId,
+      project: result.project,
+      builderData: result.builderData,
+      template: result.template,
+    });
   } catch (err) {
     next(err);
   }

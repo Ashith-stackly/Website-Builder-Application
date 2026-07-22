@@ -13,7 +13,7 @@ async function main() {
   await connectDB();
   console.log('Seeding templates...');
   const result = await seedTemplates();
-  console.log(`Seeded ${result.seeded} of ${result.total} templates.`);
+  console.log(`Seeded ${result.seeded} of ${result.total} templates; backfilled ${result.backfilled || 0} existing templates.`);
   await mongoose.disconnect();
   process.exit(0);
 }

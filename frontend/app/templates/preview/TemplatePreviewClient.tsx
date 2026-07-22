@@ -18,6 +18,8 @@ import {
 import { fadeUp, staggerContainer } from "@/lib/motion";
 import { getTemplate, cloneTemplate, isTemplateConnectionError } from "@/lib/templateApi";
 import { generateHtml } from "@/lib/exportHtml";
+import { assetPath } from "@/lib/paths";
+import { getTemplateCategoryLabel } from "@/types/template";
 import type { Template } from "@/types/template";
 import type { Viewport } from "@/types/builder";
 import { VIEWPORT_WIDTHS } from "@/types/builder";
@@ -32,12 +34,12 @@ const viewportOptions: { key: Viewport; icon: React.ComponentType<{ className?: 
 
 // ── Fallback Template Data ─────────────────────────────────────────────
 
-const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData">> = {
+const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData" | "pages" | "componentCount">> = {
   tpl_portfolio_1: {
     _id: "tpl_portfolio_1",
     name: "Creative Portfolio",
     slug: "creative-portfolio",
-    category: "Portfolio",
+    category: "portfolio",
     style: "Modern",
     description: "A stunning portfolio template with hero, features, gallery, and contact sections. Perfect for creatives and agencies.",
     thumbnail: "/landing-optimized/port.webp",
@@ -51,7 +53,7 @@ const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData">> = {
     _id: "tpl_blog_1",
     name: "Modern Blog",
     slug: "modern-blog",
-    category: "Blog",
+    category: "blog",
     style: "Minimal",
     description: "A clean and readable blog template with navigation, hero banner, features grid, and newsletter signup.",
     thumbnail: "/landing-optimized/bloggg.webp",
@@ -65,7 +67,7 @@ const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData">> = {
     _id: "tpl_ecommerce_1",
     name: "E-Commerce Store",
     slug: "ecommerce-store",
-    category: "E-Commerce",
+    category: "store",
     style: "Bold",
     description: "A fully featured e-commerce template with product showcases, pricing tables, testimonials, and checkout-ready sections.",
     thumbnail: "/landing-optimized/ecommerce.webp",
@@ -79,7 +81,7 @@ const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData">> = {
     _id: "tpl_restaurant_1",
     name: "Restaurant & Café",
     slug: "restaurant-cafe",
-    category: "Restaurant",
+    category: "restaurant",
     style: "Modern",
     description: "An appetizing restaurant template with menu showcases, gallery, reservation prompts, and location details.",
     thumbnail: "/landing-optimized/foodd03.webp",
@@ -91,14 +93,14 @@ const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData">> = {
   },
   tpl_construction_1: {
     _id: "tpl_construction_1",
-    name: "Construction Co.",
-    slug: "construction-co",
-    category: "Construction",
-    style: "Bold",
-    description: "A robust construction company template with project showcases, service features, testimonials, and contact forms.",
-    thumbnail: "/landing-optimized/construction02.webp",
+    name: "Business Professional",
+    slug: "business-professional",
+    category: "business",
+    style: "Modern",
+    description: "A professional business template with service highlights, trust signals, and a focused contact path.",
+    thumbnail: "/landing-optimized/business09.webp",
     isPremium: false,
-    tags: ["construction", "building", "contractor", "services"],
+    tags: ["business", "corporate", "services", "professional"],
     usageCount: 980,
     createdAt: "2026-04-12T00:00:00.000Z",
     sections: ["navigation", "hero", "features", "testimonial", "contact", "footer"],
@@ -108,6 +110,12 @@ const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData">> = {
 function formatUsageCount(count: number): string {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
   return String(count);
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+
+function isBlogCategory(category: string | undefined): boolean {
+  return category === "blog";
 }
 
 // ── Component ──────────────────────────────────────────────────────────
@@ -123,12 +131,18 @@ export default function TemplatePreviewClient() {
   const [error, setError] = useState<string | null>(null);
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const [cloningId, setCloningId] = useState<string | null>(null);
+  const [cloneError, setCloneError] = useState<string | null>(null);
 
   // ── Fetch Template ─────────────────────────────────────────────────
   useEffect(() => {
     if (!id) {
       setError("Template ID is missing.");
       setIsLoading(false);
+      return;
+    }
+
+    if (id === "tpl_blog_1") {
+      router.replace("/blog");
       return;
     }
 
@@ -151,6 +165,8 @@ export default function TemplatePreviewClient() {
             // Create a template with empty components (iframe will show placeholder)
             setTemplate({
               ...fallback,
+              pages: [{ id: "home", name: "Home", path: "/" }],
+              componentCount: 0,
               builderData: { schemaVersion: 1, components: [] },
             });
           } else {
@@ -174,7 +190,13 @@ export default function TemplatePreviewClient() {
   const previewHtml = useMemo(() => {
     if (!template?.builderData?.components?.length) return null;
     try {
-      return generateHtml(template.builderData.components, template.builderData.seo);
+      return generateHtml(
+        template.builderData.components,
+        template.builderData.seo,
+        undefined,
+        template.builderData.designTokens,
+        { canvasMode: template.builderData.canvasMode }
+      );
     } catch {
       return null;
     }
@@ -195,18 +217,28 @@ export default function TemplatePreviewClient() {
     }
 
     setCloningId(template._id);
+    setCloneError(null);
+
+    const isBlog = isBlogCategory(template.category);
 
     try {
       const result = await cloneTemplate(template._id);
-      router.push(`/builder?projectId=${result.projectId}`);
+      if (!result.projectId) {
+        throw new Error("The template service did not return a project to open.");
+      }
+      // Blog templates navigate to Blog Management; all others go to Builder
+      if (isBlog) {
+        router.push(`/blog/manage?workspaceId=${encodeURIComponent(result.projectId)}`);
+      } else {
+        router.push(`/builder?projectId=${result.projectId}`);
+      }
     } catch (err: unknown) {
       if (isTemplateConnectionError(err)) {
-        // Fallback: open builder with query params
-        router.push(
-          `/builder?projectName=${encodeURIComponent(template.name)}&category=${encodeURIComponent(template.category)}&style=${encodeURIComponent(template.style)}&sections=${template.sections.join(",")}`
+        setCloneError(
+          "We could not reach the template service, so your private copy was not created. Check your connection and try again."
         );
       } else {
-        setError(
+        setCloneError(
           err instanceof Error ? err.message : "Failed to clone template."
         );
       }
@@ -279,7 +311,7 @@ export default function TemplatePreviewClient() {
           </button>
           <div className="hidden sm:block">
             <h1 className="text-sm font-black text-[#06224C]">{template.name}</h1>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{template.category} • {template.style}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{getTemplateCategoryLabel(template.category)} • {template.style}</p>
           </div>
         </div>
 
@@ -313,7 +345,7 @@ export default function TemplatePreviewClient() {
               : "bg-[#06224C] hover:bg-blue-900 hover:scale-[1.02]"
           }`}
         >
-          {cloningId ? "Cloning..." : (<><FaRocket /> Use This Template</>)}
+          {cloningId ? "Cloning..." : (<><FaRocket /> {isBlogCategory(template.category) ? "Start Blog" : "Use This Template"}</>)}
         </button>
       </motion.header>
 
@@ -338,13 +370,13 @@ export default function TemplatePreviewClient() {
               /* Fallback: show thumbnail when no builder components available */
               <div className="relative flex flex-col items-center justify-center bg-gray-50 p-8">
                 <img
-                  src={template.thumbnail}
+                  src={assetPath(template.thumbnail)}
                   alt={template.name}
                   className="w-full rounded-xl object-cover shadow-lg"
                 />
                 <div className="mt-6 rounded-xl bg-blue-50 px-5 py-3 text-center">
                   <p className="text-xs font-bold text-blue-600">
-                    Live preview will be available when the template backend is connected.
+                    This template does not include Builder data yet, so this preview uses its thumbnail.
                   </p>
                 </div>
               </div>
@@ -360,6 +392,14 @@ export default function TemplatePreviewClient() {
           animate="visible"
         >
           <motion.div className="space-y-6" variants={fadeUp}>
+            {cloneError && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold leading-relaxed text-red-700"
+              >
+                {cloneError}
+              </div>
+            )}
             {/* Name & Premium Badge */}
             <div>
               <div className="mb-1 flex items-center gap-2">
@@ -371,12 +411,30 @@ export default function TemplatePreviewClient() {
                 )}
               </div>
               <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                {template.category} • {template.style}
+                {getTemplateCategoryLabel(template.category)} • {template.style}
               </p>
             </div>
 
             {/* Description */}
             <p className="text-sm leading-relaxed text-gray-600">{template.description}</p>
+
+            {/* Builder document metadata */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-slate-50 px-3 py-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pages</p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {template.pages.map((page) => (
+                    <span key={page.id} className="text-xs font-bold text-[#06224C]">
+                      {page.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Components</p>
+                <p className="mt-1 text-lg font-black text-[#06224C]">{template.componentCount}</p>
+              </div>
+            </div>
 
             {/* Usage Count */}
             <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-2.5">
@@ -436,7 +494,7 @@ export default function TemplatePreviewClient() {
                   : "bg-[#06224C] shadow-lg hover:bg-blue-900 hover:scale-[1.01]"
               }`}
             >
-              {cloningId ? "Creating Project..." : (<><FaRocket /> Use This Template</>)}
+              {cloningId ? "Creating Project..." : (<><FaRocket /> {isBlogCategory(template.category) ? "Start Blog" : "Use This Template"}</>)}
             </button>
           </motion.div>
         </motion.aside>

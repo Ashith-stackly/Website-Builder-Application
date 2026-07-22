@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { Suspense, useState, useRef, useCallback, useEffect } from "react";
 import { flushSync } from "react-dom";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import { blogCategories } from "@/lib/blogCategories";
 import { assetPath } from "@/lib/paths";
@@ -11,8 +11,10 @@ import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
+import PublicBlogListing from "@/components/blog/PublicBlogListing";
 
 const START_BLOGGING_HREF = "/blog/manage/create";
+const EXPLORE_BLOG_HREF = "/blog/manage";
 
 
 
@@ -616,7 +618,33 @@ const hireProfessionalDetails = {
   ],
 };
 
+function BlogPageContent() {
+  const searchParams = useSearchParams();
+  const workspaceId = searchParams.get("workspaceId");
+  const view = searchParams.get("view");
+
+  if (workspaceId || view === "posts") {
+    return <PublicBlogListing />;
+  }
+
+  return <BlogMarketingTemplate />;
+}
+
 export default function BlogPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-slate-50">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+        </main>
+      }
+    >
+      <BlogPageContent />
+    </Suspense>
+  );
+}
+
+function BlogMarketingTemplate() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const router = useRouter();
@@ -638,17 +666,7 @@ export default function BlogPage() {
     scrollToBlogCategory(categoryId);
   }, []);
 
-  useEffect(() => {
-    // Dynamically set aria-labels on global navbar buttons to match exact requirements
-    const cartBtn = document.querySelector('button[aria-label="Open cart"]');
-    if (cartBtn) cartBtn.setAttribute('aria-label', 'Cart');
 
-    const wishlistBtn = document.querySelector('button[aria-label="Open wishlist"]');
-    if (wishlistBtn) wishlistBtn.setAttribute('aria-label', 'Wishlist');
-
-    const searchBtn = document.querySelector('button[aria-label="Search"]');
-    if (searchBtn) searchBtn.setAttribute('aria-label', 'Search');
-  }, []);
 
   const filteredBlogs =
     selectedCategory === "All"
@@ -709,7 +727,7 @@ export default function BlogPage() {
                 </div>
 
                 <div className="w-full bg-[#0a192f] py-[1.5rem] flex justify-center">
-                  <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center min-h-[2.75rem] py-[0.55rem] px-[2.5rem] rounded-full border border-[var(--blog-white)] bg-transparent text-[var(--blog-white)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-all duration-300 ease-out max-w-full text-center hover:bg-[var(--blog-white)] hover:text-[#0a192f] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                  <Link href={EXPLORE_BLOG_HREF} className="inline-flex items-center justify-center min-h-[2.75rem] py-[0.55rem] px-[2.5rem] rounded-full border border-[var(--blog-white)] bg-transparent text-[var(--blog-white)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-all duration-300 ease-out max-w-full text-center hover:bg-[var(--blog-white)] hover:text-[#0a192f] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                     Explore Blog
                   </Link>
                 </div>

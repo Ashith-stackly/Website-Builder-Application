@@ -191,8 +191,8 @@ const exportButtonSource = readFileSync(new URL("../components/builder/ExportBut
 const builderStoreSource = readFileSync(new URL("../store/builderStore.ts", import.meta.url), "utf8");
 assert.match(exportHtmlSource, /buildAnalyticsTrackingScript\(/);
 assert.match(exportHtmlSource, /generateHtml\(components, seo, workspaceId, tokens(?:, layout)?\)/);
-assert.match(exportButtonSource, /currentProjectId/);
-assert.match(exportButtonSource, /workspaceId \?\? undefined/);
+assert.match(exportButtonSource, /prepareDeploymentPackage/);
+assert.match(exportButtonSource, /createStandaloneHtml/);
 assert.match(builderStoreSource, /currentProjectId \|\| undefined/);
 
 console.log("Analytics tracking regression tests passed");

@@ -9,11 +9,16 @@ export interface Blog {
   title: string;
   slug: string;
   content: string;
+  excerpt?: string;
+  author?: string;
+  category?: string;
+  tags?: string[];
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string[];
-  status: "draft" | "published";
+  status: "draft" | "published" | "archived";
   featuredImage?: string;
+  publishedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,8 +29,30 @@ export interface BlogListItem {
   workspaceId: string;
   title: string;
   slug: string;
-  status: "draft" | "published";
+  excerpt?: string;
+  author?: string;
+  category?: string;
+  tags?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
+  status: "draft" | "published" | "archived";
+  featuredImage?: string;
+  publishedAt?: string;
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface BlogPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+export interface BlogListResponse {
+  posts: BlogListItem[];
+  pagination: BlogPagination;
 }
 
 /** Body for POST /api/blog/create */
@@ -33,6 +60,9 @@ export interface CreateBlogBody {
   workspaceId: string;
   title: string;
   content: string;
+  excerpt?: string;
+  category?: string;
+  tags?: string[];
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string[];
@@ -47,6 +77,9 @@ export type BlogFormData = Omit<CreateBlogBody, "workspaceId">;
 export interface UpdateBlogBody {
   title?: string;
   content?: string;
+  excerpt?: string;
+  category?: string;
+  tags?: string[];
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string[];

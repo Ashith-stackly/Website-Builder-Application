@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
     resetPasswordToken: String,
     resetPasswordExpiry: Date,
   },
@@ -83,6 +87,10 @@ userSchema.pre('save', async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
+// Supports bounded, recent-active-user reporting in the admin dashboard.
+userSchema.index({ lastLoginAt: -1 });
+userSchema.index({ plan: 1 });
 
 // Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
