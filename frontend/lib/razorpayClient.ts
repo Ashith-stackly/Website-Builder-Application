@@ -18,6 +18,26 @@ export type RazorpayStatus = {
   error?: string;
 };
  
+export type RazorpayVerifyResponse = {
+  verified: boolean;
+  user?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+    mobile?: string;
+    plan?: string;
+    subscriptionStatus?: string;
+  };
+  subscription?: {
+    plan?: string;
+    paymentProvider?: string;
+    paymentStatus?: string;
+    planName?: string;
+    startDate?: string;
+    expiryDate?: string;
+  };
+};
+ 
 type RazorpayCheckoutOptions = {
   key: string;
   amount: number;
@@ -115,12 +135,20 @@ export function loadRazorpayCheckoutScript(): Promise<void> {
   });
 }
  
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem("stackly-auth-token");
+}
+ 
 async function postRazorpayApi<T>(path: string, body: unknown): Promise<T> {
   let res: Response;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = getAuthToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   try {
     res = await fetch(razorpayApiUrl(path), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(body),
     });
   } catch {
@@ -151,12 +179,17 @@ export async function createRazorpayOrder(payload: {
   return postRazorpayApi<RazorpayOrderResponse>("/api/razorpay/create-order", payload);
 }
  
-export async function verifyRazorpayPayment(payload: RazorpayPaymentSuccess): Promise<boolean> {
+export async function verifyRazorpayPayment(
+  payload: RazorpayPaymentSuccess & {
+    amount?: number;
+    planName?: string;
+    billingPeriod?: string;
+  },
+): Promise<RazorpayVerifyResponse> {
   if (isRazorpayDemoMode()) {
-    return true;
+    return { verified: true };
   }
-  const data = await postRazorpayApi<{ verified?: boolean }>("/api/razorpay/verify", payload);
-  return Boolean(data.verified);
+  return postRazorpayApi<RazorpayVerifyResponse>("/api/razorpay/verify", payload);
 }
  
 export function openRazorpayCheckout(options: {

@@ -25,20 +25,45 @@ import {
   openRazorpayCheckout,
   parseDisplayPriceToPaise,
   verifyRazorpayPayment,
+  type RazorpayVerifyResponse,
 } from "@/lib/razorpayClient";
 
-/**
- * Shown in the header until session/API provides the real name.
- * Replace with `session.user.name` (or equivalent) when auth is connected.
- */
-const PLANNING_DISPLAY_USER_NAME = "Pentakota Srinivas";
-
-const PLANNING_INVOICE_CONTACT: PlanningInvoiceContactDefaults = {
-  displayName: PLANNING_DISPLAY_USER_NAME,
-  email: "srinu@gmail.com",
-  phone: "9848xxxx19",
-  address: "Chennai - 636008",
+type UserProfile = {
+  _id?: string;
+  name: string;
+  email: string;
+  mobile: string;
 };
+
+const BACKEND_BASE =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:3001"
+    : "";
+
+async function fetchUserProfile(): Promise<UserProfile | null> {
+  if (typeof window === "undefined") return null;
+  const token = window.localStorage.getItem("stackly-auth-token");
+  if (!token) return null;
+  try {
+    const res = await fetch(`${BACKEND_BASE}/api/user/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { user?: UserProfile };
+    return data.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getUserInvoiceContact(profile: UserProfile | null): PlanningInvoiceContactDefaults {
+  return {
+    displayName: profile?.name || "User",
+    email: profile?.email || "",
+    phone: profile?.mobile || "",
+    address: "",
+  };
+}
 
 const plans = [
   {
@@ -140,130 +165,7 @@ function historyMonthIndexFromDate(date: string) {
   return Number.isNaN(parsed.getTime()) ? -1 : parsed.getMonth();
 }
 
-const DEFAULT_BILLING_HISTORY: BillingHistoryEntry[] = [
-  {
-    date: "Apr 02 2026",
-    invoiceId: "INV-200987",
-    amount: "₹39.00",
-    status: "Paid",
-    planName: "Business Plan (Monthly)",
-    planTier: "Business Plan",
-    websiteLabel: "Stackly workspace subscription",
-    paymentMethodLabel: "Credit / Debit card",
-    paymentDetail: "Card payment · ****4242 · exp 09/28",
-    generatedAt: "2026-04-02T14:22:00.000Z",
-    buyerName: PLANNING_DISPLAY_USER_NAME,
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-  {
-    date: "Mar 15 2026",
-    invoiceId: "INV-121289",
-    amount: "₹39.00",
-    status: "Paid",
-    planName: "Basic (Monthly)",
-    planTier: "Basic",
-    websiteLabel: "Stackly workspace subscription",
-    paymentMethodLabel: "PayPal",
-    paymentDetail: "PayPal · srinu@gmail.com",
-    generatedAt: "2026-03-15T11:05:00.000Z",
-    buyerName: PLANNING_DISPLAY_USER_NAME,
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-  {
-    date: "Feb 08 2026",
-    invoiceId: "INV-100123",
-    amount: "₹39.00",
-    status: "Paid",
-    planName: "Advanced (Yearly)",
-    planTier: "Advanced",
-    websiteLabel: "Stackly workspace subscription",
-    paymentMethodLabel: "UPI / Wallet",
-    paymentDetail: "Google Pay · UPI srinu@okaxis",
-    generatedAt: "2026-02-08T09:40:00.000Z",
-    buyerName: PLANNING_DISPLAY_USER_NAME,
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-  {
-    date: "Jan 20 2026",
-    invoiceId: "INV-100154",
-    amount: "₹39.00",
-    status: "Paid",
-    planName: "Business Plan (Monthly)",
-    planTier: "Pro",
-    websiteLabel: "Landing Page",
-    paymentMethodLabel: "Credit / Debit card",
-    paymentDetail: "Card payment · ****9012 · exp 12/27",
-    generatedAt: "2026-01-20T16:00:00.000Z",
-    buyerName: "Srinivas Pentakota",
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-  {
-    date: "Dec 20 2025",
-    invoiceId: "INV-101164",
-    amount: "₹39.00",
-    status: "Paid",
-    planName: "Business Plan (Monthly)",
-    planTier: "Pro",
-    websiteLabel: "Stackly workspace subscription",
-    paymentMethodLabel: "Net banking",
-    paymentDetail: "Net banking · State Bank of India",
-    generatedAt: "2025-12-20T10:15:00.000Z",
-    buyerName: PLANNING_DISPLAY_USER_NAME,
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-  {
-    date: "Dec 10 2025",
-    invoiceId: "INV-100140",
-    amount: "₹0.00",
-    status: "Free",
-    planName: "Basic (Free)",
-    planTier: "Free",
-    websiteLabel: "Stackly workspace subscription",
-    generatedAt: "2025-12-10T08:00:00.000Z",
-    buyerName: PLANNING_DISPLAY_USER_NAME,
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-  {
-    date: "Nov 20 2025",
-    invoiceId: "INV-100100",
-    amount: "₹0.00",
-    status: "Free",
-    planName: "Basic (Free)",
-    planTier: "Free",
-    websiteLabel: "Stackly workspace subscription",
-    generatedAt: "2025-11-20T08:00:00.000Z",
-    buyerName: PLANNING_DISPLAY_USER_NAME,
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-  {
-    date: "Oct 08 2025",
-    invoiceId: "INV-100240",
-    amount: "₹0.00",
-    status: "Free",
-    planName: "Basic (Free)",
-    planTier: "Free",
-    websiteLabel: "Stackly workspace subscription",
-    generatedAt: "2025-10-08T08:00:00.000Z",
-    buyerName: PLANNING_DISPLAY_USER_NAME,
-    buyerEmail: PLANNING_INVOICE_CONTACT.email,
-    buyerPhone: PLANNING_INVOICE_CONTACT.phone,
-    buyerAddress: PLANNING_INVOICE_CONTACT.address,
-  },
-];
+const INITIAL_BILLING_HISTORY: BillingHistoryEntry[] = [];
 
 const PLANNING_BILLING_HISTORY_KEY = "stacklyPlanningBillingHistory";
 
@@ -301,12 +203,6 @@ function saveBillingHistoryToStorage(entries: BillingHistoryEntry[]) {
   }
 }
 
-/** Stackly-branded HTML invoice using ₹ (INR) currency symbol. */
-async function downloadBillingInvoiceSummary(entry: BillingHistoryEntry) {
-  if (typeof window === "undefined") return;
-  await downloadPlanningInvoiceForEntry(entry, PLANNING_INVOICE_CONTACT, entry.invoiceId);
-}
-
 export default function PlanningPage() {
   return (
     <Suspense fallback={null}>
@@ -326,7 +222,16 @@ function PlanningPageContent() {
   const [isFreeCheckout, setIsFreeCheckout] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
-  const [billingHistory, setBillingHistory] = useState<BillingHistoryEntry[]>(DEFAULT_BILLING_HISTORY);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryEntry[]>(INITIAL_BILLING_HISTORY);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  const invoiceContact = getUserInvoiceContact(userProfile);
+
+  /** Stackly-branded HTML invoice using ₹ (INR) currency symbol. */
+  const downloadBillingInvoiceSummary = useCallback(async (entry: BillingHistoryEntry) => {
+    if (typeof window === "undefined") return;
+    await downloadPlanningInvoiceForEntry(entry, invoiceContact, entry.invoiceId);
+  }, [invoiceContact]);
   const [historyMonthFilter, setHistoryMonthFilter] = useState<string>("all");
   const currentYear = new Date().getFullYear();
   const historyMonths = [
@@ -408,6 +313,17 @@ function PlanningPageContent() {
   }, []);
 
   useEffect(() => {
+    const token = typeof window !== "undefined" ? window.localStorage.getItem("stackly-auth-token") : null;
+    if (!token) {
+      router.push(`/login?redirect=${encodeURIComponent("/planning")}`);
+      return;
+    }
+    void fetchUserProfile().then((profile) => {
+      if (profile) setUserProfile(profile);
+    });
+  }, [router]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const scrollToTop = () => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -458,21 +374,32 @@ function PlanningPageContent() {
     isFree: boolean;
     paymentMethodLabel: string;
     paymentDetail: string;
+    verifyResponse?: RazorpayVerifyResponse;
+    paymentId?: string;
   }) {
     if (!selectedPlan) return;
     const now = new Date();
-    const invoiceId = `INV-${Math.floor(100000 + Math.random() * 899999)}`;
+    const invoiceId = opts.paymentId
+      ? `INV-${opts.paymentId.replace(/^pay_/, "").substring(0, 10).toUpperCase()}`
+      : `INV-${Math.floor(100000 + Math.random() * 899999)}`;
     const active = getActivePrice(selectedPlan);
     const finalAmount = opts.isFree ? "₹0" : active.newPrice;
+
+    // Use backend-returned user data if available, otherwise fall back to fetched profile
+    const verifiedUser = opts.verifyResponse?.user;
+    const userName = verifiedUser?.name || userProfile?.name || "User";
+    const userEmail = verifiedUser?.email || userProfile?.email || "";
+    const userPhone = verifiedUser?.mobile || userProfile?.mobile || "";
+
     const createdInvoice: InvoiceData = {
       invoiceId,
       date: now.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
       planName: `${selectedPlan.name} ${opts.isFree ? "(Free)" : billingYearly ? "(Yearly)" : "(Monthly)"}`,
       amount: finalAmount,
-      name: PLANNING_DISPLAY_USER_NAME,
-      email: PLANNING_INVOICE_CONTACT.email,
-      contactNo: PLANNING_INVOICE_CONTACT.phone,
-      address: PLANNING_INVOICE_CONTACT.address,
+      name: userName,
+      email: userEmail,
+      contactNo: userPhone,
+      address: "",
     };
     setInvoiceData(createdInvoice);
     savePlanningInvoiceData(createdInvoice);
@@ -506,6 +433,10 @@ function PlanningPageContent() {
 
   async function handlePayWithRazorpay() {
     if (!selectedPlan) return;
+
+    const customerName = userProfile?.name || "User";
+    const customerEmail = userProfile?.email || "";
+    const customerPhone = userProfile?.mobile || "";
 
     if (isFreeCheckout) {
       setPaymentError(null);
@@ -543,30 +474,50 @@ function PlanningPageContent() {
         return;
       }
 
+      const billingPeriod = billingYearly ? "Yearly" : "Monthly";
+
       const order = await createRazorpayOrder({
         amountPaise,
         planName: selectedPlan.name,
-        billingPeriod: billingYearly ? "Yearly" : "Monthly",
+        billingPeriod,
       });
 
       setPaymentLoading(false);
 
       openRazorpayCheckout({
         order,
-        planLabel: `${selectedPlan.name} (${billingYearly ? "Yearly" : "Monthly"})`,
-        customerName: PLANNING_DISPLAY_USER_NAME,
-        customerEmail: PLANNING_INVOICE_CONTACT.email,
-        customerPhone: PLANNING_INVOICE_CONTACT.phone,
+        planLabel: `${selectedPlan.name} (${billingPeriod})`,
+        customerName,
+        customerEmail,
+        customerPhone,
         onDismiss: () => setPaymentLoading(false),
         onSuccess: async (response) => {
           setPaymentLoading(true);
           try {
-            const verified = await verifyRazorpayPayment(response);
-            if (!verified) throw new Error("Payment verification failed");
+            const verifyResult = await verifyRazorpayPayment({
+              ...response,
+              amount: amountPaise,
+              planName: selectedPlan.name,
+              billingPeriod,
+            });
+            if (!verifyResult.verified) throw new Error("Payment verification failed");
+
+            // Update user profile from verify response if backend returned it
+            if (verifyResult.user) {
+              setUserProfile({
+                _id: verifyResult.user._id,
+                name: verifyResult.user.name || customerName,
+                email: verifyResult.user.email || customerEmail,
+                mobile: verifyResult.user.mobile || customerPhone,
+              });
+            }
+
             finalizeCheckout({
               isFree: false,
               paymentMethodLabel: "Razorpay",
               paymentDetail: `Payment ${response.razorpay_payment_id} · Order ${response.razorpay_order_id}`,
+              verifyResponse: verifyResult,
+              paymentId: response.razorpay_payment_id,
             });
           } catch (e) {
             setPaymentError(e instanceof Error ? e.message : "Payment failed");
