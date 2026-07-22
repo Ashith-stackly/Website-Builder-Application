@@ -13,7 +13,8 @@ import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
 import PublicBlogListing from "@/components/blog/PublicBlogListing";
 
-const START_BLOGGING_HREF = "/blog/manage";
+const START_BLOGGING_HREF = "/blog/manage/create";
+const EXPLORE_BLOG_HREF = "/blog/manage";
 
 
 
@@ -736,7 +737,7 @@ function BlogMarketingTemplate() {
                 </div>
 
                 <div className="w-full bg-[#0a192f] py-[1.5rem] flex justify-center">
-                  <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center min-h-[2.75rem] py-[0.55rem] px-[2.5rem] rounded-full border border-[var(--blog-white)] bg-transparent text-[var(--blog-white)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-all duration-300 ease-out max-w-full text-center hover:bg-[var(--blog-white)] hover:text-[#0a192f] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                  <Link href={EXPLORE_BLOG_HREF} className="inline-flex items-center justify-center min-h-[2.75rem] py-[0.55rem] px-[2.5rem] rounded-full border border-[var(--blog-white)] bg-transparent text-[var(--blog-white)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-all duration-300 ease-out max-w-full text-center hover:bg-[var(--blog-white)] hover:text-[#0a192f] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                     Explore Blog
                   </Link>
                 </div>
