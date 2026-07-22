@@ -141,6 +141,11 @@ export default function TemplatePreviewClient() {
       return;
     }
 
+    if (id === "tpl_blog_1") {
+      router.replace("/blog");
+      return;
+    }
+
     const controller = new AbortController();
 
     async function fetchTemplate() {
