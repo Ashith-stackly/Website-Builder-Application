@@ -112,6 +112,12 @@ function formatUsageCount(count: number): string {
   return String(count);
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────
+
+function isBlogCategory(category: string | undefined): boolean {
+  return category === "blog";
+}
+
 // ── Component ──────────────────────────────────────────────────────────
 
 export default function TemplatePreviewClient() {
@@ -208,12 +214,19 @@ export default function TemplatePreviewClient() {
     setCloningId(template._id);
     setCloneError(null);
 
+    const isBlog = isBlogCategory(template.category);
+
     try {
       const result = await cloneTemplate(template._id);
       if (!result.projectId) {
         throw new Error("The template service did not return a project to open.");
       }
-      router.push(`/builder?projectId=${result.projectId}`);
+      // Blog templates navigate to Blog Management; all others go to Builder
+      if (isBlog) {
+        router.push(`/blog/manage?workspaceId=${encodeURIComponent(result.projectId)}`);
+      } else {
+        router.push(`/builder?projectId=${result.projectId}`);
+      }
     } catch (err: unknown) {
       if (isTemplateConnectionError(err)) {
         setCloneError(
@@ -327,7 +340,7 @@ export default function TemplatePreviewClient() {
               : "bg-[#06224C] hover:bg-blue-900 hover:scale-[1.02]"
           }`}
         >
-          {cloningId ? "Cloning..." : (<><FaRocket /> Use This Template</>)}
+          {cloningId ? "Cloning..." : (<><FaRocket /> {isBlogCategory(template.category) ? "Start Blog" : "Use This Template"}</>)}
         </button>
       </motion.header>
 
@@ -476,7 +489,7 @@ export default function TemplatePreviewClient() {
                   : "bg-[#06224C] shadow-lg hover:bg-blue-900 hover:scale-[1.01]"
               }`}
             >
-              {cloningId ? "Creating Project..." : (<><FaRocket /> Use This Template</>)}
+              {cloningId ? "Creating Project..." : (<><FaRocket /> {isBlogCategory(template.category) ? "Start Blog" : "Use This Template"}</>)}
             </button>
           </motion.div>
         </motion.aside>

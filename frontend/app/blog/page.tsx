@@ -13,7 +13,7 @@ import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
 import PublicBlogListing from "@/components/blog/PublicBlogListing";
 
-const START_BLOGGING_HREF = "/blog/manage/create";
+const START_BLOGGING_HREF = "/templates/preview?id=tpl_blog_1";
 
 
 
