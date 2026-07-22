@@ -3,7 +3,7 @@
 import { Suspense, useState, useRef, useCallback, useEffect } from "react";
 import { flushSync } from "react-dom";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import { blogCategories } from "@/lib/blogCategories";
 import { assetPath } from "@/lib/paths";
@@ -617,13 +617,19 @@ const hireProfessionalDetails = {
   ],
 };
 
-export default function BlogPage() {
-  const blockpagesEditor = useBlockpagesEditor();
+function BlogPageContent() {
+  const searchParams = useSearchParams();
+  const workspaceId = searchParams.get("workspaceId");
+  const view = searchParams.get("view");
 
-  if (blockpagesEditor?.enabled) {
-    return <BlogMarketingTemplate />;
+  if (workspaceId || view === "posts") {
+    return <PublicBlogListing />;
   }
 
+  return <BlogMarketingTemplate />;
+}
+
+export default function BlogPage() {
   return (
     <Suspense
       fallback={
@@ -632,7 +638,7 @@ export default function BlogPage() {
         </main>
       }
     >
-      <PublicBlogListing />
+      <BlogPageContent />
     </Suspense>
   );
 }
