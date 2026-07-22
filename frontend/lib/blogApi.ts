@@ -181,6 +181,22 @@ function toApiBody(body: CreateBlogBody | UpdateBlogBody) {
   };
 }
 
+export function isAbortError(error: unknown): boolean {
+  if (!error) return false;
+  if (error instanceof DOMException && error.name === "AbortError") return true;
+  if (error instanceof Error) {
+    if (error.name === "AbortError") return true;
+    if (
+      error.message.includes("aborted") ||
+      error.message.includes("AbortError") ||
+      error.message.includes("signal is aborted")
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Check if an error is a network/connection failure. */
 export function isBlogConnectionError(error: unknown): boolean {
   return (

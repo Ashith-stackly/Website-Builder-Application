@@ -666,17 +666,7 @@ function BlogMarketingTemplate() {
     scrollToBlogCategory(categoryId);
   }, []);
 
-  useEffect(() => {
-    // Dynamically set aria-labels on global navbar buttons to match exact requirements
-    const cartBtn = document.querySelector('button[aria-label="Open cart"]');
-    if (cartBtn) cartBtn.setAttribute('aria-label', 'Cart');
 
-    const wishlistBtn = document.querySelector('button[aria-label="Open wishlist"]');
-    if (wishlistBtn) wishlistBtn.setAttribute('aria-label', 'Wishlist');
-
-    const searchBtn = document.querySelector('button[aria-label="Search"]');
-    if (searchBtn) searchBtn.setAttribute('aria-label', 'Search');
-  }, []);
 
   const filteredBlogs =
     selectedCategory === "All"

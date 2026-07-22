@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { BlogListItem } from "@/types/blog";
-import { getBlogs, deleteBlog, getPublicBlogPath, isBlogConnectionError } from "@/lib/blogApi";
-import { getProjects, type ProjectApiProject } from "@/lib/projectApi";
+import { getBlogs, deleteBlog, getPublicBlogPath, isBlogConnectionError, isAbortError } from "@/lib/blogApi";
+import { getProjects, createProject, type ProjectApiProject } from "@/lib/projectApi";
 import { notifyBlogChanged } from "@/lib/blogEvents";
 import BlogDeleteDialog from "@/components/blog/BlogDeleteDialog";
 import BlogToast from "@/components/blog/BlogToast";
@@ -50,13 +50,30 @@ export default function BlogManagePage() {
   }, [router, searchParams]);
 
   useEffect(() => {
+    const token = typeof window !== "undefined" ? window.localStorage.getItem("stackly-auth-token") : null;
+    if (!token) {
+      router.push(`/login?redirect=${encodeURIComponent(`/blog/manage${workspaceId ? `?workspaceId=${workspaceId}` : ""}`)}`);
+      return;
+    }
+
     const controller = new AbortController();
-    void getProjects(controller.signal).then((items) => {
+    void getProjects(controller.signal).then(async (items) => {
       setProjects(items);
-      if (!workspaceId && items[0]) {
-        router.replace(`/blog/manage?workspaceId=${encodeURIComponent(items[0]._id)}`);
+      if (!workspaceId) {
+        if (items[0]) {
+          router.replace(`/blog/manage?workspaceId=${encodeURIComponent(items[0]._id)}`);
+        } else {
+          try {
+            const newProj = await createProject({ projectName: "My Blog Website", category: "blog" }, controller.signal);
+            setProjects([newProj]);
+            router.replace(`/blog/manage?workspaceId=${encodeURIComponent(newProj._id)}`);
+          } catch {
+            setLoading(false);
+          }
+        }
       }
     }).catch((err) => {
+      if (controller.signal.aborted || isAbortError(err)) return;
       setError(err instanceof Error ? err.message : "Unable to load projects.");
       setLoading(false);
     });
@@ -81,7 +98,7 @@ export default function BlogManagePage() {
       const data = await getBlogs(workspaceId, controller.signal);
       setBlogs(data);
     } catch (err) {
-      if ((err as Error).name === "AbortError") return;
+      if (controller.signal.aborted || isAbortError(err)) return;
       if (isBlogConnectionError(err)) {
         setError(
           "Unable to connect to the server. Please check your connection and try again."

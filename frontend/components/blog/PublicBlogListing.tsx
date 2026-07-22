@@ -10,6 +10,7 @@ import {
   getPublicBlogPath,
   getPublishedBlogs,
   isBlogConnectionError,
+  isAbortError,
 } from "@/lib/blogApi";
 import { getBlogExcerpt, getPublishDate } from "@/lib/blogPresentation";
 import { onBlogChanged } from "@/lib/blogEvents";
@@ -88,7 +89,7 @@ export default function PublicBlogListing() {
         }
       })
       .catch((err) => {
-        if ((err as Error).name === "AbortError") return;
+        if (controller.signal.aborted || isAbortError(err)) return;
         setContextError(err instanceof Error ? err.message : "Unable to load project context.");
         setLoading(false);
       })
@@ -121,7 +122,7 @@ export default function PublicBlogListing() {
       setPosts(result.posts);
       setPagination(result.pagination);
     } catch (err) {
-      if ((err as Error).name === "AbortError") return;
+      if (controller.signal.aborted || isAbortError(err)) return;
       setError(
         isBlogConnectionError(err)
           ? "Unable to connect to the blog service. Please try again."
