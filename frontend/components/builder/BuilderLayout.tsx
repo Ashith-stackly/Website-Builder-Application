@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { DndContext, DragOverlay, PointerSensor, closestCenter, pointerWithin, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { ChevronRight, GripVertical, SlidersHorizontal } from "lucide-react";
-import { PreviewModal } from "./PreviewModal";
 import { useSearchParams } from "next/navigation";
 import Canvas from "./Canvas";
 import ComponentPalette from "./ComponentPalette";
@@ -12,12 +12,20 @@ import PropertyEditor from "./PropertyEditor";
 import BuilderStatusBar from "./BuilderStatusBar";
 import FloatingSelectionToolbar from "./FloatingSelectionToolbar";
 import { useBuilderUiStore } from "@/store/builderUiStore";
-import GlobalStylesPanel from "./GlobalStylesPanel";
-import SEOPanel from "./SEOPanel";
-import SectionTemplates from "./SectionTemplates";
-import { useBuilder } from "@/hooks/useBuilder";
+import { useBuilderStore } from "@/store/builderStore";
+import { useShallow } from "zustand/react/shallow";
 import { useDesignStore } from "@/store/designStore";
 import type { BuilderComponent, ComponentType } from "@/types/builder";
+
+// These panels are opened on demand. Splitting them keeps the editor's first
+// paint focused on the canvas and drag/drop runtime.
+const PreviewModal = dynamic(
+  () => import("./PreviewModal").then((module) => module.PreviewModal),
+  { ssr: false },
+);
+const GlobalStylesPanel = dynamic(() => import("./GlobalStylesPanel"), { ssr: false });
+const SEOPanel = dynamic(() => import("./SEOPanel"), { ssr: false });
+const SectionTemplates = dynamic(() => import("./SectionTemplates"), { ssr: false });
 
 function findByIdDeep(components: BuilderComponent[], id: string): BuilderComponent | null {
   for (const c of components) {
@@ -40,7 +48,69 @@ const collisionDetectionStrategy: CollisionDetection = (args) => {
 };
 
 export default function BuilderLayout() {
-  const { components, selectedComponentId, selectedComponentIds, canvasMode, isInlineEditing, addComponent, updateComponent, duplicateComponent, deleteComponent, deleteSelectedComponents, duplicateSelectedComponents, groupSelectedComponents, ungroupComponent, nudgeSelectedComponents, selectComponent, reorderComponents, loadStarterWebsite, loadWebsiteFromRequirements, applyAILayout, clearCanvas, undo, redo, exportHtml, saveDraft, copyComponents, pasteComponents, moveComponentUp, moveComponentDown, hideComponent, toggleLock } = useBuilder();
+  const {
+    components,
+    selectedComponentId,
+    selectedComponentIds,
+    canvasMode,
+    isInlineEditing,
+    addComponent,
+    updateComponent,
+    duplicateComponent,
+    deleteComponent,
+    deleteSelectedComponents,
+    duplicateSelectedComponents,
+    groupSelectedComponents,
+    ungroupComponent,
+    nudgeSelectedComponents,
+    selectComponent,
+    reorderComponents,
+    loadStarterWebsite,
+    loadWebsiteFromRequirements,
+    applyAILayout,
+    clearCanvas,
+    undo,
+    redo,
+    exportHtml,
+    saveDraft,
+    copyComponents,
+    pasteComponents,
+    moveComponentUp,
+    moveComponentDown,
+    hideComponent,
+    toggleLock,
+  } = useBuilderStore(useShallow((state) => ({
+    components: state.components,
+    selectedComponentId: state.selectedComponentId,
+    selectedComponentIds: state.selectedComponentIds,
+    canvasMode: state.canvasMode,
+    isInlineEditing: state.isInlineEditing,
+    addComponent: state.addComponent,
+    updateComponent: state.updateComponent,
+    duplicateComponent: state.duplicateComponent,
+    deleteComponent: state.deleteComponent,
+    deleteSelectedComponents: state.deleteSelectedComponents,
+    duplicateSelectedComponents: state.duplicateSelectedComponents,
+    groupSelectedComponents: state.groupSelectedComponents,
+    ungroupComponent: state.ungroupComponent,
+    nudgeSelectedComponents: state.nudgeSelectedComponents,
+    selectComponent: state.selectComponent,
+    reorderComponents: state.reorderComponents,
+    loadStarterWebsite: state.loadStarterWebsite,
+    loadWebsiteFromRequirements: state.loadWebsiteFromRequirements,
+    applyAILayout: state.applyAILayout,
+    clearCanvas: state.clearCanvas,
+    undo: state.undo,
+    redo: state.redo,
+    exportHtml: state.exportHtml,
+    saveDraft: state.saveDraft,
+    copyComponents: state.copyComponents,
+    pasteComponents: state.pasteComponents,
+    moveComponentUp: state.moveComponentUp,
+    moveComponentDown: state.moveComponentDown,
+    hideComponent: state.hideComponent,
+    toggleLock: state.toggleLock,
+  })));
   const [activePaletteType, setActivePaletteType] = useState<ComponentType | null>(null);
   const [activeCanvasType, setActiveCanvasType] = useState<ComponentType | null>(null);
   const [isLeftOpen, setIsLeftOpen] = useState(false);

@@ -21,6 +21,7 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 import { useProjectStore } from "@/store/projectStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   listProducts,
   createProduct,
@@ -31,7 +32,13 @@ import type { Product } from "@/types/ecommerce";
 import { staggerContainer, staggerChild, spring } from "@/lib/motion";
 
 export default function ProductsPage() {
-  const { projects, loadProjects, isLoading: loadingProjects } = useProjectStore();
+  const { projects, loadProjects, isLoading: loadingProjects } = useProjectStore(
+    useShallow((state) => ({
+      projects: state.projects,
+      loadProjects: state.loadProjects,
+      isLoading: state.isLoading,
+    })),
+  );
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProductsList, setLoadingProductsList] = useState(false);

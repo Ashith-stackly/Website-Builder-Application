@@ -29,6 +29,7 @@ import {
   spring,
 } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
+import { useShallow } from "zustand/react/shallow";
 import { getProjectAnalytics } from "@/lib/projectApi";
 import { useCountUp } from "@/lib/hooks";
 import type { AnalyticsData, AnalyticsDateFilter, DailyTraffic } from "@/types/analytics";
@@ -48,7 +49,13 @@ function AnalyticsInner() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { projects, loadProjects, isLoading: projectsLoading } = useProjectStore();
+  const { projects, loadProjects, isLoading: projectsLoading } = useProjectStore(
+    useShallow((state) => ({
+      projects: state.projects,
+      loadProjects: state.loadProjects,
+      isLoading: state.isLoading,
+    })),
+  );
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
 
   useEffect(() => {

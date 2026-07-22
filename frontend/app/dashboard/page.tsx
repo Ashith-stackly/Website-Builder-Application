@@ -33,6 +33,7 @@ import {
   hoverLift,
 } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
+import { useShallow } from "zustand/react/shallow";
 import { getDashboardSummary, type DashboardSummary } from "@/lib/projectApi";
 import { useCountUp, useClickOutside } from "@/lib/hooks";
 import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
@@ -75,7 +76,15 @@ export default function DashboardPage() {
     renameProject,
     deleteProject,
     duplicateProject,
-  } = useProjectStore();
+  } = useProjectStore(useShallow((state) => ({
+    projects: state.projects,
+    isLoading: state.isLoading,
+    error: state.error,
+    loadProjects: state.loadProjects,
+    renameProject: state.renameProject,
+    deleteProject: state.deleteProject,
+    duplicateProject: state.duplicateProject,
+  })));
 
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("there");

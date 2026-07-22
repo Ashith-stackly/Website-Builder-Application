@@ -25,6 +25,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { useProjectStore } from "@/store/projectStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   listOrders,
   getOrder,
@@ -34,7 +35,13 @@ import type { Order } from "@/types/ecommerce";
 import { staggerContainer, staggerChild, spring } from "@/lib/motion";
 
 export default function OrdersPage() {
-  const { projects, loadProjects, isLoading: loadingProjects } = useProjectStore();
+  const { projects, loadProjects, isLoading: loadingProjects } = useProjectStore(
+    useShallow((state) => ({
+      projects: state.projects,
+      loadProjects: state.loadProjects,
+      isLoading: state.isLoading,
+    })),
+  );
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrdersList, setLoadingOrdersList] = useState(false);

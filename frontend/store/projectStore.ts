@@ -13,7 +13,6 @@ import {
   type ProjectApiProject,
 } from "@/lib/projectApi";
 import type { Project, ProjectSort, ProjectSortKey, ProjectSortOrder } from "@/types/project";
-import { useBuilderStore } from "@/store/builderStore";
 
 type EditableProjectUpdates = Partial<Pick<
   Project,
@@ -163,10 +162,14 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         error: null,
       }));
 
-      // Keep an open builder's title in sync without marking its canvas dirty.
-      if (useBuilderStore.getState().currentProjectId === id) {
-        useBuilderStore.setState({ currentProjectName: updated.name });
-      }
+      // The builder store contains the full editor runtime. Load it only when
+      // this rare cross-feature synchronization is actually needed; importing
+      // it here made every dashboard project query download the editor.
+      void import("@/store/builderStore").then(({ useBuilderStore }) => {
+        if (useBuilderStore.getState().currentProjectId === id) {
+          useBuilderStore.setState({ currentProjectName: updated.name });
+        }
+      });
       return updated;
     } catch (error) {
       const message = getProjectUpdateError(error);

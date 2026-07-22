@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { staggerContainer, staggerChild, gridContainer, cardItem, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
+import { useShallow } from "zustand/react/shallow";
 import { usePersistentState, useClickOutside } from "@/lib/hooks";
 import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
@@ -56,7 +57,20 @@ export default function ProjectsPage() {
     projects, searchQuery, sort, isLoading, error,
     loadProjects, setSearchQuery, setSort, getFilteredProjects,
     renameProject, deleteProject, duplicateProject,
-  } = useProjectStore();
+  } = useProjectStore(useShallow((state) => ({
+    projects: state.projects,
+    searchQuery: state.searchQuery,
+    sort: state.sort,
+    isLoading: state.isLoading,
+    error: state.error,
+    loadProjects: state.loadProjects,
+    setSearchQuery: state.setSearchQuery,
+    setSort: state.setSort,
+    getFilteredProjects: state.getFilteredProjects,
+    renameProject: state.renameProject,
+    deleteProject: state.deleteProject,
+    duplicateProject: state.duplicateProject,
+  })));
 
   const [view, setView] = usePersistentState<ViewMode>("stackly-projects-view", "grid");
   const [segment, setSegment] = useState<Segment>("all");

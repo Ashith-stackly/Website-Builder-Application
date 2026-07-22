@@ -13,7 +13,7 @@ import { getFreeformDefaultHeight } from "@/lib/freeformLayout";
 import { autosaveProject, createProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
 import { saveWorkspaceState } from "@/lib/publishApi";
 import { featureItemDefaults } from "@/components/blocks/feature-item/spec";
-import { heroDefaults } from "@/components/blocks/hero/spec";
+import { heroDefaults } from "@/components/blocks/hero/defaults";
 import { navigationDefaults } from "@/components/blocks/navigation/spec";
 import { contactDefaults } from "@/components/blocks/contact/spec";
 import { featuresDefaults } from "@/components/blocks/features/spec";

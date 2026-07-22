@@ -1,6 +1,6 @@
 /* ============================================================================
    Stackly codebase analysis dashboard
-   Source-and-contract audit: 21 July 2026
+   Source-and-contract audit: 22 July 2026
 
    Status meanings:
    - done: the requested capability is implemented in the source tree.
@@ -9,13 +9,13 @@
    - pending: no implementation was found for the requested capability.
    ========================================================================== */
 
-const AUDIT_DATE = "21 Jul 2026";
+const AUDIT_DATE = "22 Jul 2026";
 
 const WHATSNEW = {
-  title: "Blog setup completed",
+  title: "Frontend performance pass completed",
   body:
-    "This documentation pass captures the latest completed work across Module 2 dashboard/project settings, Module 3 template library, Module 4 drag-and-drop builder, Module 7 publishing frontend, Module 8 e-commerce, Module 9 Blog & SEO, Module 10 analytics, and Module 11 AI assistant. " +
-    "Module 9 now has live workspace-scoped public listings, static-safe post links, authenticated CRUD sync, safer public APIs, sitemap XML output, and runtime SEO metadata. The main remaining gaps are Module 6 hosting/domain infrastructure, GitHub OAuth, profile/billing UI integration, production payment/provider configuration, and optional Google Analytics."
+    "A safe Next.js/React performance pass is complete without changing product behavior. The dashboard no longer imports the full Builder runtime through the project store, reducing its emitted JavaScript from approximately 2,023 KB to 780 KB (about 61%). Builder-only dialogs now load on demand, dashboard and analytics screens use scoped Zustand subscriptions, and the Hero block initialization cycle was removed. " +
+    "Module 10 remains complete with first-party, workspace-scoped analytics. The main remaining gaps are Module 6 hosting/domain infrastructure, GitHub OAuth, profile/billing UI integration, production payment/provider configuration, optional Google Analytics, and CDN-backed image optimization."
 };
 
 const PROJECT = {
@@ -27,6 +27,7 @@ const PROJECT = {
     ["Tailwind CSS", "v4"],
     ["State", "Zustand stores"],
     ["Builder", "@dnd-kit flow editor + opt-in freeform canvas"],
+    ["Performance", "Route-level lazy loading + scoped Zustand selectors"],
     ["Backend", "Node.js · Express · MongoDB/Mongoose"],
     ["Auth & billing", "JWT · Google OAuth code exchange · Stripe/Razorpay services"],
     ["Analytics", "MongoDB event aggregation + dashboard"],
@@ -96,7 +97,7 @@ const MODULES = [
   },
   {
     id: "m2", num: 2, name: "Workspace & Dashboard",
-    blurb: "The authenticated project dashboard, CRUD API, duplicate flow, builder autosave, and project settings persistence are implemented. Settings now save changed editable fields through the existing project API and sync the active builder title after the server response.",
+    blurb: "The authenticated project dashboard, CRUD API, duplicate flow, builder autosave, and project settings persistence are implemented. A performance pass decoupled the dashboard project store from the Builder runtime and scoped dashboard subscriptions, while preserving active-builder title synchronization when it is actually needed.",
     tasks: [
       { t: "Design dashboard UI", s: "done",
         p: ["frontend/app/dashboard/page.tsx", "frontend/components/dashboard/ProjectGrid.tsx"],
@@ -109,7 +110,7 @@ const MODULES = [
         note: "The dashboard modal creates a project through POST /api/projects and opens the builder." },
       { t: "Fetch and display user projects", s: "done",
         p: ["frontend/store/projectStore.ts", "frontend/lib/projectApi.ts"],
-        note: "The project store loads the authenticated project list from the backend." },
+        note: "The project store loads the authenticated project list from the backend. Its Builder-store synchronization is now deferred to the rare active-builder rename path, so ordinary dashboard loads do not download the editor runtime." },
       { t: "Implement delete project feature", s: "done",
         p: ["frontend/store/projectStore.ts", "backend/src/services/projectService.js"],
         note: "The UI calls DELETE /api/projects/:id with optimistic recovery on failure." },
@@ -340,7 +341,7 @@ const MODULES = [
   },
   {
     id: "m10", num: 10, name: "Analytics Dashboard",
-    blurb: "An event-ingestion API, MongoDB aggregation, generated-site tracker, and dashboard are implemented. Saved-project HTML and downloaded HTML now carry the same valid workspace ID, while previews and drafts remain excluded from tracking. Hosted origin/CORS configuration remains a deployment concern.",
+    blurb: "An event-ingestion API, MongoDB aggregation, generated-site tracker, and dashboard are implemented. Saved-project HTML and downloaded HTML carry the same valid workspace ID, while previews and drafts remain excluded from tracking. The analytics UI now uses a scoped project-store subscription to avoid re-rendering for unrelated project state. Hosted origin/CORS configuration remains a deployment concern.",
     tasks: [
       { t: "Track page views (basic tracking script)", s: "done",
         p: ["frontend/lib/analyticsTracking.ts", "frontend/lib/exportHtml.ts", "frontend/components/builder/ExportButton.tsx", "frontend/components/builder/PreviewModal.tsx", "backend/src/routes/analyticsRoutes.js"],
@@ -349,7 +350,7 @@ const MODULES = [
         p: ["backend/src/models/AnalyticsEvent.js", "backend/src/services/analyticsService.js"],
         note: "Events are persisted with indexes and a 90-day retention policy." },
       { t: "Build analytics dashboard UI", s: "done",
-        p: ["frontend/app/dashboard/analytics/page.tsx"], note: "The dashboard fetches per-project data, supports date filters, and exports CSV." },
+        p: ["frontend/app/dashboard/analytics/page.tsx"], note: "The dashboard fetches per-project data, supports date filters, exports CSV, and subscribes only to the project state it renders." },
       { t: "Display traffic metrics (views, visitors)", s: "done",
         p: ["backend/src/services/analyticsService.js", "frontend/app/dashboard/analytics/page.tsx"],
         note: "Views, visitors, daily traffic, top pages, and activity are aggregated from stored events." },

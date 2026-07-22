@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, CalendarDays, RefreshCcw, Search, Tag } from "lucide-react";
 import type { BlogListItem, BlogPagination } from "@/types/blog";
@@ -14,7 +15,13 @@ import {
 } from "@/lib/blogApi";
 import { getBlogExcerpt, getPublishDate } from "@/lib/blogPresentation";
 import { onBlogChanged } from "@/lib/blogEvents";
-import Footer from "@/components/Footer";
+
+// The footer is below the primary blog content and contains its own animation
+// and icon dependencies, so it does not need to compete with post loading.
+const Footer = dynamic(() => import("@/components/Footer"), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-[#0A1E3D]" aria-hidden="true" />,
+});
 
 const PAGE_SIZE = 9;
 

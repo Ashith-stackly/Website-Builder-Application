@@ -1,17 +1,16 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState, useMemo, useLayoutEffect, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, RefreshCw, Rocket, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
-import { AssetManager } from "@/components/assets/AssetManager";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import SortableItem from "./SortableItem";
 import QuickInsertBar from "./QuickInsertBar";
 import ExportButton from "./ExportButton";
-import PublishDialog from "./PublishDialog";
 import FreeformCanvas from "./FreeformCanvas";
 import ButtonComponent from "@/components/draggable/ButtonComponent";
 import IconComponent from "@/components/draggable/IconComponent";
@@ -22,6 +21,15 @@ import { summarizeDeploymentPackage } from "@/lib/deploymentPackage";
 import type { BuilderComponent, ComponentType, Viewport } from "@/types/builder";
 import { VIEWPORT_WIDTHS } from "@/types/builder";
 import { staggerContainer } from "@/lib/motion";
+
+// Asset browsing and publishing are modal workflows. Loading them only when a
+// user opens the corresponding tool keeps their dependencies out of the first
+// interactive editor payload.
+const AssetManager = dynamic(
+  () => import("@/components/assets/AssetManager").then((module) => module.AssetManager),
+  { ssr: false },
+);
+const PublishDialog = dynamic(() => import("./PublishDialog"), { ssr: false });
 
 function Canvas({
   components,
@@ -604,16 +612,20 @@ function Canvas({
       </div>
       )}
 
-      <AssetManager open={isAssetsOpen} onClose={() => setIsAssetsOpen(false)} />
-      <PublishDialog
-        open={isPublishOpen}
-        workspaceId={currentProjectId}
-        projectName={projectName.trim() || currentProjectName || "My Website"}
-        websiteName={seo.title?.trim() || projectName.trim() || currentProjectName || "My Website"}
-        onClose={() => setIsPublishOpen(false)}
-        onPreparePublish={handlePreparePublish}
-        onInspectPackage={handleInspectPublishPackage}
-      />
+      {isAssetsOpen && (
+        <AssetManager open onClose={() => setIsAssetsOpen(false)} />
+      )}
+      {isPublishOpen && (
+        <PublishDialog
+          open
+          workspaceId={currentProjectId}
+          projectName={projectName.trim() || currentProjectName || "My Website"}
+          websiteName={seo.title?.trim() || projectName.trim() || currentProjectName || "My Website"}
+          onClose={() => setIsPublishOpen(false)}
+          onPreparePublish={handlePreparePublish}
+          onInspectPackage={handleInspectPublishPackage}
+        />
+      )}
 
       {/* ── Tools dropdown (portal to escape stacking context) ── */}
       {typeof document !== "undefined" && createPortal(

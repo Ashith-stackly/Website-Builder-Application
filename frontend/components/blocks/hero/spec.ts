@@ -15,18 +15,9 @@ import HeroComponent from "@/components/draggable/HeroComponent";
 import { HeroPanel } from "./HeroPanel";
 import { escapeHtml } from "@/lib/htmlUtils";
 import { LayoutTemplate } from "lucide-react";
+import { HERO_SCHEMA_VERSION, heroDefaults } from "./defaults";
 
-export const HERO_SCHEMA_VERSION = 1;
-
-export const heroDefaults: HeroProps = {
-  schemaVersion: HERO_SCHEMA_VERSION,
-  title: "Create a website in minutes",
-  description: "Design, edit, and export a clean landing page without leaving the builder.",
-  cta: { label: "Start Building" },
-  layout: "split",
-  align: "left",
-  media: { type: "placeholder" },
-};
+export { HERO_SCHEMA_VERSION, heroDefaults } from "./defaults";
 
 /* ─── narrow validators (zero-dependency; swap for zod later) ───────── */
 
