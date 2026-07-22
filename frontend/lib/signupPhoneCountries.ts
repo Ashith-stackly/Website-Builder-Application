@@ -93,7 +93,7 @@ const SIGNUP_NATIONAL_PATTERNS: Partial<Record<string, RegExp>> = {
   ID: /^8\d{8,11}$/,
   IN: /^[6-9]\d{9}$/,
   IT: /^3\d{8,9}$/,
-  JP: /^[789]0\d{8}$/,
+  JP: /^(?:[789]0|50)\d{8}$/,
   KE: /^[17]\d{8}$/,
   KR: /^1\d{8,10}$/,
   LK: /^7\d{8}$/,
@@ -225,15 +225,28 @@ export function hasRepeatingMobileDigits(digits: string): boolean {
   return n.length > 1 && /^(\d)\1*$/.test(n);
 }
 
+/** Strip a domestic trunk leading 0 when users enter local format (e.g. JP 090…). */
+export function normalizeSignupNationalDigits(
+  digits: string,
+  country: SignupPhoneCountry,
+): string {
+  let n = digits.replace(/\D/g, "");
+  if (n.startsWith("0") && n.length > country.minDigits) {
+    n = n.slice(1);
+  }
+  return n;
+}
+
 function getNationalFormatError(digits: string, country: SignupPhoneCountry): string | null {
-  if (digits.startsWith("0")) {
+  const n = normalizeSignupNationalDigits(digits, country);
+  if (n.startsWith("0")) {
     return SIGNUP_MOBILE_INVALID_MESSAGE;
   }
-  if (hasRepeatingMobileDigits(digits)) {
+  if (hasRepeatingMobileDigits(n)) {
     return SIGNUP_MOBILE_INVALID_MESSAGE;
   }
   const pattern = SIGNUP_NATIONAL_PATTERNS[country.id];
-  if (pattern && !pattern.test(digits)) {
+  if (pattern && !pattern.test(n)) {
     return SIGNUP_MOBILE_INVALID_MESSAGE;
   }
   return null;
@@ -242,9 +255,9 @@ function getNationalFormatError(digits: string, country: SignupPhoneCountry): st
 /** Returns an error message string or null if length is valid. */
 export function validateSignupNationalDigits(
   digits: string,
-  country: SignupPhoneCountry
+  country: SignupPhoneCountry,
 ): string | null {
-  const n = digits.replace(/\D/g, "");
+  const n = normalizeSignupNationalDigits(digits, country);
   if (n.length < country.minDigits || n.length > country.maxDigits) {
     return nationalDigitsMessage(country);
   }
@@ -252,6 +265,6 @@ export function validateSignupNationalDigits(
 }
 
 export function toE164Mobile(country: SignupPhoneCountry, nationalDigits: string): string {
-  const n = nationalDigits.replace(/\D/g, "");
+  const n = normalizeSignupNationalDigits(nationalDigits, country);
   return `+${country.dialCode}${n}`;
 }

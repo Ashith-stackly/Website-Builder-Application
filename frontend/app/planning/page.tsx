@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FaCheckCircle } from "react-icons/fa";
 import Footer from "@/components/Footer";
 import { activateFrontendSubscription } from "@/lib/demoAuth";
 import { downloadPlanningInvoiceForEntry } from "@/lib/planningInvoiceHtml";
 import type { PlanningInvoiceContactDefaults } from "@/lib/planningInvoiceHtml";
+import {
+  buildPlanningQuery,
+  clearPlanningInvoiceData,
+  planningPathFromQuery,
+  readPlanningLocationSearch,
+  resolvePlanningStateFromSearch,
+  savePlanningInvoiceData,
+  type PlanningView,
+} from "@/lib/planningNavigation";
 import {
   createRazorpayOrder,
   formatInrFromDisplayPrice,
@@ -88,8 +98,9 @@ const plans = [
   },
 ];
 
+const PLAN_NAMES = plans.map((plan) => plan.name);
+
 type Plan = (typeof plans)[number];
-type PlanningView = "plans" | "payment" | "invoice" | "history";
 
 type BillingHistoryEntry = {
   date: string;
@@ -297,6 +308,17 @@ async function downloadBillingInvoiceSummary(entry: BillingHistoryEntry) {
 }
 
 export default function PlanningPage() {
+  return (
+    <Suspense fallback={null}>
+      <PlanningPageContent />
+    </Suspense>
+  );
+}
+
+function PlanningPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [viewResolved, setViewResolved] = useState(false);
   const [billingYearly, setBillingYearly] = useState(false);
   const [planningView, setPlanningView] = useState<PlanningView>("plans");
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -329,6 +351,56 @@ export default function PlanningPage() {
         return historyMonthIndexFromDate(entry.date) === Number(historyMonthFilter);
       });
 
+  const syncPlanningUrl = useCallback(
+    (params: {
+      view: PlanningView;
+      plan?: Plan | null;
+      billingYearly?: boolean;
+      isFreeCheckout?: boolean;
+    }) => {
+      const query = buildPlanningQuery({
+        view: params.view,
+        planName: params.plan?.name,
+        billingYearly: params.billingYearly,
+        isFreeCheckout: params.isFreeCheckout,
+      });
+      router.replace(planningPathFromQuery(query), { scroll: false });
+    },
+    [router],
+  );
+
+  const applyResolvedPlanningState = useCallback((resolved: ReturnType<typeof resolvePlanningStateFromSearch>) => {
+    setBillingYearly(resolved.billingYearly);
+    setIsFreeCheckout(resolved.isFreeCheckout);
+    setPaymentLoading(false);
+    setPaymentError(null);
+    setPlanningView(resolved.view);
+
+    if (resolved.view === "payment" && resolved.planName) {
+      const plan = plans.find((entry) => entry.name === resolved.planName) ?? null;
+      setSelectedPlan(plan);
+      setInvoiceData(null);
+      return;
+    }
+
+    if (resolved.view === "invoice") {
+      setInvoiceData(resolved.invoiceData);
+      setSelectedPlan(null);
+      return;
+    }
+
+    setSelectedPlan(null);
+    setInvoiceData(null);
+  }, []);
+
+  useLayoutEffect(() => {
+    const search =
+      searchParams.toString() || readPlanningLocationSearch();
+    const resolved = resolvePlanningStateFromSearch(search, PLAN_NAMES);
+    applyResolvedPlanningState(resolved);
+    setViewResolved(true);
+  }, [applyResolvedPlanningState, searchParams]);
+
   useEffect(() => {
     const stored = loadBillingHistoryFromStorage();
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -357,11 +429,18 @@ export default function PlanningPage() {
   }
 
   function handlePurchasePlan(plan: Plan, freeCheckout = false) {
+    setViewResolved(true);
     setSelectedPlan(plan);
     setPlanningView("payment");
     setPaymentLoading(false);
     setIsFreeCheckout(freeCheckout);
     setPaymentError(null);
+    syncPlanningUrl({
+      view: "payment",
+      plan,
+      billingYearly,
+      isFreeCheckout: freeCheckout,
+    });
   }
 
   function handleBackToPlans() {
@@ -370,6 +449,9 @@ export default function PlanningPage() {
     setPaymentLoading(false);
     setPaymentError(null);
     setIsFreeCheckout(false);
+    setInvoiceData(null);
+    clearPlanningInvoiceData();
+    syncPlanningUrl({ view: "plans" });
   }
 
   function finalizeCheckout(opts: {
@@ -393,6 +475,7 @@ export default function PlanningPage() {
       address: PLANNING_INVOICE_CONTACT.address,
     };
     setInvoiceData(createdInvoice);
+    savePlanningInvoiceData(createdInvoice);
     setBillingHistory((prev) => {
       const row: BillingHistoryEntry = {
         date: createdInvoice.date,
@@ -418,6 +501,7 @@ export default function PlanningPage() {
     setIsFreeCheckout(false);
     activateFrontendSubscription();
     setPlanningView("invoice");
+    syncPlanningUrl({ view: "invoice" });
   }
 
   async function handlePayWithRazorpay() {
@@ -498,6 +582,22 @@ export default function PlanningPage() {
 
   return (
     <main className="planning-page flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-slate-100">
+      {!viewResolved ? (
+        <div className="w-full flex-1">
+          <div className="w-full border border-slate-200 bg-white shadow-sm">
+            <section className="px-3 py-5 sm:px-8 sm:py-8">
+              <div className="planning-sale-strip mb-4 w-full rounded-md bg-gradient-to-r from-slate-950 via-blue-900 to-blue-600 px-4 py-2 text-center text-[11px] font-semibold text-white shadow-lg shadow-blue-950/10 sm:text-xs">
+                Upgrade Now: Get - 50% Off on Selected Plans
+              </div>
+              <div
+                className="mx-auto w-full rounded-xl bg-gradient-to-b from-[#2b66be] to-[#0a2a5f] shadow-2xl shadow-blue-950/25"
+                style={{ maxWidth: 780, minHeight: 420 }}
+                aria-hidden
+              />
+            </section>
+          </div>
+        </div>
+      ) : (
       <div className="w-full flex-1">
         <div className="w-full border border-slate-200 bg-white shadow-sm">
           <section
@@ -522,7 +622,7 @@ export default function PlanningPage() {
                     <button
                       type="button"
                       onClick={() => handlePurchasePlan(plans[0], true)}
-                      className="inline-flex items-center gap-2 rounded-full border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-5 py-2.5 text-[11px] font-semibold text-white no-underline shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 active:translate-y-0 active:scale-100 sm:text-xs"
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-full border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-5 py-2.5 text-[11px] font-semibold text-white no-underline shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 active:translate-y-0 active:scale-100 sm:text-xs"
                     >
                       <span>Start Your Free Plan</span>
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden>
@@ -556,16 +656,16 @@ export default function PlanningPage() {
 
                   <div className="planning-fade-up mt-8 w-full pl-0 sm:pl-5 md:pl-8 lg:pl-10">
                     <div className="grid w-full min-w-0 grid-cols-1 gap-y-3 md:grid-cols-4 md:items-center md:gap-x-4 lg:gap-x-6">
-                      <p className="min-w-0 text-center text-sm font-bold leading-snug text-slate-900 md:text-left">
+                      <p className="min-w-0 text-center text-sm font-bold leading-snug text-slate-950 md:text-left">
                         What you get with every plan:
                       </p>
-                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
+                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-300 sm:text-center">
                         Custom Domain
                       </span>
-                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
+                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-300 sm:text-center">
                         Reliable web hosting
                       </span>
-                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 sm:text-center">
+                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-300 sm:text-center">
                         24/7 customer care
                       </span>
                     </div>
@@ -654,7 +754,7 @@ export default function PlanningPage() {
                       <button
                         type="button"
                         onClick={() => handlePurchasePlan(plan)}
-                        className="block w-full shrink-0 rounded-full bg-gradient-to-r from-slate-950 to-blue-700 py-2 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 group-hover:bg-none group-hover:bg-white group-hover:text-blue-700 group-hover:opacity-100 hover:bg-none hover:bg-white hover:text-blue-700 hover:shadow-md active:scale-[0.98]"
+                        className="block w-full shrink-0 cursor-pointer rounded-full bg-gradient-to-r from-slate-950 to-blue-700 py-2 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 group-hover:bg-none group-hover:bg-white group-hover:text-blue-700 group-hover:opacity-100 hover:bg-none hover:bg-white hover:text-blue-700 hover:shadow-md active:scale-[0.98]"
                       >
                         Purchase Plan
                       </button>
@@ -731,7 +831,7 @@ export default function PlanningPage() {
                     type="button"
                     onClick={() => void handlePayWithRazorpay()}
                     disabled={paymentLoading}
-                    className="inline-flex min-h-10 w-full max-w-full items-center justify-center rounded-lg bg-white px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-blue-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:opacity-70 sm:w-auto sm:min-w-[180px] sm:px-6 sm:text-sm"
+                    className="inline-flex min-h-10 w-full max-w-full cursor-pointer items-center justify-center rounded-lg bg-white px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-blue-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:min-w-[180px] sm:px-6 sm:text-sm"
                   >
                     {paymentLoading
                       ? "Processing..."
@@ -791,7 +891,10 @@ export default function PlanningPage() {
                 >
                   <button
                     type="button"
-                    onClick={() => setPlanningView("history")}
+                    onClick={() => {
+                      setPlanningView("history");
+                      syncPlanningUrl({ view: "history" });
+                    }}
                     className="inline-flex w-full max-w-full min-w-0 flex-wrap items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-xs font-semibold leading-snug text-slate-900 shadow-lg shadow-blue-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl sm:inline-flex sm:w-auto sm:max-w-none sm:px-6 sm:text-[15px]"
                   >
                     <span aria-hidden>↓</span>
@@ -902,6 +1005,7 @@ export default function PlanningPage() {
           </section>
         </div>
       </div>
+      )}
       <Footer />
     </main>
   );

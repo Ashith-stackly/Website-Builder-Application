@@ -321,7 +321,7 @@ function LandingContactSection() {
   };
 
   return (
-    <motion.section id="contact" className="mx-auto my-12 max-w-7xl px-4 md:my-24 md:px-8" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
+    <motion.section id="contact" className="mx-auto mt-6 mb-12 max-w-7xl px-4 md:mt-8 md:mb-24 md:px-8" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.16 }}>
       <SectionHeading>Contact</SectionHeading>
       <motion.div className="flex flex-col items-stretch gap-6 rounded-[2rem] bg-[#E6EFF1] p-4 sm:p-8 lg:flex-row lg:items-start lg:gap-16 lg:rounded-[3rem] lg:p-14" variants={staggerContainer}>
         <motion.div className="flex w-full flex-col justify-center gap-6 sm:gap-8 lg:w-5/12" variants={fadeUp}>
@@ -386,17 +386,17 @@ function LandingContactSection() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <label className="space-y-2">
                 <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">First Name <span className="text-red-500">*</span></span>
-                <input name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
+                <input name="firstName" type="text" maxLength={50} value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
               </label>
               <label className="space-y-2">
                 <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Last Name <span className="text-red-500">*</span></span>
-                <input name="lastName" type="text" value={formData.lastName} onChange={handleInputChange} placeholder="Last Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
+                <input name="lastName" type="text" maxLength={50} value={formData.lastName} onChange={handleInputChange} placeholder="Last Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
               </label>
             </div>
-
+ 
             <label className="block space-y-2">
               <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Email Address <span className="text-red-500">*</span></span>
-              <input name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="test@gmail.com" required className={`w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white ${emailError ? "border-red-500" : "border-gray-200"}`} />
+              <input name="email" type="email" maxLength={254} value={formData.email} onChange={handleInputChange} placeholder="test@gmail.com" required className={`w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white ${emailError ? "border-red-500" : "border-gray-200"}`} />
               {emailError && <span className="block text-[10px] font-bold text-red-500">{emailError}</span>}
             </label>
 
@@ -1433,7 +1433,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section className="mx-auto my-12 max-w-7xl bg-[#FFF1F1] px-4 py-12 md:px-8 md:py-20">
+      <section className="mx-auto mt-12 mb-6 max-w-7xl bg-[#FFF1F1] px-4 py-12 md:mt-16 md:mb-8 md:px-8 md:py-20">
         <motion.div className="overflow-hidden rounded-[2.5rem] bg-[#082A5A] p-4 sm:p-8 md:p-16 text-center shadow-[0_24px_70px_rgba(8,42,90,0.20)] md:rounded-[3rem]" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.25 }}>
           <h2 className="mb-3 font-serif text-2xl font-black leading-tight text-white md:text-5xl">
             Drag & drop your vision to life

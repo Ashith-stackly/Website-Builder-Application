@@ -125,6 +125,8 @@ export default function SignupPage() {
   const countryTriggerRef = useRef<HTMLButtonElement>(null);
   const countryListRef = useRef<HTMLUListElement>(null);
   const countryPointerOnTriggerRef = useRef(false);
+  const countrySuppressOpenOnFocusRef = useRef(false);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!countryDropdownOpen) return;
@@ -449,9 +451,14 @@ export default function SignupPage() {
     setCountryDropdownOpen(true);
   };
 
+  const resetCountryHighlightToSelection = () => {
+    setCountryHighlightIndex(getCountryListIndex(form.phoneCountryId));
+  };
+
   const closeCountryDropdown = (returnFocus = false) => {
     setCountryDropdownOpen(false);
     if (returnFocus) {
+      countrySuppressOpenOnFocusRef.current = true;
       countryTriggerRef.current?.focus();
     }
   };
@@ -466,7 +473,9 @@ export default function SignupPage() {
     setErrors((prev) => ({ ...prev, mobileNumber: undefined, form: undefined }));
     setCountryHighlightIndex(getCountryListIndex(id));
     setCountryDropdownOpen(false);
-    countryTriggerRef.current?.focus();
+    requestAnimationFrame(() => {
+      mobileInputRef.current?.focus();
+    });
   };
 
   const focusCountryOption = (index: number) => {
@@ -754,6 +763,10 @@ export default function SignupPage() {
                               countryPointerOnTriggerRef.current = true;
                             }}
                             onFocus={() => {
+                              if (countrySuppressOpenOnFocusRef.current) {
+                                countrySuppressOpenOnFocusRef.current = false;
+                                return;
+                              }
                               if (!countryPointerOnTriggerRef.current) {
                                 openCountryDropdown();
                               }
@@ -801,6 +814,7 @@ export default function SignupPage() {
                               role="listbox"
                               aria-labelledby="country-select-trigger"
                               className="signup-country-list absolute left-0 top-full z-50 mt-1 max-h-60 w-max min-w-full max-w-[80vw] overflow-y-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-lg [scrollbar-color:#94a3b8_#f1f5f9]"
+                              onMouseLeave={resetCountryHighlightToSelection}
                             >
                               {SIGNUP_PHONE_COUNTRIES.map((c, idx) => {
                                 const selected = form.phoneCountryId === c.id;
@@ -813,15 +827,17 @@ export default function SignupPage() {
                                       role="option"
                                       tabIndex={countryDropdownOpen ? 0 : -1}
                                       aria-selected={selected}
-                                      className={`flex w-full cursor-pointer items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm outline-none hover:bg-[#1A73E8] hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1A73E8] ${
-                                        selected || highlighted
+                                      className={`flex w-full cursor-pointer items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1A73E8] ${
+                                        highlighted
                                           ? "bg-[#1A73E8] text-white"
-                                          : "bg-white text-gray-900"
-                                      }`}
+                                          : "bg-white text-gray-900 hover:bg-[#1A73E8] hover:text-white"
+                                      } ${selected && !highlighted ? "font-semibold" : ""}`}
                                       onFocus={() => setCountryHighlightIndex(idx)}
-                                      onMouseEnter={() => setCountryHighlightIndex(idx)}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        selectPhoneCountry(c.id);
+                                      }}
                                       onKeyDown={(e) => handleCountryOptionKeyDown(e, c.id, idx)}
-                                      onClick={() => selectPhoneCountry(c.id)}
                                     >
                                       <span className="inline-block w-6 shrink-0 font-medium">{c.id}</span>
                                       <span className="truncate">{c.name} (+{c.dialCode})</span>
@@ -833,6 +849,7 @@ export default function SignupPage() {
                           )}
                         </div>
                       <input
+                        ref={mobileInputRef}
                         type="tel"
                         inputMode="numeric"
                           maxLength={

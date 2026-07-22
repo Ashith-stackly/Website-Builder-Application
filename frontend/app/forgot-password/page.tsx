@@ -16,18 +16,10 @@ import {
   SIMPLE_MOBILE_MAX_DIGITS,
   validateSimpleMobileContact,
 } from "@/lib/simpleMobileContact";
+import { startOtpSession } from "@/lib/otpSession";
 
 const EMAIL_MAX_LENGTH = 254;
 const EMAIL_MAX_ERROR = `Email cannot exceed ${EMAIL_MAX_LENGTH} characters.`;
-
-function clearOtpSessionForContact(
-  contact: string,
-  channel: "email" | "mobile",
-) {
-  const contactKey = encodeURIComponent(contact.trim());
-  sessionStorage.removeItem(`stackly-otp-attempts-used-${channel}-${contactKey}`);
-  sessionStorage.removeItem(`stackly-otp-expires-at-${channel}-${contactKey}`);
-}
 
 function ForgotPasswordContent() {
   const router = useRouter();
@@ -35,6 +27,7 @@ function ForgotPasswordContent() {
   const [contactInput, setContactInput] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "info">("success");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const changeFrom = searchParams.get("changeFrom");
 
@@ -49,6 +42,7 @@ function ForgotPasswordContent() {
     e.preventDefault();
     setError("");
     setMessage("");
+    setMessageTone("success");
 
     const trimmed = contactInput.trim();
     if (!trimmed) {
@@ -96,9 +90,13 @@ function ForgotPasswordContent() {
         primaryUser: searchParams.get("primaryUser") || undefined,
       });
 
-      setMessage(data.message || "OTP sent successfully.");
+      const successMessage = data.message || "OTP sent successfully.";
+      setMessage(successMessage);
+      setMessageTone(
+        successMessage.toLowerCase().includes("account exists") ? "info" : "success",
+      );
 
-      clearOtpSessionForContact(
+      startOtpSession(
         verifyContact,
         verifyRoute === "/verify-email" ? "email" : "mobile",
       );
@@ -111,7 +109,7 @@ function ForgotPasswordContent() {
         router.push("/backend-error");
         return;
       }
-      setMessage(
+      setError(
         error instanceof Error
           ? error.message
           : "Could not send OTP. Try again later.",
@@ -210,9 +208,7 @@ function ForgotPasswordContent() {
                 {message && (
                   <p
                     className={`text-center text-xs ${
-                      message.includes("account exists")
-                        ? "text-white/95"
-                        : "auth-error-text"
+                      messageTone === "info" ? "text-white/95" : "auth-success-text"
                     }`}
                   >
                     {message}

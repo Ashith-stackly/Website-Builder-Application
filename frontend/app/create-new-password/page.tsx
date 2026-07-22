@@ -9,6 +9,10 @@ import {
   passwordContainsWhitespace,
 } from "@/lib/resetFlowValidation";
 import ResetFlowBackButton from "@/components/ResetFlowBackButton";
+import {
+  handleResetFlowInputFocus,
+  handleResetFlowInputMouseDown,
+} from "@/lib/resetFlowInputHandlers";
 
 const resetFlowCardStyle = {
   background:
@@ -157,9 +161,11 @@ function CreateNewPasswordContent() {
                     minLength={PASSWORD_MIN_LENGTH}
                     maxLength={PASSWORD_MAX_LENGTH}
                     onChange={(e) => applyPasswordInput(e.target.value, setNewPassword)}
+                    onFocus={handleResetFlowInputFocus}
+                    onMouseDown={handleResetFlowInputMouseDown}
                     aria-invalid={!!error}
                     aria-describedby={error ? "create-password-error" : undefined}
-                    className="w-full h-12 pl-4 pr-12 rounded border text-[14px] outline-none focus:border-white/80 transition bg-transparent"
+                    className="reset-flow-input w-full h-12 pl-4 pr-12 rounded border text-[14px] outline-none focus:border-white/80 transition bg-transparent"
                     style={{
                       border: isPasswordValidationError
                         ? "1.5px solid #FFFFFF"
@@ -203,9 +209,11 @@ function CreateNewPasswordContent() {
                     onChange={(e) =>
                       applyPasswordInput(e.target.value, setConfirmPassword)
                     }
+                    onFocus={handleResetFlowInputFocus}
+                    onMouseDown={handleResetFlowInputMouseDown}
                     aria-invalid={!!error}
                     aria-describedby={error ? "create-password-error" : undefined}
-                    className="w-full h-12 pl-4 pr-12 rounded border text-[14px] outline-none focus:border-white/80 transition bg-transparent"
+                    className="reset-flow-input w-full h-12 pl-4 pr-12 rounded border text-[14px] outline-none focus:border-white/80 transition bg-transparent"
                     style={{
                       border: isPasswordValidationError
                         ? "1.5px solid #FFFFFF"

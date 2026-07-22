@@ -214,19 +214,32 @@ function buildPlanningInvoiceStyles(): string {
   return `
     @page { size: A4; margin: 14mm; }
     * { box-sizing: border-box; }
-    html, body.invoice-doc { margin: 0; padding: 0; background: #fff; }
+    html, body.invoice-doc { margin: 0; padding: 0; background: #fff; width: 100%; }
     body.invoice-doc {
       font-family: Inter, Roboto, "Segoe UI", Arial, Helvetica, sans-serif;
       font-size: 13px;
       color: #1a1a1a;
       line-height: 1.5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100%;
+    }
+    .invoice-shell {
+      width: 794px;
+      max-width: 100%;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      box-sizing: border-box;
     }
     .invoice-page {
       width: 698px;
       max-width: 100%;
-      margin: 0 auto;
+      margin: 0;
       padding: 52px 48px 36px;
       background: #fff;
+      box-sizing: border-box;
     }
     .doc-head { margin-bottom: 0; padding-top: 2px; }
     .brand-row { margin-bottom: 4px; }
@@ -437,7 +450,11 @@ function buildPlanningInvoiceStyles(): string {
       color: ${BRAND};
       margin-top: 16px;
     }
-    @media print { .invoice-page { padding: 12mm; width: auto; } }
+    @media print {
+      body.invoice-doc { display: block; }
+      .invoice-shell { width: auto; margin: 0 auto; }
+      .invoice-page { padding: 12mm; width: auto; margin: 0 auto; }
+    }
   `;
 }
 
@@ -475,6 +492,7 @@ export function buildPlanningInvoiceHtmlDocument(p: PlanningInvoicePayload): str
   <style>${styles}</style>
 </head>
 <body class="invoice-doc">
+  <div class="invoice-shell">
   <div class="invoice-page">
     <style data-invoice-css="1">${styles}</style>
     <header class="doc-head">
@@ -547,6 +565,7 @@ export function buildPlanningInvoiceHtmlDocument(p: PlanningInvoicePayload): str
       </table>
     </div>
     <p class="fineprint">Your invoice has been generated successfully.</p>
+  </div>
   </div>
 </body>
 </html>`;
@@ -681,6 +700,12 @@ function mountInvoiceHtmlInIframe(html: string): { root: HTMLElement; cleanup: (
   doc.close();
 
   const root = doc.body;
+  root.style.margin = "0";
+  root.style.padding = "0";
+  root.style.width = "794px";
+  root.style.display = "flex";
+  root.style.justifyContent = "center";
+  root.style.background = "#ffffff";
 
   return {
     root,
@@ -733,10 +758,13 @@ export async function downloadPlanningInvoicePdf(filenameBase: string, html: str
       await waitForInvoiceRender(root);
       const invoiceCss = buildPlanningInvoiceStyles();
 
-      const pageEl = (root.querySelector(".invoice-page") as HTMLElement | null) ?? root;
+      const captureEl =
+        (root.querySelector(".invoice-shell") as HTMLElement | null) ??
+        (root.querySelector(".invoice-page") as HTMLElement | null) ??
+        root;
       await html2pdf()
         .set({
-          margin: [8, 10, 8, 10],
+          margin: [8, 0, 8, 0],
           filename: `${safeInvoiceFilename(filenameBase)}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
           html2canvas: {
@@ -749,6 +777,23 @@ export async function downloadPlanningInvoicePdf(filenameBase: string, html: str
             width: 794,
             windowWidth: 794,
             onclone: (clonedDoc: Document) => {
+              const clonedBody = clonedDoc.body;
+              if (clonedBody) {
+                clonedBody.style.margin = "0";
+                clonedBody.style.padding = "0";
+                clonedBody.style.width = "794px";
+                clonedBody.style.display = "flex";
+                clonedBody.style.justifyContent = "center";
+                clonedBody.style.background = "#ffffff";
+              }
+              const clonedShell = clonedDoc.querySelector(".invoice-shell") as HTMLElement | null;
+              if (clonedShell) {
+                clonedShell.style.width = "794px";
+                clonedShell.style.maxWidth = "794px";
+                clonedShell.style.margin = "0 auto";
+                clonedShell.style.display = "flex";
+                clonedShell.style.justifyContent = "center";
+              }
               const clonedPage = clonedDoc.querySelector(".invoice-page");
               if (clonedPage && !clonedPage.querySelector('style[data-invoice-css="1"]')) {
                 const styleEl = clonedDoc.createElement("style");
@@ -773,7 +818,7 @@ export async function downloadPlanningInvoicePdf(filenameBase: string, html: str
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"] },
         })
-        .from(pageEl)
+        .from(captureEl)
         .save();
     } finally {
       cleanup();

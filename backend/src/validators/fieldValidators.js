@@ -50,7 +50,7 @@ const validateEmail = (email) => {
   // Optional domain whitelist check configured via environment variables
   const whitelistEnabled = process.env.EMAIL_DOMAIN_WHITELIST_ENABLED === "true";
   if (whitelistEnabled) {
-    const whitelistStr = process.env.EMAIL_DOMAIN_WHITELIST || "gmail.com,yahoo.in,outlook.com,thestackly.com";
+    const whitelistStr = process.env.EMAIL_DOMAIN_WHITELIST || "gmail.com,yahoo.com,outlook.com,hotmail.com,live.com,thestackly.com";
     const allowedDomains = whitelistStr.split(",").map(d => d.trim().toLowerCase());
     const domain = cleanEmail.split("@")[1];
     if (!allowedDomains.includes(domain)) {

@@ -2,6 +2,7 @@ import type {
   ChangeEvent,
   ClipboardEvent,
   Dispatch,
+  FocusEvent,
   KeyboardEvent,
   SetStateAction,
 } from "react";
@@ -12,6 +13,17 @@ export function focusOtpInput(inputIdPrefix: string, index: number): void {
     el.focus();
     el.select();
   }
+}
+
+export function createOtpFocusHandler() {
+  return (e: FocusEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    requestAnimationFrame(() => {
+      if (document.activeElement === input) {
+        input.select();
+      }
+    });
+  };
 }
 
 function applyOtpDigits(

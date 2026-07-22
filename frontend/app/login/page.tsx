@@ -326,6 +326,14 @@ export default function LoginPage() {
     }
   };
 
+  const handleRememberMeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      setForm((prev) => ({ ...prev, rememberMe: !prev.rememberMe }));
+      setErrors((prev) => ({ ...prev, form: undefined }));
+    }
+  };
+
   const handleContactBlur = () => {
     const trimmed = form.email.trim();
     setForm((prev) => ({ ...prev, email: trimmed }));
@@ -567,6 +575,7 @@ export default function LoginPage() {
                         type="checkbox"
                         checked={form.rememberMe}
                         onChange={handleChange("rememberMe")}
+                        onKeyDown={handleRememberMeKeyDown}
                         className="h-3.5 w-3.5 rounded border border-white/60 bg-transparent accent-[#2d8cf0]"
                       />
                       <span>Remember me</span>

@@ -380,7 +380,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const scrollLandingSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: string, closeMobile = false) => {
     const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
  
-    if (currentPath !== "/landing") {
+    if (!currentPath.endsWith("/landing")) {
       if (closeMobile) {
         setMobileOpen(false);
       }
@@ -389,7 +389,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
  
     event.preventDefault();
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    window.history.pushState(null, "", `/landing#${sectionId}`);
+    window.history.pushState(null, "", `${window.location.pathname}#${sectionId}`);
  
     if (closeMobile) {
       setMobileOpen(false);
@@ -684,7 +684,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     }
 
     const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
-    if (currentPath === "/landing") {
+    if (currentPath.endsWith("/landing")) {
       window.dispatchEvent(new CustomEvent("stackly-navbar-search", { detail: query }));
       const newUrl = `${window.location.pathname}?search=${encodeURIComponent(query)}`;
       window.history.pushState(null, "", newUrl);

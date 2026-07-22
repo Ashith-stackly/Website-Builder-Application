@@ -214,8 +214,12 @@ export function isValidEmailAddress(email: string): boolean {
 /** Allowed domains for signup (aligned with backend register). */
 export const SIGNUP_ALLOWED_EMAIL_DOMAINS = [
   "gmail.com",
-  "yahoo.in",
+  "yahoo.com",
+  "ymail.com",
+  "rocketmail.com",
   "outlook.com",
+  "hotmail.com",
+  "live.com",
   "thestackly.com",
 ] as const;
 

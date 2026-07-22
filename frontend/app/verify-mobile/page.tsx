@@ -1,27 +1,28 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isApiConnectionError, verifyMobileOtp } from "@/lib/api";
 import {
   createOtpChangeHandler,
+  createOtpFocusHandler,
   createOtpKeyDownHandler,
   createOtpPasteHandler,
 } from "@/lib/otpInputHandlers";
+import { OTP_MAX_ATTEMPTS } from "@/lib/otpSession";
+import { useOtpSession } from "@/lib/useOtpSession";
 import { assetPath } from "@/lib/paths";
 import ResetFlowBackButton from "@/components/ResetFlowBackButton";
+import {
+  VERIFY_OTP_INPUT_CLASS,
+  VERIFY_OTP_LINK_CLASS,
+  VERIFY_OTP_RESEND_CLASS,
+} from "@/lib/verifyOtpStyles";
+import { handleResetFlowInputMouseDown } from "@/lib/resetFlowInputHandlers";
 
 const MOBILE_OTP_INPUT_PREFIX = "mobile-otp";
 
-const OTP_COOLDOWN_SECONDS = 60;
-const OTP_MAX_ATTEMPTS = 3;
 const MAX_ATTEMPTS_REACHED_MESSAGE = "Maximum attempts reached.";
-
-const VERIFY_OTP_LINK_CLASS =
-  "underline font-semibold cursor-pointer transition-colors duration-200 hover:text-white focus-visible:text-white focus-visible:outline-none";
-
-const VERIFY_OTP_RESEND_CLASS =
-  "text-[12px] sm:text-[13px] underline font-semibold transition-colors duration-200 enabled:cursor-pointer enabled:hover:text-[#F2B541] focus-visible:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline";
 
 const resetFlowCardStyle = {
   background:
@@ -40,48 +41,15 @@ function VerifyMobileContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
-  const contactKey = useMemo(() => encodeURIComponent(contact.trim()), [contact]);
-  const otpAttemptsUsedKey = `stackly-otp-attempts-used-mobile-${contactKey}`;
-  const otpExpiresAtKey = `stackly-otp-expires-at-mobile-${contactKey}`;
-
-  const [otpAttemptsUsed, setOtpAttemptsUsed] = useState(0);
-  const [cooldownExpiresAt, setCooldownExpiresAt] = useState<number | null>(null);
-  const [cooldownSecondsLeft, setCooldownSecondsLeft] = useState(OTP_COOLDOWN_SECONDS);
+  const {
+    otpAttemptsUsed,
+    cooldownSecondsLeft,
+    restartSession,
+    expireSession,
+    updateAttemptsUsed,
+  } = useOtpSession(contact, "mobile");
 
   const clearError = () => setError("");
-
-  useEffect(() => {
-    // Use sessionStorage so a simple refresh doesn't wipe the timer/attempt count.
-    const now = Date.now();
-    const storedAttempts = Number(sessionStorage.getItem(otpAttemptsUsedKey) || "0");
-    setOtpAttemptsUsed(
-      Number.isFinite(storedAttempts)
-        ? Math.min(storedAttempts, OTP_MAX_ATTEMPTS)
-        : 0,
-    );
-
-    const storedExpiresAt = Number(sessionStorage.getItem(otpExpiresAtKey) || "0");
-    let nextExpiresAt = storedExpiresAt;
-    if (!storedExpiresAt || storedExpiresAt <= now) {
-      nextExpiresAt = now + OTP_COOLDOWN_SECONDS * 1000;
-      sessionStorage.setItem(otpExpiresAtKey, String(nextExpiresAt));
-    }
-
-    setCooldownExpiresAt(nextExpiresAt);
-  }, [otpAttemptsUsedKey, otpExpiresAtKey]);
-
-  useEffect(() => {
-    if (cooldownExpiresAt == null) return;
-
-    const tick = () => {
-      const remaining = Math.ceil((cooldownExpiresAt - Date.now()) / 1000);
-      setCooldownSecondsLeft(Math.max(0, remaining));
-    };
-
-    tick();
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
-  }, [cooldownExpiresAt]);
 
   const hasReachedMaxAttempts = otpAttemptsUsed >= OTP_MAX_ATTEMPTS;
   const canResend =
@@ -130,22 +98,16 @@ function VerifyMobileContent() {
           ? (err as unknown as { attemptsLeft?: number }).attemptsLeft
           : undefined;
       if (typeof attemptsLeft === "number") {
-        const nextAttemptsUsed = Math.max(0, OTP_MAX_ATTEMPTS - attemptsLeft);
-        setOtpAttemptsUsed(nextAttemptsUsed);
-        sessionStorage.setItem(otpAttemptsUsedKey, String(nextAttemptsUsed));
+        updateAttemptsUsed(Math.max(0, OTP_MAX_ATTEMPTS - attemptsLeft));
       } else {
         const normalized = message.toLowerCase();
         if (normalized.includes("max attempts")) {
-          setOtpAttemptsUsed(OTP_MAX_ATTEMPTS);
-          sessionStorage.setItem(otpAttemptsUsedKey, String(OTP_MAX_ATTEMPTS));
+          updateAttemptsUsed(OTP_MAX_ATTEMPTS);
           setInfo("");
         }
         if (normalized.includes("otp expired")) {
-          setOtpAttemptsUsed(0);
-          sessionStorage.setItem(otpAttemptsUsedKey, "0");
-          setCooldownExpiresAt(Date.now());
-          setCooldownSecondsLeft(0);
-          sessionStorage.setItem(otpExpiresAtKey, String(Date.now()));
+          updateAttemptsUsed(0);
+          expireSession();
         }
       }
       setError(message);
@@ -208,7 +170,9 @@ function VerifyMobileContent() {
                     setCode,
                     clearError
                   )}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded border bg-transparent text-center text-lg text-white outline-none focus:border-white/80"
+                  onFocus={createOtpFocusHandler()}
+                  onMouseDown={handleResetFlowInputMouseDown}
+                  className={VERIFY_OTP_INPUT_CLASS}
                   style={{
                     border: "1px solid rgba(255,255,255,0.7)",
                   }}
@@ -229,7 +193,7 @@ function VerifyMobileContent() {
                 className={VERIFY_OTP_LINK_CLASS}
                 style={{ color: "#F2B541" }}
               >
-                Change Here
+                Click here
               </button>
             </p>
 
@@ -284,14 +248,7 @@ function VerifyMobileContent() {
                     action: "resend",
                   });
                   setInfo(result.message || "Code resent successfully.");
-
-                  const nextExpiresAt =
-                    Date.now() + OTP_COOLDOWN_SECONDS * 1000;
-                  sessionStorage.setItem(otpExpiresAtKey, String(nextExpiresAt));
-                  setCooldownExpiresAt(nextExpiresAt);
-
-                  setOtpAttemptsUsed(0);
-                  sessionStorage.setItem(otpAttemptsUsedKey, "0");
+                  restartSession();
                 } catch (err) {
                   if (isApiConnectionError(err)) {
                     router.push("/backend-error");
