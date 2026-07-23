@@ -2,7 +2,27 @@
 
 import { Suspense, useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FaCheckCircle } from "react-icons/fa";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import {
+  Check,
+  Sparkles,
+  ShieldCheck,
+  ArrowLeft,
+  Download,
+  CreditCard,
+  Zap,
+  ArrowRight,
+  Lock,
+  Star,
+  FileText,
+  Calendar,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  CheckCircle2,
+  RefreshCcw,
+} from "lucide-react";
 import Footer from "@/components/Footer";
 import { activateFrontendSubscription } from "@/lib/demoAuth";
 import { downloadPlanningInvoiceForEntry } from "@/lib/planningInvoiceHtml";
@@ -19,7 +39,6 @@ import {
 import {
   createRazorpayOrder,
   formatInrFromDisplayPrice,
-  getRazorpaySetupHint,
   isRazorpayDemoMode,
   loadRazorpayCheckoutScript,
   openRazorpayCheckout,
@@ -206,6 +225,30 @@ function saveBillingHistoryToStorage(entries: BillingHistoryEntry[]) {
   }
 }
 
+// Framer Motion Animation Variants
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.05 },
+  },
+};
+
+const fadeUpVariants: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+const viewTransitionVariants: Variants = {
+  initial: { opacity: 0, y: 20, scale: 0.98 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, y: -15, scale: 0.98, transition: { duration: 0.25 } },
+};
+
 export default function PlanningPage() {
   return (
     <Suspense fallback={null}>
@@ -235,6 +278,7 @@ function PlanningPageContent() {
     if (typeof window === "undefined") return;
     await downloadPlanningInvoiceForEntry(entry, invoiceContact, entry.invoiceId);
   }, [invoiceContact]);
+
   const [historyMonthFilter, setHistoryMonthFilter] = useState<string>("all");
   const currentYear = new Date().getFullYear();
   const historyMonths = [
@@ -251,6 +295,7 @@ function PlanningPageContent() {
     { value: "10", label: "November" },
     { value: "11", label: "December" },
   ] as const;
+
   const filteredBillingHistory =
     historyMonthFilter === "all"
       ? billingHistory
@@ -311,7 +356,6 @@ function PlanningPageContent() {
 
   useEffect(() => {
     const stored = loadBillingHistoryFromStorage();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored) setBillingHistory(stored);
   }, []);
 
@@ -329,13 +373,9 @@ function PlanningPageContent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const scrollToTop = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     };
     scrollToTop();
-    const frame = requestAnimationFrame(scrollToTop);
-    return () => cancelAnimationFrame(frame);
   }, [planningView]);
 
   function getActivePrice(plan: Plan) {
@@ -522,7 +562,6 @@ function PlanningPageContent() {
             });
             if (!verifyResult.verified) throw new Error("Payment verification failed");
 
-            // Update user profile from verify response if backend returned it
             if (verifyResult.user) {
               setUserProfile({
                 _id: verifyResult.user._id,
@@ -552,328 +591,412 @@ function PlanningPageContent() {
   }
 
   return (
-    <main className="planning-page flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-slate-100">
-      {!viewResolved ? (
-        <div className="w-full flex-1">
-          <div className="w-full border border-slate-200 bg-white shadow-sm">
-            <section className="px-3 py-5 sm:px-8 sm:py-8">
-              <div className="planning-sale-strip mb-4 w-full rounded-md bg-gradient-to-r from-slate-950 via-blue-900 to-blue-600 px-4 py-2 text-center text-[11px] font-semibold text-white shadow-lg shadow-blue-950/10 sm:text-xs">
-                Upgrade Now: Get - 50% Off on Selected Plans
-              </div>
-              <div
-                className="mx-auto w-full rounded-xl bg-gradient-to-b from-[#2b66be] to-[#0a2a5f] shadow-2xl shadow-blue-950/25"
-                style={{ maxWidth: 780, minHeight: 420 }}
-                aria-hidden
-              />
-            </section>
-          </div>
-        </div>
-      ) : (
-      <div className="w-full flex-1">
-        <div className="w-full border border-slate-200 bg-white shadow-sm">
-          <section
-            id="planning-billing-content"
-            className="scroll-mt-4 px-3 py-5 sm:px-8 sm:py-8"
-          >
-            <div className="planning-sale-strip mb-4 w-full rounded-md bg-gradient-to-r from-slate-950 via-blue-900 to-blue-600 px-4 py-2 text-center text-[11px] font-semibold text-white shadow-lg shadow-blue-950/10 sm:text-xs">
-              Upgrade Now: Get - 50% Off on Selected Plans
+    <main className="relative min-h-screen w-full bg-[#080d1a] text-slate-100 overflow-x-hidden font-sans selection:bg-blue-500 selection:text-white">
+      {/* Background Decorative Glow Effects */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-blue-600/20 blur-[130px]" />
+        <div className="absolute -right-40 top-1/3 h-[600px] w-[600px] rounded-full bg-indigo-600/15 blur-[150px]" />
+        <div className="absolute left-1/3 bottom-10 h-[500px] w-[500px] rounded-full bg-purple-600/15 blur-[140px]" />
+      </div>
+
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* SALE PROMO STRIP */}
+        <motion.div
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-8 overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-900/40 via-indigo-900/50 to-purple-900/40 p-0.5 shadow-xl shadow-blue-950/40 backdrop-blur-md"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-[#0b1329]/80 px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/30">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <p className="text-xs font-semibold text-slate-200 sm:text-sm">
+                <span className="font-extrabold text-white">Special Launch Offer:</span> Save up to <span className="text-blue-400 font-extrabold">58% OFF</span> on Annual Subscriptions!
+              </p>
             </div>
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+              <ShieldCheck className="h-4 w-4 text-emerald-400" />
+              <span>30-Day Money-Back Guarantee</span>
+            </div>
+          </div>
+        </motion.div>
 
-            {planningView === "plans" && (
-              <div className="planning-hero-panel rounded-lg bg-gradient-to-br from-slate-50 via-blue-50 to-white px-5 py-8 shadow-sm ring-1 ring-slate-200/80 sm:px-8 sm:py-10 md:px-10">
-                <div className="mx-auto w-full max-w-5xl">
-                  <h1 className="planning-fade-up text-center text-3xl font-bold text-slate-950 sm:text-[44px] sm:leading-tight">
-                    Choose the Best Plan for You
-                  </h1>
-                  <p className="planning-fade-up mx-auto mt-4 max-w-2xl text-center text-[13px] font-medium leading-relaxed text-slate-700 sm:text-sm md:text-base">
-                    Create your website for free and upgrade when you’re ready
-                  </p>
-
-                  <div className="planning-fade-up mt-5 flex justify-center sm:mt-6">
-                    <button
-                      type="button"
-                      onClick={() => handlePurchasePlan(plans[0], true)}
-                      className="inline-flex cursor-pointer items-center gap-2 rounded-full border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-5 py-2.5 text-[11px] font-semibold text-white no-underline shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 active:translate-y-0 active:scale-100 sm:text-xs"
-                    >
-                      <span>Start Your Free Plan</span>
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden>
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <circle
-                            cx="10"
-                            cy="10"
-                            r="8.25"
-                            stroke="white"
-                            strokeWidth="1.2"
-                            fill="none"
-                          />
-                          <path
-                            d="M8 10h4M11.5 7l3 3-3 3"
-                            stroke="white"
-                            strokeWidth="1.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                        </svg>
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="planning-fade-up mt-8 w-full pl-0 sm:pl-5 md:pl-8 lg:pl-10">
-                    <div className="grid w-full min-w-0 grid-cols-1 gap-y-3 md:grid-cols-4 md:items-center md:gap-x-4 lg:gap-x-6">
-                      <p className="min-w-0 text-center text-sm font-bold leading-snug text-slate-950 md:text-left">
-                        What you get with every plan:
-                      </p>
-                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-300 sm:text-center">
-                        Custom Domain
-                      </span>
-                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-300 sm:text-center">
-                        Reliable web hosting
-                      </span>
-                      <span className="min-w-0 rounded-full bg-white px-3 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-300 sm:text-center">
-                        24/7 customer care
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="planning-fade-up mt-8 flex w-full justify-center px-3 sm:px-4">
-                    <div className="planning-billing-toggle-wrap flex w-full max-w-xl items-center gap-3 sm:gap-5">
-                      <span
-                        className={`planning-billing-label inline-flex min-h-9 min-w-0 flex-1 select-none items-center justify-end gap-1 py-1.5 pl-2 pr-1 text-right text-sm leading-tight sm:pr-2 ${!billingYearly ? "font-bold text-slate-950" : "font-medium text-slate-500"
-                          }`}
-                      >
-                        <span className="planning-billing-label-line">Bill</span>
-                        <span className="planning-billing-label-line">Monthly</span>
-                      </span>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={billingYearly}
-                        aria-label="Toggle monthly or yearly billing"
-                        onClick={() => setBillingYearly((v) => !v)}
-                        className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center self-center rounded-full border border-slate-300 bg-white px-0.5 align-middle shadow-inner transition-colors duration-300 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700/40 focus-visible:ring-offset-2"
-                      >
-                        <span
-                          className={`pointer-events-none absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-blue-700 shadow-sm transition-transform duration-300 ${billingYearly ? "translate-x-6" : "translate-x-0"
-                            }`}
-                        />
-                      </button>
-                      <span
-                        className={`planning-billing-label inline-flex min-h-9 min-w-0 flex-1 select-none items-center justify-start gap-1 py-1.5 pl-1 pr-2 text-left text-sm leading-tight sm:pl-2 ${billingYearly ? "font-bold text-slate-950" : "font-medium text-slate-500"
-                          }`}
-                      >
-                        <span className="planning-billing-label-line">Bill</span>
-                        <span className="planning-billing-label-line">Yearly</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="planning-plans-grid mx-auto mt-8 grid w-full max-w-5xl grid-cols-1 gap-5 md:grid-cols-3 md:items-stretch md:gap-6">
-                  {plans.map((plan) => (
-                    <article
-                      key={plan.name}
-                      className={`planning-plan-card group relative flex h-full min-h-0 flex-col rounded-lg border border-slate-200 bg-white p-4 text-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/20 hover:bg-gradient-to-b hover:from-slate-950 hover:to-blue-700 hover:text-white hover:shadow-xl hover:shadow-blue-950/20 sm:p-4 ${plan.isRecommended ? "planning-recommended-card" : ""
-                        }`}
-                    >
-                      {plan.isRecommended && (
-                        <div className="planning-recommended-badge absolute right-0 top-0 z-10 rounded-bl-md rounded-tr-lg border border-white/10 bg-blue-600 px-3 py-1.5 text-[9px] font-extrabold leading-none tracking-wide text-white shadow-sm transition-colors group-hover:border-slate-900/40 group-hover:bg-white group-hover:text-slate-950 hover:border-slate-900/40 hover:bg-white hover:text-slate-950">
-                          RECOMMENDED
-                        </div>
-                      )}
-                      <div className={`mb-1.5 flex items-center justify-between gap-2 ${plan.isRecommended ? "planning-recommended-content-offset" : ""}`}>
-                        <div>
-                          <h2 className="text-base font-bold leading-tight transition-colors group-hover:text-white">{plan.name}</h2>
-                          <p className="mt-0.5 text-xs leading-tight text-blue-900 transition-colors group-hover:text-white/85">
-                            {billingYearly ? "Per year" : "Per month"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="planning-price-row mb-1.5 flex items-start justify-between gap-2 lg:items-end">
-                        <div className="planning-price-oldsave flex min-w-0 flex-wrap items-end gap-x-1.5 gap-y-0.5 pr-1">
-                          <div className="text-sm font-bold text-slate-900 line-through transition-colors group-hover:text-white">
-                            {billingYearly ? plan.yearlyOldPrice : plan.oldPrice}
-                          </div>
-                          <div className="text-[10px] font-semibold leading-tight text-slate-500 transition-colors group-hover:text-white/85">
-                            {billingYearly ? plan.yearlySaveText : plan.saveText}
-                          </div>
-                        </div>
-                        <div className="planning-price-chip relative top-0 mr-1 shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-base font-bold leading-none text-blue-950 transition-colors lg:-top-2 lg:mr-3 lg:px-3.5 lg:py-1.5 lg:text-xl group-hover:border-white/30 group-hover:bg-white group-hover:text-blue-700">
-                          {billingYearly ? plan.yearlyNewPrice : plan.newPrice}
-                        </div>
-                      </div>
-                      <div className="mb-2 h-px w-full bg-slate-200 transition-colors group-hover:bg-white/30" />
-
-                      <ul className="space-y-1 text-xs leading-snug text-slate-700 transition-colors group-hover:text-white sm:text-sm sm:leading-snug">
-                        {plan.features.map((feature) => (
-                          <li key={feature} className="flex items-start gap-1.5">
-                            <FaCheckCircle className="mt-px shrink-0 text-[10px] text-blue-700 transition-colors group-hover:text-white" aria-hidden={true} />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      <div className="mt-2 min-h-0 w-full flex-1 shrink-0" aria-hidden />
-
-                      <button
-                        type="button"
-                        onClick={() => handlePurchasePlan(plan)}
-                        className="block w-full shrink-0 cursor-pointer rounded-full bg-gradient-to-r from-slate-950 to-blue-700 py-2 text-center text-sm font-semibold text-white shadow-sm transition-all duration-300 group-hover:bg-none group-hover:bg-white group-hover:text-blue-700 group-hover:opacity-100 hover:bg-none hover:bg-white hover:text-blue-700 hover:shadow-md active:scale-[0.98]"
-                      >
-                        Purchase Plan
-                      </button>
-                    </article>
-                  ))}
-                </div>
+        {/* DYNAMIC VIEW ROUTER WITH ANIMATE PRESENCE */}
+        <AnimatePresence mode="wait">
+          {!viewResolved ? (
+            <motion.div
+              key="loading-state"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex min-h-[450px] w-full items-center justify-center rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-10 w-10 animate-spin rounded-full border-3 border-blue-500 border-t-transparent" />
+                <p className="text-sm font-semibold text-slate-400">Loading plan choices...</p>
               </div>
-            )}
+            </motion.div>
+          ) : planningView === "plans" ? (
+            /* ================= PLANS SELECTION VIEW ================= */
+            <motion.div
+              key="plans-view"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="space-y-10"
+            >
+              {/* HERO HEADER */}
+              <div className="text-center space-y-4 max-w-3xl mx-auto">
+                <motion.div variants={fadeUpVariants} className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-bold text-blue-300 backdrop-blur-md">
+                  <Zap className="h-3.5 w-3.5 text-blue-400" />
+                  <span>Flexible Pricing for Everyone</span>
+                </motion.div>
+                <motion.h1 variants={fadeUpVariants} className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                  Choose the Perfect Plan for Your <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">Growth</span>
+                </motion.h1>
+                <motion.p variants={fadeUpVariants} className="text-base text-slate-300 sm:text-lg">
+                  Start free and upgrade as your website expands. Cancel or switch plans anytime.
+                </motion.p>
+              </div>
 
-            {planningView === "payment" && selectedPlan && (
-              <div
-                className="planning-payment-view planning-view-panel mx-auto w-full overflow-hidden rounded-xl border border-white/20 text-white shadow-2xl shadow-blue-950/25"
-                style={{
-                  maxWidth: 780,
-                  background: "linear-gradient(180deg, #2b66be 0%, #0a2a5f 100%)",
-                }}
-              >
-                <div className="border-b border-white/20 bg-white/5 px-4 pb-6 pt-4 backdrop-blur sm:px-6 sm:pb-8 sm:pt-6">
-                  <div className="mb-4 text-left">
-                    <button
-                      type="button"
-                      onClick={handleBackToPlans}
-                      className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:text-sm"
-                      aria-label="Back to plans"
-                    >
-                      ← Back to plans
-                    </button>
-                  </div>
-                  <div className="text-center">
-                    <h2 className="text-2xl font-bold sm:text-3xl">
-                      {isFreeCheckout ? "Activate free plan" : "Pay with Razorpay"}
-                    </h2>
-                    <p className="mt-2 text-xs text-white/85 sm:text-sm">
-                      {isFreeCheckout
-                        ? "No payment required — your free plan will be activated immediately."
-                        : "Card, UPI, netbanking, and wallets are supported via Razorpay Checkout."}
-                    </p>
-                  </div>
-                </div>
-                <div className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8" style={{ maxWidth: 500 }}>
-
-                  <div className="rounded-xl border border-white/15 bg-white/10 p-4 text-xs shadow-lg shadow-blue-950/10 backdrop-blur sm:p-5 sm:text-sm">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">Order summary</p>
-                    <p className="mt-2 text-lg font-bold text-white">{selectedPlan.name}</p>
-                    <p className="text-white/85">
-                      {billingYearly ? "Yearly billing" : "Monthly billing"}
-                    </p>
-                    {isFreeCheckout ? (
-                      <p className="mt-3 text-2xl font-bold text-white">Free</p>
-                    ) : (
-                      <>
-                        <p className="mt-3 text-2xl font-bold text-white">
-                          {formatInrFromDisplayPrice(getActivePrice(selectedPlan).newPrice)}
-                        </p>
-                        <p className="mt-1 text-[11px] text-white/65">
-                          Plan price {getActivePrice(selectedPlan).newPrice} · paid in INR via Razorpay
-                        </p>
-                      </>
-                    )}
-                    {!isFreeCheckout ? (
-                      <p className="mt-2 text-[11px] leading-snug text-white/75">
-                        Secure Razorpay popup — UPI, cards, netbanking, and wallets.
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="border-t border-white/20 bg-white/5 px-4 py-5 text-center sm:px-6 sm:py-6">
-                  {paymentError ? (
-                    <p className="mb-3 text-center text-xs font-medium text-red-200 sm:text-sm" role="alert">
-                      {paymentError}
-                    </p>
-                  ) : null}
+              {/* BILLING TOGGLE */}
+              <motion.div variants={fadeUpVariants} className="flex flex-col items-center gap-4 pt-2">
+                <div className="relative flex items-center gap-3 rounded-full border border-white/15 bg-slate-900/90 p-1.5 shadow-2xl backdrop-blur-xl">
                   <button
                     type="button"
-                    onClick={() => void handlePayWithRazorpay()}
-                    disabled={paymentLoading}
-                    className="inline-flex min-h-10 w-full max-w-full cursor-pointer items-center justify-center rounded-lg bg-white px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-blue-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:min-w-[180px] sm:px-6 sm:text-sm"
+                    onClick={() => setBillingYearly(false)}
+                    className={`relative z-10 rounded-full px-5 py-2 text-xs font-bold transition-colors cursor-pointer sm:text-sm ${!billingYearly ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
                   >
-                    {paymentLoading
-                      ? "Processing..."
-                      : isFreeCheckout
-                        ? "Activate free plan"
-                        : isRazorpayDemoMode()
-                          ? "Complete demo payment"
-                          : "Pay with Razorpay"}
+                    {!billingYearly && (
+                      <motion.div
+                        layoutId="billingToggleHighlight"
+                        className="absolute inset-0 z-[-1] rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-600/40"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    Monthly Billing
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBillingYearly(true)}
+                    className={`relative z-10 flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold transition-colors cursor-pointer sm:text-sm ${billingYearly ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+                  >
+                    {billingYearly && (
+                      <motion.div
+                        layoutId="billingToggleHighlight"
+                        className="absolute inset-0 z-[-1] rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-600/40"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span>Annual Billing</span>
+                    <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-extrabold text-amber-300 border border-amber-400/30">
+                      Save 58%
+                    </span>
                   </button>
                 </div>
-              </div>
-            )}
 
-            {planningView === "invoice" && invoiceData && (
-              <div
-                className="planning-invoice-view planning-view-panel mx-auto w-full min-w-0 overflow-hidden rounded-xl border border-white/20 text-white shadow-2xl shadow-blue-950/25"
-                style={{
-                  maxWidth: 900,
-                  background: "linear-gradient(180deg, #2a66be 0%, #0b2a5c 100%)",
-                }}
-              >
-                <div className="border-b border-white/15 bg-white/5 px-4 py-5 backdrop-blur sm:px-8 sm:py-6">
-                  <div className="mb-4 text-left">
-                    <button
-                      type="button"
-                      onClick={handleBackToPlans}
-                      className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:text-sm"
-                      aria-label="Back to plans"
-                    >
-                      ← Back to plans
-                    </button>
-                  </div>
-                  <div className="text-center">
-                    <h2 className="text-2xl font-bold leading-tight sm:text-[36px]">Invoice Details</h2>
-                  </div>
-                </div>
-                <div className="min-w-0 space-y-6 px-4 py-6 sm:space-y-8 sm:px-8 sm:py-7">
-                  <div className="mx-auto w-full min-w-0 max-w-2xl space-y-3 text-xs sm:space-y-4 sm:text-[15px]">
-                    <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Invoice ID</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.invoiceId}</span></div>
-                    <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Date</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.date}</span></div>
-                    <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Plan</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.planName}</span></div>
-                    <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Amount</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.amount}</span></div>
-                  </div>
-                  <div className="min-w-0 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
-                    <h3 className="mx-auto mb-4 w-full min-w-0 max-w-2xl text-xl font-semibold sm:mb-5 sm:text-[30px]">Billing Information</h3>
-                    <div className="mx-auto w-full min-w-0 max-w-2xl space-y-3 text-xs sm:space-y-4 sm:text-[15px]">
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Name</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.name || "—"}</span></div>
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Email</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.email || "—"}</span></div>
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Contact No</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.contactNo || "—"}</span></div>
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Address</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.address || "—"}</span></div>
-                    </div>
-                  </div>
-
-                  <div className="min-w-0 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
-                    <h3 className="mx-auto mb-4 w-full min-w-0 max-w-2xl text-xl font-semibold sm:mb-5 sm:text-[30px]">Payment Information</h3>
-                    <div className="mx-auto w-full min-w-0 max-w-2xl space-y-3 text-xs sm:space-y-4 sm:text-[15px]">
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Payment Method</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.paymentMethodLabel || "Card – Visa / MasterCard"}</span></div>
-                      {invoiceData.paymentId ? (
-                        <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Payment ID</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.paymentId}</span></div>
-                      ) : null}
-                      {invoiceData.orderId ? (
-                        <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Order ID</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.orderId}</span></div>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="planning-invoice-download min-w-0 px-4 py-5 text-center sm:px-8 sm:py-6"
-                  style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
+                <button
+                  type="button"
+                  onClick={() => handlePurchasePlan(plans[0], true)}
+                  className="group inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-blue-300 transition-colors cursor-pointer"
                 >
+                  <span>Looking to test first? Activate Free Plan</span>
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </button>
+              </motion.div>
+
+              {/* FEATURES INCLUDED BAR */}
+              <motion.div variants={fadeUpVariants} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                <div className="flex flex-wrap items-center justify-around gap-4 text-xs font-semibold text-slate-300 sm:text-sm">
+                  <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-blue-400" /> Free Domain Included</span>
+                  <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-blue-400" /> Reliable Cloud Hosting</span>
+                  <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-blue-400" /> 24/7 Priority Support</span>
+                  <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-blue-400" /> SSL Security Certificate</span>
+                </div>
+              </motion.div>
+
+              {/* CARDS GRID */}
+              <motion.div variants={fadeUpVariants} className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-8 items-stretch">
+                {plans.map((plan) => {
+                  const priceInfo = getActivePrice(plan);
+                  return (
+                    <motion.div
+                      key={plan.name}
+                      whileHover={{ y: -8, transition: { duration: 0.25 } }}
+                      className={`relative flex flex-col justify-between rounded-3xl p-6 transition-all duration-300 sm:p-8 ${
+                        plan.isRecommended
+                          ? "border-2 border-blue-500/80 bg-gradient-to-b from-[#111e3b] via-[#0d162d] to-[#080d1a] shadow-2xl shadow-blue-600/30 ring-1 ring-blue-400/50"
+                          : "border border-white/10 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl hover:border-white/20 hover:shadow-xl"
+                      }`}
+                    >
+                      {plan.isRecommended && (
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-1 text-xs font-extrabold tracking-wider text-white shadow-lg shadow-blue-500/40 uppercase border border-white/20">
+                          ★ Most Popular Choice
+                        </div>
+                      )}
+
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-xl font-bold text-white sm:text-2xl">{plan.name}</h3>
+                          <p className="text-xs text-slate-400 mt-1">{priceInfo.period}</p>
+                        </div>
+
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl font-extrabold text-white sm:text-5xl">{priceInfo.newPrice}</span>
+                          <span className="text-sm font-semibold text-slate-400 line-through">{priceInfo.oldPrice}</span>
+                          <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-400 border border-emerald-500/30">
+                            {priceInfo.saveText}
+                          </span>
+                        </div>
+
+                        <div className="h-px w-full bg-white/10" />
+
+                        <ul className="space-y-3 text-xs sm:text-sm text-slate-300">
+                          {plan.features.map((feature) => (
+                            <li key={feature} className="flex items-center gap-3">
+                              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${plan.isRecommended ? "bg-blue-500 text-white" : "bg-white/10 text-blue-400"}`}>
+                                <Check className="h-3.5 w-3.5" />
+                              </span>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="pt-8">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="button"
+                          onClick={() => handlePurchasePlan(plan)}
+                          className={`w-full rounded-2xl py-3.5 text-sm font-bold shadow-lg transition-all cursor-pointer ${
+                            plan.isRecommended
+                              ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-600/40 hover:from-blue-600 hover:to-indigo-700"
+                              : "bg-white text-slate-900 hover:bg-slate-100"
+                          }`}
+                        >
+                          Select {plan.name}
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </motion.div>
+          ) : planningView === "payment" && selectedPlan ? (
+            /* ================= PAYMENT CHECKOUT VIEW ================= */
+            <motion.div
+              key="payment-view"
+              variants={viewTransitionVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="mx-auto max-w-2xl"
+            >
+              <div className="overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-b from-[#101b36] to-[#0a1224] p-6 shadow-2xl backdrop-blur-2xl sm:p-10">
+                <button
+                  type="button"
+                  onClick={handleBackToPlans}
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer mb-6"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Back to plan options</span>
+                </button>
+
+                <div className="space-y-6">
+                  <div className="text-center space-y-2">
+                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      <CreditCard className="h-6 w-6" />
+                    </span>
+                    <h2 className="text-2xl font-bold text-white sm:text-3xl">
+                      {isFreeCheckout ? "Activate Free Subscription" : "Complete Payment"}
+                    </h2>
+                    <p className="text-xs text-slate-300 sm:text-sm">
+                      {isFreeCheckout
+                        ? "Instant free access — no credit card needed."
+                        : "Encrypted payment powered by Razorpay Checkout."}
+                    </p>
+                  </div>
+
+                  {/* SUMMARY BOX */}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
+                    <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      <span>Order Summary</span>
+                      <span className="text-blue-400">{billingYearly ? "Annual" : "Monthly"}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-lg font-bold text-white">{selectedPlan.name}</p>
+                        <p className="text-xs text-slate-400">Stackly Workspace Access</p>
+                      </div>
+                      <div className="text-right">
+                        {isFreeCheckout ? (
+                          <p className="text-xl font-extrabold text-emerald-400">₹0</p>
+                        ) : (
+                          <p className="text-xl font-extrabold text-white">
+                            {formatInrFromDisplayPrice(getActivePrice(selectedPlan).newPrice)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {paymentError && (
+                    <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-300 font-semibold text-center">
+                      {paymentError}
+                    </div>
+                  )}
+
+                  <div className="space-y-3 pt-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      disabled={paymentLoading}
+                      onClick={() => void handlePayWithRazorpay()}
+                      className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition-all hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      {paymentLoading ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          <span>Processing Payment...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-4 w-4" />
+                          <span>{isFreeCheckout ? "Activate Free Plan" : "Pay with Razorpay"}</span>
+                        </>
+                      )}
+                    </motion.button>
+
+                    <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400">
+                      <Lock className="h-3 w-3 text-emerald-400" />
+                      <span>256-Bit SSL Encrypted & Secure Checkout</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : planningView === "invoice" && invoiceData ? (
+            /* ================= INVOICE DISPLAY VIEW ================= */
+            <motion.div
+              key="invoice-view"
+              variants={viewTransitionVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="mx-auto max-w-3xl"
+            >
+              <div className="overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-b from-[#101b36] to-[#0a1224] p-6 shadow-2xl backdrop-blur-2xl sm:p-10 space-y-8">
+                <div className="flex items-center justify-between border-b border-white/10 pb-6">
                   <button
+                    type="button"
+                    onClick={handleBackToPlans}
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back to plans</span>
+                  </button>
+
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/30">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Payment Successful
+                  </span>
+                </div>
+
+                <div className="text-center space-y-2">
+                  <h2 className="text-3xl font-extrabold text-white">Invoice Details</h2>
+                  <p className="text-xs text-slate-400">Thank you for subscribing to Stackly!</p>
+                </div>
+
+                {/* INVOICE DETAILS GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left Column: Plan Overview */}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3 text-xs">
+                    <h3 className="text-sm font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Order Overview
+                    </h3>
+                    <div className="space-y-2 text-slate-300">
+                      <div className="flex justify-between py-1 border-b border-white/5">
+                        <span className="text-slate-400">Invoice ID</span>
+                        <span className="font-mono font-bold text-white">{invoiceData.invoiceId}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-white/5">
+                        <span className="text-slate-400">Date</span>
+                        <span className="font-semibold text-white">{invoiceData.date}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-white/5">
+                        <span className="text-slate-400">Plan Name</span>
+                        <span className="font-semibold text-white">{invoiceData.planName}</span>
+                      </div>
+                      <div className="flex justify-between py-1 pt-2 font-bold text-sm">
+                        <span className="text-slate-300">Amount Paid</span>
+                        <span className="text-emerald-400">{invoiceData.amount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Customer Info */}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3 text-xs">
+                    <h3 className="text-sm font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2">
+                      <User className="h-4 w-4" /> Customer Details
+                    </h3>
+                    <div className="space-y-2 text-slate-300">
+                      <div className="flex justify-between py-1 border-b border-white/5">
+                        <span className="text-slate-400">Name</span>
+                        <span className="font-semibold text-white">{invoiceData.name || "—"}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-white/5">
+                        <span className="text-slate-400">Email</span>
+                        <span className="font-semibold text-white truncate max-w-[180px]">{invoiceData.email || "—"}</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-white/5">
+                        <span className="text-slate-400">Contact</span>
+                        <span className="font-semibold text-white">{invoiceData.contactNo || "—"}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-slate-400">Address</span>
+                        <span className="font-semibold text-white truncate max-w-[180px]">{invoiceData.address || "—"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PAYMENT INSTRUMENT INFO */}
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3 text-xs">
+                  <h3 className="text-sm font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" /> Payment Instrument
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-slate-300">
+                    <div>
+                      <span className="text-slate-400 block text-[11px]">Payment Instrument</span>
+                      <span className="font-semibold text-white text-sm">{invoiceData.paymentMethodLabel || "Card – Visa / MasterCard"}</span>
+                    </div>
+                    {invoiceData.paymentId && (
+                      <div>
+                        <span className="text-slate-400 block text-[11px]">Transaction ID</span>
+                        <span className="font-mono text-white text-xs">{invoiceData.paymentId}</span>
+                      </div>
+                    )}
+                    {invoiceData.orderId && (
+                      <div>
+                        <span className="text-slate-400 block text-[11px]">Order ID</span>
+                        <span className="font-mono text-white text-xs">{invoiceData.orderId}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ACTION BUTTON */}
+                <div className="flex justify-center pt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     type="button"
                     onClick={() => {
                       const entry: BillingHistoryEntry = {
@@ -894,104 +1017,79 @@ function PlanningPageContent() {
                       };
                       void downloadBillingInvoiceSummary(entry);
                     }}
-                    className="inline-flex w-full max-w-full min-w-0 flex-wrap items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-xs font-semibold leading-snug text-slate-900 shadow-lg shadow-blue-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl sm:inline-flex sm:w-auto sm:max-w-none sm:px-6 sm:text-[15px]"
+                    className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-3.5 text-sm font-bold text-slate-900 shadow-xl hover:bg-slate-100 transition-colors cursor-pointer"
                   >
-                    <span aria-hidden>↓</span>
-                    Download Invoice
-                  </button>
+                    <Download className="h-4 w-4 text-blue-600" />
+                    <span>Download PDF Invoice</span>
+                  </motion.button>
                 </div>
               </div>
-            )}
-
-            {planningView === "history" && (
-              <div
-                className="planning-history-view planning-view-panel mx-auto my-4 w-full rounded-xl border border-white/25 p-3 text-white shadow-2xl shadow-blue-950/25 sm:my-6 sm:p-4"
-                style={{
-                  maxWidth: 640,
-                  background: "linear-gradient(180deg, #2f6dca 0%, #0a2a5f 100%)",
-                }}
-              >
-                <div className="mx-auto mb-3 w-full max-w-[560px] text-left">
+            </motion.div>
+          ) : planningView === "history" ? (
+            /* ================= BILLING HISTORY VIEW ================= */
+            <motion.div
+              key="history-view"
+              variants={viewTransitionVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="mx-auto max-w-4xl"
+            >
+              <div className="overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-b from-[#101b36] to-[#0a1224] p-6 shadow-2xl backdrop-blur-2xl sm:p-10 space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
                   <button
                     type="button"
                     onClick={handleBackToPlans}
-                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:text-sm"
-                    aria-label="Back to plans"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer"
                   >
-                    ← Back to plans
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back to plans</span>
                   </button>
-                </div>
-                <div className="planning-history-track mx-auto mb-3 flex w-full max-w-[560px] flex-col gap-3 pb-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.17)" }}>
-                  <h2 className="shrink-0 text-xl font-bold leading-tight tracking-[0.2px] sm:text-[34px]">Billing History</h2>
-                  <div
-                    className="planning-history-filter flex min-h-0 w-full min-w-0 flex-col items-stretch overflow-visible rounded-md bg-white sm:w-auto sm:max-w-none sm:flex-row sm:flex-nowrap sm:shrink-0"
-                    style={{ color: "#1f2937", fontSize: 10, lineHeight: 1.2, boxShadow: "0 0 0 1px rgba(15,23,42,0.08)" }}
+
+                  <h2 className="text-xl font-bold text-white sm:text-2xl">Billing History</h2>
+
+                  <select
+                    value={historyMonthFilter}
+                    onChange={(e) => setHistoryMonthFilter(e.target.value)}
+                    className="rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white outline-none cursor-pointer"
                   >
-                    <button
-                      type="button"
-                      onClick={() => setHistoryMonthFilter("all")}
-                      className="min-w-0 w-full whitespace-nowrap border-b border-[#e2e8f0] sm:w-auto sm:flex-none sm:border-b-0 sm:border-r sm:border-[#e2e8f0]"
-                      style={{
-                        padding: "7px 10px",
-                        color: "#1f2937",
-                        background: historyMonthFilter === "all" ? "#eef2ff" : "transparent",
-                        fontWeight: historyMonthFilter === "all" ? 700 : 500,
-                      }}
-                    >
-                      All Invoices
-                    </button>
-                    <select
-                      id="historyYearSelect"
-                      value={historyMonthFilter}
-                      onChange={(e) => setHistoryMonthFilter(e.target.value)}
-                      className="planning-history-year-select box-border w-full min-w-0 max-w-none shrink-0 bg-transparent py-[7px] pl-[10px] pr-9 text-[12px] leading-snug text-[#1f2937] sm:min-w-[10rem] sm:max-w-[12rem] sm:flex-1 sm:pr-9 sm:text-[10px]"
-                      style={{ border: 0, outline: "none", fontWeight: historyMonthFilter === "all" ? 500 : 700 }}
-                    >
-                      <option value="all">This Year (All Months)</option>
-                      {historyMonths.map((month) => (
-                        <option key={month.value} value={month.value}>
-                          {month.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <option value="all" className="bg-slate-900 text-white">All Months</option>
+                    {historyMonths.map((m) => (
+                      <option key={m.value} value={m.value} className="bg-slate-900 text-white">{m.label}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="planning-history-table-wrap mx-auto w-full max-w-[560px] overflow-x-auto rounded-xl bg-white shadow-xl shadow-blue-950/15" style={{ WebkitOverflowScrolling: "touch" as const }}>
-                  <table className="planning-history-table w-full min-w-[470px] text-left" style={{ fontSize: 10.5, color: "#0f172a" }}>
-                    <thead className="bg-[#f3f4f6] text-[11px] font-semibold text-[#1f2937]" style={{ borderBottom: "2px solid #d1d5db" }}>
+
+                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+                  <table className="w-full min-w-[550px] text-left text-xs text-slate-300">
+                    <thead className="bg-white/5 text-slate-400 font-bold uppercase tracking-wider border-b border-white/10">
                       <tr>
-                        <th className="px-3 py-3.5">Date</th>
-                        <th className="px-3 py-3.5">Invoice ID</th>
-                        <th className="px-3 py-3.5">Amount</th>
-                        <th className="px-3 py-3.5">Status</th>
-                        <th className="px-3 py-3.5">Download</th>
+                        <th className="px-4 py-3.5">Date</th>
+                        <th className="px-4 py-3.5">Invoice ID</th>
+                        <th className="px-4 py-3.5">Amount</th>
+                        <th className="px-4 py-3.5">Status</th>
+                        <th className="px-4 py-3.5 text-right">Download</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-white/5">
                       {filteredBillingHistory.map((entry, index) => (
-                        <tr key={`${entry.invoiceId}-${entry.date}-${index}`} className="transition-colors hover:bg-blue-50" style={{ borderTop: "1px solid #e2e8f0" }}>
-                          <td className="px-3 py-3.5">{entry.date}</td>
-                          <td className="px-3 py-3.5">{entry.invoiceId}</td>
-                          <td className="px-3 py-3.5">{entry.amount}</td>
-                          <td className="px-3 py-3.5">
-                            <span
-                              className="inline-flex min-w-[56px] justify-center rounded-md px-2 py-1 text-[10px] font-bold text-white"
-                              style={{ backgroundColor: entry.status === "Paid" ? "#4f8f43" : "#667085" }}
-                            >
+                        <tr key={`${entry.invoiceId}-${index}`} className="hover:bg-white/5 transition-colors">
+                          <td className="px-4 py-3.5">{entry.date}</td>
+                          <td className="px-4 py-3.5 font-mono font-semibold text-white">{entry.invoiceId}</td>
+                          <td className="px-4 py-3.5 font-bold text-white">{entry.amount}</td>
+                          <td className="px-4 py-3.5">
+                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${entry.status === "Paid" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-slate-500/20 text-slate-400"}`}>
                               {entry.status}
                             </span>
                           </td>
-                          <td className="px-3 py-3.5">
+                          <td className="px-4 py-3.5 text-right">
                             <button
                               type="button"
-                              className="inline-flex h-6 w-7 cursor-pointer items-center justify-center rounded-md border-0 text-xs font-bold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e7fd8] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-                              style={{ backgroundColor: "#1e7fd8" }}
-                              aria-label={`Download invoice summary ${entry.invoiceId}`}
                               onClick={() => void downloadBillingInvoiceSummary(entry)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/30 text-blue-300 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer border border-blue-500/30"
+                              title="Download PDF"
                             >
-                              <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                                <path d="M10 4v8m0 0l-3-3m3 3l3-3M5 14h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <Download className="h-4 w-4" />
                             </button>
                           </td>
                         </tr>
@@ -1000,15 +1098,12 @@ function PlanningPageContent() {
                   </table>
                 </div>
               </div>
-            )}
-          </section>
-        </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
-      )}
+
       <Footer />
     </main>
   );
 }
-
-
-
