@@ -48,6 +48,8 @@ import {
   FaPhoneVolume,
   FaPlus,
   FaStar,
+  FaStarHalfStroke,
+  FaRegStar,
   FaWandMagicSparkles,
   FaWhatsapp,
   FaXmark,
@@ -117,12 +119,12 @@ const categories = [
 ];
 
 const topProducts = [
-  { title: "ShopNest", type: "E-commerce Website", price: 290, sales: "10.5K", image: "/landing-optimized/shopnest.webp", alt: "ShopNest template preview" },
-  { title: "BuySphere", type: "Template Website", price: 100, sales: "3.4K", image: "/landing-optimized/buysphere.webp", alt: "BuySphere template preview" },
-  { title: "TurboCart", type: "Template Website", price: 350, sales: "2.9K", image: "/landing-optimized/turbocart.webp", alt: "TurboCart template preview" },
-  { title: "MegaBasket", type: "Template Website", price: 290, sales: "4.2K", image: "/landing-optimized/megabasket.webp", alt: "MegaBasket template preview" },
-  { title: "NexaStore", type: "Template Website", price: 100, sales: "4.7K", image: "/landing-optimized/nexastore1.webp", alt: "NexaStore template preview" },
-  { title: "SampleStore", type: "Template Website", price: 350, sales: "5.0K", image: "/landing-optimized/samplestore.webp", alt: "SampleStore template preview" },
+  { title: "ShopNest", type: "E-commerce Website", price: 290, sales: "10.5K", image: "/landing-optimized/shopnest.webp", alt: "ShopNest template preview", rating: 5.0 },
+  { title: "BuySphere", type: "Template Website", price: 100, sales: "3.4K", image: "/landing-optimized/buysphere.webp", alt: "BuySphere template preview", rating: 4.5 },
+  { title: "TurboCart", type: "Template Website", price: 350, sales: "2.9K", image: "/landing-optimized/turbocart.webp", alt: "TurboCart template preview", rating: 4.8 },
+  { title: "MegaBasket", type: "Template Website", price: 290, sales: "4.2K", image: "/landing-optimized/megabasket.webp", alt: "MegaBasket template preview", rating: 4.7 },
+  { title: "NexaStore", type: "Template Website", price: 100, sales: "4.7K", image: "/landing-optimized/nexastore1.webp", alt: "NexaStore template preview", rating: 4.3 },
+  { title: "SampleStore", type: "Template Website", price: 350, sales: "5.0K", image: "/landing-optimized/samplestore.webp", alt: "SampleStore template preview", rating: 5.0 },
 ];
 
 const bannerSlides = [
@@ -162,6 +164,7 @@ type WishlistItem = {
   price: number;
   image: string;
   alt: string;
+  rating?: number;
 };
 
 type CartItem = WishlistItem & {
@@ -1152,10 +1155,32 @@ export default function Home() {
                       <span className="text-2xl font-black text-[#06224C]">₹ {product.price}</span>
                       <span className="text-[10px] font-bold text-gray-400">({product.sales} Sales)</span>
                     </div>
-                    <div className="flex items-center gap-1 text-yellow-400" aria-label="Rating 5 out of 5">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <FaStar key={index} className="text-xs" />
-                      ))}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black text-[#06224C]">{(product.rating || 5).toFixed(1)}</span>
+                      <div className="flex items-center gap-0.5 text-yellow-400" aria-label={`Rating ${product.rating || 5} out of 5`}>
+                        {(() => {
+                          const rating = product.rating || 5;
+                          const fullStars = Math.floor(rating);
+                          const hasHalf = rating % 1 >= 0.25 && rating % 1 < 0.75;
+                          const extraFull = rating % 1 >= 0.75 ? 1 : 0;
+                          const totalFull = fullStars + extraFull;
+                          const emptyStars = 5 - totalFull - (hasHalf ? 1 : 0);
+
+                          return (
+                            <>
+                              {Array.from({ length: totalFull }).map((_, idx) => (
+                                <FaStar key={`full-${idx}`} className="text-xs" />
+                              ))}
+                              {hasHalf && (
+                                <FaStarHalfStroke key="half" className="text-xs" />
+                              )}
+                              {Array.from({ length: emptyStars }).map((_, idx) => (
+                                <FaRegStar key={`empty-${idx}`} className="text-xs text-gray-300" />
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2.5">
