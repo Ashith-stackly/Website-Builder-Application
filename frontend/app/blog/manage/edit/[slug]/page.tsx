@@ -14,9 +14,9 @@ import BlogForm from "@/components/blog/BlogForm";
 
 export default function EditBlogPage() {
   const router = useRouter();
-  const params = useParams<{ slug: string }>();
+  const params = useParams<{ slug?: string }>();
   const searchParams = useSearchParams();
-  const slug = params.slug;
+  const slug = params?.slug || searchParams.get("slug") || "";
   const workspaceId = searchParams.get("workspaceId") || "";
 
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -99,14 +99,16 @@ export default function EditBlogPage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
-        {!workspaceId && (
+        {(!workspaceId || !slug) && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
-            <p className="text-red-700 font-semibold text-base">Select a project before editing a blog post.</p>
+            <p className="text-red-700 font-semibold text-base">
+              {!workspaceId ? "Select a project before editing a blog post." : "Select a valid blog post to edit."}
+            </p>
             <Link href="/blog/manage" className="mt-4 inline-flex rounded-lg bg-slate-600 px-4 py-2 text-sm font-bold text-white no-underline">Back to Blog Management</Link>
           </div>
         )}
         {/* Loading State */}
-        {workspaceId && loading && (
+        {workspaceId && slug && loading && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6 animate-pulse">
             <div className="h-5 w-1/3 bg-slate-200 rounded" />
             <div className="h-10 w-full bg-slate-100 rounded-lg" />
@@ -118,7 +120,7 @@ export default function EditBlogPage() {
         )}
 
         {/* Error State */}
-        {workspaceId && !loading && fetchError && (
+        {workspaceId && slug && !loading && fetchError && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
             <p className="text-red-700 font-semibold text-base">{fetchError}</p>
             <Link
@@ -131,7 +133,7 @@ export default function EditBlogPage() {
         )}
 
         {/* Form */}
-        {workspaceId && !loading && !fetchError && blog && (
+        {workspaceId && slug && !loading && !fetchError && blog && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
             <BlogForm
               initialData={blog}

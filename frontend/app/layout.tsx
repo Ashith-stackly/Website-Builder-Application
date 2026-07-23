@@ -3,6 +3,7 @@ import { Geist_Mono, Lora } from "next/font/google";
 import NavBarShell from "@/components/NavBarShell";
 import RouteLoadingOverlay from "@/components/RouteLoadingOverlay";
 import ScrollToTop from "@/components/ScrollToTop";
+import "@/lib/reactDomPatch";
 import "./globals.css";
 
 const lora = Lora({

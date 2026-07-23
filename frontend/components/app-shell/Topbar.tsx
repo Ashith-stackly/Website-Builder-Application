@@ -22,7 +22,7 @@ import {
 import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { useClickOutside } from "@/lib/hooks";
-import { readUserSettings, type UserSettings } from "@/lib/userSettings";
+import { fetchProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -211,10 +211,23 @@ function ProfileMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
-  const [user, setUser] = useState<UserSettings | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    setUser(readUserSettings());
+    const controller = new AbortController();
+    void fetchProfile(controller.signal)
+      .then((data) => setUser(data))
+      .catch(() => {});
+
+    const onUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfile>;
+      if (customEvent.detail) setUser(customEvent.detail);
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    return () => {
+      controller.abort();
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    };
   }, []);
 
   const initials = (user?.name || "Stackly User")

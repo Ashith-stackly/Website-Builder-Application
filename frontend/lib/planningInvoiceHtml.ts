@@ -85,59 +85,27 @@ export type PlanningInvoiceContactDefaults = {
 
 /** Builds label/value lines for the Payment Info block from saved checkout data. */
 export function buildPaymentInfoRows(entry: BillingHistoryEntryLike): PaymentInfoRow[] {
-  const amountNum = parseUsdAmount(entry.amount);
-  if (entry.status === "Free" || amountNum === 0) {
+  if (entry.status === "Free" || entry.amount === "₹0" || entry.amount === "$0") {
     return [{ label: "Billing", value: "Complimentary plan — no payment collected." }];
   }
 
   const method = (entry.paymentMethodLabel ?? "").trim();
   const detail = (entry.paymentDetail ?? "").trim();
-  const methodL = method.toLowerCase();
-  const detailL = detail.toLowerCase();
-
-  if (methodL.includes("credit") || methodL.includes("debit") || detailL.includes("card payment")) {
-    const rows: PaymentInfoRow[] = [
-      { label: "Payment method", value: method || "Credit / Debit card" },
-    ];
-    const lastM = detail.match(/\*{4}(\d{4})/);
-    const expM = detail.match(/exp\s+([\d/]+)/i);
-    if (lastM) rows.push({ label: "Card (last digits)", value: `****${lastM[1]}` });
-    if (expM) rows.push({ label: "Expiry (MM/YY)", value: expM[1] });
-    if (!lastM && !expM && detail) rows.push({ label: "Card details", value: detail });
-    return rows;
-  }
-
-  if (methodL.includes("paypal") || detailL.includes("paypal")) {
-    const rows: PaymentInfoRow[] = [{ label: "Payment method", value: "PayPal" }];
-    const m = detail.match(/PayPal\s*·\s*(.+)/i);
-    rows.push({ label: "PayPal account", value: (m ? m[1] : detail.replace(/^PayPal\s*/i, "")).trim() || "—" });
-    return rows;
-  }
-
-  if (methodL.includes("upi") || methodL.includes("wallet") || detailL.includes("upi")) {
-    const rows: PaymentInfoRow[] = [
-      { label: "Payment method", value: method || "UPI / Wallet" },
-    ];
-    if (detail.includes("Google Pay")) rows.push({ label: "Wallet", value: "Google Pay" });
-    if (detail.includes("PhonePe")) rows.push({ label: "Wallet", value: "PhonePe" });
-    const um = detail.match(/UPI\s+(\S+)/i);
-    if (um) rows.push({ label: "UPI ID", value: um[1] });
-    else if (detail) rows.push({ label: "Payment details", value: detail });
-    return rows;
-  }
-
-  if (methodL.includes("net") || detailL.includes("net banking")) {
-    const bank = detail.replace(/^Net banking\s*·\s*/i, "").trim() || detail;
-    return [
-      { label: "Payment method", value: "Net banking" },
-      { label: "Bank / account", value: bank || "—" },
-    ];
-  }
 
   const rows: PaymentInfoRow[] = [];
-  if (method) rows.push({ label: "Payment method", value: method });
-  if (detail) rows.push({ label: "Transaction details", value: detail });
-  return rows.length > 0 ? rows : [{ label: "Payment", value: "Paid — see your statement for the descriptor." }];
+  rows.push({
+    label: "Paymentmethod",
+    value: method || "Card – Visa / MasterCard",
+  });
+
+  if (detail) {
+    rows.push({
+      label: "Transaction details",
+      value: detail,
+    });
+  }
+
+  return rows;
 }
 
 export function billingHistoryEntryToInvoicePayload(
@@ -148,7 +116,9 @@ export function billingHistoryEntryToInvoicePayload(
   const amountNum = parseUsdAmount(entry.amount);
   const website = entry.websiteLabel ?? "Stackly workspace subscription";
   const planCol = entry.planTier ?? entry.planName ?? (entry.status === "Free" ? "Free" : "Pro");
-  const currencyLine = formatUsd(amountNum);
+  const currencyLine = entry.amount && (entry.amount.includes("₹") || entry.amount.includes("$"))
+    ? entry.amount
+    : formatUsd(amountNum);
   const lines: PlanningInvoiceLine[] = [
     { si: 1, website, price: currencyLine, plan: planCol, total: currencyLine },
   ];
@@ -170,10 +140,10 @@ export function billingHistoryEntryToInvoicePayload(
     invoiceId: entry.invoiceId,
     invoiceDateDisplay,
     generatedAtDisplay,
-    customerName: entry.buyerName ?? defaults.displayName,
-    customerEmail: entry.buyerEmail ?? defaults.email,
-    customerPhone: entry.buyerPhone ?? defaults.phone,
-    customerAddress: entry.buyerAddress ?? defaults.address,
+    customerName: entry.buyerName || defaults.displayName || "User",
+    customerEmail: entry.buyerEmail || defaults.email || "",
+    customerPhone: entry.buyerPhone || defaults.phone || "",
+    customerAddress: entry.buyerAddress || defaults.address || "",
     status: entry.status,
     lines,
     subtotal: currencyLine,
@@ -505,6 +475,9 @@ export function buildPlanningInvoiceHtmlDocument(p: PlanningInvoicePayload): str
       <div class="meta-left">
         <h2>Invoice details :</h2>
         <div class="name">${escapeHtml(p.customerName)}</div>
+        ${p.customerEmail ? `<div style="font-size:12px;color:#4b5563;margin-top:2px;">Email : ${escapeHtml(p.customerEmail)}</div>` : ""}
+        ${p.customerPhone ? `<div style="font-size:12px;color:#4b5563;margin-top:2px;">Contact : ${escapeHtml(p.customerPhone)}</div>` : ""}
+        ${p.customerAddress ? `<div style="font-size:12px;color:#4b5563;margin-top:2px;">Address : ${escapeHtml(p.customerAddress)}</div>` : ""}
       </div>
       <div class="meta-right">
         <table class="meta-table" role="presentation">

@@ -1,3 +1,6 @@
+/**
+ * @deprecated Legacy local storage settings types. Profile settings now fetch directly from backend APIs.
+ */
 export const USER_SETTINGS_KEY = "stacklyUserSettings";
 export const USER_SETTINGS_EVENT = "stackly-user-settings-updated";
 
@@ -13,21 +16,33 @@ export const defaultUserSettings: UserSettings = {
   avatar: "/profile.webp",
 };
 
+/**
+ * @deprecated Use fetchProfile() from profileApi.ts instead.
+ */
 export function readUserSettings(): UserSettings {
-  if (typeof window === "undefined") return defaultUserSettings;
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(USER_SETTINGS_KEY) || "{}") as Partial<UserSettings>;
-    return {
-      name: typeof parsed.name === "string" && parsed.name.trim() ? parsed.name : defaultUserSettings.name,
-      email: typeof parsed.email === "string" && parsed.email.trim() ? parsed.email : defaultUserSettings.email,
-      avatar: typeof parsed.avatar === "string" && parsed.avatar ? parsed.avatar : defaultUserSettings.avatar,
-    };
-  } catch {
-    return defaultUserSettings;
+  // Legacy profile localStorage persistence has been removed.
+  // Clean up legacy localStorage profile key if present.
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.removeItem(USER_SETTINGS_KEY);
+    } catch {
+      /* ignore */
+    }
   }
+  return defaultUserSettings;
 }
 
+/**
+ * @deprecated Use updateProfile() from profileApi.ts instead.
+ */
 export function saveUserSettings(settings: UserSettings) {
-  window.localStorage.setItem(USER_SETTINGS_KEY, JSON.stringify(settings));
-  window.dispatchEvent(new CustomEvent(USER_SETTINGS_EVENT, { detail: settings }));
+  // Legacy profile localStorage persistence has been removed.
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.removeItem(USER_SETTINGS_KEY);
+    } catch {
+      /* ignore */
+    }
+    window.dispatchEvent(new CustomEvent(USER_SETTINGS_EVENT, { detail: settings }));
+  }
 }

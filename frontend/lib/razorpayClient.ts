@@ -1,4 +1,4 @@
-/** Client-side Razorpay Checkout — WBA uses static export + razorpay-api on :3001 in dev. */
+/** Client-side Razorpay Checkout — communicates with backend Express API. */
  
 export type RazorpayPaymentSuccess = {
   razorpay_payment_id: string;
@@ -25,6 +25,7 @@ export type RazorpayVerifyResponse = {
     name?: string;
     email?: string;
     mobile?: string;
+    address?: string;
     plan?: string;
     subscriptionStatus?: string;
   };
@@ -35,6 +36,23 @@ export type RazorpayVerifyResponse = {
     planName?: string;
     startDate?: string;
     expiryDate?: string;
+  };
+  paymentDetails?: {
+    invoiceId?: string;
+    paymentId?: string;
+    orderId?: string;
+    paymentDate?: string;
+    paymentMethodLabel?: string;
+    bankName?: string;
+    cardNetwork?: string;
+    upiApp?: string;
+    walletName?: string;
+    amount?: number;
+    currency?: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    customerAddress?: string;
   };
 };
  
@@ -85,19 +103,20 @@ export function getRazorpaySetupHint(): string | null {
   return "Demo mode: payment completes locally without Razorpay keys. Add real Test keys to .env.local for live checkout.";
 }
  
-/** Static export: payment API runs on port 3001 (npm run razorpay-api). */
+/** Backend API base URL for Razorpay payment routes (/api/razorpay). */
 export function getRazorpayApiBase(): string {
-  const fromEnv = process.env.NEXT_PUBLIC_RAZORPAY_API_BASE?.replace(/\/$/, "");
+  const fromEnv = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
   if (fromEnv) return fromEnv;
-  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
-    return "http://localhost:3001";
-  }
-  return "";
+  return "http://localhost:5000/api";
 }
  
 function razorpayApiUrl(path: string): string {
   const base = getRazorpayApiBase();
-  return base ? `${base}${path}` : path;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  if (base.endsWith("/api") && cleanPath.startsWith("/api/")) {
+    return `${base}${cleanPath.slice(4)}`;
+  }
+  return `${base}${cleanPath}`;
 }
  
 export function parseDisplayPriceToPaise(price: string): number {
@@ -153,12 +172,12 @@ async function postRazorpayApi<T>(path: string, body: unknown): Promise<T> {
     });
   } catch {
     throw new Error(
-      "Payment API not running. In a second terminal run: npm run razorpay-api (and keep npm run dev running).",
+      "Backend Payment API not reachable. Please ensure the backend server is running on http://localhost:5000.",
     );
   }
-  const data = (await res.json()) as T & { error?: string };
+  const data = (await res.json()) as T & { error?: string; message?: string };
   if (!res.ok) {
-    throw new Error(data.error ?? "Payment request failed");
+    throw new Error(data.message ?? data.error ?? "Payment request failed");
   }
   return data;
 }
@@ -176,7 +195,7 @@ export async function createRazorpayOrder(payload: {
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
     };
   }
-  return postRazorpayApi<RazorpayOrderResponse>("/api/razorpay/create-order", payload);
+  return postRazorpayApi<RazorpayOrderResponse>("/razorpay/create-order", payload);
 }
  
 export async function verifyRazorpayPayment(
@@ -189,7 +208,7 @@ export async function verifyRazorpayPayment(
   if (isRazorpayDemoMode()) {
     return { verified: true };
   }
-  return postRazorpayApi<RazorpayVerifyResponse>("/api/razorpay/verify", payload);
+  return postRazorpayApi<RazorpayVerifyResponse>("/razorpay/verify", payload);
 }
  
 export function openRazorpayCheckout(options: {

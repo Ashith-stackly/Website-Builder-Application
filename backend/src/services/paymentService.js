@@ -158,6 +158,11 @@ async function verifyRazorpay(user, body = {}) {
     currency = 'INR',
     planName = 'Premium',
     billingPeriod = 'Monthly',
+    paymentMethod,
+    bankName,
+    cardNetwork,
+    upiApp,
+    walletName,
   } = body;
 
   if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
@@ -176,35 +181,84 @@ async function verifyRazorpay(user, body = {}) {
   }
 
   if (!verified) return { verified: false };
-  if (!user) return { verified: true };
+
+  let instrumentLabel = paymentMethod || '';
+  let bank = bankName || '';
+  let cardNet = cardNetwork || '';
+  let upi = upiApp || '';
+  let wallet = walletName || '';
+
+  if (hasRazorpayConfig() && razorpay_payment_id && !razorpay_payment_id.startsWith('pay_demo')) {
+    try {
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+      const p = await razorpay.payments.fetch(razorpay_payment_id);
+      if (p) {
+        if (p.method === 'card' && p.card) {
+          cardNet = p.card.network || p.card.type || 'Visa';
+          bank = p.card.issuer || p.bank || '';
+          instrumentLabel = bank ? `Card – ${cardNet} (${bank})` : `Card – ${cardNet}`;
+        } else if (p.method === 'netbanking') {
+          bank = p.bank || 'Bank';
+          instrumentLabel = `Net Banking – ${bank}`;
+        } else if (p.method === 'upi') {
+          upi = p.vpa || 'Google Pay';
+          instrumentLabel = `UPI – ${upi}`;
+        } else if (p.method === 'wallet') {
+          wallet = p.wallet || 'Wallet';
+          instrumentLabel = `Wallet – ${wallet}`;
+        }
+      }
+    } catch {
+      /* ignore fetch error */
+    }
+  }
+
+  if (!instrumentLabel || instrumentLabel === 'Razorpay') {
+    if (bank) instrumentLabel = `Net Banking – ${bank}`;
+    else if (cardNet) instrumentLabel = `Card – ${cardNet}${bank ? ` (${bank})` : ''}`;
+    else if (upi) instrumentLabel = `UPI – ${upi}`;
+    else if (wallet) instrumentLabel = `Wallet – ${wallet}`;
+    else instrumentLabel = 'Card – Visa / MasterCard';
+  }
 
   const startDate = new Date();
   const expiryDate = buildExpiryDate(billingPeriod);
   const plan = normalizePlanName(planName);
-  await Subscription.findOneAndUpdate(
-    { userId: user._id, orderId: razorpay_order_id },
-    {
-      userId: user._id,
-      plan,
-      paymentProvider: 'razorpay',
-      paymentStatus: 'completed',
-      subscriptionId: razorpay_payment_id,
-      orderId: razorpay_order_id,
-      amount: Number(amount) || 0,
-      currency,
-      startDate,
-      expiryDate,
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
 
-  user.plan = plan;
-  user.subscriptionStatus = 'active';
-  await user.save();
+  if (user) {
+    await Subscription.findOneAndUpdate(
+      { userId: user._id, orderId: razorpay_order_id },
+      {
+        userId: user._id,
+        plan,
+        paymentProvider: 'razorpay',
+        paymentStatus: 'completed',
+        subscriptionId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        amount: Number(amount) || 0,
+        currency,
+        startDate,
+        expiryDate,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    user.plan = plan;
+    user.subscriptionStatus = 'active';
+    await user.save();
+  }
+
+  const cleanPayId = (razorpay_payment_id || '').replace(/^pay_/, '').toUpperCase();
+  const invoiceId = `INV-${cleanPayId.substring(0, 10) || Math.floor(100000 + Math.random() * 899999)}`;
+  const sanitized = user ? sanitizeUser(user) : null;
 
   return {
     verified: true,
-    user: sanitizeUser(user),
+    user: sanitized,
     subscription: {
       plan,
       paymentProvider: 'razorpay',
@@ -212,6 +266,23 @@ async function verifyRazorpay(user, body = {}) {
       planName,
       startDate,
       expiryDate,
+    },
+    paymentDetails: {
+      invoiceId,
+      paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
+      paymentDate: startDate.toISOString(),
+      paymentMethodLabel: instrumentLabel,
+      bankName: bank,
+      cardNetwork: cardNet,
+      upiApp: upi,
+      walletName: wallet,
+      amount: Number(amount) || 0,
+      currency,
+      customerName: user?.name || 'Customer',
+      customerEmail: user?.email || '',
+      customerPhone: user?.mobile || user?.phone || '',
+      customerAddress: user?.address || '',
     },
   };
 }

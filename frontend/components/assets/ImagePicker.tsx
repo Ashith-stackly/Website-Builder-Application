@@ -33,16 +33,18 @@ interface ImagePickerProps {
   currentUrl?: string;
   /** Selection mode. Defaults to "single" for backward compatibility. */
   mode?:       "single" | "multiple";
+  /** Initial active tab when modal opens. Defaults to "library". */
+  initialTab?: PickerTab;
   /** Called with all selected assets when user confirms in "multiple" mode. */
   onSelectMultiple?: (selections: Array<{ url: string; assetId?: string }>) => void;
 }
 
 type PickerTab = "library" | "upload" | "url" | "ai";
 
-export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "single", onSelectMultiple }: ImagePickerProps) {
+export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "single", initialTab = "library", onSelectMultiple }: ImagePickerProps) {
   const { assets, loadAssets, uploadFiles, deleteAsset, getUrl } = useAssetStore();
 
-  const [tab,        setTab]        = useState<PickerTab>("library");
+  const [tab,        setTab]        = useState<PickerTab>(initialTab);
   const [search,     setSearch]     = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [multiSelectedIds, setMultiSelectedIds] = useState<Set<string>>(new Set());
@@ -52,8 +54,11 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
   const isMulti = mode === "multiple";
 
   useEffect(() => {
-    if (open) void loadAssets();
-  }, [open, loadAssets]);
+    if (open) {
+      void loadAssets();
+      setTab(initialTab);
+    }
+  }, [open, initialTab, loadAssets]);
 
   useEffect(() => {
     if (tab === "url") urlRef.current?.focus();

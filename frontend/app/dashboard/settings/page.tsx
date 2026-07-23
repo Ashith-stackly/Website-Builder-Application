@@ -24,12 +24,13 @@ import {
   Camera,
   Sparkles,
   FolderCog,
+  Loader2,
 } from "lucide-react";
 import { staggerContainer, staggerChild, revealSection, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { usePersistentState } from "@/lib/hooks";
-import { readUserSettings, saveUserSettings } from "@/lib/userSettings";
+import { fetchProfile, updateProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 import ProjectSettingsForm from "@/components/dashboard/ProjectSettingsForm";
 
 type TabKey = "profile" | "appearance" | "notifications" | "security" | "billing" | "danger";
@@ -120,12 +121,31 @@ function SettingsInner() {
 /* ─── Profile hero ─────────────────────────────────────────────────────── */
 
 function ProfileHero() {
-  const [user, setUser] = useState({ name: "Stackly User", email: "user@stackly.com" });
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const s = readUserSettings();
-    setUser({ name: s.name, email: s.email });
+    const controller = new AbortController();
+    void fetchProfile(controller.signal)
+      .then((data) => setUser(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    const onUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfile>;
+      if (customEvent.detail) setUser(customEvent.detail);
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    return () => {
+      controller.abort();
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    };
   }, []);
-  const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+
+  const name = user?.name || (loading ? "Loading profile..." : "Stackly User");
+  const email = user?.email || (loading ? "..." : "user@stackly.com");
+  const planLabel = user?.plan ? `${user.plan.charAt(0).toUpperCase()}${user.plan.slice(1)} plan` : "Free plan";
+  const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "SU";
 
   return (
     <motion.section
@@ -139,18 +159,18 @@ function ProfileHero() {
       <div className="relative flex flex-col items-start gap-4 pt-8 sm:flex-row sm:items-center">
         <div className="relative">
           <span className="grid h-20 w-20 place-items-center rounded-2xl border-4 bg-gradient-to-br from-[#4f6bed] to-[#8b5cf6] text-2xl font-black text-white shadow-xl" style={{ borderColor: "var(--surface)" }}>
-            {initials}
+            {loading ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : initials}
           </span>
           <button className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-lg border text-white shadow-md" style={{ background: "var(--accent)", borderColor: "var(--surface)" }} aria-label="Change avatar">
             <Camera className="h-3.5 w-3.5" />
           </button>
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-black sm:text-2xl" style={{ color: "var(--text)" }}>{user.name}</h1>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>{user.email}</p>
+          <h1 className="text-xl font-black sm:text-2xl" style={{ color: "var(--text)" }}>{name}</h1>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>{email}</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold" style={{ borderColor: "var(--border)", background: "var(--accent-soft)", color: "var(--accent-strong)" }}>
-          <Sparkles className="h-3.5 w-3.5" /> Free plan
+          <Sparkles className="h-3.5 w-3.5" /> {planLabel}
         </span>
       </div>
     </motion.section>
@@ -162,57 +182,111 @@ function ProfileHero() {
 function ProfilePanel() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [initialProfile, setInitialProfile] = useState<{ name: string; email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const s = readUserSettings();
-    setName(s.name);
-    setEmail(s.email);
+    const controller = new AbortController();
+    void fetchProfile(controller.signal)
+      .then((data) => {
+        setName(data.name);
+        setEmail(data.email);
+        setInitialProfile({ name: data.name, email: data.email });
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : "Failed to load profile from server.");
+      })
+      .finally(() => setLoading(false));
+    return () => controller.abort();
   }, []);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return setError("Name can't be empty.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("Enter a valid email.");
+    if (submitting) return;
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName) return setError("Name can't be empty.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) return setError("Enter a valid email address.");
+
+    // Prevent duplicate submission if values are unchanged
+    if (initialProfile && initialProfile.name === trimmedName && initialProfile.email === trimmedEmail) {
+      setError(null);
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 1800);
+      return;
+    }
+
     setError(null);
-    const current = readUserSettings();
-    saveUserSettings({ ...current, name: name.trim(), email: email.trim() });
-    setSaved(true);
-    window.setTimeout(() => setSaved(false), 1800);
+    setSubmitting(true);
+
+    try {
+      const updated = await updateProfile({ name: trimmedName, email: trimmedEmail });
+      setName(updated.name);
+      setEmail(updated.email);
+      setInitialProfile({ name: updated.name, email: updated.email });
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save profile changes.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <Card icon={UserIcon} title="Personal information" desc="Update how your name and email appear across Stackly.">
-      <form onSubmit={submit} className="space-y-4">
-        <Field label="Full name">
-          <Input value={name} onChange={setName} placeholder="Jane Doe" />
-        </Field>
-        <Field label="Email address">
-          <Input value={email} onChange={setEmail} placeholder="jane@example.com" type="email" />
-        </Field>
-        <AnimatePresence>
-          {error && (
-            <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[13px] font-semibold text-rose-500">
-              {error}
-            </motion.p>
-          )}
-        </AnimatePresence>
-        <div className="flex items-center gap-3 pt-1">
-          <motion.button whileTap={{ scale: 0.97 }} type="submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
-            Save changes
-          </motion.button>
+      {loading ? (
+        <div className="flex items-center gap-3 py-6 text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+          <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--accent-strong)" }} />
+          Loading profile settings...
+        </div>
+      ) : (
+        <form onSubmit={submit} className="space-y-4">
+          <Field label="Full name">
+            <Input value={name} onChange={setName} placeholder="Jane Doe" />
+          </Field>
+          <Field label="Email address">
+            <Input value={email} onChange={setEmail} placeholder="jane@example.com" type="email" />
+          </Field>
           <AnimatePresence>
-            {saved && (
-              <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-                className="inline-flex items-center gap-1.5 text-[13px] font-bold text-emerald-600">
-                <Check className="h-4 w-4" /> Saved
-              </motion.span>
+            {error && (
+              <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[13px] font-semibold text-rose-500">
+                {error}
+              </motion.p>
             )}
           </AnimatePresence>
-        </div>
-      </form>
+          <div className="flex items-center gap-3 pt-1">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                "Save changes"
+              )}
+            </motion.button>
+            <AnimatePresence>
+              {saved && (
+                <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                  className="inline-flex items-center gap-1.5 text-[13px] font-bold text-emerald-600">
+                  <Check className="h-4 w-4" /> Saved
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </form>
+      )}
     </Card>
   );
 }

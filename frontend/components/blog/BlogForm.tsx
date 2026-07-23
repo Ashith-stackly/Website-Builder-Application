@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, type FormEvent } from "react";
 import type { Blog, BlogFormData } from "@/types/blog";
+import FeaturedImagePicker from "./FeaturedImagePicker";
 
 interface BlogFormProps {
   /** Pre-filled data for edit mode. Omit for create mode. */
@@ -23,7 +24,7 @@ interface FormErrors {
 /**
  * Reusable blog form shared by Create and Edit pages.
  * Handles client-side validation, field state, and error display.
- * Does NOT modify any existing UI — this is a new component.
+ * Uses Builder Asset Management for Featured Image picker.
  */
 export default function BlogForm({
   initialData,
@@ -238,20 +239,12 @@ export default function BlogForm({
         </div>
       </fieldset>
 
-      {/* Featured Image */}
-      <div>
-        <label htmlFor="blog-featured-image" className={labelClass}>
-          Featured Image URL
-        </label>
-        <input
-          id="blog-featured-image"
-          type="url"
-          value={featuredImage}
-          onChange={(e) => setFeaturedImage(e.target.value)}
-          placeholder="https://example.com/image.jpg"
-          className={inputClass}
-        />
-      </div>
+      {/* Featured Image Picker (Reusing Builder Asset Management) */}
+      <FeaturedImagePicker
+        value={featuredImage}
+        onChange={setFeaturedImage}
+        disabled={isSubmitting}
+      />
 
       {/* Status */}
       <div>

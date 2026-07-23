@@ -278,6 +278,11 @@ async function generateSitemap(workspaceId) {
   return xml;
 }
 
+async function listAllSlugs() {
+  const posts = await BlogPost.find({}).select('slug').lean();
+  return { slugs: posts.map((p) => p.slug).filter(Boolean) };
+}
+
 module.exports = {
   createPost,
   listPosts,
@@ -288,4 +293,5 @@ module.exports = {
   updatePost,
   deletePost,
   generateSitemap,
+  listAllSlugs,
 };

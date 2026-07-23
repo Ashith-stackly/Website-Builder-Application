@@ -624,10 +624,10 @@ function BlogPageContent() {
   const view = searchParams.get("view");
 
   if (workspaceId || view === "posts") {
-    return <PublicBlogListing />;
+    return <PublicBlogListing key={workspaceId || "public-listing"} />;
   }
 
-  return <BlogMarketingTemplate />;
+  return <BlogMarketingTemplate key="blog-marketing" />;
 }
 
 export default function BlogPage() {

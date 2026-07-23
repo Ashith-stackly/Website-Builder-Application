@@ -36,9 +36,8 @@ type UserProfile = {
 };
 
 const BACKEND_BASE =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:3001"
-    : "";
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/api\/?$/, "") ||
+  "http://localhost:5000";
 
 async function fetchUserProfile(): Promise<UserProfile | null> {
   if (typeof window === "undefined") return null;
@@ -153,6 +152,10 @@ type InvoiceData = {
   email: string;
   contactNo: string;
   address: string;
+  paymentMethodLabel?: string;
+  paymentId?: string;
+  orderId?: string;
+  paymentDate?: string;
 };
 
 function historyYearFromDate(date: string) {
@@ -379,17 +382,27 @@ function PlanningPageContent() {
   }) {
     if (!selectedPlan) return;
     const now = new Date();
-    const invoiceId = opts.paymentId
+    const details = opts.verifyResponse?.paymentDetails;
+    const verifiedUser = opts.verifyResponse?.user;
+
+    const invoiceId = details?.invoiceId || (opts.paymentId
       ? `INV-${opts.paymentId.replace(/^pay_/, "").substring(0, 10).toUpperCase()}`
-      : `INV-${Math.floor(100000 + Math.random() * 899999)}`;
+      : `INV-${Math.floor(100000 + Math.random() * 899999)}`);
+
     const active = getActivePrice(selectedPlan);
     const finalAmount = opts.isFree ? "₹0" : active.newPrice;
 
-    // Use backend-returned user data if available, otherwise fall back to fetched profile
-    const verifiedUser = opts.verifyResponse?.user;
-    const userName = verifiedUser?.name || userProfile?.name || "User";
-    const userEmail = verifiedUser?.email || userProfile?.email || "";
-    const userPhone = verifiedUser?.mobile || userProfile?.mobile || "";
+    const userName = details?.customerName || verifiedUser?.name || userProfile?.name || "User";
+    const userEmail = details?.customerEmail || verifiedUser?.email || userProfile?.email || "";
+    const userPhone = details?.customerPhone || verifiedUser?.mobile || userProfile?.mobile || "";
+    const userAddress = details?.customerAddress || verifiedUser?.address || "";
+
+    const methodLabel = details?.paymentMethodLabel || opts.paymentMethodLabel || "Card – Visa / MasterCard";
+    const paymentIdStr = details?.paymentId || opts.paymentId || "";
+    const orderIdStr = details?.orderId || "";
+    const paymentDateStr = details?.paymentDate
+      ? new Date(details.paymentDate).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
+      : now.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
 
     const createdInvoice: InvoiceData = {
       invoiceId,
@@ -399,10 +412,16 @@ function PlanningPageContent() {
       name: userName,
       email: userEmail,
       contactNo: userPhone,
-      address: "",
+      address: userAddress,
+      paymentMethodLabel: methodLabel,
+      paymentId: paymentIdStr,
+      orderId: orderIdStr,
+      paymentDate: paymentDateStr,
     };
+
     setInvoiceData(createdInvoice);
     savePlanningInvoiceData(createdInvoice);
+
     setBillingHistory((prev) => {
       const row: BillingHistoryEntry = {
         date: createdInvoice.date,
@@ -412,8 +431,8 @@ function PlanningPageContent() {
         planName: createdInvoice.planName,
         planTier: selectedPlan.name,
         websiteLabel: "Stackly workspace subscription",
-        paymentMethodLabel: opts.paymentMethodLabel,
-        paymentDetail: opts.paymentDetail,
+        paymentMethodLabel: methodLabel,
+        paymentDetail: paymentIdStr ? `Payment ${paymentIdStr}${orderIdStr ? ` · Order ${orderIdStr}` : ""}` : opts.paymentDetail,
         buyerName: createdInvoice.name,
         buyerEmail: createdInvoice.email,
         buyerPhone: createdInvoice.contactNo,
@@ -424,6 +443,7 @@ function PlanningPageContent() {
       saveBillingHistoryToStorage(next);
       return next;
     });
+
     setPaymentLoading(false);
     setIsFreeCheckout(false);
     activateFrontendSubscription();
@@ -829,10 +849,23 @@ function PlanningPageContent() {
                   <div className="min-w-0 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
                     <h3 className="mx-auto mb-4 w-full min-w-0 max-w-2xl text-xl font-semibold sm:mb-5 sm:text-[30px]">Billing Information</h3>
                     <div className="mx-auto w-full min-w-0 max-w-2xl space-y-3 text-xs sm:space-y-4 sm:text-[15px]">
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Name</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.name}</span></div>
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Email</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.email}</span></div>
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Contact No</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.contactNo}</span></div>
-                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "96px 14px minmax(0,1fr)", alignItems: "center" }}><span>Address</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.address}</span></div>
+                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Name</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.name || "—"}</span></div>
+                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Email</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.email || "—"}</span></div>
+                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Contact No</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.contactNo || "—"}</span></div>
+                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Address</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.address || "—"}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+                    <h3 className="mx-auto mb-4 w-full min-w-0 max-w-2xl text-xl font-semibold sm:mb-5 sm:text-[30px]">Payment Information</h3>
+                    <div className="mx-auto w-full min-w-0 max-w-2xl space-y-3 text-xs sm:space-y-4 sm:text-[15px]">
+                      <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Payment Method</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.paymentMethodLabel || "Card – Visa / MasterCard"}</span></div>
+                      {invoiceData.paymentId ? (
+                        <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Payment ID</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.paymentId}</span></div>
+                      ) : null}
+                      {invoiceData.orderId ? (
+                        <div className="planning-invoice-row rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 shadow-sm" style={{ display: "grid", gridTemplateColumns: "130px 14px minmax(0,1fr)", alignItems: "center" }}><span>Order ID</span><span>:</span><span className="planning-invoice-value break-words">{invoiceData.orderId}</span></div>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -843,8 +876,23 @@ function PlanningPageContent() {
                   <button
                     type="button"
                     onClick={() => {
-                      setPlanningView("history");
-                      syncPlanningUrl({ view: "history" });
+                      const entry: BillingHistoryEntry = {
+                        date: invoiceData.date,
+                        invoiceId: invoiceData.invoiceId,
+                        amount: invoiceData.amount,
+                        status: "Paid",
+                        planName: invoiceData.planName,
+                        planTier: selectedPlan?.name || "Advanced",
+                        websiteLabel: "Stackly workspace subscription",
+                        paymentMethodLabel: invoiceData.paymentMethodLabel || "Card – Visa / MasterCard",
+                        paymentDetail: invoiceData.paymentId ? `Payment ${invoiceData.paymentId}${invoiceData.orderId ? ` · Order ${invoiceData.orderId}` : ""}` : "",
+                        buyerName: invoiceData.name,
+                        buyerEmail: invoiceData.email,
+                        buyerPhone: invoiceData.contactNo,
+                        buyerAddress: invoiceData.address,
+                        generatedAt: invoiceData.paymentDate || new Date().toISOString(),
+                      };
+                      void downloadBillingInvoiceSummary(entry);
                     }}
                     className="inline-flex w-full max-w-full min-w-0 flex-wrap items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-xs font-semibold leading-snug text-slate-900 shadow-lg shadow-blue-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl sm:inline-flex sm:w-auto sm:max-w-none sm:px-6 sm:text-[15px]"
                   >

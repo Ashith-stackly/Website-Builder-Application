@@ -36,7 +36,8 @@ import { useAssetStore } from "@/store/assetStore";
 import { useBuilderStore } from "@/store/builderStore";
 import { useDesignStore } from "@/store/designStore";
 import { useProjectStore } from "@/store/projectStore";
-import { defaultUserSettings, readUserSettings, USER_SETTINGS_EVENT } from "@/lib/userSettings";
+import { fetchProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
+import { defaultUserSettings } from "@/lib/userSettings";
 import {
   loadRazorpayCheckoutScript,
   createRazorpayOrder,
@@ -371,10 +372,30 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   });
 
   useEffect(() => {
-    const refresh = () => setDisplayUser(readUserSettings());
-    refresh();
-    window.addEventListener(USER_SETTINGS_EVENT, refresh);
-    return () => window.removeEventListener(USER_SETTINGS_EVENT, refresh);
+    const controller = new AbortController();
+    void fetchProfile(controller.signal).then((data) => {
+      setDisplayUser({
+        name: data.name || defaultUserSettings.name,
+        email: data.email || defaultUserSettings.email,
+        avatar: data.avatar || defaultUserSettings.avatar,
+      });
+    }).catch(() => {});
+
+    const onUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfile>;
+      if (customEvent.detail) {
+        setDisplayUser({
+          name: customEvent.detail.name || defaultUserSettings.name,
+          email: customEvent.detail.email || defaultUserSettings.email,
+          avatar: customEvent.detail.avatar || defaultUserSettings.avatar,
+        });
+      }
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    return () => {
+      controller.abort();
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    };
   }, []);
  
   const scrollLandingSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: string, closeMobile = false) => {

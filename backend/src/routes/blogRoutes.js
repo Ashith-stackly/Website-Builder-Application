@@ -8,6 +8,7 @@ const router = express.Router();
 router.get('/public/:workspaceId', blogController.listPublicPosts);
 router.get('/public/:workspaceId/:slug', blogController.getPublicPost);
 router.get('/sitemap/:workspaceId', blogController.generateSitemap);
+router.get('/all-slugs', blogController.listAllSlugs);
 
 // Authenticated CMS management.
 router.use(authenticate);

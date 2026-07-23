@@ -2,6 +2,7 @@ const { body } = require('express-validator');
 
 const updateProfileValidation = [
   body('name').optional().trim().isLength({ min: 2, max: 50 }).withMessage('Name must be 2-50 characters'),
+  body('email').optional().trim().isEmail().withMessage('Enter a valid email'),
   body('avatar')
     .optional({ values: 'falsy' })
     .trim()
