@@ -438,6 +438,15 @@ export function isPersistedCanvasHtmlValid(template: TextTemplateType, html: str
   if (!html.trim()) return false;
   if (!templateUsesHtmlCanvasPersistence(template)) return false;
 
+  // Anti-cross-contamination check: reject HTML if it contains markers from other templates
+  for (const [otherKey, otherMarkers] of Object.entries(TEMPLATE_CANVAS_MARKERS)) {
+    if (otherKey !== template && otherMarkers?.length) {
+      if (otherMarkers.some((marker) => html.includes(marker))) {
+        return false;
+      }
+    }
+  }
+
   const markers = TEMPLATE_CANVAS_MARKERS[template];
   if (!markers?.length) return html.length > 200;
 

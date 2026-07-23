@@ -24,6 +24,7 @@ import {
   removeStoreCartItem,
   updateStoreCartItem,
   verifyStoreCheckoutPayment,
+  formatStorePrice,
 } from "@/lib/storefrontApi";
 import type { Product } from "@/types/ecommerce";
 
@@ -83,19 +84,6 @@ type CartItem = {
   product: BuyProduct;
   qty: number;
 };
-
-function formatStorePrice(amount: number, currency = "INR"): string {
-  try {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
 
 function toBuyProduct(product: Product): BuyProduct {
   const currency = product.currency || "INR";

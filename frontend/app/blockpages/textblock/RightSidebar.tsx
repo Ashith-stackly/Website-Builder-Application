@@ -38,6 +38,13 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
   const activeSectionId = state.activeSectionId ?? getBlockpagesDefaultSectionId(template);
 
   useEffect(() => {
+    if (selectedTarget === "main") {
+      setActiveTab("styles");
+      setShowSection(true);
+    }
+  }, [selectedTarget]);
+
+  useEffect(() => {
     if (template !== "ecommerce") return;
 
     const syncUserAccountVisibility = () => {

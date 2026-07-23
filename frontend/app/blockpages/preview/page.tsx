@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
-import Footer from "@/components/Footer";
 import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProjectsSlider";
 import { animateStatCounterElement } from "@/lib/blockpagesStatCounter";
 import { bindBlockpagesPreviewInteractions } from "@/lib/blockpagesPreviewInteractions";
@@ -261,12 +260,7 @@ export default function BlockPreviewPage() {
   }
  
   if (isIframeMode) {
-    return (
-      <>
-        <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-        <Footer />
-      </>
-    );
+    return <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />;
   }
  
   return (
@@ -311,10 +305,7 @@ export default function BlockPreviewPage() {
             } ${previewDevice !== "desktop" ? "rounded-[2.5rem] border-[12px] border-slate-800 bg-white overflow-hidden relative" : ""}`}
         >
           {previewDevice === "desktop" ? (
-            <>
-              <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-              <Footer />
-            </>
+            <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />
           ) : (
             <iframe
               src={PREVIEW_IFRAME_SRC}

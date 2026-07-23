@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon, ChevronRight, Download, ShoppingBag, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { BlockData } from './types';
 import type { DraftSaveStatus } from '../BlockPagesClient';
+import MyWebsiteDropdown from '../MyWebsiteDropdown';
  
 const renderIcon = (type: string) => {
   switch (type) {
@@ -251,10 +252,7 @@ export default function Canvas({
         className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <a href="/blockpages?template=portfolio" className="flex items-center gap-2 whitespace-nowrap rounded px-2 py-1.5 text-[14px] font-bold text-[#0B1D40] hover:bg-gray-100 md:text-[15px]">
-          My Website
-          <ChevronDown className="h-4 w-4 text-gray-600" />
-        </a>
+        <MyWebsiteDropdown />
  
         {/* Mobile Settings Trigger */}
         <button

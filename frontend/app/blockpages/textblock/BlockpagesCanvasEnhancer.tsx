@@ -24,7 +24,7 @@ import {
   scrubOrphanDividerDomFromLiveCanvas,
   type BlockpagesOverlayPosition,
 } from "@/lib/blockpagesOverlayLayers";
-import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
+import { scrollBlockpagesCanvasToSection, scrollCanvasToModifiedElement } from "@/lib/blockpagesTemplateSections";
 import {
   isBlockpagesTextEditingActive,
   mutationsAreFromTextEditing,
@@ -545,6 +545,7 @@ function BlockpagesCanvasEnhancer({
       htmlImg.setAttribute("data-blockpages-image-id", imageId);
 
       if (isImageEditingMode && onEditImage) {
+        if (editingImageId && imageId !== editingImageId) return;
         const position = getOverlayPosition(container, htmlImg, "image");
         if (position) {
           targets.push({
@@ -570,6 +571,7 @@ function BlockpagesCanvasEnhancer({
       element.setAttribute("data-blockpages-button-id", buttonId);
 
       if (isButtonEditingMode && onEditButton) {
+        if (editingButtonId && buttonId !== editingButtonId) return;
         const position = getOverlayPosition(container, element, "button");
         if (position) {
           targets.push({
@@ -589,6 +591,7 @@ function BlockpagesCanvasEnhancer({
       anchor.setAttribute("data-blockpages-icon-id", iconId);
 
       if (isIconEditingMode && onEditIcon) {
+        if (editingIconId && iconId !== editingIconId) return;
         const position = getOverlayPosition(container, anchor, "icon");
         if (position) {
           targets.push({
@@ -635,6 +638,9 @@ function BlockpagesCanvasEnhancer({
     isButtonEditingMode,
     isVideoEditingMode,
     isIconEditingMode,
+    editingImageId,
+    editingButtonId,
+    editingIconId,
     onEditImage,
     onEditButton,
     onEditVideo,
@@ -719,6 +725,15 @@ function BlockpagesCanvasEnhancer({
   useEffect(() => {
     applyCanvasCustomizations();
   }, [applyCanvasCustomizations]);
+
+  useEffect(() => {
+    const activeId = editingImageId || editingButtonId || editingIconId;
+    if (activeId) {
+      window.requestAnimationFrame(() => {
+        scrollCanvasToModifiedElement(activeId);
+      });
+    }
+  }, [editingImageId, editingButtonId, editingIconId]);
 
   useEffect(() => {
     const handleRestore = () => {

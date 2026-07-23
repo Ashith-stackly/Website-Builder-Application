@@ -29,6 +29,19 @@ export type StoreCart = {
   currency: string;
 };
 
+export function formatStorePrice(amount: number, currency = "INR"): string {
+  try {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
+}
+
 type CheckoutResponse = {
   order: Order;
   payment: RazorpayOrderResponse;
