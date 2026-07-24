@@ -80,13 +80,15 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
 
   /* AI image generated callback */
   const handleGeneratedAsset = async (details: GeneratedAssetDetails) => {
+    const assetId = details.asset.id;
     if (isMulti) {
-      setMultiSelectedIds((prev) => new Set([...prev, details.id]));
+      setMultiSelectedIds((prev) => new Set([...prev, assetId]));
       setTab("library");
       return;
     }
-    const url = await getUrl(details.id);
-    onSelect(url || details.url, details.id);
+    const url = await getUrl(assetId);
+    if (!url) return;
+    onSelect(url, assetId);
     closePicker();
   };
 
@@ -141,7 +143,7 @@ export function ImagePicker({ open, onClose, onSelect, currentUrl, mode = "singl
   const filtered = assets.filter((a) => {
     if (!a) return false;
     const query = (search || "").toLowerCase();
-    const filename = (a.filename || (a as Record<string, unknown>).name || (a as Record<string, unknown>).originalName || "").toString().toLowerCase();
+    const filename = (a.name || "").toLowerCase();
     const matchName = filename.includes(query);
     const matchTags = Array.isArray(a.tags) && a.tags.some((t) => typeof t === "string" && t.toLowerCase().includes(query));
     return matchName || matchTags;
