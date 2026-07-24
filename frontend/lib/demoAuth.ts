@@ -13,10 +13,12 @@
  * REMOVE or replace this once the real auth + subscription backend is wired up.
  */
 
+import { setAuthToken } from "@/lib/authToken";
+
 export const DEMO_LOGIN_EMAIL = "sukesh@gmail.com";
 export const DEMO_LOGIN_PASSWORD = "Frontend123@";
 
-const DEMO_AUTH_TOKEN = "demo-frontend-token";
+export const DEMO_AUTH_TOKEN = "demo-frontend-token";
 const DEMO_SESSION_KEY = "stackly-demo-session";
 const DEMO_SUBSCRIPTION_KEY = "stackly-demo-subscription";
 
@@ -38,9 +40,9 @@ export function isDemoLoginCredentials(email: string, password: string): boolean
  * The subscription flag lives in sessionStorage so it is scoped to the current
  * tab only. A new tab will not inherit it, so "Edit" won't work there.
  */
-export function activateDemoSession(): void {
+export function activateDemoSession(remember = false): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem("stackly-auth-token", DEMO_AUTH_TOKEN);
+  setAuthToken(DEMO_AUTH_TOKEN, remember);
   window.sessionStorage.setItem(DEMO_SESSION_KEY, DEMO_LOGIN_EMAIL);
   activateFrontendSubscription();
 }

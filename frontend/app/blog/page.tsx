@@ -12,6 +12,7 @@ import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "reac
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
 import PublicBlogListing from "@/components/blog/PublicBlogListing";
+import { clearAuthToken } from "@/lib/authToken";
 
 const START_BLOGGING_HREF = "/blog/manage/create";
 const EXPLORE_BLOG_HREF = "/blog/manage";
@@ -132,7 +133,7 @@ function BlogHeader({
   }, []);
 
   const handleLogout = useCallback(() => {
-    window.localStorage.removeItem("stackly-auth-token");
+    clearAuthToken();
     setProfileOpen(false);
     setMobileOpen(false);
     router.push("/login");

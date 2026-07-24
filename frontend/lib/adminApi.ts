@@ -1,3 +1,5 @@
+import { getAuthToken } from "@/lib/authToken";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
@@ -26,11 +28,6 @@ export class AdminApiError extends Error {
     super(message);
     this.name = "AdminApiError";
   }
-}
-
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("stackly-auth-token");
 }
 
 export async function getAdminDashboardSummary(

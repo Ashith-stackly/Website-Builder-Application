@@ -17,6 +17,7 @@ import {
 } from "react-icons/fa6";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 import { getTemplate, cloneTemplate, isTemplateConnectionError } from "@/lib/templateApi";
+import { getAuthToken } from "@/lib/authToken";
 import { generateHtml } from "@/lib/exportHtml";
 import { assetPath } from "@/lib/paths";
 import { getTemplateCategoryLabel } from "@/types/template";
@@ -208,7 +209,7 @@ export default function TemplatePreviewClient() {
 
     const token =
       typeof window !== "undefined"
-        ? window.localStorage.getItem("stackly-auth-token")
+        ? getAuthToken()
         : null;
 
     if (!token) {

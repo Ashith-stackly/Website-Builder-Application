@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { BlogListItem } from "@/types/blog";
 import { getBlogs, deleteBlog, getPublicBlogPath, isBlogConnectionError, isAbortError } from "@/lib/blogApi";
 import { getProjects, createProject, type ProjectApiProject } from "@/lib/projectApi";
+import { getAuthToken } from "@/lib/authToken";
 import { notifyBlogChanged } from "@/lib/blogEvents";
 import BlogDeleteDialog from "@/components/blog/BlogDeleteDialog";
 import BlogToast from "@/components/blog/BlogToast";
@@ -50,7 +51,7 @@ export default function BlogManagePage() {
   }, [router, searchParams]);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("stackly-auth-token") : null;
+    const token = typeof window !== "undefined" ? getAuthToken() : null;
     if (!token) {
       router.push(`/login?redirect=${encodeURIComponent(`/blog/manage${workspaceId ? `?workspaceId=${workspaceId}` : ""}`)}`);
       return;

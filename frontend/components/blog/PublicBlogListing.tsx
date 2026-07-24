@@ -15,6 +15,7 @@ import {
 } from "@/lib/blogApi";
 import { getBlogExcerpt, getPublishDate } from "@/lib/blogPresentation";
 import { onBlogChanged } from "@/lib/blogEvents";
+import { getAuthToken } from "@/lib/authToken";
 
 // The footer is below the primary blog content and contains its own animation
 // and icon dependencies, so it does not need to compete with post loading.
@@ -24,11 +25,6 @@ const Footer = dynamic(() => import("@/components/Footer"), {
 });
 
 const PAGE_SIZE = 9;
-
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("stackly-auth-token");
-}
 
 function getPaginationFallback(page: number): BlogPagination {
   return { page, limit: PAGE_SIZE, total: 0, pages: 0 };

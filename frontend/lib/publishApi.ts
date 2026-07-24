@@ -1,5 +1,6 @@
 import type { ProjectBuilderData } from "@/lib/projectApi";
 import type { SerializedDeploymentPackage } from "@/lib/deploymentPackage";
+import { getAuthToken } from "@/lib/authToken";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
@@ -37,11 +38,6 @@ export class PublishApiError extends Error {
     super(message);
     this.name = "PublishApiError";
   }
-}
-
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("stackly-auth-token");
 }
 
 function getErrorMessage(status: number): string {

@@ -5,6 +5,8 @@
  * the user's requested content context and its existing session token.
  */
 
+import { getAuthToken } from "@/lib/authToken";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
@@ -70,11 +72,6 @@ type CacheEntry = {
 };
 
 const textCache = new Map<string, CacheEntry>();
-
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("stackly-auth-token");
-}
 
 function toCacheKey(input: GenerateAITextInput): string {
   return JSON.stringify({

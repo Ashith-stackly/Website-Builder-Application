@@ -7,6 +7,7 @@ import type { BlogFormData } from "@/types/blog";
 import { createBlog, isBlogConnectionError } from "@/lib/blogApi";
 import { getProjects, createProject } from "@/lib/projectApi";
 import { notifyBlogChanged } from "@/lib/blogEvents";
+import { getAuthToken } from "@/lib/authToken";
 import BlogForm from "@/components/blog/BlogForm";
 
 export default function CreateBlogPage() {
@@ -18,7 +19,7 @@ export default function CreateBlogPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("stackly-auth-token") : null;
+    const token = typeof window !== "undefined" ? getAuthToken() : null;
     if (!token) {
       router.push(`/login?redirect=${encodeURIComponent(`/blog/manage/create${workspaceId ? `?workspaceId=${workspaceId}` : ""}`)}`);
       return;
@@ -60,7 +61,7 @@ export default function CreateBlogPage() {
       setIsSubmitting(true);
 
       try {
-        const token = typeof window !== "undefined" ? window.localStorage.getItem("stackly-auth-token") : null;
+        const token = typeof window !== "undefined" ? getAuthToken() : null;
         if (!token) {
           router.push(`/login?redirect=${encodeURIComponent(`/blog/manage/create${workspaceId ? `?workspaceId=${workspaceId}` : ""}`)}`);
           throw new Error("Please log in to publish a blog post.");

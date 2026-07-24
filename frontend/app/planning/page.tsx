@@ -28,28 +28,14 @@ import {
   type RazorpayVerifyResponse,
 } from "@/lib/razorpayClient";
 
-type UserProfile = {
-  _id?: string;
-  name: string;
-  email: string;
-  mobile: string;
-};
-
-const BACKEND_BASE =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:3001"
-    : "";
+import { getAuthToken } from "@/lib/authToken";
+import { getUserProfile, type UserProfile } from "@/lib/api";
 
 async function fetchUserProfile(): Promise<UserProfile | null> {
-  if (typeof window === "undefined") return null;
-  const token = window.localStorage.getItem("stackly-auth-token");
+  const token = getAuthToken();
   if (!token) return null;
   try {
-    const res = await fetch(`${BACKEND_BASE}/api/user/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { user?: UserProfile };
+    const data = await getUserProfile(token);
     return data.user ?? null;
   } catch {
     return null;
@@ -313,7 +299,7 @@ function PlanningPageContent() {
   }, []);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("stackly-auth-token") : null;
+    const token = typeof window !== "undefined" ? getAuthToken() : null;
     if (!token) {
       router.push(`/login?redirect=${encodeURIComponent("/planning")}`);
       return;

@@ -6,6 +6,7 @@ import type {
   CloneTemplateResponse,
   TemplateQueryParams,
 } from "@/types/template";
+import { getAuthToken } from "@/lib/authToken";
 
 // ── Base URL ───────────────────────────────────────────────────────────
 
@@ -18,11 +19,6 @@ type ApiErrorBody = {
   message?: string;
   errors?: string[];
 };
-
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("stackly-auth-token");
-}
 
 function authHeaders(): Record<string, string> {
   const token = getAuthToken();

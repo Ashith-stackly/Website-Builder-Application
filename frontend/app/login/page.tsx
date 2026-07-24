@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { FaAddressBook, FaLock } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -14,8 +14,16 @@ import {
   fitInputPlaceholderToWidth,
   observeAuthPlaceholderFit,
 } from "@/lib/authPlaceholderFit";
-import { isApiConnectionError, login as loginApi } from "@/lib/api";
+import { isApiConnectionError, login as loginApi, getUserProfile } from "@/lib/api";
 import { activateDemoSession, isDemoLoginCredentials } from "@/lib/demoAuth";
+import { setAuthToken } from "@/lib/authToken";
+import {
+  clearRememberedLogin,
+  readRememberedLogin,
+  saveRememberedLogin,
+  type RememberedLogin,
+} from "@/lib/rememberLogin";
+import { saveUserSettings, defaultUserSettings } from "@/lib/userSettings";
 import { assetPath } from "@/lib/paths";
 import {
   getSignupEmailValidationError,
@@ -84,6 +92,28 @@ const loginErrorVariants: Variants = {
   exit: { opacity: 0, y: -5, transition: { duration: 0.16, ease: "easeIn" } },
 };
 
+function resolvePostLoginPath(): string {
+  if (typeof window === "undefined") return "/landing";
+  const redirect = new URLSearchParams(window.location.search).get("redirect");
+  return redirect && redirect.startsWith("/") ? redirect : "/landing";
+}
+
+async function persistAuthenticatedUser(token: string): Promise<void> {
+  try {
+    const { user } = await getUserProfile(token);
+    saveUserSettings({
+      name: user.name?.trim() || defaultUserSettings.name,
+      email: user.email?.trim() || defaultUserSettings.email,
+      avatar:
+        typeof user.avatar === "string" && user.avatar.trim()
+          ? user.avatar
+          : defaultUserSettings.avatar,
+    });
+  } catch {
+    /* Token may still work for APIs; profile hydrate is best-effort after login. */
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState<LoginFormState>(initialLoginState);
@@ -92,6 +122,30 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false); // New state for popup
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const rememberedLoginRef = useRef<RememberedLogin | null>(null);
+  const rememberedHydratedRef = useRef(false);
+
+  useEffect(() => {
+    rememberedLoginRef.current = readRememberedLogin();
+  }, []);
+
+  const hydrateRememberedLogin = useCallback(() => {
+    if (rememberedHydratedRef.current) return;
+    const remembered = rememberedLoginRef.current;
+    if (!remembered) return;
+
+    setForm((prev) => {
+      if (prev.email.trim() || prev.password) {
+        return prev;
+      }
+      rememberedHydratedRef.current = true;
+      return {
+        email: remembered.email,
+        password: remembered.password,
+        rememberMe: true,
+      };
+    });
+  }, []);
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
@@ -375,13 +429,18 @@ export default function LoginPage() {
       // Frontend-only demo account (no backend). Grants a default subscription
       // so template "Edit" buttons open the builder. Remove once auth is wired up.
       if (isDemoLoginCredentials(contact, form.password)) {
-        activateDemoSession();
+        if (form.rememberMe) {
+          saveRememberedLogin(contact, form.password);
+        } else {
+          clearRememberedLogin();
+        }
+        activateDemoSession(form.rememberMe);
         setForm(initialLoginState);
         setErrors((prev) => ({ ...prev, form: "Login successful!" }));
         setShowSuccessModal(true);
         setTimeout(() => {
           setShowSuccessModal(false);
-          router.push("/landing");
+          router.push(resolvePostLoginPath());
         }, 2000);
         return;
       }
@@ -395,7 +454,13 @@ export default function LoginPage() {
       });
 
       if (result.token) {
-        window.localStorage.setItem("stackly-auth-token", result.token);
+        setAuthToken(result.token, form.rememberMe);
+        if (form.rememberMe) {
+          saveRememberedLogin(contact, form.password);
+        } else {
+          clearRememberedLogin();
+        }
+        await persistAuthenticatedUser(result.token);
       }
 
       setForm(initialLoginState);
@@ -404,7 +469,7 @@ export default function LoginPage() {
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
-        router.push("/landing");
+        router.push(resolvePostLoginPath());
       }, 2000);
     } catch (error) {
       if (isApiConnectionError(error)) {
@@ -458,9 +523,12 @@ export default function LoginPage() {
                         <input
                           ref={emailInputRef}
                           type="text"
+                          name="username"
+                          autoComplete="username"
                           placeholder="Email or Mobile number"
                           value={form.email}
                           onChange={handleChange("email")}
+                          onFocus={hydrateRememberedLogin}
                           onBlur={() => {
                             handleContactBlur();
                             requestAnimationFrame(() =>
@@ -496,9 +564,12 @@ export default function LoginPage() {
                         <FaLock className="mr-2 sm:mr-4 text-sm opacity-80 flex-shrink-0" />
                         <input
                           type={showPassword ? "text" : "password"}
+                          name="password"
+                          autoComplete="current-password"
                           placeholder="Password"
                           value={form.password}
                           onChange={handleChange("password")}
+                          onFocus={hydrateRememberedLogin}
                           onKeyDown={handlePasswordKeyDown}
                           maxLength={PASSWORD_MAX_LENGTH}
                           className="bg-transparent outline-none w-full min-w-0 placeholder-white text-sm pr-9"

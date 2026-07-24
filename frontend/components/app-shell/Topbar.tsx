@@ -23,6 +23,8 @@ import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { useClickOutside } from "@/lib/hooks";
 import { readUserSettings, type UserSettings } from "@/lib/userSettings";
+import { clearAuthToken } from "@/lib/authToken";
+import { clearDemoSession } from "@/lib/demoAuth";
 
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -226,7 +228,8 @@ function ProfileMenu() {
 
   const signOut = () => {
     try {
-      window.localStorage.removeItem("stackly-auth-token");
+      clearAuthToken();
+      clearDemoSession();
     } catch {
       /* ignore */
     }

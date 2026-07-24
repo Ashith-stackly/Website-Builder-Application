@@ -1,3 +1,5 @@
+import { getAuthToken } from "@/lib/authToken";
+
 /** Client-side Razorpay Checkout — WBA uses static export + razorpay-api on :3001 in dev. */
  
 export type RazorpayPaymentSuccess = {
@@ -134,12 +136,7 @@ export function loadRazorpayCheckoutScript(): Promise<void> {
     document.body.appendChild(script);
   });
 }
- 
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("stackly-auth-token");
-}
- 
+
 async function postRazorpayApi<T>(path: string, body: unknown): Promise<T> {
   let res: Response;
   const headers: Record<string, string> = { "Content-Type": "application/json" };

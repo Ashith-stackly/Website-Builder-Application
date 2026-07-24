@@ -31,6 +31,8 @@ import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { usePersistentState } from "@/lib/hooks";
 import { readUserSettings, saveUserSettings } from "@/lib/userSettings";
 import ProjectSettingsForm from "@/components/dashboard/ProjectSettingsForm";
+import { clearAuthToken } from "@/lib/authToken";
+import { clearDemoSession } from "@/lib/demoAuth";
 
 type TabKey = "profile" | "appearance" | "notifications" | "security" | "billing" | "danger";
 
@@ -102,7 +104,7 @@ function SettingsInner() {
               {tab === "notifications" && <NotificationsPanel />}
               {tab === "security" && <SecurityPanel />}
               {tab === "billing" && <BillingPanel onUpgrade={() => router.push("/planning")} />}
-              {tab === "danger" && <DangerPanel onSignOut={() => { try { window.localStorage.removeItem("stackly-auth-token"); } catch {} router.push("/login"); }} />}
+              {tab === "danger" && <DangerPanel onSignOut={() => { try { clearAuthToken(); clearDemoSession(); } catch {} router.push("/login"); }} />}
 
               {projectId && (
                 <Card icon={FolderCog} title="Project settings" desc="Settings for the currently selected project.">

@@ -1,5 +1,6 @@
 import type { Order, Product } from "@/types/ecommerce";
 import type { RazorpayOrderResponse, RazorpayPaymentSuccess } from "@/lib/razorpayClient";
+import { getAuthToken } from "@/lib/authToken";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
@@ -39,11 +40,6 @@ type VerifyPaymentResponse = {
   message?: string;
   order?: Order;
 };
-
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("stackly-auth-token");
-}
 
 function authHeaders(): Record<string, string> {
   const token = getAuthToken();

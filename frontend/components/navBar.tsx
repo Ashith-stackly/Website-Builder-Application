@@ -44,6 +44,7 @@ import {
   openRazorpayCheckout,
 } from "@/lib/razorpayClient";
 import MockCheckoutModal from "@/components/MockCheckoutModal";
+import { LOGOUT_PRESERVED_STORAGE_KEYS } from "@/lib/rememberLogin";
  
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
  
@@ -226,6 +227,7 @@ type StoredCommerceItem = {
 };
  
 const STORAGE_SYNC_EVENT = "stackly-storage-change";
+
 const LOGOUT_STORAGE_KEYS = new Set([
   "cartItems",
   "cartCount",
@@ -236,6 +238,9 @@ const LOGOUT_STORAGE_KEYS = new Set([
 ]);
 
 function shouldClearOnLogout(key: string) {
+  if (LOGOUT_PRESERVED_STORAGE_KEYS.has(key)) {
+    return false;
+  }
   return key.toLowerCase().startsWith("stackly") || LOGOUT_STORAGE_KEYS.has(key);
 }
 

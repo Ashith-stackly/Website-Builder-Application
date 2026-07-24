@@ -19,6 +19,7 @@ import Footer from "@/components/Footer";
 import { fadeUp, staggerContainer, scaleIn } from "@/lib/motion";
 import { assetPath } from "@/lib/paths";
 import { getTemplates, cloneTemplate, isTemplateConnectionError } from "@/lib/templateApi";
+import { getAuthToken } from "@/lib/authToken";
 import { TEMPLATE_CATEGORIES, getTemplateCategoryLabel } from "@/types/template";
 import type { TemplateListItem, TemplateCategoryFilter } from "@/types/template";
 
@@ -166,9 +167,7 @@ export default function TemplatesPage() {
   // ── Clone Handler ──────────────────────────────────────────────────
   const handleClone = async (templateId: string, templateName: string) => {
     // Auth check — if no token, redirect to login
-    const token = typeof window !== "undefined"
-      ? window.localStorage.getItem("stackly-auth-token")
-      : null;
+    const token = typeof window !== "undefined" ? getAuthToken() : null;
 
     if (!token) {
       router.push("/login?redirect=/templates");

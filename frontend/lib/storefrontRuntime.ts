@@ -197,7 +197,9 @@ export const buildStorefrontRuntimeScript = ({
         }
 
         function token() {
-          try { return window.localStorage.getItem("stackly-auth-token") || ""; } catch (error) { return ""; }
+          try {
+            return window.sessionStorage.getItem("stackly-auth-token") || window.localStorage.getItem("stackly-auth-token") || "";
+          } catch (error) { return ""; }
         }
 
         function updateCartButton(button, status, config, product) {

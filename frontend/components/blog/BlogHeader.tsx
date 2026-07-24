@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "react-icons/fa6";
 import { blogCategories } from "@/lib/blogCategories";
+import { clearAuthToken } from "@/lib/authToken";
 
 const navLinks = [
   { label: "Home", hash: "#blog-home" },
@@ -67,7 +68,7 @@ export default function BlogHeader() {
   }, []);
 
   const handleLogout = useCallback(() => {
-    window.localStorage.removeItem("stackly-auth-token");
+    clearAuthToken();
     setProfileOpen(false);
     setMobileOpen(false);
     router.push("/login");

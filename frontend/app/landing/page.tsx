@@ -66,6 +66,7 @@ import {
   openRazorpayCheckout,
 } from "@/lib/razorpayClient";
 import MockCheckoutModal from "@/components/MockCheckoutModal";
+import { rateTemplate } from "@/lib/api";
 type TemplateCategory = "portfolio" | "blog" | "ecommerce" | "business";
 
 const Footer = dynamic(() => import("@/components/Footer"), {
@@ -396,7 +397,7 @@ function LandingContactSection() {
                 <input name="lastName" type="text" maxLength={50} value={formData.lastName} onChange={handleInputChange} placeholder="Last Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
               </label>
             </div>
- 
+
             <label className="block space-y-2">
               <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Email Address <span className="text-red-500">*</span></span>
               <input name="email" type="email" maxLength={254} value={formData.email} onChange={handleInputChange} placeholder="test@gmail.com" required className={`w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white ${emailError ? "border-red-500" : "border-gray-200"}`} />
@@ -451,6 +452,35 @@ export default function Home() {
   const [comingSoonTemplate, setComingSoonTemplate] = useState("");
   const [checkoutProduct, setCheckoutProduct] = useState<WishlistItem | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [productRatings, setProductRatings] = useState<Record<string, number>>({});
+  const [hoveredStar, setHoveredStar] = useState<{ productTitle: string; starIndex: number } | null>(null);
+  const [ratingSubmitting, setRatingSubmitting] = useState<Record<string, boolean>>({});
+
+  const handleRateProduct = async (productTitle: string, ratingValue: number) => {
+    if (ratingSubmitting[productTitle]) return;
+
+    setRatingSubmitting((prev) => ({ ...prev, [productTitle]: true }));
+    try {
+      const templateId = productTitle.toLowerCase().replace(/\s+/g, "-");
+      const response = await rateTemplate({
+        templateId,
+        rating: ratingValue,
+      });
+
+      if (response.success) {
+        const updatedRating = response.rating?.rating ?? ratingValue;
+        setProductRatings((prev) => ({ ...prev, [productTitle]: updatedRating }));
+      } else {
+        throw new Error(response.message || "Failed to submit rating");
+      }
+    } catch (err) {
+      console.warn(`[Rating API Fallback] Backend submission failed for ${productTitle}:`, err);
+      // Fallback locally in case API endpoint is 404 or backend is offline
+      setProductRatings((prev) => ({ ...prev, [productTitle]: ratingValue }));
+    } finally {
+      setRatingSubmitting((prev) => ({ ...prev, [productTitle]: false }));
+    }
+  };
 
   const handleBuyNow = (product: WishlistItem) => {
     setCheckoutProduct(product);
@@ -1118,12 +1148,25 @@ export default function Home() {
           </Link>
         </div>
       </section>
- 
+
       <section id="top-selling" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Top Selling This Week</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
         <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {visibleTopProducts.map((product) => {
+            const currentRating = productRatings[product.title] !== undefined
+              ? productRatings[product.title]
+              : (product.rating || 5);
+
+            const displayRating = hoveredStar && hoveredStar.productTitle === product.title
+              ? hoveredStar.starIndex
+              : currentRating;
+
+            const productWithCurrentRating = {
+              ...product,
+              rating: currentRating,
+            };
+
             const isWishlisted = wishlistItems.some((item) => item.title === product.title);
             const isInCart = cartTitles.includes(product.title);
 
@@ -1141,7 +1184,7 @@ export default function Home() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => toggleWishlistItem(product)}
+                      onClick={() => toggleWishlistItem(productWithCurrentRating)}
                       aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
                       aria-pressed={isWishlisted}
                       className={`p-1 transition hover:text-red-500 shrink-0 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
@@ -1155,31 +1198,44 @@ export default function Home() {
                       <span className="text-2xl font-black text-[#06224C]">₹ {product.price}</span>
                       <span className="text-[10px] font-bold text-gray-400">({product.sales} Sales)</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-black text-[#06224C]">{(product.rating || 5).toFixed(1)}</span>
-                      <div className="flex items-center gap-0.5 text-yellow-400" aria-label={`Rating ${product.rating || 5} out of 5`}>
-                        {(() => {
-                          const rating = product.rating || 5;
-                          const fullStars = Math.floor(rating);
-                          const hasHalf = rating % 1 >= 0.25 && rating % 1 < 0.75;
-                          const extraFull = rating % 1 >= 0.75 ? 1 : 0;
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-black text-[#06224C]">{displayRating.toFixed(1)}</span>
+                      <div className="flex items-center gap-0.5 text-yellow-400" aria-label={`Rating ${displayRating} out of 5`}>
+                        {Array.from({ length: 5 }).map((_, idx) => {
+                          const starValue = idx + 1;
+                          const fullStars = Math.floor(displayRating);
+                          const hasHalf = displayRating % 1 >= 0.25 && displayRating % 1 < 0.75;
+                          const extraFull = displayRating % 1 >= 0.75 ? 1 : 0;
                           const totalFull = fullStars + extraFull;
-                          const emptyStars = 5 - totalFull - (hasHalf ? 1 : 0);
+
+                          let starType: "full" | "half" | "empty" = "empty";
+                          if (idx < totalFull) {
+                            starType = "full";
+                          } else if (idx === totalFull && hasHalf) {
+                            starType = "half";
+                          }
 
                           return (
-                            <>
-                              {Array.from({ length: totalFull }).map((_, idx) => (
-                                <FaStar key={`full-${idx}`} className="text-xs" />
-                              ))}
-                              {hasHalf && (
-                                <FaStarHalfStroke key="half" className="text-xs" />
+                            <button
+                              key={idx}
+                              type="button"
+                              disabled={ratingSubmitting[product.title]}
+                              onClick={() => handleRateProduct(product.title, starValue)}
+                              onMouseEnter={() => setHoveredStar({ productTitle: product.title, starIndex: starValue })}
+                              onMouseLeave={() => setHoveredStar(null)}
+                              className="cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 focus-visible:rounded-sm transition duration-150 hover:scale-125 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={`Rate ${starValue} star${starValue > 1 ? "s" : ""}`}
+                            >
+                              {starType === "full" ? (
+                                <FaStar className="text-2xl" />
+                              ) : starType === "half" ? (
+                                <FaStarHalfStroke className="text-2xl" />
+                              ) : (
+                                <FaRegStar className="text-2xl text-gray-300" />
                               )}
-                              {Array.from({ length: emptyStars }).map((_, idx) => (
-                                <FaRegStar key={`empty-${idx}`} className="text-xs text-gray-300" />
-                              ))}
-                            </>
+                            </button>
                           );
-                        })()}
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1187,7 +1243,7 @@ export default function Home() {
                     <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
                       <button
                         type="button"
-                        onClick={() => addToCart(product)}
+                        onClick={() => addToCart(productWithCurrentRating)}
                         disabled={isInCart}
                         aria-label={isInCart ? `${product.title} is already in cart` : `Add ${product.title} to cart`}
                         className={`cursor-pointer flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition ${isInCart ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
@@ -1197,7 +1253,7 @@ export default function Home() {
                       <button
                         type="button"
                         disabled={paymentLoading}
-                        onClick={() => handleBuyNow(product)}
+                        onClick={() => handleBuyNow(productWithCurrentRating)}
                         className="cursor-pointer flex h-10 flex-1 items-center justify-center rounded-xl bg-[#06224C] text-sm font-bold text-white transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-95 shadow-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Buy Now
@@ -1500,7 +1556,7 @@ export default function Home() {
               onClick={() => setShowComingSoon(false)}
               className="absolute inset-0 bg-[#06224C]/40 backdrop-blur-sm"
             />
-            
+
             {/* Modal Content */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -1513,12 +1569,12 @@ export default function Home() {
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
                 <FaWandMagicSparkles className="text-2xl animate-pulse" />
               </div>
-              
+
               <h3 className="mb-2 text-2xl font-black text-[#06224C]">Coming Soon</h3>
               <p className="mb-6 text-sm font-semibold text-gray-500 leading-relaxed">
                 The <span className="font-bold text-[#06224C]">{comingSoonTemplate}</span> template is currently under design and will be available very soon. Stay tuned!
               </p>
-              
+
               <button
                 type="button"
                 onClick={() => setShowComingSoon(false)}
