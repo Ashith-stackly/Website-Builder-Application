@@ -1,6 +1,6 @@
 /* ============================================================================
    Stackly codebase analysis dashboard
-   Source-and-contract audit: 22 July 2026
+   Source-and-contract audit: 24 July 2026
 
    Status meanings:
    - done: the requested capability is implemented in the source tree.
@@ -9,13 +9,15 @@
    - pending: no implementation was found for the requested capability.
    ========================================================================== */
 
-const AUDIT_DATE = "22 Jul 2026";
+const AUDIT_DATE = "24 Jul 2026";
 
 const WHATSNEW = {
-  title: "Frontend performance pass completed",
+  title: "Blog CMS, Admin Console, and Dashboard UX Upgrades Completed",
   body:
-    "A safe Next.js/React performance pass is complete without changing product behavior. The dashboard no longer imports the full Builder runtime through the project store, reducing its emitted JavaScript from approximately 2,023 KB to 780 KB (about 61%). Builder-only dialogs now load on demand, dashboard and analytics screens use scoped Zustand subscriptions, and the Hero block initialization cycle was removed. " +
-    "Module 10 remains complete with first-party, workspace-scoped analytics. The main remaining gaps are Module 6 hosting/domain infrastructure, GitHub OAuth, profile/billing UI integration, production payment/provider configuration, optional Google Analytics, and CDN-backed image optimization."
+    "A major UI and feature pass has been completed across Blog Management, Public Articles, Admin Console, and Dashboard surfaces. " +
+    "The Blog Management system (/blog/manage, /blog/manage/create, /blog/manage/edit, /blog, /blog/[slug]) now features a full Light & Dark theme toggle system, workspace-scoped Website Project selectors, standardized magazine hero/story card layouts, focus/autofill styling, and hydration fixes. " +
+    "The Admin Dashboard (/admin) has been upgraded with Light & Dark theme support, glassmorphic top navigation, and live telemetry cards. " +
+    "Dashboard project controls now use a custom RenameProjectModal popup, non-clipping action menus, and OS-aware keyboard shortcuts (Ctrl K on Windows/Linux, ⌘ K on Mac)."
 };
 
 const PROJECT = {
@@ -314,12 +316,12 @@ const MODULES = [
   },
   {
     id: "m9", num: 9, name: "Blog & SEO",
-    blurb: "Workspace-scoped blog CRUD, public listing, static-safe post routing, SEO fields, sitemap output, and metadata updates are implemented. Pretty runtime URLs and deployed site-root sitemap wiring depend on hosting/publish infrastructure because the frontend is a static export.",
+    blurb: "Workspace-scoped blog CRUD, public listing, static-safe post routing, SEO fields, sitemap output, and metadata updates are fully implemented. The Blog Management system features a full Light & Dark theme toggle system, workspace-scoped Website Project selectors, standardized magazine hero/story card layouts, focus/autofill styling, and zero build errors.",
     tasks: [
       { t: "Create blog post schema", s: "done",
         p: ["backend/src/models/BlogPost.js", "frontend/types/blog.ts"], note: "Posts include title, content, excerpt, author, status, cover image, category, tags, publishedAt, and SEO fields." },
       { t: "Build blog editor UI", s: "done",
-        p: ["frontend/components/blog/BlogForm.tsx", "frontend/app/blog/manage/"], note: "Create, edit, and management views are implemented." },
+        p: ["frontend/components/blog/BlogForm.tsx", "frontend/app/blog/manage/", "frontend/app/blog/manage/create/page.tsx", "frontend/app/blog/manage/edit/[slug]/page.tsx"], note: "Create, edit, and management views are fully implemented with theme toggles, Website Project Selectors, focus background fixes, and dark mode autofill styling." },
       { t: "Implement post creation/edit/delete", s: "done",
         p: ["backend/src/routes/blogRoutes.js", "frontend/lib/blogApi.ts", "frontend/lib/blogEvents.ts"], note: "Authenticated blog CRUD calls align with the active /api/blog routes, and create/update/delete actions notify live blog views to refresh." },
       { t: "Generate slug-based URLs", s: "done",
@@ -335,8 +337,8 @@ const MODULES = [
         p: ["frontend/components/blog/BlogSeoHead.tsx", "frontend/app/blog/layout.tsx", "frontend/app/blog/post/layout.tsx"],
         note: "Static fallback metadata is present and loaded posts update title, description, canonical URL, Open Graph, Twitter, published time, and modified time tags on the client." },
       { t: "Implement blog listing page", s: "done",
-        p: ["frontend/app/blog/page.tsx", "frontend/components/blog/PublicBlogListing.tsx", "frontend/lib/blogApi.ts"],
-        note: "The normal /blog route now renders live published posts with search, category chips, pagination, empty/error/loading states, and workspace-scoped static-safe links while preserving the old marketing template for Builder preview." },
+        p: ["frontend/app/blog/page.tsx", "frontend/components/blog/PublicBlogListing.tsx", "frontend/app/blog/[slug]/page.tsx"],
+        note: "The /blog route renders live published posts with interactive Website Project Selectors, search, category chips, pagination, Framer Motion staggered grids, theme toggles, and standardized segregated hero/story content cards." },
     ],
   },
   {

@@ -46,11 +46,11 @@ export function DropZone({
 
   return (
     <motion.div
-      animate={{
-        borderColor: isDragOver ? "#3b82f6" : "#d1d5db",
-        backgroundColor: isDragOver ? "#eff6ff" : "#f9fafb",
-      }}
-      className={`relative flex cursor-pointer select-none flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors
+      className={`relative flex cursor-pointer select-none flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all
+        ${isDragOver 
+          ? "border-blue-500 bg-blue-50/70 dark:bg-blue-950/40" 
+          : "border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/60 hover:bg-slate-100/60 dark:hover:bg-slate-800/60"
+        }
         ${compact ? "gap-1.5 py-3.5" : "gap-3 py-10"}
         ${className}`}
       onClick={() => inputRef.current?.click()}
@@ -79,7 +79,7 @@ export function DropZone({
             className="flex flex-col items-center gap-2"
           >
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-            <span className="text-[12px] text-gray-500">Uploading…</span>
+            <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Uploading…</span>
           </motion.div>
         ) : (
           <motion.div
@@ -90,7 +90,7 @@ export function DropZone({
             className="flex flex-col items-center gap-2 text-center"
           >
             <div
-              className={`flex items-center justify-center rounded-xl bg-blue-50 text-blue-500
+              className={`flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400
                 ${compact ? "h-8 w-8" : "h-12 w-12"}`}
             >
               {isDragOver
@@ -99,15 +99,15 @@ export function DropZone({
             </div>
 
             {compact ? (
-              <p className="text-[12px] font-medium text-gray-500">
+              <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
                 {isDragOver ? "Drop to upload" : "Click or drag to upload"}
               </p>
             ) : (
               <>
-                <p className="text-[13px] font-semibold text-gray-700">
+                <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">
                   {isDragOver ? "Drop images here" : "Drag & drop or click to upload"}
                 </p>
-                <p className="text-[11px] text-gray-400">PNG, JPG, WebP, GIF, SVG · max 10 MB</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">PNG, JPG, WebP, GIF, SVG · max 10 MB</p>
               </>
             )}
           </motion.div>

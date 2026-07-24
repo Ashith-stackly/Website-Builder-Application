@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { spring, staggerChild } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
+import { useModKeyLabel } from "@/lib/hooks";
 import { primaryNav, isActivePath, type NavItem } from "./navConfig";
 
 const WORKSPACES = [
@@ -40,6 +41,7 @@ export default function Sidebar({
   const recent = projects.slice(0, 4);
   const [wsOpen, setWsOpen] = useState(false);
   const [ws, setWs] = useState(WORKSPACES[0]);
+  const modKey = useModKeyLabel();
 
   return (
     <div className="flex h-full flex-col" style={{ background: "var(--surface)" }}>
@@ -177,7 +179,7 @@ export default function Sidebar({
               className="rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
               style={{ borderColor: "var(--border)" }}
             >
-              ⌘K
+              {modKey}K
             </kbd>
           )}
         </motion.button>

@@ -619,9 +619,22 @@ const hireProfessionalDetails = {
 };
 
 function BlogPageContent() {
+  const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
   const workspaceId = searchParams.get("workspaceId");
   const view = searchParams.get("view");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+      </main>
+    );
+  }
 
   if (workspaceId || view === "posts") {
     return <PublicBlogListing key={workspaceId || "public-listing"} />;

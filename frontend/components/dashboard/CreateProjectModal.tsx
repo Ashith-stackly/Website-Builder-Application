@@ -166,22 +166,22 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#06224C]/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
             onClick={handleClose}
           />
 
-          {/* Modal */}
+          {/* Modal Card */}
           <motion.div
             variants={scaleIn}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative w-full max-w-[95vw] sm:max-w-2xl bg-white rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]"
+            className="relative w-full max-w-[95vw] sm:max-w-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] text-slate-900 dark:text-slate-100"
           >
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/80 p-4 sm:p-6">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 p-4 sm:p-6">
               <div className="min-w-0">
-                <h3 className="text-lg font-black uppercase tracking-widest text-[#06224C] sm:text-xl">
+                <h3 className="text-lg font-black uppercase tracking-widest text-[#06224C] dark:text-slate-100 sm:text-xl">
                   Create Project
                 </h3>
                 <div className="mt-1 flex items-center gap-2">
@@ -189,43 +189,44 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                     <div
                       key={s}
                       className={`h-1.5 rounded-full transition-all duration-300 ${
-                        s <= step ? "w-8 bg-blue-500" : "w-4 bg-slate-200"
+                        s <= step ? "w-8 bg-blue-600 dark:bg-blue-500" : "w-4 bg-slate-200 dark:bg-slate-800"
                       }`}
                     />
                   ))}
-                  <span className="ml-1 text-[10px] font-bold text-slate-400">
+                  <span className="ml-1 text-[10px] font-bold text-slate-400 dark:text-slate-500">
                     {step}/4
                   </span>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white shadow-sm transition-all hover:bg-red-50 hover:text-red-500 sm:h-10 sm:w-10"
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200/60 dark:border-slate-700/60 transition-all hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-400 dark:text-slate-400 hover:text-rose-500 sm:h-10 sm:w-10 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Content */}
+            {/* Content Area */}
             <div className="min-h-0 flex-grow overflow-y-auto p-4 sm:p-8">
               <AnimatePresence mode="wait">
                 {step === 1 && (
                   <motion.div key="step1" variants={fadeUp} initial="hidden" animate="visible" exit="exit" className="space-y-4 sm:space-y-6">
-                    <h4 className="break-words text-xl font-black text-[#06224C] sm:text-2xl">Your Project Name.</h4>
+                    <h4 className="break-words text-xl font-black text-[#06224C] dark:text-slate-100 sm:text-2xl">Your Project Name.</h4>
                     <input
                       type="text"
                       placeholder="e.g. MyProject01"
-                      className={`w-full rounded-xl border-2 px-4 py-3 text-base font-bold outline-none transition-all sm:rounded-2xl sm:px-6 sm:py-4 sm:text-lg ${
+                      className={`w-full rounded-xl border-2 px-4 py-3 text-base font-bold outline-none transition-all sm:rounded-2xl sm:px-6 sm:py-4 sm:text-lg text-[#06224C] dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 ${
                         error
-                          ? "border-red-400 bg-red-50"
-                          : "border-slate-100 bg-slate-50 focus:border-blue-500 focus:bg-white"
-                      }`}
+                          ? "border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-950/60"
+                          : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-blue-500 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900"
+                      } autofill:shadow-[0_0_0_1000px_white_inset] dark:autofill:shadow-[0_0_0_1000px_#0f172a_inset]`}
                       value={projectData.name}
                       onChange={handleNameChange}
                       maxLength={40}
+                      autoFocus
                     />
                     {error && (
-                      <p className="animate-pulse text-[10px] font-bold uppercase tracking-wide text-red-500">
+                      <p className="animate-pulse text-[10px] font-bold uppercase tracking-wide text-rose-500 dark:text-rose-400">
                         {error}
                       </p>
                     )}
@@ -234,21 +235,22 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
                 {step === 2 && (
                   <motion.div key="step2" variants={fadeUp} initial="hidden" animate="visible" exit="exit" className="space-y-4 sm:space-y-6">
-                    <h4 className="break-words text-xl font-black text-[#06224C] sm:text-2xl">What are you building?</h4>
+                    <h4 className="break-words text-xl font-black text-[#06224C] dark:text-slate-100 sm:text-2xl">What are you building?</h4>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                       {categories.map((cat) => (
                         <motion.button
                           key={cat.title}
+                          type="button"
                           onClick={() => {
                             setProjectData({ ...projectData, category: cat.title });
                             setError("");
                           }}
                           whileHover={{ y: -2 }}
                           whileTap={{ scale: 0.98 }}
-                          className={`relative overflow-hidden rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl sm:p-5 ${
+                          className={`relative overflow-hidden rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl sm:p-5 cursor-pointer ${
                             projectData.category === cat.title
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-slate-100 hover:border-blue-200"
+                              ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60"
+                              : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50"
                           }`}
                         >
                           {projectData.category === cat.title && (
@@ -257,25 +259,26 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                               className="absolute inset-x-0 top-0 h-1 bg-blue-500"
                             />
                           )}
-                          <span className="mb-3 inline-flex rounded-xl bg-white p-2 text-blue-600 shadow-sm">
+                          <span className="mb-3 inline-flex rounded-xl bg-white dark:bg-slate-800 p-2 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-100 dark:border-slate-700">
                             <cat.icon className="h-5 w-5" />
                           </span>
-                          <p className="text-sm font-black text-[#06224C] sm:text-base">{cat.title}</p>
-                          <p className="text-[9px] font-bold uppercase text-slate-400">{cat.description}</p>
+                          <p className="text-sm font-black text-[#06224C] dark:text-slate-100 sm:text-base">{cat.title}</p>
+                          <p className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500">{cat.description}</p>
                         </motion.button>
                       ))}
                     </div>
-                    {error && <p className="text-[10px] font-bold uppercase tracking-wide text-red-500">{error}</p>}
+                    {error && <p className="text-[10px] font-bold uppercase tracking-wide text-rose-500 dark:text-rose-400">{error}</p>}
                   </motion.div>
                 )}
 
                 {step === 3 && (
                   <motion.div key="step3" variants={fadeUp} initial="hidden" animate="visible" exit="exit" className="space-y-4 sm:space-y-6">
-                    <h4 className="break-words text-xl font-black text-[#06224C] sm:text-2xl">Pick a template style.</h4>
+                    <h4 className="break-words text-xl font-black text-[#06224C] dark:text-slate-100 sm:text-2xl">Pick a template style.</h4>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                       {templateStyles.map((style) => (
                         <motion.button
                           key={style.title}
+                          type="button"
                           onClick={() => {
                             setProjectData({ ...projectData, template: style.title });
                             setError("");
@@ -284,33 +287,33 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                           whileTap={{ scale: 0.98 }}
                           className={`group cursor-pointer space-y-2 rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl ${
                             projectData.template === style.title
-                              ? "border-blue-500 bg-blue-50/30"
-                              : "border-slate-100 hover:border-blue-200"
+                              ? "border-blue-500 bg-blue-50/30 dark:bg-blue-950/40"
+                              : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50"
                           }`}
                         >
-                          <div className="flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-slate-300 sm:rounded-xl">
+                          <div className="flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 sm:rounded-xl">
                             <motion.div
                               animate={projectData.template === style.title ? { scale: [1, 1.08, 1] } : { scale: 1 }}
                               transition={{ duration: 0.35 }}
-                              className="rounded-xl bg-white p-3 text-blue-600 shadow-sm"
+                              className="rounded-xl bg-white dark:bg-slate-800 p-3 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-100 dark:border-slate-700"
                             >
                               <style.icon className="h-6 w-6 sm:h-8 sm:w-8" />
                             </motion.div>
                           </div>
-                          <p className="text-[11px] font-black text-[#06224C] sm:text-xs">{style.title}</p>
-                          <p className="text-[9px] font-bold uppercase text-slate-400">{style.description}</p>
+                          <p className="text-[11px] font-black text-[#06224C] dark:text-slate-100 sm:text-xs">{style.title}</p>
+                          <p className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500">{style.description}</p>
                         </motion.button>
                       ))}
                     </div>
-                    {error && <p className="text-[10px] font-bold uppercase tracking-wide text-red-500">{error}</p>}
+                    {error && <p className="text-[10px] font-bold uppercase tracking-wide text-rose-500 dark:text-rose-400">{error}</p>}
                   </motion.div>
                 )}
 
                 {step === 4 && (
                   <motion.div key="step4" variants={fadeUp} initial="hidden" animate="visible" exit="exit" className="space-y-4 sm:space-y-6">
                     <div>
-                      <h4 className="break-words text-xl font-black text-[#06224C] sm:text-2xl">Choose website sections.</h4>
-                      <p className="mt-1 text-xs font-bold uppercase text-slate-400">These will be added to your builder canvas.</p>
+                      <h4 className="break-words text-xl font-black text-[#06224C] dark:text-slate-100 sm:text-2xl">Choose website sections.</h4>
+                      <p className="mt-1 text-xs font-bold uppercase text-slate-400 dark:text-slate-500">These will be added to your builder canvas.</p>
                     </div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       {websiteSections.map((section) => {
@@ -318,44 +321,48 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                         return (
                           <motion.button
                             key={section.id}
+                            type="button"
                             onClick={() => toggleSection(section.id)}
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl sm:p-4 ${
-                              isSelected ? "border-blue-500 bg-blue-50" : "border-slate-100 hover:border-blue-200"
+                            className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl sm:p-4 cursor-pointer ${
+                              isSelected
+                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60"
+                                : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50"
                             }`}
                           >
                             <span
                               className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border ${
                                 isSelected
                                   ? "border-blue-500 bg-blue-600 text-white"
-                                  : "border-slate-200 text-slate-300"
+                                  : "border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600"
                               }`}
                             >
                               {isSelected && <Check className="h-3 w-3" />}
                             </span>
-                            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm border border-slate-100 dark:border-slate-700">
                               <section.icon className="h-4 w-4" />
                             </span>
                             <span>
-                              <span className="block text-sm font-black text-[#06224C]">{section.label}</span>
-                              <span className="block text-[9px] font-bold uppercase text-slate-400">{section.description}</span>
+                              <span className="block text-sm font-black text-[#06224C] dark:text-slate-100">{section.label}</span>
+                              <span className="block text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500">{section.description}</span>
                             </span>
                           </motion.button>
                         );
                       })}
                     </div>
-                    {error && <p className="text-[10px] font-bold uppercase tracking-wide text-red-500">{error}</p>}
+                    {error && <p className="text-[10px] font-bold uppercase tracking-wide text-rose-500 dark:text-rose-400">{error}</p>}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/80 p-4 sm:p-6">
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 p-4 sm:p-6">
               <button
+                type="button"
                 onClick={handleBack}
-                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-[#06224C] sm:px-8 sm:py-3 sm:text-xs ${
+                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 transition-colors hover:text-[#06224C] dark:hover:text-slate-200 sm:px-8 sm:py-3 sm:text-xs cursor-pointer ${
                   step === 1 ? "invisible" : ""
                 }`}
               >
@@ -363,18 +370,20 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
               </button>
               {step < 4 ? (
                 <button
+                  type="button"
                   onClick={handleNext}
                   disabled={!!error || (step === 1 && !projectData.name)}
-                  className="rounded-lg bg-[#06224C] px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all hover:bg-blue-900 disabled:opacity-50 sm:rounded-xl sm:px-10 sm:py-3 sm:text-xs"
+                  className="rounded-lg bg-[#06224C] dark:bg-blue-600 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all hover:bg-blue-900 dark:hover:bg-blue-700 disabled:opacity-50 sm:rounded-xl sm:px-10 sm:py-3 sm:text-xs cursor-pointer disabled:cursor-not-allowed"
                 >
                   Continue <ArrowRight className="ml-1 inline h-3 w-3" />
                 </button>
               ) : (
                 <motion.button
+                  type="button"
                   onClick={handleBuild}
                   disabled={isBuilding || !projectData.template || projectData.sections.length === 0}
                   whileTap={isBuilding ? undefined : { scale: 0.96 }}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all hover:bg-green-700 disabled:opacity-60 sm:rounded-xl sm:px-10 sm:py-3 sm:text-xs"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 dark:bg-emerald-500 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all hover:bg-emerald-700 dark:hover:bg-emerald-600 disabled:opacity-60 sm:rounded-xl sm:px-10 sm:py-3 sm:text-xs cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isBuilding ? (
                     <>

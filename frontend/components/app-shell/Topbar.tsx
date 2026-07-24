@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
-import { useClickOutside } from "@/lib/hooks";
+import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { fetchProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -47,6 +47,7 @@ export default function Topbar({
 }) {
   const pathname = usePathname() || "/dashboard";
   const crumbs = pathname.split("/").filter(Boolean);
+  const modKey = useModKeyLabel();
 
   return (
     <header
@@ -92,7 +93,7 @@ export default function Topbar({
         <Search className="h-4 w-4" />
         <span className="hidden md:inline">Search everything…</span>
         <kbd className="ml-auto hidden rounded-md border px-1.5 py-0.5 text-[10px] font-semibold md:block" style={{ borderColor: "var(--border)" }}>
-          ⌘K
+          {modKey}K
         </kbd>
       </button>
 

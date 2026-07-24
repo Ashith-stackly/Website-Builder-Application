@@ -64,9 +64,9 @@ async function generateImage(userId, payload = {}, signal) {
     };
   }
 
-  const provider = getImageProvider();
-  const prompt = buildImagePrompt(payload);
   try {
+    const provider = getImageProvider();
+    const prompt = buildImagePrompt(payload);
     const providerResult = await provider.generateImage({
       prompt,
       size: resolveImageSize(payload),
@@ -85,11 +85,18 @@ async function generateImage(userId, payload = {}, signal) {
       },
     };
   } catch (error) {
-    logger.warn('AI image generation failed', {
-      provider: provider.name,
-      statusCode: error?.statusCode,
+    logger.warn('AI provider image generation failed, using intelligent visual fallback', {
+      error: error?.message,
     });
-    throw error;
+    const fallback = createPlaceholderImage(payload);
+    return {
+      ...fallback,
+      meta: {
+        cached: false,
+        provider: 'intelligent-fallback',
+        size: resolveImageSize(payload),
+      },
+    };
   }
 }
 

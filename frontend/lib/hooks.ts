@@ -96,6 +96,23 @@ export function useHotkey(
   }, [key, meta, ctrl, shift, preventDefault]);
 }
 
+/** Helper function to get OS-appropriate modifier key text ("Ctrl" for Windows/Linux, "⌘" for Mac) */
+export function getModKeyLabel(): string {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return "Ctrl";
+  const userAgent = navigator.userAgent || "";
+  const platform = (navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData?.platform || navigator.platform || "";
+  const isMac = /mac/i.test(platform) || /macintosh|mac os x/i.test(userAgent);
+  return isMac ? "⌘" : "Ctrl";
+}
+
+export function useModKeyLabel(): string {
+  const [label, setLabel] = useState("Ctrl");
+  useEffect(() => {
+    setLabel(getModKeyLabel());
+  }, []);
+  return label;
+}
+
 /* ─── Click / Escape outside ───────────────────────────────────────────── */
 
 export function useClickOutside<T extends HTMLElement>(

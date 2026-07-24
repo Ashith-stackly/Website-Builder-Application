@@ -18,7 +18,9 @@ import {
   ExternalLink,
   ArrowUpDown,
   FolderKanban,
+  SlidersHorizontal,
 } from "lucide-react";
+import RenameProjectModal from "@/components/dashboard/RenameProjectModal";
 import { staggerContainer, staggerChild, gridContainer, cardItem, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useShallow } from "zustand/react/shallow";
@@ -258,12 +260,12 @@ function ProjectCard({
   onOpen: () => void; onRename: (id: string, name: string) => void; onDelete: (id: string) => void; onDuplicate: (id: string) => void;
 }) {
   const [menu, setMenu] = useState(false);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setMenu(false), menu);
 
   const doRename = () => {
     setMenu(false);
-    const n = window.prompt("Rename project", project.name);
-    if (n && n.trim() && n.trim() !== project.name) onRename(project.id, n.trim());
+    setRenameModalOpen(true);
   };
   const doDelete = () => {
     setMenu(false);
@@ -278,7 +280,7 @@ function ProjectCard({
       <AnimatePresence>
         {menu && (
           <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -4 }} transition={{ duration: 0.14 }}
-            className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border p-1 shadow-xl" style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}>
+            className="absolute right-2 top-full z-50 mt-1 w-40 rounded-xl border p-1 shadow-2xl" style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}>
             <MItem icon={ExternalLink} label="Open" onClick={() => { setMenu(false); onOpen(); }} />
             <MItem icon={Pencil} label="Rename" onClick={doRename} />
             <MItem icon={Copy} label="Duplicate" onClick={() => { setMenu(false); onDuplicate(project.id); }} />
@@ -295,48 +297,55 @@ function ProjectCard({
     </button>
   );
 
-  if (view === "list") {
-    return (
-      <motion.div layout variants={cardItem} exit={{ opacity: 0, scale: 0.97 }} whileHover={{ x: 3 }} transition={spring.snappy}
-        className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
-        <button onClick={onOpen} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ background: tone }}>
-          <Blocks className="h-5 w-5" />
-        </button>
-        <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-          <p className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</p>
-          <p className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
-            <span className="truncate">{project.category || "Website"}</span><span>·</span>
-            <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
-          </p>
-        </button>
-        <span className="hidden rounded-md px-2 py-0.5 text-[10px] font-bold uppercase sm:block" style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}>{project.status || "draft"}</span>
-        {Fav}{Menu}
-      </motion.div>
-    );
-  }
-
   return (
-    <motion.div layout variants={cardItem} exit={{ opacity: 0, scale: 0.96 }} whileHover={{ y: -4 }} transition={spring.snappy}
-      className="group flex flex-col overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
-      <button onClick={onOpen} className="relative h-32 w-full" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
-        <span className="absolute inset-0 grid place-items-center">
-          <span className="grid h-12 w-12 place-items-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ background: tone }}>
+    <>
+      {view === "list" ? (
+        <motion.div layout variants={cardItem} exit={{ opacity: 0, scale: 0.97 }} whileHover={{ x: 3 }} transition={spring.snappy}
+          className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
+          <button onClick={onOpen} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ background: tone }}>
             <Blocks className="h-5 w-5" />
-          </span>
-        </span>
-        <span className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase backdrop-blur" style={{ background: "var(--glass)", color: "var(--text-muted)" }}>{project.status || "draft"}</span>
-      </button>
-      <div className="flex items-center gap-1 p-3">
-        <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-          <p className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</p>
-          <p className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
-            <span className="truncate">{project.category || "Website"}</span><span>·</span>
-            <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
-          </p>
-        </button>
-        {Fav}{Menu}
-      </div>
-    </motion.div>
+          </button>
+          <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+            <p className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</p>
+            <p className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
+              <span className="truncate">{project.category || "Website"}</span><span>·</span>
+              <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
+            </p>
+          </button>
+          <span className="hidden rounded-md px-2 py-0.5 text-[10px] font-bold uppercase sm:block" style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}>{project.status || "draft"}</span>
+          {Fav}{Menu}
+        </motion.div>
+      ) : (
+        <motion.div layout variants={cardItem} exit={{ opacity: 0, scale: 0.96 }} whileHover={{ y: -4 }} transition={spring.snappy}
+          className={`group relative flex flex-col rounded-2xl border ${menu ? "z-40" : "z-0 hover:z-20"}`} style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
+          <button onClick={onOpen} className="relative h-32 w-full overflow-hidden rounded-t-2xl" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
+            <span className="absolute inset-0 grid place-items-center">
+              <span className="grid h-12 w-12 place-items-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ background: tone }}>
+                <Blocks className="h-5 w-5" />
+              </span>
+            </span>
+            <span className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase backdrop-blur" style={{ background: "var(--glass)", color: "var(--text-muted)" }}>{project.status || "draft"}</span>
+          </button>
+          <div className="flex items-center gap-1 p-3">
+            <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+              <p className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</p>
+              <p className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
+                <span className="truncate">{project.category || "Website"}</span><span>·</span>
+                <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
+              </p>
+            </button>
+            {Fav}{Menu}
+          </div>
+        </motion.div>
+      )}
+
+      <RenameProjectModal
+        isOpen={renameModalOpen}
+        onClose={() => setRenameModalOpen(false)}
+        initialName={project.name}
+        onSave={(newName) => onRename(project.id, newName)}
+      />
+    </>
   );
 }
 
