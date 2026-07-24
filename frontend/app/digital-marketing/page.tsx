@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
+import StandardModal from "@/components/StandardModal";
 import { motion, AnimatePresence, useMotionValueEvent, useReducedMotion, useScroll, animate, useMotionValue, useTransform, useInView } from "framer-motion";
 import {
   FaEye,
@@ -307,115 +308,65 @@ function TemplateFooter() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {isPrivacyModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-[#F8F9FA] shadow-2xl text-left"
-            >
-              <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
-                <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Privacy Policy</h2>
-              </div>
+      <StandardModal
+        isOpen={isPrivacyModalOpen}
+        onClose={() => setIsPrivacyModalOpen(false)}
+        title="Privacy Policy"
+        maxWidth="max-w-2xl"
+      >
+        <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">
+          Your privacy is important to us. This policy explains how Stackly collects, uses, and protects your information.
+        </p>
 
-              <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
-                <p className="mb-8 text-sm font-medium leading-relaxed @md:text-base">
-                  Your privacy is important to us. This policy explains how Stackly collects, uses, and protects your information.
-                </p>
+        <div className="space-y-6 text-sm @md:text-base">
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Information We Collect</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">We collect account details, contact information, usage data, and project preferences needed to operate the platform.</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. How We Use Data</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">We use data to provide services, improve templates, process payments, prevent abuse, and send important updates.</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Security</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">We use reasonable safeguards to protect user data, though no internet transmission is completely risk free.</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Your Rights</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">You can request access, correction, or deletion of personal data by contacting <a href="mailto:privacy@thestackly.com" className="font-bold text-[#1E56E5] hover:underline">privacy@thestackly.com</a>.</p>
+          </div>
+        </div>
+      </StandardModal>
 
-                <div className="space-y-6 text-sm @md:text-base">
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Information We Collect</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">We collect account details, contact information, usage data, and project preferences needed to operate the platform.</p>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. How We Use Data</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">We use data to provide services, improve templates, process payments, prevent abuse, and send important updates.</p>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Security</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">We use reasonable safeguards to protect user data, though no internet transmission is completely risk free.</p>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Your Rights</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">You can request access, correction, or deletion of personal data by contacting <a href="mailto:privacy@thestackly.com" className="font-bold text-[#1E56E5] hover:underline">privacy@thestackly.com</a>.</p>
-                  </div>
-                </div>
-              </div>
+      <StandardModal
+        isOpen={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+        title="Terms of Use"
+        maxWidth="max-w-2xl"
+      >
+        <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">
+          Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.
+        </p>
 
-              <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
-                <button
-                  onClick={() => setIsPrivacyModalOpen(false)}
-                  className="rounded-full bg-[#0A1E3D] px-10 py-3 text-sm font-bold tracking-widest text-white transition hover:bg-[#06152b] uppercase"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {isTermsModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-[#F8F9FA] shadow-2xl text-left"
-            >
-              <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
-                <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Terms of Use</h2>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
-                <p className="mb-8 text-sm font-medium leading-relaxed @md:text-base">
-                  Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.
-                </p>
-
-                <div className="space-y-6 text-sm @md:text-base">
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Account Responsibilities</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">You are responsible for maintaining your login credentials and all activity under your account.</p>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. Template Usage</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">Templates may be customized for your own projects. Redistribution or resale without permission is not allowed.</p>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Payments</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">Paid assets and subscriptions are billed according to the plan selected at purchase.</p>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Platform Changes</h3>
-                    <p className="text-sm font-medium leading-relaxed @md:text-base">We may improve, update, or discontinue features to keep Stackly reliable and secure.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
-                <button
-                  onClick={() => setIsTermsModalOpen(false)}
-                  className="rounded-full bg-[#0A1E3D] px-10 py-3 text-sm font-bold tracking-widest text-white transition hover:bg-[#06152b] uppercase"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <div className="space-y-6 text-sm @md:text-base">
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Account Responsibilities</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">You are responsible for maintaining your login credentials and all activity under your account.</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">2. Template Usage</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">Templates may be customized for your own projects. Redistribution or resale without permission is not allowed.</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">3. Payments</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">Paid assets and subscriptions are billed according to the plan selected at purchase.</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">4. Platform Changes</h3>
+            <p className="text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base">We may improve, update, or discontinue features to keep Stackly reliable and secure.</p>
+          </div>
+        </div>
+      </StandardModal>
     </footer>
   );
 }
@@ -477,6 +428,7 @@ export default function DigitalMarketingPreviewPage() {
   );
   const [innerMobileMenuOpen, setInnerMobileMenuOpen] = useState(false);
   const [innerNavHidden, setInnerNavHidden] = useState(false);
+  const [testimonialList, setTestimonialList] = useState(testimonials);
   const [testimonialIndex, setTestimonialIndex] = useState(1);
   const [slideDirection, setSlideDirection] = useState(1);
   const [isHoveredTestimonials, setIsHoveredTestimonials] = useState(false);
@@ -539,10 +491,10 @@ export default function DigitalMarketingPreviewPage() {
     if (isHoveredTestimonials) return;
     const interval = setInterval(() => {
       setSlideDirection(1);
-      setTestimonialIndex((i) => (i + 1) % testimonials.length);
+      setTestimonialIndex((i) => (i + 1) % testimonialList.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [isHoveredTestimonials]);
+  }, [isHoveredTestimonials, testimonialList.length]);
 
   useMotionValueEvent(canvasScrollY, "change", (current) => {
     if (isBlockpages) return;
@@ -553,9 +505,9 @@ export default function DigitalMarketingPreviewPage() {
   const previewNavHidden = innerNavHidden && !innerMobileMenuOpen && !prefersReducedMotion;
 
   const visibleTestimonials = [
-    testimonials[(testimonialIndex + testimonials.length - 1) % testimonials.length],
-    testimonials[testimonialIndex],
-    testimonials[(testimonialIndex + 1) % testimonials.length],
+    { ...testimonialList[(testimonialIndex + testimonialList.length - 1) % testimonialList.length], realIndex: (testimonialIndex + testimonialList.length - 1) % testimonialList.length },
+    { ...testimonialList[testimonialIndex], realIndex: testimonialIndex },
+    { ...testimonialList[(testimonialIndex + 1) % testimonialList.length], realIndex: (testimonialIndex + 1) % testimonialList.length },
   ];
 
   return (
@@ -970,14 +922,43 @@ export default function DigitalMarketingPreviewPage() {
                                   <FaStar key={si} size={14} />
                                 ))}
                               </div>
-                              <p className="min-w-0 break-words flex-1 text-left text-sm font-medium leading-relaxed transition-colors duration-500 @md:text-base text-[#4A5568] group-hover:text-gray-300">
+                              <p
+                                className="min-w-0 break-words flex-1 text-left text-sm font-medium leading-relaxed transition-colors duration-500 @md:text-base text-[#4A5568] group-hover:text-gray-300"
+                                suppressContentEditableWarning
+                                onBlur={(e) => {
+                                  const newText = e.currentTarget.textContent ?? "";
+                                  setTestimonialList((prev) =>
+                                    prev.map((item, idx) => (idx === t.realIndex ? { ...item, text: newText } : item))
+                                  );
+                                }}
+                              >
                                 {t.text}
                               </p>
                               <div className="min-w-0 mt-6 text-right">
-                                <p className="min-w-0 break-words font-bold transition-colors duration-500 text-[#0A1E3D] group-hover:text-white">{t.name}</p>
-                                {t.role && (
-                                  <p className="min-w-0 break-words mt-0.5 text-[10px] font-medium transition-colors duration-500 text-gray-500 group-hover:text-gray-400 @sm:text-xs">{t.role}</p>
-                                )}
+                                <p
+                                  className="min-w-0 break-words font-bold transition-colors duration-500 text-[#0A1E3D] group-hover:text-white"
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => {
+                                    const newName = e.currentTarget.textContent ?? "";
+                                    setTestimonialList((prev) =>
+                                      prev.map((item, idx) => (idx === t.realIndex ? { ...item, name: newName } : item))
+                                    );
+                                  }}
+                                >
+                                  {t.name}
+                                </p>
+                                <p
+                                  className="min-w-0 break-words mt-0.5 text-[10px] font-medium transition-colors duration-500 text-gray-500 group-hover:text-gray-400 @sm:text-xs"
+                                  suppressContentEditableWarning
+                                  onBlur={(e) => {
+                                    const newRole = e.currentTarget.textContent ?? "";
+                                    setTestimonialList((prev) =>
+                                      prev.map((item, idx) => (idx === t.realIndex ? { ...item, role: newRole } : item))
+                                    );
+                                  }}
+                                >
+                                  {t.role || "Client"}
+                                </p>
                               </div>
                             </motion.div>
                           ))}

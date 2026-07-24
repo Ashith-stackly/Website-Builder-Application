@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 /** A deliberately separate shell for cross-account administrator operations. */
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="stackly-admin-layout min-h-screen bg-slate-950 text-slate-100">
+    <div className="stackly-admin-layout min-h-screen">
       <style>{`
         body:has(.stackly-admin-layout) .stackly-global-nav,
         .stackly-admin-layout ~ footer,

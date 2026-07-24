@@ -23,10 +23,10 @@ class OpenAIProvider extends AIProvider {
   constructor({ apiKey, textModel, imageModel, baseUrl, timeoutMs } = {}) {
     super('openai');
     this.apiKey = apiKey || process.env.OPENAI_API_KEY;
-    this.textModel = textModel || process.env.OPENAI_TEXT_MODEL || 'gpt-4.1-mini';
-    this.imageModel = imageModel || process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
+    this.textModel = textModel || process.env.OPENAI_TEXT_MODEL || 'gpt-4o-mini';
+    this.imageModel = imageModel || process.env.OPENAI_IMAGE_MODEL || 'dall-e-3';
     this.baseUrl = normaliseBaseUrl(baseUrl || process.env.OPENAI_API_BASE_URL);
-    this.timeoutMs = Number(timeoutMs || process.env.AI_REQUEST_TIMEOUT_MS) || 30_000;
+    this.timeoutMs = Number(timeoutMs || process.env.AI_REQUEST_TIMEOUT_MS) || 10_000;
   }
 
   assertConfigured() {

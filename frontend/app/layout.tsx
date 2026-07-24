@@ -4,6 +4,7 @@ import NavBarShell from "@/components/NavBarShell";
 import AuthSessionProvider from "@/components/AuthSessionProvider";
 import RouteLoadingOverlay from "@/components/RouteLoadingOverlay";
 import ScrollToTop from "@/components/ScrollToTop";
+import "@/lib/reactDomPatch";
 import "./globals.css";
 
 const lora = Lora({

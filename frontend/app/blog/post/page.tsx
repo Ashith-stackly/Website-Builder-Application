@@ -6,7 +6,16 @@ import { BlogViewPage } from "../[slug]/page";
 
 function ClientBlogPost() {
   const searchParams = useSearchParams();
-  return <BlogViewPage slugOverride={searchParams.get("slug") || ""} workspaceIdOverride={searchParams.get("workspaceId") || ""} />;
+  const slug = searchParams.get("slug") || "";
+  const workspaceId = searchParams.get("workspaceId") || "";
+
+  return (
+    <BlogViewPage
+      key={`${workspaceId}-${slug}`}
+      slugOverride={slug}
+      workspaceIdOverride={workspaceId}
+    />
+  );
 }
 
 export default function ClientBlogPostPage() {

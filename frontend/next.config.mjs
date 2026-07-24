@@ -9,7 +9,7 @@ const basePath =
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  output: isDev ? undefined : "export",
   trailingSlash: true,
   basePath,
   assetPrefix: basePath ? `${basePath}/` : undefined,

@@ -5,7 +5,7 @@ function getProfile(user) {
 }
 
 async function updateProfile(user, updates) {
-  const allowed = ['name', 'avatar', 'mobile'];
+  const allowed = ['name', 'email', 'avatar', 'mobile'];
   for (const key of allowed) {
     if (Object.prototype.hasOwnProperty.call(updates, key)) {
       user[key] = updates[key];

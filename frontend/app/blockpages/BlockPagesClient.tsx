@@ -442,9 +442,6 @@ export default function BlockPagesClient() {
       return;
     }
 
-    const cachedHtml = readBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate));
-    if (cachedHtml?.trim() && openPreview(cachedHtml)) return;
-
     flushSync(() => setActiveBlockPage("text"));
 
     const attemptCapture = (attempt = 0) => {

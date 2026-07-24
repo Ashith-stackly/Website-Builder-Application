@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   Lightbulb,
 } from "lucide-react";
+import RenameProjectModal from "@/components/dashboard/RenameProjectModal";
+import { useModKeyLabel } from "@/lib/hooks";
 import {
   gridContainer,
   cardItem,
@@ -391,12 +393,12 @@ function ProjectTile({
   onDuplicate: (id: string) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
   const menuRef = useClickOutside<HTMLDivElement>(() => setMenuOpen(false), menuOpen);
 
   const doRename = () => {
     setMenuOpen(false);
-    const next = window.prompt("Rename project", project.name);
-    if (next && next.trim() && next.trim() !== project.name) onRename(project.id, next.trim());
+    setRenameModalOpen(true);
   };
   const doDelete = () => {
     setMenuOpen(false);
@@ -404,65 +406,74 @@ function ProjectTile({
   };
 
   return (
-    <motion.div
-      variants={cardItem}
-      layout
-      whileHover={{ y: -4 }}
-      transition={spring.snappy}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border"
-      style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
-    >
-      {/* Thumbnail */}
-      <button onClick={onOpen} className="relative h-28 w-full overflow-hidden" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
-        <div className="absolute inset-0 grid place-items-center">
-          <span className="grid h-11 w-11 place-items-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ background: tone }}>
-            <Blocks className="h-5 w-5" />
+    <>
+      <motion.div
+        variants={cardItem}
+        layout
+        whileHover={{ y: -4 }}
+        transition={spring.snappy}
+        className={`group relative flex flex-col rounded-2xl border ${menuOpen ? "z-40" : "z-0 hover:z-20"}`}
+        style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+      >
+        {/* Thumbnail */}
+        <button onClick={onOpen} className="relative h-28 w-full overflow-hidden rounded-t-2xl" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
+          <div className="absolute inset-0 grid place-items-center">
+            <span className="grid h-11 w-11 place-items-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ background: tone }}>
+              <Blocks className="h-5 w-5" />
+            </span>
+          </div>
+          <span className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur" style={{ background: "var(--glass)", color: "var(--text-muted)" }}>
+            {project.status || "draft"}
           </span>
-        </div>
-        <span className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur" style={{ background: "var(--glass)", color: "var(--text-muted)" }}>
-          {project.status || "draft"}
-        </span>
-      </button>
+        </button>
 
-      {/* Meta */}
-      <div className="flex items-center gap-2 p-3">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</div>
-          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
-            <span className="truncate">{project.category || "Website"}</span>
-            <span>·</span>
-            <span className="flex items-center gap-0.5 whitespace-nowrap"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
+        {/* Meta */}
+        <div className="flex items-center gap-2 p-3">
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</div>
+            <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
+              <span className="truncate">{project.category || "Website"}</span>
+              <span>·</span>
+              <span className="flex items-center gap-0.5 whitespace-nowrap"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
+            </div>
+          </div>
+          <div ref={menuRef} className="relative">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="grid h-8 w-8 place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]"
+              style={{ color: "var(--text-faint)" }}
+              aria-label="Project actions"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.14 }}
+                  className="absolute right-2 top-full z-50 mt-1 w-40 rounded-xl border p-1 shadow-2xl"
+                  style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}
+                >
+                  <MenuItem icon={ExternalLink} label="Open" onClick={() => { setMenuOpen(false); onOpen(); }} />
+                  <MenuItem icon={Pencil} label="Rename" onClick={doRename} />
+                  <MenuItem icon={Copy} label="Duplicate" onClick={() => { setMenuOpen(false); onDuplicate(project.id); }} />
+                  <MenuItem icon={Trash2} label="Delete" danger onClick={doDelete} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-        <div ref={menuRef} className="relative">
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="grid h-8 w-8 place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]"
-            style={{ color: "var(--text-faint)" }}
-            aria-label="Project actions"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                transition={{ duration: 0.14 }}
-                className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border p-1 shadow-xl"
-                style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}
-              >
-                <MenuItem icon={ExternalLink} label="Open" onClick={() => { setMenuOpen(false); onOpen(); }} />
-                <MenuItem icon={Pencil} label="Rename" onClick={doRename} />
-                <MenuItem icon={Copy} label="Duplicate" onClick={() => { setMenuOpen(false); onDuplicate(project.id); }} />
-                <MenuItem icon={Trash2} label="Delete" danger onClick={doDelete} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </motion.div>
+      </motion.div>
+
+      <RenameProjectModal
+        isOpen={renameModalOpen}
+        onClose={() => setRenameModalOpen(false)}
+        initialName={project.name}
+        onSave={(newName) => onRename(project.id, newName)}
+      />
+    </>
   );
 }
 
@@ -533,6 +544,7 @@ function ActivityTimeline({ projects }: { projects: Project[] }) {
 }
 
 function TipCard() {
+  const modKey = useModKeyLabel();
   return (
     <motion.div
       variants={revealSection}
@@ -549,7 +561,7 @@ function TipCard() {
         <h3 className="text-sm font-black" style={{ color: "var(--text)" }}>Pro tip</h3>
       </div>
       <p className="mt-3 text-[13px] leading-6" style={{ color: "var(--text-muted)" }}>
-        Press <Kbd>⌘</Kbd> <Kbd>K</Kbd> anywhere to open the command palette — jump to any page, project, or action instantly.
+        Press <Kbd>{modKey}</Kbd> <Kbd>K</Kbd> anywhere to open the command palette — jump to any page, project, or action instantly.
       </p>
     </motion.div>
   );

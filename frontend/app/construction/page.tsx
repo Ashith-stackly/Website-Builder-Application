@@ -441,6 +441,7 @@ export default function ConstructionTemplatePage() {
   const r = useCallback((classes: string) => getModeClasses(classes, activeDeviceMode), [activeDeviceMode]);
   const [activeTab, setActiveTab] = useState("All Projects");
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [faqList, setFaqList] = useState(faqs);
   const canvasScrollRef = useRef<HTMLDivElement | null>(null);
 
   const recentWorkScrollRef = useRef<HTMLDivElement | null>(null);
@@ -1037,7 +1038,7 @@ export default function ConstructionTemplatePage() {
 
                 <div className={r("grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-8 items-start")}>
                   <div className="flex flex-col gap-3 sm:gap-4">
-                    {faqs.map((faq, i) => {
+                    {faqList.map((faq, i) => {
                       if (i % 2 !== 0) return null;
                       const isActive = activeFaq === i;
                       return (
@@ -1051,23 +1052,40 @@ export default function ConstructionTemplatePage() {
                             className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base")} ${isActive ? "rounded-t-xl" : "rounded-xl"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
                             onClick={() => setActiveFaq(isActive ? null : i)}
                           >
-                            <span>{faq.question}</span>
+                            <span
+                              suppressContentEditableWarning
+                              onBlur={(e) => {
+                                const text = e.currentTarget.textContent ?? "";
+                                setFaqList((prev) =>
+                                  prev.map((item, index) => (index === i ? { ...item, question: text } : item))
+                                );
+                              }}
+                            >
+                              {faq.question}
+                            </span>
                             <FaChevronDown
                               className={`shrink-0 transform transition-transform duration-300 ${isActive ? "rotate-180 text-white" : "rotate-0 text-[#0A1E3D]"}`}
                             />
                           </button>
-                          {isActive && (
-                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")}>
-                              {faq.answer}
-                            </div>
-                          )}
+                          <div
+                            className={`${r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")} ${isActive ? "block" : "hidden"}`}
+                            suppressContentEditableWarning
+                            onBlur={(e) => {
+                              const text = e.currentTarget.textContent ?? "";
+                              setFaqList((prev) =>
+                                prev.map((item, index) => (index === i ? { ...item, answer: text } : item))
+                              );
+                            }}
+                          >
+                            {faq.answer}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
 
                   <div className="flex flex-col gap-3 sm:gap-4">
-                    {faqs.map((faq, i) => {
+                    {faqList.map((faq, i) => {
                       if (i % 2 === 0) return null;
                       const isActive = activeFaq === i;
                       return (
@@ -1081,16 +1099,33 @@ export default function ConstructionTemplatePage() {
                             className={`${r("w-full px-5 py-4 text-left font-bold text-sm flex justify-between items-center gap-3 sm:px-6 sm:py-5 sm:text-base")} ${isActive ? "rounded-t-xl" : "rounded-xl"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset`}
                             onClick={() => setActiveFaq(isActive ? null : i)}
                           >
-                            <span>{faq.question}</span>
+                            <span
+                              suppressContentEditableWarning
+                              onBlur={(e) => {
+                                const text = e.currentTarget.textContent ?? "";
+                                setFaqList((prev) =>
+                                  prev.map((item, index) => (index === i ? { ...item, question: text } : item))
+                                );
+                              }}
+                            >
+                              {faq.question}
+                            </span>
                             <FaChevronDown
                               className={`shrink-0 transform transition-transform duration-300 ${isActive ? "rotate-180 text-white" : "rotate-0 text-[#0A1E3D]"}`}
                             />
                           </button>
-                          {isActive && (
-                            <div className={r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")}>
-                              {faq.answer}
-                            </div>
-                          )}
+                          <div
+                            className={`${r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")} ${isActive ? "block" : "hidden"}`}
+                            suppressContentEditableWarning
+                            onBlur={(e) => {
+                              const text = e.currentTarget.textContent ?? "";
+                              setFaqList((prev) =>
+                                prev.map((item, index) => (index === i ? { ...item, answer: text } : item))
+                              );
+                            }}
+                          >
+                            {faq.answer}
+                          </div>
                         </div>
                       );
                     })}

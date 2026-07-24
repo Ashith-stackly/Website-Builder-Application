@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { assetPath } from "@/lib/paths";
 import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
+import { formatStorePrice } from "@/lib/storefrontApi";
 
 const buyCategoryNavClass =
   "buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
@@ -84,16 +85,16 @@ type CartItem = {
 };
 
 const buyProducts: BuyProduct[] = [
-  { id: "phone", name: "Phone", image: assetPath("/phone.webp"), badge: "", price: "$899.00", unitPriceCents: 899_00 },
-  { id: "audio", name: "Audio", image: assetPath("/audio.webp"), badge: "50%", price: "$149.00", originalPrice: "$298.00", unitPriceCents: 149_00 },
-  { id: "laptop", name: "Laptop", image: assetPath("/laptop.webp"), badge: "", price: "$1,299.00", unitPriceCents: 129_900 },
-  { id: "camera", name: "Camera", image: assetPath("/camera.webp"), badge: "", price: "$79.00", unitPriceCents: 79_00 },
-  { id: "television", name: "Television", image: assetPath("/television.webp"), badge: "", price: "$599.00", unitPriceCents: 599_00 },
-  { id: "tablet", name: "Tablet", image: assetPath("/tablet.webp"), badge: "", price: "$399.00", unitPriceCents: 399_00 },
-  { id: "watch", name: "Watch", image: assetPath("/watch.webp"), badge: "", price: "$199.00", unitPriceCents: 199_00 },
-  { id: "speaker", name: "Speaker", image: assetPath("/speaker.webp"), badge: "", price: "$89.00", unitPriceCents: 89_00 },
-  { id: "keyboard", name: "Keyboard", image: assetPath("/keyboard.webp"), badge: "", price: "$49.00", unitPriceCents: 49_00 },
-  { id: "mouse", name: "Mouse", image: assetPath("/mouse.webp"), badge: "", price: "$29.00", unitPriceCents: 29_00 },
+  { id: "phone", name: "Phone", image: assetPath("/phone.webp"), badge: "", price: formatStorePrice(899), unitPriceCents: 899_00 },
+  { id: "audio", name: "Audio", image: assetPath("/audio.webp"), badge: "50%", price: formatStorePrice(149), originalPrice: formatStorePrice(298), unitPriceCents: 149_00 },
+  { id: "laptop", name: "Laptop", image: assetPath("/laptop.webp"), badge: "", price: formatStorePrice(1299), unitPriceCents: 129_900 },
+  { id: "camera", name: "Camera", image: assetPath("/camera.webp"), badge: "", price: formatStorePrice(79), unitPriceCents: 79_00 },
+  { id: "television", name: "Television", image: assetPath("/television.webp"), badge: "", price: formatStorePrice(599), unitPriceCents: 599_00 },
+  { id: "tablet", name: "Tablet", image: assetPath("/tablet.webp"), badge: "", price: formatStorePrice(399), unitPriceCents: 399_00 },
+  { id: "watch", name: "Watch", image: assetPath("/watch.webp"), badge: "", price: formatStorePrice(199), unitPriceCents: 199_00 },
+  { id: "speaker", name: "Speaker", image: assetPath("/speaker.webp"), badge: "", price: formatStorePrice(89), unitPriceCents: 89_00 },
+  { id: "keyboard", name: "Keyboard", image: assetPath("/keyboard.webp"), badge: "", price: formatStorePrice(49), unitPriceCents: 49_00 },
+  { id: "mouse", name: "Mouse", image: assetPath("/mouse.webp"), badge: "", price: formatStorePrice(29), unitPriceCents: 29_00 },
 ];
 const buyProductById = new Map(buyProducts.map((product) => [product.id, product]));
 

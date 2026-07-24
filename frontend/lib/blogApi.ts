@@ -143,24 +143,27 @@ function normalizeAuthor(author?: ApiBlog["author"]): string | undefined {
 }
 
 function mapBlog(blog: ApiBlog): Blog {
+  if (!blog || typeof blog !== "object") {
+    throw new Error("Invalid blog post format returned from server.");
+  }
   return {
-    _id: blog._id,
-    workspaceId: blog.workspaceId,
-    title: blog.title,
-    slug: blog.slug,
+    _id: blog._id || "",
+    workspaceId: blog.workspaceId || "",
+    title: blog.title || "Untitled",
+    slug: blog.slug || "",
     content: contentToString(blog.content),
     excerpt: blog.excerpt || undefined,
     author: normalizeAuthor(blog.author),
     category: blog.category || undefined,
-    tags: blog.tags?.filter(Boolean),
-    status: blog.status,
+    tags: Array.isArray(blog.tags) ? blog.tags.filter(Boolean) : undefined,
+    status: blog.status || "draft",
     featuredImage: blog.coverImage || undefined,
     seoTitle: blog.seo?.title || undefined,
     seoDescription: blog.seo?.description || undefined,
     seoKeywords: normalizeKeywords(blog.seo?.keywords),
     publishedAt: blog.publishedAt || undefined,
-    createdAt: blog.createdAt,
-    updatedAt: blog.updatedAt,
+    createdAt: blog.createdAt || new Date().toISOString(),
+    updatedAt: blog.updatedAt || new Date().toISOString(),
   };
 }
 
@@ -193,15 +196,28 @@ export function isAbortError(error: unknown): boolean {
   return false;
 }
 
-/** Check if an error is a network/connection failure. */
+/** Check if an error is a genuine network/connection failure (e.g. server down, CORS block, no internet). */
 export function isBlogConnectionError(error: unknown): boolean {
-  return (
-    error instanceof TypeError ||
-    (error instanceof Error &&
-      (error.message === "Failed to fetch" ||
-        error.message.includes("NetworkError") ||
-        error.message.includes("load failed")))
-  );
+  if (isAbortError(error)) return false;
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    if (error.name === "TypeError") {
+      return (
+        msg.includes("fetch") ||
+        msg.includes("networkerror") ||
+        msg.includes("failed to fetch") ||
+        msg.includes("load failed") ||
+        msg.includes("network request failed")
+      );
+    }
+    return (
+      msg === "failed to fetch" ||
+      msg.includes("networkerror") ||
+      msg.includes("load failed") ||
+      msg.includes("network request failed")
+    );
+  }
+  return false;
 }
 
 export function getPublicBlogPath(workspaceId: string, slug: string): string {
@@ -213,11 +229,15 @@ export function getPublicBlogPath(workspaceId: string, slug: string): string {
 export async function createBlog(
   body: CreateBlogBody
 ): Promise<{ message?: string; blog?: Blog }> {
-  const result = await blogRequest<{ message?: string; post: ApiBlog }>("/blog/post", {
+  const result = await blogRequest<{ message?: string; post?: ApiBlog; data?: ApiBlog; blog?: ApiBlog }>("/blog/post", {
     method: "POST",
     body: JSON.stringify(toApiBody(body)),
   });
-  return { message: result.message, blog: mapBlog(result.post) };
+  const post = result.post || result.data || result.blog;
+  if (!post) {
+    throw new Error(result.message || "Blog post was created but server returned incomplete post data.");
+  }
+  return { message: result.message, blog: mapBlog(post) };
 }
 
 /** GET /api/blog/posts/:workspaceId */
@@ -226,11 +246,12 @@ export async function getBlogsPage(
   query: BlogListQuery = {},
   signal?: AbortSignal
 ): Promise<BlogListResponse> {
-  const result = await blogRequest<ApiListResponse>(
+  const result = await blogRequest<ApiListResponse & { data?: ApiBlog[] }>(
     `/blog/posts/${encodeURIComponent(workspaceId)}${buildQuery(query)}`,
     { method: "GET", signal }
   );
-  const posts = (result.posts ?? []).map(mapBlog);
+  const rawPosts = result.posts ?? result.data ?? [];
+  const posts = rawPosts.map(mapBlog);
   return {
     posts,
     pagination: result.pagination ?? {
@@ -257,11 +278,12 @@ export async function getPublishedBlogs(
   query: BlogListQuery = {},
   signal?: AbortSignal
 ): Promise<BlogListResponse> {
-  const result = await publicBlogRequest<ApiListResponse>(
+  const result = await publicBlogRequest<ApiListResponse & { data?: ApiBlog[] }>(
     `/blog/public/${encodeURIComponent(workspaceId)}${buildQuery(query)}`,
     { method: "GET", signal }
   );
-  const posts = (result.posts ?? []).map(mapBlog);
+  const rawPosts = result.posts ?? result.data ?? [];
+  const posts = rawPosts.map(mapBlog);
   return {
     posts,
     pagination: result.pagination ?? {
@@ -279,20 +301,34 @@ export async function getBlogBySlug(
   slug: string,
   signal?: AbortSignal
 ): Promise<Blog> {
-  const result = await blogRequest<{ post: ApiBlog }>(`/blog/posts/${encodeURIComponent(workspaceId)}/slug/${encodeURIComponent(slug)}`, {
-    method: "GET",
-    signal,
-  });
-  return mapBlog(result.post);
+  const result = await blogRequest<{ post?: ApiBlog; data?: ApiBlog }>(
+    `/blog/posts/${encodeURIComponent(workspaceId)}/slug/${encodeURIComponent(slug)}`,
+    {
+      method: "GET",
+      signal,
+    }
+  );
+  const post = result.post || result.data;
+  if (!post) throw new Error("Blog post not found.");
+  return mapBlog(post);
 }
 
 /** Public published post lookup for static-safe post URLs. */
-export async function getPublishedBlog(workspaceId: string, slug: string, signal?: AbortSignal): Promise<Blog> {
-  const result = await publicBlogRequest<{ post: ApiBlog }>(`/blog/public/${encodeURIComponent(workspaceId)}/${encodeURIComponent(slug)}`, {
-    method: "GET",
-    signal,
-  });
-  return mapBlog(result.post);
+export async function getPublishedBlog(
+  workspaceId: string,
+  slug: string,
+  signal?: AbortSignal
+): Promise<Blog> {
+  const result = await publicBlogRequest<{ post?: ApiBlog; data?: ApiBlog }>(
+    `/blog/public/${encodeURIComponent(workspaceId)}/${encodeURIComponent(slug)}`,
+    {
+      method: "GET",
+      signal,
+    }
+  );
+  const post = result.post || result.data;
+  if (!post) throw new Error("Blog post not found.");
+  return mapBlog(post);
 }
 
 /** PUT /api/blog/:id */
@@ -300,11 +336,18 @@ export async function updateBlog(
   id: string,
   body: UpdateBlogBody
 ): Promise<{ message?: string; blog?: Blog }> {
-  const result = await blogRequest<{ message?: string; post: ApiBlog }>(`/blog/post/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(toApiBody(body)),
-  });
-  return { message: result.message, blog: mapBlog(result.post) };
+  const result = await blogRequest<{ message?: string; post?: ApiBlog; data?: ApiBlog; blog?: ApiBlog }>(
+    `/blog/post/${encodeURIComponent(id)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(toApiBody(body)),
+    }
+  );
+  const post = result.post || result.data || result.blog;
+  if (!post) {
+    throw new Error(result.message || "Blog post was updated but server returned incomplete post data.");
+  }
+  return { message: result.message, blog: mapBlog(post) };
 }
 
 /** DELETE /api/blog/:id */
@@ -315,3 +358,4 @@ export async function deleteBlog(
     method: "DELETE",
   });
 }
+

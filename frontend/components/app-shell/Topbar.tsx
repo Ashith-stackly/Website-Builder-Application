@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
-import { useClickOutside } from "@/lib/hooks";
-import { readUserSettings, type UserSettings } from "@/lib/userSettings";
+import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
+import { fetchProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
 
@@ -49,6 +49,7 @@ export default function Topbar({
 }) {
   const pathname = usePathname() || "/dashboard";
   const crumbs = pathname.split("/").filter(Boolean);
+  const modKey = useModKeyLabel();
 
   return (
     <header
@@ -94,7 +95,7 @@ export default function Topbar({
         <Search className="h-4 w-4" />
         <span className="hidden md:inline">Search everything…</span>
         <kbd className="ml-auto hidden rounded-md border px-1.5 py-0.5 text-[10px] font-semibold md:block" style={{ borderColor: "var(--border)" }}>
-          ⌘K
+          {modKey}K
         </kbd>
       </button>
 
@@ -213,10 +214,23 @@ function ProfileMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
-  const [user, setUser] = useState<UserSettings | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    setUser(readUserSettings());
+    const controller = new AbortController();
+    void fetchProfile(controller.signal)
+      .then((data) => setUser(data))
+      .catch(() => {});
+
+    const onUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfile>;
+      if (customEvent.detail) setUser(customEvent.detail);
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    return () => {
+      controller.abort();
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    };
   }, []);
 
   const initials = (user?.name || "Stackly User")

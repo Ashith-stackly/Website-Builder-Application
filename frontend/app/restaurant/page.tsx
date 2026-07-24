@@ -260,6 +260,7 @@ export default function RestaurantTemplatesPage() {
   const blockpagesEditor = useBlockpagesEditor();
   const isBlockpages = Boolean(blockpagesEditor?.enabled);
   const [openFaq, setOpenFaq] = useState(0);
+  const [faqList, setFaqList] = useState(faqItems);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [localDeviceMode, setLocalDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const deviceMode = resolveBlockpagesDeviceMode(isBlockpages, blockpagesEditor?.deviceMode, localDeviceMode);
@@ -531,7 +532,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {faqItems.map((item, index) => {
+                  {faqList.map((item, index) => {
                     const isOpen = openFaq === index;
                     return (
                       <div key={index} className="border border-gray-200 rounded-xl overflow-hidden transition-colors hover:border-gray-300">
@@ -540,14 +541,32 @@ export default function RestaurantTemplatesPage() {
                           className="w-full flex items-center justify-between p-5 bg-gray-50/50 text-left"
                           onClick={() => setOpenFaq(isOpen ? -1 : index)}
                         >
-                          <span className="font-bold text-[#0A1E3D] pr-4 text-sm sm:text-base break-words whitespace-normal text-left flex-1">{item.q}</span>
+                          <span
+                            className="font-bold text-[#0A1E3D] pr-4 text-sm sm:text-base break-words whitespace-normal text-left flex-1"
+                            suppressContentEditableWarning
+                            onBlur={(e) => {
+                              const text = e.currentTarget.textContent ?? "";
+                              setFaqList((prev) =>
+                                prev.map((faq, i) => (i === index ? { ...faq, q: text } : faq))
+                              );
+                            }}
+                          >
+                            {item.q}
+                          </span>
                           <span className="text-xl sm:text-2xl text-gray-400 shrink-0 font-light" aria-hidden>{isOpen ? "−" : "+"}</span>
                         </button>
-                        {isOpen && (
-                          <div className="p-5 pt-2 text-sm sm:text-base text-gray-600 leading-relaxed border-t border-gray-100 bg-white break-words whitespace-normal">
-                            {item.answer}
-                          </div>
-                        )}
+                        <div
+                          className={`p-5 pt-2 text-sm sm:text-base text-gray-600 leading-relaxed border-t border-gray-100 bg-white break-words whitespace-normal ${isOpen ? "block" : "hidden"}`}
+                          suppressContentEditableWarning
+                          onBlur={(e) => {
+                            const text = e.currentTarget.textContent ?? "";
+                            setFaqList((prev) =>
+                              prev.map((faq, i) => (i === index ? { ...faq, answer: text } : faq))
+                            );
+                          }}
+                        >
+                          {item.answer}
+                        </div>
                       </div>
                     );
                   })}

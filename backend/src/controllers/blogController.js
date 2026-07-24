@@ -80,6 +80,14 @@ async function generateSitemap(req, res, next) {
   }
 }
 
+async function listAllSlugs(_req, res, next) {
+  try {
+    res.json(await blogService.listAllSlugs());
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   createPost,
   listPosts,
@@ -90,4 +98,5 @@ module.exports = {
   updatePost,
   deletePost,
   generateSitemap,
+  listAllSlugs,
 };

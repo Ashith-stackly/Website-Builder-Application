@@ -159,6 +159,62 @@ export function scrollBlockpagesCanvasToSection(sectionId: string) {
   target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+export function scrollCanvasToModifiedElement(elementId: string) {
+  if (typeof document === "undefined" || !elementId?.trim()) return;
+
+  const scrollRoot = document.querySelector<HTMLElement>(
+    "[data-blockpages-scroll-root], [data-textblock-canvas], [data-blockpages-preview-root]"
+  );
+
+  const escaped =
+    typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(elementId) : elementId.replace(/"/g, '\\"');
+
+  const selectors = [
+    `[data-blockpages-button-id="${escaped}"]`,
+    `[data-button-id="${escaped}"]`,
+    `[data-blockpages-image-id="${escaped}"]`,
+    `[data-image-id="${escaped}"]`,
+    `[data-crop-wrapper-id="${escaped}"]`,
+    `[data-blockpages-icon-id="${escaped}"]`,
+    `[data-blockpages-video-id="${escaped}"]`,
+    `[data-blockpages-overlay-id="${escaped}"]`,
+    `#${escaped}`,
+    `[id="${escaped}"]`,
+  ];
+
+  let target: HTMLElement | null = null;
+  for (const selector of selectors) {
+    target = scrollRoot?.querySelector<HTMLElement>(selector) ?? document.querySelector<HTMLElement>(selector);
+    if (target) break;
+  }
+
+  if (!target) return;
+
+  if (scrollRoot) {
+    const rootRect = scrollRoot.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+
+    const isVisible =
+      targetRect.top >= rootRect.top + 60 &&
+      targetRect.bottom <= rootRect.bottom - 60;
+
+    if (!isVisible) {
+      const nextTop = scrollRoot.scrollTop + (targetRect.top - rootRect.top) - rootRect.height / 3;
+      scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+    }
+  } else {
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  if (target instanceof HTMLElement && typeof target.focus === "function") {
+    try {
+      target.focus({ preventScroll: true });
+    } catch {
+      // Ignore non-focusable targets
+    }
+  }
+}
+
 export function buildBlockpagesSectionStylesCss(sectionStyles: Record<string, { backgroundColor?: string; gradientBackground?: string; backgroundImage?: string }> = {}) {
   return Object.entries(sectionStyles)
     .map(([id, styles]) => {

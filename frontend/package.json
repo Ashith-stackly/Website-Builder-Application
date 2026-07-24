@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/dev-with-razorpay.mjs",
+    "dev": "node scripts/dev-safe.mjs",
     "dev:next": "node scripts/dev-safe.mjs",
-    "razorpay-api": "node scripts/razorpay-api-server.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -21,6 +21,7 @@ import PortfolioPreview from "./PortfolioPreview";
 import StorefrontPreview from "./StorefrontPreview";
 import TemplatePreviewRouter from "./TemplatePreviewRouter";
 import BlockpagesCanvasEnhancer from "./BlockpagesCanvasEnhancer";
+import MyWebsiteDropdown from "../MyWebsiteDropdown";
 import type { BlockData } from "../buttonblock/types";
 import type { VideoBlockData } from "../videoblock/types";
 import type { DividerBlockProps } from "../dividerblock/types";
@@ -439,6 +440,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       dispatchCanvasRestoredEvent();
     };
 
+    syncFromStorage();
+
     window.addEventListener("focus", syncFromStorage);
     window.addEventListener("storage", syncFromStorage);
     return () => {
@@ -761,10 +764,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         data-builder-chrome="true"
         className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
       >
-        <a href={`/blockpages?template=${template}`} className="flex items-center gap-2 whitespace-nowrap rounded px-2 py-1.5 text-[14px] font-bold text-[#0B1D40] hover:bg-gray-100 md:text-[15px]">
-          My Website
-          <ChevronDown className="h-4 w-4 text-gray-600" />
-        </a>
+        <MyWebsiteDropdown currentTemplate={template} />
  
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex flex-shrink-0 overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm">
@@ -841,6 +841,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
           </div>
  
           <div
+            key={template}
             ref={canvasRef}
             data-blockpages-canvas-host="true"
             className="relative flex min-h-0 flex-1 flex-col"

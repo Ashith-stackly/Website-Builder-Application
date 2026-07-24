@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import "@/lib/reactDomPatch";
 
 interface BlogSeoHeadProps {
   title: string;
@@ -15,10 +16,9 @@ interface BlogSeoHeadProps {
 
 /**
  * Client-side SEO meta tag updater.
- * Since the project uses `output: "export"` (static export),
- * we cannot use Next.js `generateMetadata()` at runtime.
- * Instead, this component dynamically sets document.title and
- * relevant <meta> tags via useEffect.
+ * Safely updates document.title and meta tags without imperatively
+ * removing nodes from document.head during React component unmounting,
+ * avoiding React Fiber null removeChild DOM errors.
  */
 export default function BlogSeoHead({
   title,
@@ -31,7 +31,8 @@ export default function BlogSeoHead({
   updatedAt,
 }: BlogSeoHeadProps) {
   useEffect(() => {
-    const previousTitle = document.title;
+    if (typeof document === "undefined") return;
+
     const pageTitle = seoTitle?.trim() || title;
     const fullTitle = `${pageTitle} | Stackly Blog`;
     const description = seoDescription?.trim() || "";
@@ -44,35 +45,31 @@ export default function BlogSeoHead({
       key: string,
       content?: string
     ) => {
+      if (!content) return;
       let el = document.querySelector<HTMLMetaElement>(
         `meta[${attr}="${key}"]`
       );
-      if (!content) {
-        if (el?.dataset.stacklyBlogSeo === "true") el.remove();
-        return;
-      }
-      if (!el) {
+      if (!el && document.head) {
         el = document.createElement("meta");
         el.setAttribute(attr, key);
         document.head.appendChild(el);
       }
-      el.dataset.stacklyBlogSeo = "true";
-      el.setAttribute("content", content);
+      if (el) {
+        el.setAttribute("content", content);
+      }
     };
 
     const setCanonical = (href?: string) => {
+      if (!href) return;
       let el = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-      if (!href) {
-        if (el?.dataset.stacklyBlogSeo === "true") el.remove();
-        return;
-      }
-      if (!el) {
+      if (!el && document.head) {
         el = document.createElement("link");
         el.rel = "canonical";
         document.head.appendChild(el);
       }
-      el.dataset.stacklyBlogSeo = "true";
-      el.href = href;
+      if (el) {
+        el.href = href;
+      }
     };
 
     setCanonical(canonicalUrl);
@@ -91,13 +88,6 @@ export default function BlogSeoHead({
     setMeta("name", "twitter:title", pageTitle);
     setMeta("name", "twitter:description", description);
     setMeta("name", "twitter:image", featuredImage);
-
-    return () => {
-      document.title = previousTitle;
-      document
-        .querySelectorAll('[data-stackly-blog-seo="true"]')
-        .forEach((element) => element.remove());
-    };
   }, [title, seoTitle, seoDescription, seoKeywords, featuredImage, canonicalUrl, publishedAt, updatedAt]);
 
   return null;

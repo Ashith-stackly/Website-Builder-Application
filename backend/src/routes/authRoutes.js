@@ -24,7 +24,14 @@ router.post('/verify-email', verifyEmailValidation, validate, authController.ver
 router.post('/verify-mobile', verifyMobileValidation, validate, authController.verifyMobile);
 router.post('/reset-password', resetPasswordValidation, validate, authController.resetPassword);
 
+const authenticate = require('../middleware/auth');
+const userController = require('../controllers/userController');
+const { updateProfileValidation } = require('../validators/userValidation');
+
 router.get('/google', authController.googleCallback);
 router.get('/oauth-failed', (_req, res) => res.status(401).json({ message: 'OAuth login failed' }));
+
+router.get('/profile', authenticate, userController.getProfile);
+router.put('/profile', authenticate, updateProfileValidation, validate, userController.updateProfile);
 
 module.exports = router;

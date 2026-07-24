@@ -5,6 +5,7 @@ import type { BlockpagesTemplateId } from '@/lib/blockpagesTemplates';
 import { saveBlockpagesVideoProps } from '@/lib/blockpagesVideoStorage';
 import { VideoBlockData } from './types';
 import type { DraftSaveStatus } from '../BlockPagesClient';
+import MyWebsiteDropdown from '../MyWebsiteDropdown';
  
 const UploadedVideoPlayer = ({ block, uploadUrl, posterImage, autoplay, loop, muted, showControls }: any) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -198,10 +199,7 @@ export default function Canvas({
         className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 whitespace-nowrap rounded px-2 py-1.5 text-[14px] font-bold text-[#0B1D40] hover:bg-gray-100 md:text-[15px] cursor-pointer">
-          My Website
-          <ChevronDown className="h-4 w-4 text-gray-600" />
-        </div>
+        <MyWebsiteDropdown currentTemplate={template} />
  
         {/* Mobile Settings Trigger */}
         <button

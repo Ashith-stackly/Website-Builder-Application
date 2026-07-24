@@ -198,8 +198,7 @@ copy frontend\.env.example frontend\.env.local
 |---|---|---|---|
 | `NEXT_PUBLIC_API_BASE_URL` | No | `http://localhost:5000/api` | Browser-accessible base URL for the backend API. |
 | `NEXT_PUBLIC_BASE_PATH` | No | — | Subdirectory prefix if deployed under a path (e.g. GitHub Pages `/Website-Builder-Application`). |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | **Yes** | `rzp_test_Sx4RHrkl9mpz0s` | Razorpay public Key ID (must match backend). |
-| `NEXT_PUBLIC_RAZORPAY_API_BASE` | No | `http://localhost:3001` | Local fallback proxy URL for mock static transactions helper. |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | **Yes** | `rzp_test_T396K90F4XiIfu` | Razorpay public Key ID (must match backend). |
 | `NEXT_PUBLIC_RAZORPAY_DEMO` | No | `false` | Set to `true` to run checkout in client-side mock demo mode. |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | No | — | Google client ID for front-end authentication login button. |
 | `NEXT_PUBLIC_ECOMMERCE_WORKSPACE_ID` | No | — | Override key for default e-commerce workspace storefront loaded by app. |

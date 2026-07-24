@@ -224,22 +224,20 @@ export default function LeftSidebar({ onAddBlock }: LeftSidebarProps) {
             >
               + Create New Page
             </button>
+            <div className="mt-6 pt-4 border-t border-[#1A315E]">
+              <button
+                className="w-full bg-white text-gray-800 rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-sm cursor-pointer"
+                onClick={() => alert("Help Center Modal Opened.")}
+              >
+                Help
+                <HelpCircle className="w-4 h-4 text-slate-600" />
+              </button>
+            </div>
           </div>
         )}
-      </div>
- 
-      <div className="border-t border-[#1A315E] p-5">
-        <button
-          className="w-full bg-white text-gray-800 rounded py-2.5 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 hover:scale-105 active:scale-95 transition-all duration-300 shadow-sm"
-          onClick={() => alert("Help Center Modal Opened.")}
-        >
-          Help
-          <HelpCircle className="w-4 h-4" />
-        </button>
       </div>
     </aside>
   );
 }
- 
  
  
