@@ -1194,12 +1194,22 @@ export default function Home() {
                   </div>
                   <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
                   <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-black text-[#06224C]">₹ {product.price}</span>
-                      <span className="text-[10px] font-bold text-gray-400">({product.sales} Sales)</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="font-black text-[#06224C] whitespace-nowrap"
+                        style={{ fontSize: "clamp(16px, 5.5vw, 24px)" }}
+                      >
+                        ₹ {product.price}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap">({product.sales} Sales)</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-black text-[#06224C]">{displayRating.toFixed(1)}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="font-black text-[#06224C] whitespace-nowrap"
+                        style={{ fontSize: "clamp(16px, 5.5vw, 24px)" }}
+                      >
+                        {displayRating.toFixed(1)}
+                      </span>
                       <div className="flex items-center gap-0.5 text-yellow-400" aria-label={`Rating ${displayRating} out of 5`}>
                         {Array.from({ length: 5 }).map((_, idx) => {
                           const starValue = idx + 1;
@@ -1227,11 +1237,11 @@ export default function Home() {
                               title={`Rate ${starValue} star${starValue > 1 ? "s" : ""}`}
                             >
                               {starType === "full" ? (
-                                <FaStar className="text-2xl" />
+                                <FaStar style={{ fontSize: "clamp(12px, 5vw, 24px)" }} />
                               ) : starType === "half" ? (
-                                <FaStarHalfStroke className="text-2xl" />
+                                <FaStarHalfStroke style={{ fontSize: "clamp(12px, 5vw, 24px)" }} />
                               ) : (
-                                <FaRegStar className="text-2xl text-gray-300" />
+                                <FaRegStar className="text-gray-300" style={{ fontSize: "clamp(12px, 5vw, 24px)" }} />
                               )}
                             </button>
                           );
