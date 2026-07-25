@@ -11,6 +11,7 @@ const updateProfileValidation = [
       if (/^https?:\/\//i.test(value)) return true;
       throw new Error('Avatar must be a valid image URL or uploaded image');
     }),
+  body('address').optional().trim(),
 ];
 
 module.exports = { updateProfileValidation };

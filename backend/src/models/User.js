@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       default: '',
     },
+    address: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     password: {
       type: String,
       minlength: 8,

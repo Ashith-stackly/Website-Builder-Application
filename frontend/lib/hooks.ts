@@ -86,7 +86,7 @@ export function useHotkey(
     const onKey = (e: KeyboardEvent) => {
       const modOk = meta || ctrl ? e.metaKey || e.ctrlKey : !e.metaKey && !e.ctrlKey;
       const shiftOk = shift ? e.shiftKey : true;
-      if (e.key.toLowerCase() === key.toLowerCase() && modOk && shiftOk) {
+      if (typeof e?.key === "string" && typeof key === "string" && e.key.toLowerCase() === key.toLowerCase() && modOk && shiftOk) {
         if (preventDefault) e.preventDefault();
         saved.current(e);
       }

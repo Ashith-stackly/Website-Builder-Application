@@ -3364,6 +3364,39 @@ body.auth-visible {
   .stackly-icon-button,
   .stackly-footer-link {
     animation: none !important;
-    transition: none !important;
   }
 }
+
+/* Prevent Chrome / Edge autofill from turning inputs / textareas bright white in dark theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0d1527 inset !important;
+  box-shadow: 0 0 0px 1000px #0d1527 inset !important;
+  transition: background-color 50000s ease-in-out 0s;
+  color: #ffffff !important;
+}
+
+/* Custom dark scrollbar for textareas */
+textarea {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+textarea::-webkit-scrollbar {
+  width: 6px;
+}
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+textarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+

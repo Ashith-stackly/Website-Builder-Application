@@ -25,7 +25,11 @@ import {
   Sparkles,
   FolderCog,
   Loader2,
+  Download,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
+import { downloadPlanningInvoiceForEntry, type BillingHistoryEntryLike } from "@/lib/planningInvoiceHtml";
 import { staggerContainer, staggerChild, revealSection, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
@@ -184,7 +188,8 @@ function ProfileHero() {
 function ProfilePanel() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [initialProfile, setInitialProfile] = useState<{ name: string; email: string } | null>(null);
+  const [address, setAddress] = useState("");
+  const [initialProfile, setInitialProfile] = useState<{ name: string; email: string; address: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -196,7 +201,8 @@ function ProfilePanel() {
       .then((data) => {
         setName(data.name);
         setEmail(data.email);
-        setInitialProfile({ name: data.name, email: data.email });
+        setAddress(data.address || "");
+        setInitialProfile({ name: data.name, email: data.email, address: data.address || "" });
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
@@ -212,12 +218,13 @@ function ProfilePanel() {
 
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
+    const trimmedAddress = address.trim();
 
     if (!trimmedName) return setError("Name can't be empty.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) return setError("Enter a valid email address.");
 
     // Prevent duplicate submission if values are unchanged
-    if (initialProfile && initialProfile.name === trimmedName && initialProfile.email === trimmedEmail) {
+    if (initialProfile && initialProfile.name === trimmedName && initialProfile.email === trimmedEmail && initialProfile.address === trimmedAddress) {
       setError(null);
       setSaved(true);
       window.setTimeout(() => setSaved(false), 1800);
@@ -228,10 +235,11 @@ function ProfilePanel() {
     setSubmitting(true);
 
     try {
-      const updated = await updateProfile({ name: trimmedName, email: trimmedEmail });
+      const updated = await updateProfile({ name: trimmedName, email: trimmedEmail, address: trimmedAddress });
       setName(updated.name);
       setEmail(updated.email);
-      setInitialProfile({ name: updated.name, email: updated.email });
+      setAddress(updated.address || "");
+      setInitialProfile({ name: updated.name, email: updated.email, address: updated.address || "" });
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2200);
     } catch (err) {
@@ -255,6 +263,16 @@ function ProfilePanel() {
           </Field>
           <Field label="Email address">
             <Input value={email} onChange={setEmail} placeholder="jane@example.com" type="email" />
+          </Field>
+          <Field label="Billing address">
+            <textarea
+              rows={3}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Street, City, State, ZIP, Country"
+              className="w-full resize-none rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-shadow focus:shadow-[0_0_0_4px_var(--ring)]"
+              style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}
+            />
           </Field>
           <AnimatePresence>
             {error && (
@@ -455,7 +473,90 @@ function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
           })}
         </ul>
       </Card>
+
+      <DashboardBillingHistory />
     </>
+  );
+}
+
+function DashboardBillingHistory() {
+  const [history, setHistory] = useState<BillingHistoryEntryLike[]>([]);
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setHistory(parsed);
+      }
+    } catch {}
+
+    const controller = new AbortController();
+    void fetchProfile(controller.signal).then(setUser).catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  const downloadInvoice = async (entry: BillingHistoryEntryLike) => {
+    const contactDefaults = {
+      displayName: user?.name || "User",
+      email: user?.email || "",
+      phone: user?.mobile || "",
+      address: user?.address || "",
+    };
+    await downloadPlanningInvoiceForEntry(entry, contactDefaults, entry.invoiceId);
+  };
+
+  return (
+    <Card icon={FileText} title="Invoice & Billing History" desc="Past payment invoices and downloadable billing records.">
+      {history.length === 0 ? (
+        <div className="rounded-2xl border p-6 text-center" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+          <FileText className="mx-auto h-8 w-8 text-slate-400 mb-2" />
+          <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>No past invoices found</p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Subscribe to a plan or complete checkout to view and download past invoices.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--border)" }}>
+          <table className="w-full text-left text-xs" style={{ color: "var(--text)" }}>
+            <thead className="border-b uppercase tracking-wider text-[11px] font-bold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-muted)" }}>
+              <tr>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Invoice ID</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Invoice PDF</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y" style={{ borderColor: "var(--border)" }}>
+              {history.map((entry, index) => (
+                <tr key={`${entry.invoiceId}-${index}`} className="hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-3.5 font-medium">{entry.date}</td>
+                  <td className="px-4 py-3.5 font-mono font-bold">{entry.invoiceId}</td>
+                  <td className="px-4 py-3.5 font-bold">{entry.amount}</td>
+                  <td className="px-4 py-3.5">
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black ${entry.status === "Paid" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"}`}>
+                      {entry.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 text-right">
+                    <button
+                      type="button"
+                      onClick={() => void downloadInvoice(entry)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                      style={{ borderColor: "var(--border)", background: "var(--accent-soft)", color: "var(--accent-strong)" }}
+                      title="Download PDF Invoice"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Download</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   );
 }
 

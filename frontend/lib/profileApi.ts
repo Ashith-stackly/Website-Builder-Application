@@ -8,6 +8,7 @@ export type UserProfile = {
   name: string;
   email: string;
   mobile?: string;
+  address?: string;
   plan?: string;
   subscriptionStatus?: string;
   avatar?: string;
@@ -17,6 +18,7 @@ export type UpdateProfilePayload = {
   name?: string;
   email?: string;
   mobile?: string;
+  address?: string;
   avatar?: string;
 };
 
@@ -80,6 +82,7 @@ export async function fetchProfile(signal?: AbortSignal): Promise<UserProfile> {
     name: user.name || "",
     email: user.email || "",
     mobile: user.mobile || "",
+    address: user.address || "",
     plan: user.plan || "free",
     subscriptionStatus: user.subscriptionStatus || "none",
     avatar: user.avatar || "/profile.webp",
@@ -139,6 +142,7 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<User
     name: updatedUser.name || payload.name || "",
     email: updatedUser.email || payload.email || "",
     mobile: updatedUser.mobile || payload.mobile || "",
+    address: updatedUser.address || payload.address || "",
     plan: updatedUser.plan || "free",
     subscriptionStatus: updatedUser.subscriptionStatus || "none",
     avatar: updatedUser.avatar || payload.avatar || "/profile.webp",

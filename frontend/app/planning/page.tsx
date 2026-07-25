@@ -66,7 +66,7 @@ function getUserInvoiceContact(profile: UserProfile | null): PlanningInvoiceCont
     displayName: profile?.name || "User",
     email: profile?.email || "",
     phone: profile?.mobile || "",
-    address: "",
+    address: profile?.address || "",
   };
 }
 
@@ -422,7 +422,7 @@ function PlanningPageContent() {
     const userName = details?.customerName || verifiedUser?.name || userProfile?.name || "User";
     const userEmail = details?.customerEmail || verifiedUser?.email || userProfile?.email || "";
     const userPhone = details?.customerPhone || verifiedUser?.mobile || userProfile?.mobile || "";
-    const userAddress = details?.customerAddress || verifiedUser?.address || "";
+    const userAddress = details?.customerAddress || verifiedUser?.address || userProfile?.address || "";
 
     const methodLabel = details?.paymentMethodLabel || opts.paymentMethodLabel || "Card – Visa / MasterCard";
     const paymentIdStr = details?.paymentId || opts.paymentId || "";
@@ -948,7 +948,9 @@ function PlanningPageContent() {
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-400">Address</span>
-                        <span className="font-semibold text-white truncate max-w-[180px]">{invoiceData.address || "—"}</span>
+                        <span className="font-semibold text-white truncate max-w-[200px]" title={invoiceData.address || invoiceContact.address || userProfile?.address || ""}>
+                          {invoiceData.address || invoiceContact.address || userProfile?.address || "—"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -999,7 +1001,7 @@ function PlanningPageContent() {
                         buyerName: invoiceData.name,
                         buyerEmail: invoiceData.email,
                         buyerPhone: invoiceData.contactNo,
-                        buyerAddress: invoiceData.address,
+                        buyerAddress: invoiceData.address || invoiceContact.address || userProfile?.address || "",
                         generatedAt: invoiceData.paymentDate || new Date().toISOString(),
                       };
                       void downloadBillingInvoiceSummary(entry);

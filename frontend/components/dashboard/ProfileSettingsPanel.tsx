@@ -9,6 +9,7 @@ export default function ProfileSettingsPanel() {
   const [form, setForm] = useState<UserProfile>({
     name: "",
     email: "",
+    address: "",
     avatar: "/profile.webp",
   });
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,7 @@ export default function ProfileSettingsPanel() {
       const updated = await updateProfile({
         name: form.name.trim(),
         email: form.email.trim(),
+        address: (form.address || "").trim(),
         avatar: form.avatar,
       });
       setForm(updated);
@@ -96,6 +98,7 @@ export default function ProfileSettingsPanel() {
           <div className="grid content-start gap-4 sm:grid-cols-2">
             <label className="text-xs font-bold text-slate-600">Display name<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100" /></label>
             <label className="text-xs font-bold text-slate-600">Email address<input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100" /></label>
+            <label className="text-xs font-bold text-slate-600 sm:col-span-2">Billing address<textarea rows={2} value={form.address || ""} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street, City, State, ZIP, Country" className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100" /></label>
             {error && <p className="text-xs font-semibold text-rose-500 sm:col-span-2">{error}</p>}
             <div className="flex items-center gap-3 sm:col-span-2">
               <button type="submit" disabled={submitting} className="rounded-xl bg-[#06224C] px-5 py-3 text-xs font-black uppercase tracking-wider text-white transition hover:bg-blue-800 disabled:opacity-50">

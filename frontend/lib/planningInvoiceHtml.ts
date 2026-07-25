@@ -94,13 +94,13 @@ export function buildPaymentInfoRows(entry: BillingHistoryEntryLike): PaymentInf
 
   const rows: PaymentInfoRow[] = [];
   rows.push({
-    label: "Paymentmethod",
+    label: "Payment Method",
     value: method || "Card – Visa / MasterCard",
   });
 
   if (detail) {
     rows.push({
-      label: "Transaction details",
+      label: "Transaction Details",
       value: detail,
     });
   }
@@ -167,28 +167,22 @@ function renderLogoBlock(logoSrc: string | null): string {
   </div>`;
 }
 
-/** SVG ribbon — html2canvas uses alphabetic baseline for &lt;text y&gt;, not dominant-baseline middle. */
 function renderInvoiceBarHtml(): string {
-  const barY = 8;
-  const barH = 30;
-  const textBaselineY = barY + barH - 2;
-  return `<svg class="invoice-ribbon" xmlns="http://www.w3.org/2000/svg" width="100%" height="46" viewBox="0 0 602 46" preserveAspectRatio="none" role="img" aria-label="INVOICE" style="display:block;width:100%;height:46px;margin:0;padding:0;overflow:visible;">
-    <rect x="0" y="${barY}" width="248" height="${barH}" fill="${BRAND}"/>
-    <rect x="500" y="${barY}" width="102" height="${barH}" fill="${BRAND}"/>
-    <text x="374" y="${textBaselineY}" text-anchor="middle" fill="${INVOICE_TITLE}" font-family="Arial Black, Arial, sans-serif" font-size="38" font-weight="800" letter-spacing="5">INVOICE</text>
-  </svg>`;
+  return `<div class="invoice-ribbon-bar" role="img" aria-label="INVOICE">
+    <div class="ribbon-bar-left"></div>
+    <div class="ribbon-text">INVOICE</div>
+    <div class="ribbon-bar-right"></div>
+  </div>`;
 }
-
 
 function buildPlanningInvoiceStyles(): string {
   return `
-    @page { size: A4; margin: 14mm; }
+    @page { size: A4; margin: 12mm; }
     * { box-sizing: border-box; }
-    html, body.invoice-doc { margin: 0; padding: 0; background: #fff; width: 100%; }
+    html, body.invoice-doc { margin: 0; padding: 0; background: #ffffff; width: 100%; color: #06224C; }
     body.invoice-doc {
-      font-family: Inter, Roboto, "Segoe UI", Arial, Helvetica, sans-serif;
-      font-size: 13px;
-      color: #1a1a1a;
+      font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-size: 12.5px;
       line-height: 1.5;
       display: flex;
       justify-content: center;
@@ -196,7 +190,7 @@ function buildPlanningInvoiceStyles(): string {
       min-height: 100%;
     }
     .invoice-shell {
-      width: 794px;
+      width: 800px;
       max-width: 100%;
       margin: 0 auto;
       display: flex;
@@ -204,226 +198,201 @@ function buildPlanningInvoiceStyles(): string {
       box-sizing: border-box;
     }
     .invoice-page {
-      width: 698px;
+      width: 740px;
+      min-height: 960px;
       max-width: 100%;
       margin: 0;
-      padding: 52px 48px 36px;
-      background: #fff;
+      padding: 48px 48px 40px;
+      background: #ffffff;
       box-sizing: border-box;
-    }
-    .doc-head { margin-bottom: 0; padding-top: 2px; }
-    .brand-row { margin-bottom: 4px; }
-    .logo-img {
-      height: 34px;
-      width: auto;
-      max-width: 170px;
-      object-fit: contain;
-      display: block;
-    }
-    .logo-fallback {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      flex-direction: column;
     }
-    .logo-fallback .brand-name {
-      font-size: 21px;
+    .doc-content-body {
+      flex: 1 0 auto;
+    }
+    
+    /* Header */
+    .doc-head { margin-bottom: 24px; }
+    .head-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .brand-box { flex: 1; }
+    .logo-img { height: 38px; width: auto; max-width: 180px; object-fit: contain; display: block; }
+    .logo-fallback { display: flex; align-items: center; gap: 10px; }
+    .logo-fallback .brand-name { font-size: 22px; font-weight: 900; letter-spacing: 0.06em; color: ${BRAND}; }
+    .tagline { font-size: 11px; color: #475569; margin: 6px 0 0; font-weight: 500; }
+    
+    .header-invoice-box {
+      text-align: right;
+    }
+    .inv-main-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      color: ${BRAND};
+      margin: 0;
+      line-height: 1;
+    }
+    
+    .divider-line {
+      height: 3px;
+      background: linear-gradient(90deg, ${BRAND} 0%, #3b82f6 50%, ${BRAND} 100%);
+      border-radius: 2px;
+      margin-top: 20px;
+    }
+    
+    /* Meta Grid (2 columns) */
+    .meta-section {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 22px 0 26px;
+    }
+    .meta-card {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .meta-card-title {
+      font-size: 12px;
       font-weight: 800;
+      text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: ${BRAND};
+      color: #1e3a8a;
+      margin: 0 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #cbd5e1;
     }
-    .tagline {
-      font-size: 10.5px;
-      color: ${BRAND};
-      margin: 0 0 16px;
-      line-height: 1.4;
+    .customer-name { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+    .meta-line { font-size: 12px; color: #334155; margin-bottom: 4px; line-height: 1.45; }
+    .meta-label { font-weight: 600; color: #64748b; margin-right: 4px; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700; color: #0f172a; }
+    .status-text { font-weight: 700; color: #16a34a; }
+    
+    /* Table */
+    .inv-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .inv-table thead th {
+      background: ${BRAND};
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 12px 14px;
+      border: none;
+    }
+    .inv-table tbody td {
+      padding: 12px 14px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 12.5px;
+      color: #1e293b;
+    }
+    .inv-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .inv-table td.num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    
+    /* Lower summary */
+    .lower-section {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+      align-items: stretch;
+    }
+    .lower-left { flex: 1; display: flex; flex-direction: column; }
+    .payment-info-box {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .payment-info-title { font-size: 12px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin: 0 0 10px; letter-spacing: 0.06em; }
+    .pay-row { font-size: 12px; color: #334155; margin: 0 0 6px; line-height: 1.45; word-break: break-word; }
+    .gen-timestamp { font-size: 11px; color: #64748b; margin-top: 10px; }
+    
+    .lower-right { width: 280px; display: flex; flex-direction: column; }
+    .summary-box {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sum-details { flex: 1; }
+    .sum-row { display: flex; justify-content: space-between; font-size: 13px; color: #334155; margin-bottom: 8px; }
+    .sum-lbl { font-weight: 600; color: #64748b; }
+    .sum-val { font-weight: 700; color: #0f172a; }
+    .total-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: ${BRAND};
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      margin-top: auto;
+    }
+    .tot-lbl { font-size: 13px; font-weight: 700; line-height: 1; }
+    .tot-val { font-size: 19px; font-weight: 900; line-height: 1; }
+
+    .thank-you-banner {
+      margin: 8px 0 20px;
+    }
+    .thank-you-title { font-size: 16px; font-weight: 800; color: ${BRAND}; margin: 0; }
+    
+    /* Footer */
+    .doc-footer {
+      border-top: 1.5px solid #cbd5e1;
+      padding-top: 20px;
+      margin-top: auto;
+    }
+    .footer-grid { display: flex; justify-content: space-between; align-items: flex-end; }
+    .terms-h { font-size: 12px; font-weight: 800; color: ${BRAND}; margin: 0 0 4px; }
+    .terms-p { font-size: 11px; color: #64748b; margin: 0; max-width: 420px; }
+    .footer-sign {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .sign-box {
+      width: 150px;
+      text-align: center;
+    }
+    .sign-line {
+      width: 100%;
+      border-bottom: 1px dashed #94a3b8;
+      margin-bottom: 6px;
+    }
+    .sign-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: #334155;
+      white-space: nowrap;
       letter-spacing: 0.02em;
     }
-    .invoice-ribbon {
-      display: block;
-      width: 100%;
-      height: 46px;
-      margin: 4px 0 0;
-      padding: 0;
-      overflow: visible;
-    }
-    .meta {
-      display: flex;
-      display: -webkit-flex;
-      justify-content: space-between;
-      -webkit-justify-content: space-between;
-      align-items: flex-start;
-      -webkit-align-items: flex-start;
-      gap: 32px;
-      margin: 14px 0 28px;
-      flex-wrap: wrap;
-    }
-    .meta-left h2 {
-      font-size: 17px;
-      color: ${BRAND};
-      margin: 0 0 10px;
-      font-weight: 800;
-      letter-spacing: 0.01em;
-    }
-    .meta-left .name {
-      font-size: 15px;
-      font-weight: 400;
-      color: ${BRAND};
-      line-height: 1.35;
-    }
-    .meta-right { margin-left: auto; }
-    .meta-table {
-      border-collapse: collapse;
-      margin-left: auto;
-    }
-    .meta-table td {
-      padding: 0 0 8px;
-      vertical-align: baseline;
-      font-size: 13px;
-      color: ${BRAND};
-    }
-    .meta-table tr:last-child td { padding-bottom: 0; }
-    .meta-table .meta-lbl {
-      text-align: right;
-      font-weight: 700;
-      white-space: nowrap;
-      padding-right: 2px;
-    }
-    .meta-table .meta-col {
-      text-align: center;
-      font-weight: 700;
-      padding: 0 8px 0 4px;
-    }
-    .meta-table .meta-val {
-      text-align: left;
-      font-weight: 500;
-    }
-    table.inv {
-      width: 100%;
-      border-collapse: collapse;
-      border: 1px solid #d0d0d0;
-      margin-bottom: 30px;
-    }
-    table.inv thead th {
-      background: ${BRAND};
-      color: #fff;
-      font-weight: 700;
-      font-size: 12px;
-      padding: 13px 11px;
-      text-align: left;
-      border: 1px solid ${BRAND};
-    }
-    table.inv thead th:nth-child(1) { width: 44px; text-align: center; }
-    table.inv thead th:nth-child(3),
-    table.inv thead th:nth-child(5) { text-align: right; }
-    table.inv td {
-      padding: 12px 11px;
-      border: 1px solid #e4e4e4;
-      font-size: 13px;
-      color: #222;
-    }
-    table.inv td:nth-child(1) { text-align: center; }
-    table.inv tr.alt td { background: ${ROW_ALT}; }
-    table.inv td.num { text-align: right; font-variant-numeric: tabular-nums; }
-    .lower {
-      display: flex;
-      display: -webkit-flex;
-      justify-content: space-between;
-      -webkit-justify-content: space-between;
-      gap: 36px;
-      align-items: flex-start;
-      -webkit-align-items: flex-start;
-      flex-wrap: wrap;
-      margin-bottom: 26px;
-    }
-    .lower-left { flex: 1; min-width: 240px; max-width: 440px; }
-    .lower-left h3 {
-      color: ${BRAND};
-      font-size: 19px;
-      margin: 0 0 16px;
-      font-weight: 700;
-    }
-    .lower-left h4 {
-      color: ${BRAND};
-      font-size: 16px;
-      margin: 0 0 12px;
-      font-weight: 700;
-    }
-    .pay-row { margin: 0 0 8px; font-size: 12.5px; line-height: 1.45; }
-    .pay-label { font-weight: 600; color: ${BRAND}; }
-    .pay-val { color: #222; }
-    .gen-line {
-      margin-top: 14px;
-      font-size: 11px;
-      color: ${BRAND};
-    }
-    .lower-right { min-width: 210px; text-align: right; }
-    .lower-right .row { margin-bottom: 7px; font-size: 13px; color: #222; }
-    .total-bar {
-      margin-top: 12px;
-      background: ${BRAND};
-      color: #fff;
-      font-weight: 800;
-      font-size: 15px;
-      padding: 13px 18px;
-      text-align: right;
-      border-radius: 1px;
-    }
-    .footer-wrap {
-      border-top: 2px solid ${BRAND};
-      border-bottom: 1px solid ${BRAND};
-      padding: 16px 0 14px;
-      margin-top: 4px;
-    }
-    .footer-table {
-      width: 100%;
-      border-collapse: collapse;
-      border-spacing: 0;
-    }
-    .footer-table td {
-      padding: 0;
-      border: 0;
-      vertical-align: bottom;
-    }
-    .footer-terms { padding-right: 24px; }
-    .terms-h {
-      margin: 0 0 9px;
-      font-size: 17px;
-      font-weight: 800;
-      color: ${BRAND};
-      letter-spacing: 0.01em;
-    }
-    .terms-p {
-      margin: 0;
-      font-size: 14px;
-      line-height: 1.55;
-      color: ${BRAND};
-      font-weight: 400;
-      max-width: 420px;
-    }
-    .footer-sign {
-      text-align: right;
-      white-space: nowrap;
-      padding-left: 40px;
-      padding-right: 12px;
-      padding-bottom: 6px;
-    }
-    .sign {
-      color: ${SIGN_BLUE};
-      text-decoration: underline;
-      font-weight: 600;
-      font-size: 12px;
-      display: inline-block;
-    }
-    .fineprint {
-      text-align: center;
-      font-size: 10px;
-      color: ${BRAND};
-      margin-top: 16px;
-    }
+    
     @media print {
       body.invoice-doc { display: block; }
       .invoice-shell { width: auto; margin: 0 auto; }
-      .invoice-page { padding: 12mm; width: auto; margin: 0 auto; }
+      .invoice-page { padding: 10mm; width: auto; margin: 0 auto; }
     }
   `;
 }
@@ -433,10 +402,10 @@ export function buildPlanningInvoiceHtmlDocument(p: PlanningInvoicePayload): str
     .map(
       (row, i) => `
       <tr class="${i % 2 === 1 ? "alt" : ""}">
-        <td>${row.si}</td>
+        <td style="text-align: center;">${row.si}</td>
         <td>${escapeHtml(row.website)}</td>
-        <td class="num">${escapeHtml(row.price)}</td>
         <td>${escapeHtml(row.plan)}</td>
+        <td class="num">${escapeHtml(row.price)}</td>
         <td class="num">${escapeHtml(row.total)}</td>
       </tr>`,
     )
@@ -445,7 +414,7 @@ export function buildPlanningInvoiceHtmlDocument(p: PlanningInvoicePayload): str
   const paymentInfoHtml = p.paymentInfoRows
     .map(
       (r) =>
-        `<p class="pay-row"><span class="pay-label">${escapeHtml(r.label)} :</span> <span class="pay-val">${escapeHtml(r.value)}</span></p>`,
+        `<p class="pay-row"><span class="pay-label" style="font-weight:600;color:#64748b;">${escapeHtml(r.label)}:</span> <span class="pay-val" style="font-weight:700;color:#0f172a;">${escapeHtml(r.value)}</span></p>`,
     )
     .join("");
 
@@ -465,79 +434,95 @@ export function buildPlanningInvoiceHtmlDocument(p: PlanningInvoicePayload): str
   <div class="invoice-shell">
   <div class="invoice-page">
     <style data-invoice-css="1">${styles}</style>
-    <header class="doc-head">
-      <div class="brand-row">${logoBlock}</div>
-      <p class="tagline">Empowering businesses with cutting-edge solutions.</p>
-      ${renderInvoiceBarHtml()}
-    </header>
+    <div class="doc-content-body">
+      <header class="doc-head">
+        <div class="head-row">
+          <div class="brand-box">
+            ${logoBlock}
+            <p class="tagline">Empowering businesses with cutting-edge solutions.</p>
+          </div>
+          <div class="header-invoice-box">
+            <h1 class="inv-main-title">INVOICE</h1>
+          </div>
+        </div>
+        <div class="divider-line"></div>
+      </header>
 
-    <div class="meta">
-      <div class="meta-left">
-        <h2>Invoice details :</h2>
-        <div class="name">${escapeHtml(p.customerName)}</div>
-        ${p.customerEmail ? `<div style="font-size:12px;color:#4b5563;margin-top:2px;">Email : ${escapeHtml(p.customerEmail)}</div>` : ""}
-        ${p.customerPhone ? `<div style="font-size:12px;color:#4b5563;margin-top:2px;">Contact : ${escapeHtml(p.customerPhone)}</div>` : ""}
-        ${p.customerAddress ? `<div style="font-size:12px;color:#4b5563;margin-top:2px;">Address : ${escapeHtml(p.customerAddress)}</div>` : ""}
+      <div class="meta-section">
+        <div class="meta-card customer-card">
+          <h3 class="meta-card-title">Billed To</h3>
+          <div class="customer-name">${escapeHtml(p.customerName)}</div>
+          ${p.customerEmail ? `<div class="meta-line"><span class="meta-label">Email:</span> ${escapeHtml(p.customerEmail)}</div>` : ""}
+          ${p.customerPhone ? `<div class="meta-line"><span class="meta-label">Contact:</span> ${escapeHtml(p.customerPhone)}</div>` : ""}
+          ${p.customerAddress ? `<div class="meta-line"><span class="meta-label">Address:</span> ${escapeHtml(p.customerAddress)}</div>` : ""}
+        </div>
+
+        <div class="meta-card invoice-details-card">
+          <h3 class="meta-card-title">Invoice Details</h3>
+          <div class="meta-line"><span class="meta-label">Invoice ID:</span> <strong class="font-mono">${escapeHtml(p.invoiceId)}</strong></div>
+          <div class="meta-line"><span class="meta-label">Invoice Date:</span> ${escapeHtml(p.invoiceDateDisplay)}</div>
+          <div class="meta-line"><span class="meta-label">Payment Status:</span> <span class="status-text">${p.status === "Paid" ? "Paid in Full" : "Complimentary"}</span></div>
+        </div>
       </div>
-      <div class="meta-right">
-        <table class="meta-table" role="presentation">
+
+      <table class="inv-table" role="table">
+        <thead>
           <tr>
-            <td class="meta-lbl">Invoice Id</td>
-            <td class="meta-col">:</td>
-            <td class="meta-val">${escapeHtml(p.invoiceId)}</td>
+            <th style="width: 50px; text-align: center;">S.I.</th>
+            <th>Item Description</th>
+            <th>Plan</th>
+            <th style="text-align: right;">Price</th>
+            <th style="text-align: right;">Total</th>
           </tr>
-          <tr>
-            <td class="meta-lbl">Date</td>
-            <td class="meta-col">:</td>
-            <td class="meta-val">${escapeHtml(p.invoiceDateDisplay)}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
-    <table class="inv" role="table">
-      <thead>
-        <tr>
-          <th>S.I.</th>
-          <th>Website</th>
-          <th>Price</th>
-          <th>Plan</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml}
-      </tbody>
-    </table>
-
-    <div class="lower">
-      <div class="lower-left">
-        <h3>Thank you for your business</h3>
-        <h4>Payment Info :</h4>
-        ${paymentInfoHtml}
-        <p class="gen-line">Invoice generated: ${escapeHtml(p.generatedAtDisplay)}</p>
-      </div>
-      <div class="lower-right">
-        <div class="row"><strong>Sub Total :</strong> ${escapeHtml(p.subtotal)}</div>
-        <div class="row"><strong>Tax :</strong> ${escapeHtml(taxLine)}</div>
-        <div class="total-bar">Total : ${escapeHtml(p.total)}</div>
-      </div>
-    </div>
-
-    <div class="footer-wrap">
-      <table class="footer-table" width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
-        <tr valign="bottom">
-          <td class="footer-terms" align="left" valign="bottom">
-            <h5 class="terms-h">Terms &amp; Conditions</h5>
-            <p class="terms-p">For billing-related issues, users can contact customer support through email, chat, or help center.</p>
-          </td>
-          <td class="footer-sign" align="right" valign="bottom">
-            <span class="sign">Authorised Sign</span>
-          </td>
-        </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
       </table>
+
+      <div class="lower-section">
+        <div class="lower-left">
+          <div class="payment-info-box">
+            <div>
+              <h4 class="payment-info-title">Payment Details</h4>
+              ${paymentInfoHtml}
+            </div>
+            <p class="gen-timestamp">Generated: ${escapeHtml(p.generatedAtDisplay)}</p>
+          </div>
+        </div>
+        <div class="lower-right">
+          <div class="summary-box">
+            <div class="sum-details">
+              <div class="sum-row"><span class="sum-lbl">Sub Total:</span> <span class="sum-val">${escapeHtml(p.subtotal)}</span></div>
+              <div class="sum-row"><span class="sum-lbl">Tax (0.00%):</span> <span class="sum-val">₹0</span></div>
+            </div>
+            <div class="total-box">
+              <span class="tot-lbl">Total Paid:</span>
+              <span class="tot-val">${escapeHtml(p.total)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="thank-you-banner">
+        <h3 class="thank-you-title">Thank you for your business!</h3>
+      </div>
     </div>
-    <p class="fineprint">Your invoice has been generated successfully.</p>
+
+    <footer class="doc-footer">
+      <div class="footer-grid">
+        <div class="footer-terms">
+          <h5 class="terms-h">Terms &amp; Conditions</h5>
+          <p class="terms-p">For billing inquiries or support, contact support@thestackly.com.</p>
+        </div>
+        <div class="footer-sign">
+          <div class="sign-box">
+            <div class="sign-line"></div>
+            <div class="sign-text">Authorized&nbsp;Signatory</div>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
   </div>
 </body>

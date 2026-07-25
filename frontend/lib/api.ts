@@ -50,6 +50,7 @@ export type UserProfile = {
   name: string;
   email: string;
   mobile?: string;
+  address?: string;
   avatar?: string;
   userType?: string;
 };
