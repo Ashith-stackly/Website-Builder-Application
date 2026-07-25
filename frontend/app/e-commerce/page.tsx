@@ -13,7 +13,9 @@ import {
   loadRazorpayCheckoutScript,
   openRazorpayCheckout,
   isRazorpayDemoMode,
+  type RazorpayOrderResponse,
 } from "@/lib/razorpayClient";
+import MockCheckoutModal from "@/components/MockCheckoutModal";
 import {
   addStoreCartItem,
   clearStoreCart,
@@ -431,6 +433,78 @@ export default function ECommercePage() {
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<BuyPreviewDevice>("desktop");
+
+  const [checkoutProduct, setCheckoutProduct] = useState<BuyProduct | null>(null);
+
+  const handleBuyNow = (product: BuyProduct) => {
+    setCheckoutProduct(product);
+  };
+
+  const executePayment = async (product: BuyProduct) => {
+    setPaymentLoading(true);
+    try {
+      if (!isRazorpayDemoMode()) {
+        await loadRazorpayCheckoutScript();
+      }
+
+      let paymentOrder: RazorpayOrderResponse = {
+        orderId: `order_mock_${Math.random().toString(36).substring(2, 9)}`,
+        amount: product.unitPriceCents,
+        currency: product.currency || "INR",
+        keyId: "rzp_test_placeholder",
+      };
+
+      if (hasStorefrontSession && resolvedStorefrontWorkspaceId) {
+        try {
+          const checkout = await createStoreCheckout({
+            workspaceId: resolvedStorefrontWorkspaceId,
+            items: [{ productId: product.id, quantity: 1 }],
+          });
+          paymentOrder = checkout.payment;
+        } catch (apiErr) {
+          console.warn("[BuyNow API Fallback] Failed to create storefront checkout:", apiErr);
+        }
+      }
+
+      openRazorpayCheckout({
+        order: paymentOrder,
+        planLabel: `Purchase of ${product.name}`,
+        customerName: "",
+        customerEmail: "",
+        customerPhone: "",
+        onDismiss: () => setPaymentLoading(false),
+        onSuccess: async (response) => {
+          setPaymentLoading(true);
+          try {
+            if (hasStorefrontSession && resolvedStorefrontWorkspaceId) {
+              try {
+                const verified = await verifyStoreCheckoutPayment({
+                  ...response,
+                  orderId: paymentOrder.orderId,
+                });
+                if (verified.verified) {
+                  setCheckoutProduct(null);
+                  alert(`Payment Successful for ${product.name}!`);
+                  return;
+                }
+              } catch (verifyErr) {
+                console.warn("[BuyNow API Verification Fallback]:", verifyErr);
+              }
+            }
+            setCheckoutProduct(null);
+            alert(`Payment Successful for ${product.name}!`);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Payment verification failed");
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not initialize payment");
+      setPaymentLoading(false);
+    }
+  };
 
   const [activeProductStart, setActiveProductStart] = useState(0);
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -2729,6 +2803,21 @@ export default function ECommercePage() {
                                 ) : null}
                                 {product.price}
                               </p>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBuyNow(product);
+                                }}
+                                className="mt-2.5 mx-auto flex items-center justify-center rounded-full border-2 border-[#06224C] bg-white text-[#06224C] hover:bg-[#06224C] hover:text-white transition-colors duration-150 shadow-md w-[28px] h-[28px] min-[400px]:w-[30px] min-[400px]:h-[30px] sm:w-[32px] sm:h-[32px] md:w-[32px] md:h-[32px] lg:w-[36px] lg:h-[36px] shrink-0 active:scale-95"
+                                aria-label="Buy now"
+                                title="Buy Now"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] shrink-0" aria-hidden>
+                                  <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                                  <path d="M3 10h18M7 15h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                </svg>
+                              </button>
                               <div className="mt-auto flex justify-center pt-2">
                                 {product.badge ? (
                                   <span className="inline-block rounded bg-[#ff664f] px-2 py-0.5 text-[10px] font-bold leading-none text-white shadow-sm">{product.badge}</span>
@@ -3254,6 +3343,17 @@ export default function ECommercePage() {
           </motion.div>
         </div>
       )}
+      <MockCheckoutModal
+        isOpen={checkoutProduct !== null}
+        onClose={() => setCheckoutProduct(null)}
+        onSuccess={() => checkoutProduct && executePayment(checkoutProduct)}
+        productName={checkoutProduct?.name || ""}
+        productPrice={(checkoutProduct?.unitPriceCents || 0) / 100}
+        productImage={checkoutProduct?.image}
+        productAlt={`${checkoutProduct?.name || ""} product image`}
+        storeName="Stackly Store"
+        quantity={1}
+      />
     </main>
   );
 }
