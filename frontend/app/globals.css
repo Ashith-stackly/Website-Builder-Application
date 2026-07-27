@@ -1203,17 +1203,6 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
   .planning-plans-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
-  .planning-billing-toggle-wrap {
-    gap: 0.45rem !important;
-  }
-  .planning-billing-toggle-wrap .planning-billing-label {
-    min-width: 0;
-    font-size: 12px !important;
-    line-height: 1.2;
-    white-space: normal;
-    overflow-wrap: normal;
-    word-break: normal;
-  }
 }
 .planning-recommended-content-offset {
   margin-top: 0.85rem;
@@ -1224,80 +1213,154 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
 .planning-billing-label .planning-billing-label-line + .planning-billing-label-line {
   margin-top: 0;
 }
-/* Mobile + zoom safety: keep recommended badge clear of title */
-@media (max-width: 768px) {
-  .planning-recommended-card {
-    padding-top: 2rem !important;
+/* Mobile + zoom safety: keep recommended badge clear of title (match Tailwind max-md: 767px) */
+@media (max-width: 767px) {
+  html:has(main.planning-page),
+  body:has(main.planning-page) {
+    overflow-x: hidden;
+    background: #080d1a;
   }
-  .planning-recommended-content-offset {
-    margin-top: 0.95rem !important;
+  .planning-page .planning-plans-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .planning-page .planning-plan-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: clip;
+  }
+  .planning-page .planning-recommended-card {
+    padding-top: 1.5rem !important;
+  }
+  .planning-page .planning-recommended-badge {
+    position: relative !important;
+    top: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+    translate: none !important;
+    margin: 0 0 0.75rem !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    padding: 0.45rem 0.65rem;
+    overflow-wrap: break-word;
+    word-break: normal;
+    border-radius: 9999px;
+  }
+  .planning-page .planning-recommended-content-offset {
+    margin-top: 0 !important;
+  }
+  .planning-page .planning-price-row {
+    flex-wrap: wrap;
+    align-items: flex-start !important;
+    gap: 0.45rem !important;
+    row-gap: 0.35rem !important;
+  }
+  .planning-page .planning-price-oldsave {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .planning-page .planning-price-chip {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .planning-page .planning-billing-section {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .planning-page .planning-billing-toggle-wrap {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    gap: 0.35rem !important;
+    padding: 0.35rem !important;
+  }
+  .planning-page .planning-billing-toggle-wrap .planning-billing-label {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: auto !important;
+    flex: 1 1 calc(50% - 0.2rem) !important;
+    white-space: normal !important;
+    font-size: 10px !important;
+    line-height: 1.12 !important;
+    padding-left: 0.35rem !important;
+    padding-right: 0.35rem !important;
+  }
+  .planning-page .planning-billing-toggle-wrap .planning-billing-label .planning-billing-label-line {
+    display: block !important;
+    width: 100%;
+  }
+  .planning-page .planning-billing-save-chip--inline {
+    max-width: 100%;
+    white-space: nowrap;
+    margin-top: 0.15rem;
+  }
+}
+
+/* Desktop / laptop: preserve original plan card layout (floating badge, no clip) */
+@media (min-width: 768px) {
+  .planning-page .planning-plan-card {
+    overflow: visible;
+  }
+  .planning-page .planning-plans-grid {
+    overflow: visible;
+  }
+  .planning-page .planning-price-row {
+    flex-wrap: nowrap;
+    align-items: baseline;
+  }
+  .planning-page .planning-billing-toggle-wrap .planning-billing-label {
+    flex: none !important;
+    width: auto !important;
+    max-width: none !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    padding-left: inherit !important;
+    padding-right: inherit !important;
   }
 }
 @media (max-width: 560px) {
-  .planning-billing-toggle-wrap {
-    justify-content: center !important;
-    gap: 0.4rem !important;
-  }
-  .planning-billing-toggle-wrap .planning-billing-label {
-    flex: 0 0 76px !important;
-    width: 76px !important;
-    max-width: 76px !important;
-    min-width: 76px !important;
-    display: inline-flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    white-space: normal !important;
-    line-height: 1.08 !important;
-    row-gap: 0.12rem !important;
-    padding-left: 2px !important;
-    padding-right: 2px !important;
-  }
-  .planning-billing-toggle-wrap .planning-billing-label .planning-billing-label-line {
-    display: block !important;
-    width: 100%;
+  .planning-page .planning-billing-toggle-wrap .planning-billing-label {
+    font-size: 9.5px !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
   }
 }
 @media (max-width: 420px) {
-  .planning-billing-toggle-wrap {
-    justify-content: center !important;
-    gap: 0.35rem !important;
-  }
-  .planning-billing-toggle-wrap .planning-billing-label {
-    flex: 0 0 74px !important;
-    width: 74px !important;
-    max-width: 74px !important;
-    min-width: 74px !important;
-    min-height: 2.2rem !important;
-    display: inline-flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
-    row-gap: 0.12rem !important;
-    font-size: 10px !important;
-    line-height: 1.02 !important;
-    white-space: normal !important;
-    text-align: center !important;
-    padding: 0 2px !important;
-  }
-  .planning-billing-toggle-wrap .planning-billing-label .planning-billing-label-line {
-    display: block !important;
-    width: 100%;
-  }
-  .planning-price-row {
+  .planning-page .planning-price-row {
     flex-direction: column;
     align-items: flex-start !important;
     gap: 0.4rem !important;
   }
-  .planning-price-oldsave {
+  .planning-page .planning-price-oldsave {
     width: 100%;
     padding-right: 0 !important;
   }
-  .planning-price-chip {
-    align-self: flex-end;
+  .planning-page .planning-price-chip {
+    align-self: flex-start;
     margin-right: 0 !important;
-    top: 0 !important;
+  }
+  .planning-page .planning-recommended-badge {
+    font-size: 9px;
+    letter-spacing: 0.02em;
+    padding: 0.35rem 0.55rem;
   }
 }
 
@@ -1525,23 +1588,16 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
   }
 }
 
-/* Extreme mobile zoom safety: keep "Monthly" fully inside its label box */
+/* Extreme mobile zoom: billing toggle label size */
 @media (max-width: 360px) {
-  .planning-billing-toggle-wrap {
-    gap: 0.3rem !important;
+  .planning-page .planning-billing-toggle-wrap .planning-billing-label {
+    font-size: 9px !important;
+    line-height: 1.06 !important;
   }
-  .planning-billing-toggle-wrap .planning-billing-label {
-    flex-basis: 72px !important;
-    width: 72px !important;
-    max-width: 72px !important;
-    min-width: 72px !important;
-    min-height: 2.3rem !important;
-    font-size: 9.5px !important;
-    line-height: 1.08 !important;
-  }
-  .planning-billing-toggle-wrap .planning-billing-label .planning-billing-label-line {
-    overflow: visible;
-    text-overflow: unset;
+  .planning-page .planning-billing-save-chip--inline {
+    font-size: 7.5px !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
   }
 }
 

@@ -578,7 +578,7 @@ function PlanningPageContent() {
   }
 
   return (
-    <main className="relative min-h-screen w-full bg-[#080d1a] text-slate-100 overflow-x-hidden font-sans selection:bg-blue-500 selection:text-white">
+    <main className="planning-page relative min-h-screen w-full bg-[#080d1a] text-slate-100 overflow-x-hidden font-sans selection:bg-blue-500 selection:text-white">
       {/* Background Decorative Glow Effects */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-blue-600/20 blur-[130px]" />
@@ -586,7 +586,7 @@ function PlanningPageContent() {
         <div className="absolute left-1/3 bottom-10 h-[500px] w-[500px] rounded-full bg-purple-600/15 blur-[140px]" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 max-md:min-w-0">
         {/* SALE PROMO STRIP */}
         <motion.div
           initial={{ opacity: 0, y: -15 }}
@@ -650,12 +650,12 @@ function PlanningPageContent() {
               </div>
 
               {/* BILLING TOGGLE */}
-              <motion.div variants={fadeUpVariants} className="flex flex-col items-center gap-4 pt-2">
-                <div className="relative flex items-center gap-3 rounded-full border border-white/15 bg-slate-900/90 p-1.5 shadow-2xl backdrop-blur-xl">
+              <motion.div variants={fadeUpVariants} className="planning-billing-section flex w-full min-w-0 max-w-full flex-col items-center gap-4 pt-2">
+                <div className="planning-billing-toggle-wrap relative flex w-full min-w-0 max-w-full flex-wrap items-stretch justify-center gap-1.5 rounded-2xl border border-white/15 bg-slate-900/90 p-1.5 shadow-2xl backdrop-blur-xl md:w-auto md:flex-nowrap md:items-center md:gap-3 md:rounded-full">
                   <button
                     type="button"
                     onClick={() => setBillingYearly(false)}
-                    className={`relative z-10 rounded-full px-5 py-2 text-xs font-bold transition-colors cursor-pointer sm:text-sm ${!billingYearly ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`planning-billing-label relative z-10 min-w-0 flex-1 basis-[calc(50%-0.25rem)] rounded-full px-3 py-2 text-center text-[10px] font-bold leading-tight transition-colors cursor-pointer sm:text-xs md:flex-none md:basis-auto md:px-5 md:py-2 md:text-xs md:leading-normal lg:text-sm ${!billingYearly ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
                   >
                     {!billingYearly && (
                       <motion.div
@@ -664,13 +664,17 @@ function PlanningPageContent() {
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
                     )}
-                    Monthly Billing
+                    <span className="hidden md:inline">Monthly Billing</span>
+                    <span className="md:hidden">
+                      <span className="planning-billing-label-line block">Monthly</span>
+                      <span className="planning-billing-label-line block">Billing</span>
+                    </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setBillingYearly(true)}
-                    className={`relative z-10 flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold transition-colors cursor-pointer sm:text-sm ${billingYearly ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+                    className={`planning-billing-label relative z-10 flex min-w-0 flex-1 basis-[calc(50%-0.25rem)] flex-col items-center justify-center gap-0.5 rounded-full px-3 py-2 text-center text-[10px] font-bold leading-tight transition-colors cursor-pointer sm:text-xs md:flex-none md:basis-auto md:flex-row md:gap-2 md:px-5 md:py-2 md:text-xs md:leading-normal lg:text-sm ${billingYearly ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
                   >
                     {billingYearly && (
                       <motion.div
@@ -679,8 +683,17 @@ function PlanningPageContent() {
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
                     )}
-                    <span>Annual Billing</span>
-                    <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-extrabold text-amber-300 border border-amber-400/30">
+                    <span className="hidden md:inline">Annual Billing</span>
+                    <span className="flex flex-col items-center gap-0.5 md:hidden">
+                      <span>
+                        <span className="planning-billing-label-line block">Annual</span>
+                        <span className="planning-billing-label-line block">Billing</span>
+                      </span>
+                      <span className="planning-billing-save-chip planning-billing-save-chip--inline shrink-0 rounded-full bg-amber-400/20 px-1.5 py-px text-[8px] font-extrabold leading-none text-amber-300 border border-amber-400/30 sm:text-[9px]">
+                        Save 58%
+                      </span>
+                    </span>
+                    <span className="planning-billing-save-chip hidden shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-extrabold text-amber-300 border border-amber-400/30 md:inline">
                       Save 58%
                     </span>
                   </button>
@@ -707,36 +720,39 @@ function PlanningPageContent() {
               </motion.div>
 
               {/* CARDS GRID */}
-              <motion.div variants={fadeUpVariants} className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-8 items-stretch">
+              <motion.div variants={fadeUpVariants} className="planning-plans-grid grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-8 items-stretch max-md:w-full max-md:min-w-0 max-md:max-w-full">
                 {plans.map((plan) => {
                   const priceInfo = getActivePrice(plan);
                   return (
                     <motion.div
                       key={plan.name}
                       whileHover={{ y: -8, transition: { duration: 0.25 } }}
-                      className={`relative flex flex-col justify-between rounded-3xl p-6 transition-all duration-300 sm:p-8 ${
+                      className={`planning-plan-card relative flex flex-col justify-between rounded-3xl p-6 transition-all duration-300 sm:p-8 max-md:min-w-0 max-md:w-full max-md:max-w-full max-md:overflow-x-clip ${
                         plan.isRecommended
-                          ? "border-2 border-blue-500/80 bg-gradient-to-b from-[#111e3b] via-[#0d162d] to-[#080d1a] shadow-2xl shadow-blue-600/30 ring-1 ring-blue-400/50"
+                          ? "planning-recommended-card border-2 border-blue-500/80 bg-gradient-to-b from-[#111e3b] via-[#0d162d] to-[#080d1a] shadow-2xl shadow-blue-600/30 ring-1 ring-blue-400/50 max-md:shadow-xl max-md:ring-0"
                           : "border border-white/10 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl hover:border-white/20 hover:shadow-xl"
                       }`}
                     >
                       {plan.isRecommended && (
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-1 text-xs font-extrabold tracking-wider text-white shadow-lg shadow-blue-500/40 uppercase border border-white/20">
-                          ★ Most Popular Choice
+                        <div className="planning-recommended-badge absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-1 text-xs font-extrabold tracking-wider text-white shadow-lg shadow-blue-500/40 uppercase border border-white/20 max-md:static max-md:left-auto max-md:top-0 max-md:mx-0 max-md:mb-3 max-md:w-full max-md:max-w-full max-md:translate-x-0 max-md:transform-none max-md:whitespace-normal max-md:text-center max-md:text-[10px] max-md:leading-snug max-md:tracking-wide max-md:px-3 max-md:shadow-md">
+                          <span className="max-md:hidden">★ Most Popular Choice</span>
+                          <span className="hidden max-md:inline">★ Most Popular</span>
                         </div>
                       )}
 
-                      <div className="space-y-6">
+                      <div className={`space-y-6 max-md:min-w-0 ${plan.isRecommended ? "planning-recommended-content-offset" : ""}`}>
                         <div>
                           <h3 className="text-xl font-bold text-white sm:text-2xl">{plan.name}</h3>
                           <p className="text-xs text-slate-400 mt-1">{priceInfo.period}</p>
                         </div>
 
-                        <div className="flex items-baseline gap-2">
+                        <div className="planning-price-row flex items-baseline gap-2 max-md:min-w-0 max-md:flex-wrap">
                           <span className="text-4xl font-extrabold text-white sm:text-5xl">{priceInfo.newPrice}</span>
-                          <span className="text-sm font-semibold text-slate-400 line-through">{priceInfo.oldPrice}</span>
-                          <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-400 border border-emerald-500/30">
-                            {priceInfo.saveText}
+                          <span className="planning-price-oldsave inline-flex min-w-0 flex-wrap items-baseline gap-2">
+                            <span className="text-sm font-semibold text-slate-400 line-through">{priceInfo.oldPrice}</span>
+                            <span className="planning-price-chip shrink-0 rounded-md bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-400 border border-emerald-500/30">
+                              {priceInfo.saveText}
+                            </span>
                           </span>
                         </div>
 
