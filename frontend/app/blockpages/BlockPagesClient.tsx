@@ -300,9 +300,40 @@ export default function BlockPagesClient() {
           return;
         }
 
-        // Hydrate all editor state from the saved draft
-        if (draft.template) setTextTemplate(draft.template);
-        if (draft.textBlockState) setTextBlockState(draft.textBlockState);
+        // Hydrate editor state from the saved draft
+        const requestedTemplateParam = searchParams.get("template");
+        const explicitRequestedTemplate = requestedTemplateParam ? parseBlockpagesTemplate(requestedTemplateParam) : null;
+        const isExplicitTemplateSwitch = Boolean(
+          explicitRequestedTemplate && draft.template && explicitRequestedTemplate !== draft.template
+        );
+
+        if (isExplicitTemplateSwitch && explicitRequestedTemplate) {
+          // User explicitly selected a different template from the dropdown while editing a project
+          setTextTemplate(explicitRequestedTemplate);
+          const persisted = loadPersistedTextBlockState(explicitRequestedTemplate);
+          if (persisted) {
+            setTextBlockState({
+              ...persisted,
+              activeSectionId: persisted.activeSectionId ?? getBlockpagesDefaultSectionId(explicitRequestedTemplate),
+            });
+          } else {
+            setTextBlockState((current) => ({
+              ...current,
+              activeSectionId: getBlockpagesDefaultSectionId(explicitRequestedTemplate),
+            }));
+          }
+          const loadedDividers = loadAppliedDividersForTemplate(explicitRequestedTemplate);
+          setAppliedDividers(loadedDividers);
+          persistAppliedDividersForTemplate(explicitRequestedTemplate, loadedDividers);
+          setAppliedIcons(loadAppliedIconsForTemplate(explicitRequestedTemplate));
+        } else {
+          // Standard project draft hydration
+          if (draft.template) setTextTemplate(draft.template);
+          if (draft.textBlockState) setTextBlockState(draft.textBlockState);
+          if (draft.appliedDividers) setAppliedDividers(draft.appliedDividers);
+          if (draft.appliedIcons) setAppliedIcons(draft.appliedIcons);
+        }
+
         if (draft.buttonBlocks?.length) {
           setButtonBlocks(draft.buttonBlocks);
           setSelectedButtonBlockId(draft.buttonBlocks[0]?.id ?? null);
@@ -322,8 +353,6 @@ export default function BlockPagesClient() {
         if (draft.customImages) setCustomImages(draft.customImages);
         if (draft.customButtons) setCustomButtons(draft.customButtons as Record<string, ButtonProps>);
         if (draft.customIcons) setCustomIcons(draft.customIcons);
-        if (draft.appliedDividers) setAppliedDividers(draft.appliedDividers);
-        if (draft.appliedIcons) setAppliedIcons(draft.appliedIcons);
 
         setDraftProjectId(projectId);
 
