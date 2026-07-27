@@ -9,13 +9,16 @@ import { animateStatCounterElement } from "@/lib/blockpagesStatCounter";
 import { bindBlockpagesPreviewInteractions } from "@/lib/blockpagesPreviewInteractions";
 import { sanitizeBlockpagesPreviewHtml } from "@/lib/blockpagesPreviewSanitize";
 import { readBlockpagesPreviewCaptureDevice } from "@/lib/blockpagesOverlayLayers";
+import type { TextTemplateType } from "@/app/blockpages/textblock/types";
 import {
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
   readBlockpagesStorageItem,
   getBlockpagesStorageKey,
+  getBlockpagesPreviewSnapshotKey,
 } from "@/lib/blockpagesEditorPersistence";
 import { routePath } from "@/lib/paths";
 import { loadBlockPagesDraft, type BlockPagesDraftPayload } from "@/lib/blockPagesDraftApi";
+import { BLOCKPAGES_PREVIEW_ROUTES } from "@/lib/blockpagesTemplates";
 
 const PREVIEW_IFRAME_SRC = routePath("/blockpages/preview?mode=iframe");
 
@@ -95,6 +98,7 @@ function renderDraftPreviewHtml(draft: BlockPagesDraftPayload): string {
 export default function BlockPreviewPage() {
   const searchParams = useSearchParams();
   const projectIdParam = searchParams.get("projectId");
+  const templateParam = searchParams.get("template") as TextTemplateType | null;
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -105,6 +109,7 @@ export default function BlockPreviewPage() {
  
   // Load preview from backend if projectId is present, otherwise from localStorage
   useEffect(() => {
+
     if (projectIdParam) {
       // MODE 2: Saved draft preview
       let cancelled = false;
@@ -114,14 +119,26 @@ export default function BlockPreviewPage() {
         try {
           const { project, draft } = await loadBlockPagesDraft(projectIdParam, controller.signal);
           if (cancelled) return;
+
           if (project.htmlContent?.trim()) {
             setPreviewHtml(project.htmlContent);
             return;
           }
 
+          const targetTemplate = draft?.template ?? templateParam ?? "construction";
+          const snapshotKey = getBlockpagesPreviewSnapshotKey(targetTemplate);
+          const snapshotHtml = readBlockpagesStorageItem(snapshotKey);
+
+          if (snapshotHtml?.trim()) {
+            const capturedDevice = readBlockpagesPreviewCaptureDevice(snapshotHtml);
+            if (capturedDevice) {
+              setPreviewDevice(capturedDevice);
+            }
+            setPreviewHtml(sanitizeBlockpagesPreviewHtml(snapshotHtml));
+            return;
+          }
+
           if (draft) {
-            // For saved draft preview, we render a JSON-based summary
-            // since we only have structured data, not HTML
             const summaryHtml = renderDraftPreviewHtml(draft);
             setPreviewHtml(summaryHtml);
           } else {
@@ -144,8 +161,13 @@ export default function BlockPreviewPage() {
     }
 
     // MODE 1: Current editor state preview (localStorage)
+    const activeTemplate =
+      templateParam ?? (readBlockpagesStorageItem("stackly-last-active-template") as TextTemplateType | null) ?? "construction";
+    const templateSnapshotKey = getBlockpagesPreviewSnapshotKey(activeTemplate);
+
     const loadPreview = () => {
-      const rawHtml = readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "";
+      const templateHtml = readBlockpagesStorageItem(templateSnapshotKey);
+      const rawHtml = (templateHtml && templateHtml.trim()) ? templateHtml : (readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "");
       const capturedDevice = readBlockpagesPreviewCaptureDevice(rawHtml);
       if (capturedDevice) {
         setPreviewDevice(capturedDevice);
@@ -161,9 +183,12 @@ export default function BlockPreviewPage() {
       const previewKeys = new Set([
         TEXTBLOCK_PREVIEW_STORAGE_KEY,
         getBlockpagesStorageKey(TEXTBLOCK_PREVIEW_STORAGE_KEY),
+        templateSnapshotKey,
+        getBlockpagesStorageKey(templateSnapshotKey),
       ]);
       if (!event.key || !previewKeys.has(event.key)) return;
-      const nextHtml = event.newValue ?? readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "";
+      const templateHtml = readBlockpagesStorageItem(templateSnapshotKey);
+      const nextHtml = event.newValue ?? ((templateHtml && templateHtml.trim()) ? templateHtml : (readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? ""));
       const capturedDevice = readBlockpagesPreviewCaptureDevice(nextHtml);
       if (capturedDevice) {
         setPreviewDevice(capturedDevice);
@@ -177,7 +202,7 @@ export default function BlockPreviewPage() {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("storage", handleStorage);
     };
-  }, [projectIdParam]);
+  }, [projectIdParam, searchParams]);
  
   useEffect(() => {
     if (!previewHtml) return;
@@ -246,23 +271,31 @@ export default function BlockPreviewPage() {
   }
  
   if (!previewHtml) {
+    const activeTemplate =
+      templateParam ?? (readBlockpagesStorageItem("stackly-last-active-template") as TextTemplateType | null) ?? "construction";
+    const route = BLOCKPAGES_PREVIEW_ROUTES[activeTemplate] || "/construction";
+
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#f5f7fb] px-4 text-center text-[#0B1D40]">
-        <h1 className="text-2xl font-black">No preview available</h1>
-        <p className="mt-3 max-w-md text-sm text-slate-500">Open the editor, make your changes, and click Preview again.</p>
-        {!isIframeMode && (
-          <Link href="/blockpages" className="mt-6 rounded-md bg-[#0B1D40] px-5 py-2.5 text-sm font-bold text-white">
-            Back to editor
-          </Link>
-        )}
+      <main className="min-h-screen w-full bg-white">
+        <iframe
+          src={routePath(route)}
+          className="h-screen w-full border-none"
+          title={`${activeTemplate} preview`}
+        />
       </main>
     );
   }
- 
+
   if (isIframeMode) {
     return <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />;
   }
- 
+
+  const activeTemplateForIframe =
+    templateParam ?? (readBlockpagesStorageItem("stackly-last-active-template") as TextTemplateType | null) ?? "construction";
+  const responsiveIframeSrc = routePath(
+    `/blockpages/preview?mode=iframe&template=${encodeURIComponent(activeTemplateForIframe)}${projectIdParam ? `&projectId=${projectIdParam}` : ""}`
+  );
+
   return (
     <>
       <div
@@ -308,7 +341,7 @@ export default function BlockPreviewPage() {
             <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />
           ) : (
             <iframe
-              src={PREVIEW_IFRAME_SRC}
+              src={responsiveIframeSrc}
               className="w-full h-full border-none bg-[#f5f7fb]"
               title="Responsive Preview"
             />

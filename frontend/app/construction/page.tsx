@@ -1053,7 +1053,10 @@ export default function ConstructionTemplatePage() {
                             onClick={() => setActiveFaq(isActive ? null : i)}
                           >
                             <span
+                              className="cursor-text"
+                              contentEditable={true}
                               suppressContentEditableWarning
+                              onClick={(e) => e.stopPropagation()}
                               onBlur={(e) => {
                                 const text = e.currentTarget.textContent ?? "";
                                 setFaqList((prev) =>
@@ -1068,7 +1071,8 @@ export default function ConstructionTemplatePage() {
                             />
                           </button>
                           <div
-                            className={`${r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")} ${isActive ? "block" : "hidden"}`}
+                            className={`${r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")} ${isActive ? "block" : "hidden"} cursor-text`}
+                            contentEditable={true}
                             suppressContentEditableWarning
                             onBlur={(e) => {
                               const text = e.currentTarget.textContent ?? "";
@@ -1100,7 +1104,10 @@ export default function ConstructionTemplatePage() {
                             onClick={() => setActiveFaq(isActive ? null : i)}
                           >
                             <span
+                              className="cursor-text"
+                              contentEditable={true}
                               suppressContentEditableWarning
+                              onClick={(e) => e.stopPropagation()}
                               onBlur={(e) => {
                                 const text = e.currentTarget.textContent ?? "";
                                 setFaqList((prev) =>
@@ -1115,7 +1122,8 @@ export default function ConstructionTemplatePage() {
                             />
                           </button>
                           <div
-                            className={`${r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")} ${isActive ? "block" : "hidden"}`}
+                            className={`${r("px-5 pb-4 text-gray-300 text-sm leading-relaxed border-t border-white/10 sm:px-6 sm:pb-5")} ${isActive ? "block" : "hidden"} cursor-text`}
+                            contentEditable={true}
                             suppressContentEditableWarning
                             onBlur={(e) => {
                               const text = e.currentTarget.textContent ?? "";

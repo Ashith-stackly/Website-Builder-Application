@@ -176,7 +176,9 @@ export function scrollCanvasToModifiedElement(elementId: string) {
     `[data-image-id="${escaped}"]`,
     `[data-crop-wrapper-id="${escaped}"]`,
     `[data-blockpages-icon-id="${escaped}"]`,
+    `[data-icon-id="${escaped}"]`,
     `[data-blockpages-video-id="${escaped}"]`,
+    `[data-video-id="${escaped}"]`,
     `[data-blockpages-overlay-id="${escaped}"]`,
     `#${escaped}`,
     `[id="${escaped}"]`,
@@ -193,15 +195,8 @@ export function scrollCanvasToModifiedElement(elementId: string) {
   if (scrollRoot) {
     const rootRect = scrollRoot.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
-
-    const isVisible =
-      targetRect.top >= rootRect.top + 60 &&
-      targetRect.bottom <= rootRect.bottom - 60;
-
-    if (!isVisible) {
-      const nextTop = scrollRoot.scrollTop + (targetRect.top - rootRect.top) - rootRect.height / 3;
-      scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
-    }
+    const nextTop = scrollRoot.scrollTop + (targetRect.top - rootRect.top) - (rootRect.height / 3);
+    scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
   } else {
     target.scrollIntoView({ behavior: "smooth", block: "center" });
   }

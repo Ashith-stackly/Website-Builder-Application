@@ -10,6 +10,7 @@ import type { VideoBlockData } from "../videoblock/types";
 import { applyCustomButtonStyle } from "@/lib/blockpagesButtonStyles";
 import {
   collectEditableIconAnchors,
+  isInsideTemplateHeader,
 } from "@/lib/blockpagesEditTargets";
 import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 import { BLOCKPAGES_CANVAS_RESTORED_EVENT } from "@/lib/blockpagesEditorPersistence";
@@ -102,25 +103,7 @@ function isInsideBuilderChrome(node: Element | null) {
   return Boolean(node?.closest("[data-builder-chrome='true']"));
 }
 
-/** Template site header / nav chrome — no image or button edit overlays here. */
-function isInsideTemplateHeader(element: HTMLElement) {
-  return Boolean(
-    element.closest(
-      [
-        "header",
-        ".buyscreen-header",
-        ".buyscreen-categories",
-        ".portfolio-shell > .sticky",
-        ".portfolio-mobile-menu",
-        ".restaurant-shell > header",
-        ".construction-shell header",
-        ".blog-page header",
-        ".dm-shell > .sticky",
-        "[data-template-header='true']",
-      ].join(", ")
-    )
-  );
-}
+
 
 function isExplicitHeaderEditableButton(element: HTMLElement) {
   return (

@@ -16,10 +16,14 @@ const RestaurantPage = dynamic(() => import("@/app/restaurant/page"), { ssr: fal
 const ConstructionPage = dynamic(() => import("@/app/construction/page"), { ssr: false, loading: TemplatePageLoader });
 const BlogPage = dynamic(() => import("@/app/blog/page"), { ssr: false, loading: TemplatePageLoader });
 const DigitalMarketingPage = dynamic(() => import("@/app/digital-marketing/page"), { ssr: false, loading: TemplatePageLoader });
+const PortfolioPage = dynamic(() => import("@/app/portfolio/page"), { ssr: false, loading: TemplatePageLoader });
+const ECommercePage = dynamic(() => import("@/app/e-commerce/page"), { ssr: false, loading: TemplatePageLoader });
 
 const INLINE_TEMPLATE_PAGES: Partial<
   Record<TextTemplateType, React.ComponentType<object>>
 > = {
+  portfolio: PortfolioPage,
+  ecommerce: ECommercePage,
   restaurant: RestaurantPage,
   construction: ConstructionPage,
   blog: BlogPage,

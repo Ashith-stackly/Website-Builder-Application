@@ -542,8 +542,10 @@ export default function RestaurantTemplatesPage() {
                           onClick={() => setOpenFaq(isOpen ? -1 : index)}
                         >
                           <span
-                            className="font-bold text-[#0A1E3D] pr-4 text-sm sm:text-base break-words whitespace-normal text-left flex-1"
+                            className="font-bold text-[#0A1E3D] pr-4 text-sm sm:text-base break-words whitespace-normal text-left flex-1 cursor-text"
+                            contentEditable={true}
                             suppressContentEditableWarning
+                            onClick={(e) => e.stopPropagation()}
                             onBlur={(e) => {
                               const text = e.currentTarget.textContent ?? "";
                               setFaqList((prev) =>
@@ -556,7 +558,8 @@ export default function RestaurantTemplatesPage() {
                           <span className="text-xl sm:text-2xl text-gray-400 shrink-0 font-light" aria-hidden>{isOpen ? "−" : "+"}</span>
                         </button>
                         <div
-                          className={`p-5 pt-2 text-sm sm:text-base text-gray-600 leading-relaxed border-t border-gray-100 bg-white break-words whitespace-normal ${isOpen ? "block" : "hidden"}`}
+                          className={`p-5 pt-2 text-sm sm:text-base text-gray-600 leading-relaxed border-t border-gray-100 bg-white break-words whitespace-normal cursor-text ${isOpen ? "block" : "hidden"}`}
+                          contentEditable={true}
                           suppressContentEditableWarning
                           onBlur={(e) => {
                             const text = e.currentTarget.textContent ?? "";

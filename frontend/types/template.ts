@@ -9,7 +9,9 @@ export type TemplateCategory =
   | "blog"
   | "store"
   | "business"
-  | "restaurant";
+  | "restaurant"
+  | "construction"
+  | "digital-marketing";
 
 export type TemplateCategoryFilter = "all" | TemplateCategory;
 
@@ -20,6 +22,8 @@ export const TEMPLATE_CATEGORIES = [
   { value: "store", label: "Store" },
   { value: "business", label: "Business" },
   { value: "restaurant", label: "Restaurant" },
+  { value: "construction", label: "Construction" },
+  { value: "digital-marketing", label: "Digital Marketing" },
 ] as const satisfies ReadonlyArray<{
   value: TemplateCategoryFilter;
   label: string;
@@ -31,6 +35,8 @@ export const TEMPLATE_CATEGORY_LABELS: Record<TemplateCategory, string> = {
   store: "Store",
   business: "Business",
   restaurant: "Restaurant",
+  construction: "Construction",
+  "digital-marketing": "Digital Marketing",
 };
 
 export function getTemplateCategoryLabel(category: TemplateCategory): string {

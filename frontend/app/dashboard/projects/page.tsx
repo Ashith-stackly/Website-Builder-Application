@@ -235,7 +235,18 @@ export default function ProjectsPage() {
                   tone={TONES[i % TONES.length]}
                   fav={favorites.includes(p.id)}
                   onToggleFav={() => toggleFav(p.id)}
-                  onOpen={() => router.push(`/builder?projectId=${p.id}`)}
+                  onOpen={() => {
+                    const isBlockpages =
+                      p.category === "blockpages" ||
+                      Boolean(p.builderData?.blockPagesData) ||
+                      ["portfolio", "blog", "ecommerce", "restaurant", "construction", "digital-marketing"].includes((p.category || "").toLowerCase());
+                    if (isBlockpages) {
+                      const tpl = p.category && p.category !== "blockpages" ? p.category : "construction";
+                      router.push(`/blockpages?projectId=${p.id}&template=${encodeURIComponent(tpl)}`);
+                    } else {
+                      router.push(`/builder?projectId=${p.id}`);
+                    }
+                  }}
                   onRename={renameProject}
                   onDelete={deleteProject}
                   onDuplicate={duplicateProject}

@@ -923,7 +923,8 @@ export default function DigitalMarketingPreviewPage() {
                                 ))}
                               </div>
                               <p
-                                className="min-w-0 break-words flex-1 text-left text-sm font-medium leading-relaxed transition-colors duration-500 @md:text-base text-[#4A5568] group-hover:text-gray-300"
+                                className="min-w-0 break-words flex-1 text-left text-sm font-medium leading-relaxed transition-colors duration-500 @md:text-base text-[#4A5568] group-hover:text-gray-300 cursor-text"
+                                contentEditable={true}
                                 suppressContentEditableWarning
                                 onBlur={(e) => {
                                   const newText = e.currentTarget.textContent ?? "";
@@ -936,7 +937,8 @@ export default function DigitalMarketingPreviewPage() {
                               </p>
                               <div className="min-w-0 mt-6 text-right">
                                 <p
-                                  className="min-w-0 break-words font-bold transition-colors duration-500 text-[#0A1E3D] group-hover:text-white"
+                                  className="min-w-0 break-words font-bold transition-colors duration-500 text-[#0A1E3D] group-hover:text-white cursor-text"
+                                  contentEditable={true}
                                   suppressContentEditableWarning
                                   onBlur={(e) => {
                                     const newName = e.currentTarget.textContent ?? "";
@@ -948,7 +950,8 @@ export default function DigitalMarketingPreviewPage() {
                                   {t.name}
                                 </p>
                                 <p
-                                  className="min-w-0 break-words mt-0.5 text-[10px] font-medium transition-colors duration-500 text-gray-500 group-hover:text-gray-400 @sm:text-xs"
+                                  className="min-w-0 break-words mt-0.5 text-[10px] font-medium transition-colors duration-500 text-gray-500 group-hover:text-gray-400 @sm:text-xs cursor-text"
+                                  contentEditable={true}
                                   suppressContentEditableWarning
                                   onBlur={(e) => {
                                     const newRole = e.currentTarget.textContent ?? "";

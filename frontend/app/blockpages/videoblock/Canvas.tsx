@@ -108,7 +108,7 @@ export default function Canvas({
     if (onApplyVideo) {
       onApplyVideo(block.id);
     } else {
-      router.push('/blockpages?template=portfolio');
+      router.push(`/blockpages?template=${encodeURIComponent(template)}`);
     }
   };
  

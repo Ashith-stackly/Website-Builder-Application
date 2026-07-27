@@ -15,6 +15,7 @@ export interface ProjectBuilderData {
   seo?: SEOMetadata;
   canvasMode?: "flow" | "freeform";
   projectName?: string;
+  blockPagesData?: unknown;
 }
 
 export interface ProjectApiProject {

@@ -116,7 +116,7 @@ export default function MyWebsiteDropdown({ currentTemplate }: MyWebsiteDropdown
       params.set("projectId", projectId);
     }
     const targetUrl = `/blockpages?${params.toString()}`;
-    window.location.href = targetUrl;
+    router.push(targetUrl);
   };
 
   return (

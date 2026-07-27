@@ -18,7 +18,7 @@ const templateSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: ['portfolio', 'blog', 'store', 'business', 'restaurant'],
+      enum: ['portfolio', 'blog', 'store', 'business', 'restaurant', 'construction', 'digital-marketing'],
     },
     description: {
       type: String,
