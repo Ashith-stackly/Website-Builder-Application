@@ -17,8 +17,6 @@ import {
 } from "@/lib/blockpagesDropdownStyles";
 import { buildBlockpagesCardShadowCss } from "@/lib/blockpagesCardShadow";
 import { buildBlockpagesTemplateChromeCss } from "@/lib/blockpagesTemplateChrome";
-import PortfolioPreview from "./PortfolioPreview";
-import StorefrontPreview from "./StorefrontPreview";
 import TemplatePreviewRouter from "./TemplatePreviewRouter";
 import BlockpagesCanvasEnhancer from "./BlockpagesCanvasEnhancer";
 import MyWebsiteDropdown from "../MyWebsiteDropdown";
@@ -1012,54 +1010,6 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                   `}</style>
                   <div ref={contentRef} className="min-w-0 max-w-full">
                     <BlockpagesEditorProvider template={template} deviceMode={previewDevice} onPreview={previewHandler}>
-                      {template === "portfolio" ? (
-                        <BlockpagesCanvasEnhancer
-                          template={template}
-                          isImageEditingMode={isImageEditingMode}
-                          customImages={customImages}
-                          onEditImage={onEditImage}
-                          editingImageId={editingImageId}
-                          isButtonEditingMode={isButtonEditingMode}
-                          customButtons={customButtons}
-                          onEditButton={onEditButton}
-                          editingButtonId={editingButtonId}
-                          isVideoEditingMode={isVideoEditingMode}
-                          onEditVideo={onEditVideo}
-                          videoBlocks={videoBlocks}
-                          isIconEditingMode={isIconEditingMode}
-                          onEditIcon={onEditIcon}
-                          editingIconId={editingIconId}
-                          customIcons={customIcons}
-                          appliedDividers={appliedDividers}
-                          onRemoveDivider={onRemoveDivider}
-                          onUpdateDividerPosition={onUpdateDividerPosition}
-                          onUpdateDividerScale={onUpdateDividerScale}
-                          appliedIcons={appliedIcons}
-                          onRemoveIcon={onRemoveIcon}
-                          onUpdateIconPosition={onUpdateIconPosition}
-                          onUpdateIconScale={onUpdateIconScale}
-                          pendingDividerScrollId={pendingDividerScrollId}
-                          onPendingDividerScrollComplete={onPendingDividerScrollComplete}
-                        >
-                          <PortfolioPreview
-                            isImageEditingMode={isImageEditingMode}
-                            customImages={customImages}
-                            onEditImage={onEditImage}
-                            editingImageId={editingImageId}
-                            isButtonEditingMode={isButtonEditingMode}
-                            customButtons={customButtons}
-                            onEditButton={onEditButton}
-                            videoBlocks={videoBlocks}
-                            isVideoEditingMode={isVideoEditingMode}
-                            onEditVideo={onEditVideo}
-                            sectionStyles={state.sectionStyles}
-                            isIconEditingMode={isIconEditingMode}
-                            customIcons={customIcons}
-                            onEditIcon={onEditIcon}
-                            editingIconId={editingIconId}
-                          />
-                        </BlockpagesCanvasEnhancer>
-                      ) : (
                       <BlockpagesCanvasEnhancer
                         template={template}
                         isImageEditingMode={isImageEditingMode}
@@ -1088,13 +1038,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         pendingDividerScrollId={pendingDividerScrollId}
                         onPendingDividerScrollComplete={onPendingDividerScrollComplete}
                       >
-                        {template === "ecommerce" ? (
-                          <StorefrontPreview hiddenElementIds={hiddenElementIds} />
-                        ) : (
-                          <TemplatePreviewRouter template={template} />
-                        )}
+                        <TemplatePreviewRouter template={template} />
                       </BlockpagesCanvasEnhancer>
-                    )}
                     </BlockpagesEditorProvider>
                   </div>
                 </div>
