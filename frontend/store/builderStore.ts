@@ -465,7 +465,11 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
   const rawCategoryKey = category.toLowerCase().trim();
   const categoryKey = ["store", "ecommerce", "e-commerce"].includes(rawCategoryKey)
     ? "e-commerce"
-    : rawCategoryKey;
+    : ["construction", "building"].includes(rawCategoryKey)
+      ? "construction"
+      : ["digital-marketing", "marketing", "digital"].includes(rawCategoryKey)
+        ? "digital-marketing"
+        : rawCategoryKey;
 
   const templates: Record<string, () => BuilderComponent[]> = {
     "e-commerce": () => [
@@ -557,6 +561,36 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Book a table", description: "Invite guests to reserve, call, or ask about private dining.", inputPlaceholder: "guest@example.com", cta: { label: "Reserve Now", href: "#contact" } } }),
       withComponentOverrides("footer", 7, { props: templateFooter(projectName, "Fresh flavors, warm service, and easy reservations."), styles: { borderRadius: "16px" } }),
     ],
+    construction: () => [
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Projects" }, { label: "Safety" }, { label: "Contact" }], "Request Quote") }),
+      withComponentOverrides("hero", 1, {
+        props: { ...heroDefaults, title: "Building Excellence with Precision", description: "Heavy machinery, project showcases, safety commitments, and expert building contracting.", cta: { label: "Explore Projects", href: "#projects" }, layout: "split" },
+        styles: { ...baseHeroStyles, backgroundColor: "#0A1E3D", color: "#ffffff" },
+      }),
+      withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "Construction & Engineering Services", items: [
+        { title: "Commercial Construction", description: "State-of-the-art office buildings and retail developments." },
+        { title: "Heavy Civil & Infrastructure", description: "Roads, bridges, and large-scale site preparation." },
+        { title: "Safety & Quality Control", description: "Uncompromising safety standards on every job site." },
+      ] }, styles: { backgroundColor: "#F8F9FA", padding: "36px", borderRadius: "16px" } }),
+      withComponentOverrides("gallery", 3, { content: "/landing-optimized/construction02.webp|Industrial project site\n/landing-optimized/constrctio10.webp|Heavy equipment operation", styles: { backgroundColor: "#ffffff", padding: "28px", borderRadius: "16px" } }),
+      withComponentOverrides("contact", 4, { props: { ...contactDefaults, title: "Request a Project Quote", description: "Speak with our contracting engineers about your next build.", inputPlaceholder: "contractor@example.com", cta: { label: "Get Quote", href: "#contact" } } }),
+      withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Heavy construction, infrastructure, and contracting."), styles: { borderRadius: "16px" } }),
+    ],
+    "digital-marketing": () => [
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Growth Stats" }, { label: "Reviews" }, { label: "Contact" }], "Book Strategy Call") }),
+      withComponentOverrides("hero", 1, {
+        props: { ...heroDefaults, title: "Accelerate Your Business Growth", description: "High-converting digital marketing strategies, SEO, brand positioning, and performance campaigns.", cta: { label: "Get Started", href: "#services" }, layout: "split" },
+        styles: { ...baseHeroStyles, backgroundColor: "#0A1E3D", color: "#ffffff" },
+      }),
+      withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "Growth & Marketing Capabilities", items: [
+        { title: "SEO & Organic Search", description: "Drive targeted search traffic and rank higher." },
+        { title: "Performance Marketing", description: "Data-driven ad campaigns focused on ROI." },
+        { title: "Brand & Content Strategy", description: "Position your brand as an industry authority." },
+      ] }, styles: { backgroundColor: surface, padding: "36px", borderRadius: "16px" } }),
+      withComponentOverrides("testimonial", 3, { props: { ...testimonialDefaults, heading: "Client Growth Reviews" }, styles: { backgroundColor: "#ffffff", padding: "40px 24px", borderRadius: "16px" } }),
+      withComponentOverrides("form", 4, { props: { ...formDefaults, heading: "Schedule a Growth Consultation", description: "Let us analyze your current marketing channels.", submitLabel: "Request Call" } }),
+      withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Digital marketing, brand growth, and performance ads."), styles: { borderRadius: "16px" } }),
+    ],
   };
 
   return templates[categoryKey]?.() ?? null;
@@ -606,6 +640,24 @@ const categoryCopy: Record<string, { hero: string; description: string; features
       { title: "Menu highlights", description: "Feature signature dishes and seasonal specials" },
       { title: "Reservation ready", description: "Guide guests toward booking or contact" },
       { title: "Location clarity", description: "Make hours, map, and phone details easy to find" },
+    ],
+  },
+  Construction: {
+    hero: "Build a strong construction & contracting website",
+    description: "Showcase project highlights, engineering services, safety commitments, and quote requests.",
+    features: [
+      { title: "Project highlights", description: "Showcase completed construction builds" },
+      { title: "Service clarity", description: "List civil, commercial, and engineering capabilities" },
+      { title: "Quote requests", description: "Make inquiries simple for prospective clients" },
+    ],
+  },
+  "Digital Marketing": {
+    hero: "Build a high-converting digital marketing website",
+    description: "Showcase performance stats, marketing capabilities, client reviews, and strategy bookings.",
+    features: [
+      { title: "Growth capabilities", description: "Detail SEO, ads, content, and strategy" },
+      { title: "Client reviews", description: "Build trust with client case studies" },
+      { title: "Consultation path", description: "Guide visitors to book a strategy call" },
     ],
   },
 };
@@ -1209,8 +1261,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       // A freshly created project has no saved components yet. Populate the
       // canvas from its requirement metadata (category / style / sections)
       // by reusing the same generator the requirements flow uses.
+      const isBlockPagesProject = Boolean(builderData?.blockPagesData) || project.category === "blockpages";
       const hasRequirements = Boolean(project.category) || (project.sections?.length ?? 0) > 0;
-      const shouldGenerate = savedComponents.length === 0 && hasRequirements;
+      const shouldGenerate = savedComponents.length === 0 && hasRequirements && !isBlockPagesProject;
       const components = shouldGenerate
         ? createRequirementComponents({
             projectName: project.projectName || builderData.projectName || "My Website",

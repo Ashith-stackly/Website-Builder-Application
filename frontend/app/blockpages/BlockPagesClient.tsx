@@ -40,6 +40,7 @@ import {
   getBlockpagesVideoScrollId,
   getBlockpagesAboutScrollId,
   getBlockpagesIconScrollId,
+  scrollCanvasToModifiedElement,
 } from "@/lib/blockpagesTemplateSections";
 import {
   getBlockpagesCanvasElement,
@@ -410,7 +411,8 @@ export default function BlockPagesClient() {
       }
 
       // Save structured draft data, plus rendered HTML if the website canvas is mounted.
-      const htmlContent = buildPreviewHtml(false);
+      writeBlockpagesStorageItem("stackly-last-active-template", textTemplate);
+      const htmlContent = buildPreviewHtml(false) || readBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate)) || undefined;
       await saveBlockPagesDraft(currentProjectId, payload, undefined, htmlContent || undefined);
 
       setSaveStatus("saved");
@@ -431,9 +433,11 @@ export default function BlockPagesClient() {
   const handlePreview = useCallback(() => {
     const openPreview = (previewHtml: string) => {
       if (!previewHtml.trim()) return false;
+      writeBlockpagesStorageItem("stackly-last-active-template", textTemplate);
       writeBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
       writeBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate), previewHtml);
-      window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
+      const previewPath = `/blockpages/preview?template=${encodeURIComponent(textTemplate)}${draftProjectId ? `&projectId=${draftProjectId}` : ""}`;
+      window.open(routePath(previewPath), "_blank", "noopener,noreferrer");
       return true;
     };
 
@@ -906,6 +910,7 @@ export default function BlockPagesClient() {
               }
             }}
             onImageSelected={(url) => {
+              const lastId = editingImageId;
               if (editingImageId) {
                 setCustomImages((prev) => {
                   const next = { ...prev, [editingImageId]: url };
@@ -915,6 +920,10 @@ export default function BlockPagesClient() {
               }
               setEditingImageId(null);
               setIsImageEditingMode(false);
+              setActiveBlockPage("text");
+              if (lastId) {
+                window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+              }
             }}
             onCloseMobileImageSelect={() => setEditingImageId(null)}
             onSelectBlockPage={(page) => {
@@ -1021,16 +1030,20 @@ export default function BlockPagesClient() {
                 onRedo={redoButton}
                 editingButtonId={editingButtonId}
                 onButtonSelected={(props) => {
+                  const lastId = editingButtonId;
                   if (editingButtonId) {
                     setCustomButtons((prev) => {
                       const next = { ...prev, [editingButtonId]: props };
-                  writeBlockpagesStorageItem("stackly-custom-buttons", JSON.stringify(next));
+                      writeBlockpagesStorageItem("stackly-custom-buttons", JSON.stringify(next));
                       return next;
                     });
                   }
                   setActiveBlockPage("text");
                   setEditingButtonId(null);
                   setIsButtonEditingMode(false);
+                  if (lastId) {
+                    window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+                  }
                 }}
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
                 onSaveDraft={handleSaveDraft}
@@ -1344,6 +1357,7 @@ export default function BlockPagesClient() {
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
                 onApplyIcon={() => {
                   const block = selectedIconBlock ?? iconBlocks[0];
+                  const lastId = editingIconId;
                   if (block) {
                     if (editingIconId) {
                       setCustomIcons((prev) => {
@@ -1371,6 +1385,9 @@ export default function BlockPagesClient() {
                   setActiveBlockPage("text");
                   setEditingIconId(null);
                   setIsIconEditingMode(false);
+                  if (lastId) {
+                    window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+                  }
                 }}
                 onDuplicateBlock={(id) => {
                   const blockToDuplicate = iconBlocks.find(b => b.id === id);

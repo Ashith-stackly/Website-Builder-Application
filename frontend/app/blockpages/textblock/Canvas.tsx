@@ -745,9 +745,11 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     });
     if (!previewHtml.trim()) return;
 
+    writeBlockpagesStorageItem("stackly-last-active-template", template);
     writeBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY, previewHtml);
     persistPreviewSnapshot(template, canvasRoot, appliedDividers);
-    window.open(routePath("/blockpages/preview"), "_blank", "noopener,noreferrer");
+    const previewPath = `/blockpages/preview?template=${encodeURIComponent(template)}`;
+    window.open(routePath(previewPath), "_blank", "noopener,noreferrer");
   }, [state, template, appliedDividers]);
 
   useEffect(() => {

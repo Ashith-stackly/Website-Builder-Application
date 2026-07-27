@@ -16,6 +16,7 @@ export interface Project {
   thumbnail?: string;
   components?: BuilderComponent[];
   designTokens?: DesignTokens;
+  builderData?: Record<string, unknown>;
   status?: string;
   createdAt: string;
   updatedAt: string;

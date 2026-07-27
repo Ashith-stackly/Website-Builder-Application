@@ -3,9 +3,11 @@ import type { BlockpagesTemplateId } from "./blockpagesTemplates";
 const TEMPLATE_HEADER_SELECTORS = [
   "header",
   "[data-blockpages-template-header='true']",
+  "[data-template-header='true']",
   ".buyscreen-header",
   ".buyscreen-categories",
   ".portfolio-shell > .sticky",
+  ".portfolio-shell .sticky",
   ".portfolio-mobile-menu",
   ".restaurant-shell > header",
   ".restaurant-shell header",
@@ -14,14 +16,19 @@ const TEMPLATE_HEADER_SELECTORS = [
   ".blog-blockpages-root header",
   ".dm-shell .sticky",
   ".dm-shell [data-blockpages-template-header='true']",
-  "[data-template-header='true']",
+  ".dm-shell header",
+  "#dm-mobile-nav",
+  "#restaurant-mobile-nav",
+  "#construction-mobile-nav",
+  "#blog-mobile-nav",
 ].join(", ");
 
 function isInsideBuilderChrome(node: Element | null) {
   return Boolean(node?.closest("[data-builder-chrome='true'], [data-blockpages-edit-overlay='true']"));
 }
 
-function isInsideTemplateHeader(element: Element) {
+export function isInsideTemplateHeader(element: Element | null) {
+  if (!element) return false;
   return Boolean(element.closest(TEMPLATE_HEADER_SELECTORS));
 }
 

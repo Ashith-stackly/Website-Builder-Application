@@ -94,19 +94,56 @@ const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData" | "pages" 
   },
   tpl_construction_1: {
     _id: "tpl_construction_1",
-    name: "Business Professional",
-    slug: "business-professional",
+    name: "Construction & Building",
+    slug: "construction-building",
+    category: "business",
+    style: "Modern",
+    description: "A robust construction template with project showcases, service highlights, safety commitments, and quote requests.",
+    thumbnail: "/landing-optimized/construction02.webp",
+    isPremium: false,
+    tags: ["construction", "building", "contractor", "services"],
+    usageCount: 1420,
+    createdAt: "2026-03-12T00:00:00.000Z",
+    sections: ["navigation", "hero", "services", "about", "projects", "contact", "footer"],
+  },
+  tpl_business_1: {
+    _id: "tpl_business_1",
+    name: "Digital Marketing & Business",
+    slug: "digital-marketing-business",
     category: "business",
     style: "Modern",
     description: "A professional business template with service highlights, trust signals, and a focused contact path.",
     thumbnail: "/landing-optimized/business09.webp",
     isPremium: false,
-    tags: ["business", "corporate", "services", "professional"],
+    tags: ["business", "corporate", "marketing", "services"],
     usageCount: 980,
     createdAt: "2026-04-12T00:00:00.000Z",
     sections: ["navigation", "hero", "features", "testimonial", "contact", "footer"],
   },
 };
+
+function getTemplatePreviewRoute(template: Template): string {
+  const id = (template._id ?? "").toLowerCase();
+  const slug = (template.slug ?? "").toLowerCase();
+  const name = (template.name ?? "").toLowerCase();
+
+  if (id === "tpl_construction_1" || slug.includes("construction") || name.includes("construction")) {
+    return "/construction";
+  }
+  if (id === "tpl_portfolio_1" || slug.includes("portfolio") || name.includes("portfolio")) {
+    return "/portfolio";
+  }
+  if (id === "tpl_restaurant_1" || slug.includes("restaurant") || name.includes("restaurant")) {
+    return "/restaurant";
+  }
+  if (id === "tpl_blog_1" || slug.includes("blog") || name.includes("blog")) {
+    return "/blog";
+  }
+  if (id === "tpl_ecommerce_1" || slug.includes("ecommerce") || slug.includes("store") || name.includes("store")) {
+    return "/e-commerce";
+  }
+  return "/digital-marketing";
+}
 
 function formatUsageCount(count: number): string {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
@@ -136,56 +173,79 @@ export default function TemplatePreviewClient() {
 
   // ── Fetch Template ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!id) {
-      setError("Template ID is missing.");
-      setIsLoading(false);
-      return;
-    }
+    const rawId = searchParams.get("id") || searchParams.get("template") || "tpl_construction_1";
+    const templateId = rawId === "construction" ? "tpl_construction_1"
+      : rawId === "portfolio" ? "tpl_portfolio_1"
+      : rawId === "restaurant" ? "tpl_restaurant_1"
+      : rawId === "blog" ? "tpl_blog_1"
+      : rawId === "ecommerce" || rawId === "store" ? "tpl_ecommerce_1"
+      : rawId === "business" || rawId === "digital-marketing" ? "tpl_business_1"
+      : rawId;
 
-    if (id === "tpl_blog_1") {
+    if (templateId === "tpl_blog_1") {
       router.replace("/blog");
       return;
     }
 
     const controller = new AbortController();
+    let settled = false;
+
+    // Fast 1.5s fallback timer to guarantee UI never hangs on "Loading template..."
+    const fallbackTimer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      controller.abort();
+      const fallback = FALLBACK_TEMPLATES[templateId] || FALLBACK_TEMPLATES.tpl_construction_1;
+      setTemplate({
+        ...fallback,
+        pages: [{ id: "home", name: "Home", path: "/" }],
+        componentCount: 0,
+        builderData: { schemaVersion: 1, components: [] },
+      });
+      setIsLoading(false);
+    }, 1500);
 
     async function fetchTemplate() {
       setIsLoading(true);
       setError(null);
 
       try {
-        const data = await getTemplate(id, controller.signal);
+        const data = await getTemplate(templateId, controller.signal);
+        if (settled) return;
+        settled = true;
+        clearTimeout(fallbackTimer);
         setTemplate(data);
       } catch (err: unknown) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(fallbackTimer);
         if (err instanceof DOMException && err.name === "AbortError") return;
 
-        // Fallback: use static data if backend is unavailable
-        if (isTemplateConnectionError(err)) {
-          const fallback = FALLBACK_TEMPLATES[id];
-          if (fallback) {
-            // Create a template with empty components (iframe will show placeholder)
-            setTemplate({
-              ...fallback,
-              pages: [{ id: "home", name: "Home", path: "/" }],
-              componentCount: 0,
-              builderData: { schemaVersion: 1, components: [] },
-            });
-          } else {
-            setError("Template not found.");
-          }
+        const fallback = FALLBACK_TEMPLATES[templateId] || FALLBACK_TEMPLATES.tpl_construction_1;
+        if (fallback) {
+          setTemplate({
+            ...fallback,
+            pages: [{ id: "home", name: "Home", path: "/" }],
+            componentCount: 0,
+            builderData: { schemaVersion: 1, components: [] },
+          });
         } else {
-          setError(
-            err instanceof Error ? err.message : "Failed to load template."
-          );
+          setError(err instanceof Error ? err.message : "Failed to load template.");
         }
       } finally {
-        setIsLoading(false);
+        if (!settled) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchTemplate();
-    return () => controller.abort();
-  }, [id]);
+    return () => {
+      settled = true;
+      clearTimeout(fallbackTimer);
+      controller.abort();
+    };
+  }, [searchParams, router]);
 
   // ── Generate Preview HTML ──────────────────────────────────────────
   const previewHtml = useMemo(() => {
@@ -368,19 +428,11 @@ export default function TemplatePreviewClient() {
                 sandbox="allow-scripts"
               />
             ) : (
-              /* Fallback: show thumbnail when no builder components available */
-              <div className="relative flex flex-col items-center justify-center bg-gray-50 p-8">
-                <img
-                  src={assetPath(template.thumbnail)}
-                  alt={template.name}
-                  className="w-full rounded-xl object-cover shadow-lg"
-                />
-                <div className="mt-6 rounded-xl bg-blue-50 px-5 py-3 text-center">
-                  <p className="text-xs font-bold text-blue-600">
-                    This template does not include Builder data yet, so this preview uses its thumbnail.
-                  </p>
-                </div>
-              </div>
+              <iframe
+                src={assetPath(getTemplatePreviewRoute(template))}
+                title={`${template.name} preview`}
+                className="h-[600px] w-full border-0 lg:h-[700px]"
+              />
             )}
           </motion.div>
         </div>

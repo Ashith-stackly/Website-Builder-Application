@@ -2,7 +2,7 @@
 
 /* Manual dark mode, scoped to the authenticated App Shell (data-theme="dark").
    The marketing site never sets data-theme, so it stays light. */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   --background: #ffffff;
@@ -912,9 +912,6 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
 }
 .buyscreen-hero-scroll-hint {
   display: none;
-}
-.buyscreen-social-row {
-  /* default (desktop/tablet) keeps natural wrapping if needed */
 }
 
 @media (max-width: 640px) {
