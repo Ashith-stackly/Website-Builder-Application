@@ -1,6 +1,6 @@
 "use client";
-
-import { Suspense, useState } from "react";
+ 
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isApiConnectionError, verifyEmailOtp } from "@/lib/api";
 import {
@@ -13,23 +13,24 @@ import { OTP_MAX_ATTEMPTS } from "@/lib/otpSession";
 import { useOtpSession } from "@/lib/useOtpSession";
 import { assetPath } from "@/lib/paths";
 import ResetFlowBackButton from "@/components/ResetFlowBackButton";
+import AuthBackgroundSvg from "@/components/AuthBackgroundSvg";
 import {
   VERIFY_OTP_INPUT_CLASS,
   VERIFY_OTP_LINK_CLASS,
   VERIFY_OTP_RESEND_CLASS,
 } from "@/lib/verifyOtpStyles";
 import { handleResetFlowInputMouseDown } from "@/lib/resetFlowInputHandlers";
-
+ 
 const EMAIL_OTP_INPUT_PREFIX = "email-otp";
-
+ 
 const MAX_ATTEMPTS_REACHED_MESSAGE = "Maximum attempts reached.";
-
+ 
 const resetFlowCardStyle = {
   background:
     "linear-gradient(180deg, #4A76F3 0%, #2C4FAD 50%, #0A193F 100%)",
   boxShadow: "4px 4px 4px 0 rgba(0,0,0,0.25)",
 } as const;
-
+ 
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,7 +41,16 @@ function VerifyEmailContent() {
   const isCodeComplete = code.every((digit) => digit !== "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
-
+ 
+  useEffect(() => {
+    document.documentElement.classList.add("auth-visible");
+    document.body.classList.add("auth-visible");
+    return () => {
+      document.documentElement.classList.remove("auth-visible");
+      document.body.classList.remove("auth-visible");
+    };
+  }, []);
+ 
   const {
     otpAttemptsUsed,
     cooldownSecondsLeft,
@@ -48,9 +58,9 @@ function VerifyEmailContent() {
     expireSession,
     updateAttemptsUsed,
   } = useOtpSession(contact, "email");
-
+ 
   const clearError = () => setError("");
-
+ 
   const hasReachedMaxAttempts = otpAttemptsUsed >= OTP_MAX_ATTEMPTS;
   const canResend =
     cooldownSecondsLeft <= 0 && !hasReachedMaxAttempts && !isResending;
@@ -58,7 +68,7 @@ function VerifyEmailContent() {
     cooldownSecondsLeft > 0
       ? `OTP expires in ${cooldownSecondsLeft}s`
       : "OTP expired";
-
+ 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -92,7 +102,7 @@ function VerifyEmailContent() {
       const message = err instanceof Error
         ? err.message
         : "Verification failed. Please try again.";
-
+ 
       const attemptsLeft =
         err instanceof Error
           ? (err as unknown as { attemptsLeft?: number }).attemptsLeft
@@ -115,11 +125,12 @@ function VerifyEmailContent() {
       setIsSubmitting(false);
     }
   };
-
+ 
   return (
-    <div className="reset-flow-page relative min-h-[100dvh] flex flex-col justify-start lg:justify-center items-stretch overflow-y-auto px-0 py-0 lg:px-6 lg:py-6 max-lg:bg-transparent bg-white">
-      <ResetFlowBackButton onClick={() => router.back()} />
-      <div className="flex w-full flex-1 flex-col items-stretch justify-center max-lg:max-w-none max-w-[480px] lg:mx-auto min-h-0">
+    <div className="reset-flow-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col justify-start lg:justify-center items-stretch max-lg:overflow-auto overflow-hidden lg:overflow-y-auto px-0 py-0 lg:px-6 lg:py-6 bg-gradient-to-br from-[#f6fcfe] via-[#e2f2f9] to-[#b2dbeb]">
+      <AuthBackgroundSvg />
+      <div className="relative z-10 flex w-full flex-1 flex-col items-stretch justify-center max-lg:max-w-none max-w-[480px] lg:mx-auto min-h-0">
+        <ResetFlowBackButton onClick={() => router.back()} />
         <div
           className="reset-flow-card relative flex w-full flex-1 flex-col justify-center overflow-hidden px-6 py-8 sm:px-10 sm:py-10 text-center lg:flex-none lg:min-h-0 lg:rounded-xl"
           style={resetFlowCardStyle}
@@ -138,7 +149,7 @@ function VerifyEmailContent() {
             Please enter the 4 digit code sent to your<br />
             Registered email {contact}
           </p>
-
+ 
           <form onSubmit={handleConfirm} className="space-y-6">
             <div className="flex justify-center gap-3 sm:gap-4">
               {code.map((value, idx) => (
@@ -179,7 +190,7 @@ function VerifyEmailContent() {
                 />
               ))}
             </div>
-
+ 
             <p
               className="text-[12px] sm:text-[13px]"
               style={{ color: "#FFFFFF" }}
@@ -196,7 +207,7 @@ function VerifyEmailContent() {
                 Click here
               </button>
             </p>
-
+ 
             <button
               type="submit"
               disabled={
@@ -207,22 +218,22 @@ function VerifyEmailContent() {
             >
               {isSubmitting ? "Verifying..." : "Confirm"}
             </button>
-
+ 
             <div className="flex flex-col items-center gap-1 -mt-4">
               <p className="text-[11px] sm:text-[12px]" style={{ color: "#FFFFFF" }}>
                 {otpExpiryLabel}
               </p>
-
+ 
               {error && (
                 <p className="text-[12px]" style={{ color: "#F2B541" }}>
                   {error}
                 </p>
               )}
-
+ 
               <p className="text-[11px] sm:text-[12px]" style={{ color: "#F2B541" }}>
                 Attempts used: {otpAttemptsUsed}/{OTP_MAX_ATTEMPTS}
               </p>
-
+ 
               {hasReachedMaxAttempts ? (
                 <p className="text-[12px] sm:text-[13px]" style={{ color: "#F2B541" }}>
                   {MAX_ATTEMPTS_REACHED_MESSAGE}
@@ -237,7 +248,7 @@ function VerifyEmailContent() {
                   return;
                 }
                 if (cooldownSecondsLeft > 0) return;
-
+ 
                 setIsResending(true);
                 setInfo("");
                 setError("");
@@ -281,7 +292,7 @@ function VerifyEmailContent() {
     </div>
   );
 }
-
+ 
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={null}>
@@ -289,3 +300,5 @@ export default function VerifyEmailPage() {
     </Suspense>
   );
 }
+ 
+ 

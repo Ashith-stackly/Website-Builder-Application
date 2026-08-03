@@ -1,6 +1,6 @@
 "use client";
-
-import { useState, useEffect, useRef, useCallback } from "react";
+ 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { FaAddressBook, FaLock } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -14,16 +14,8 @@ import {
   fitInputPlaceholderToWidth,
   observeAuthPlaceholderFit,
 } from "@/lib/authPlaceholderFit";
-import { isApiConnectionError, login as loginApi, getUserProfile } from "@/lib/api";
+import { isApiConnectionError, login as loginApi } from "@/lib/api";
 import { activateDemoSession, isDemoLoginCredentials } from "@/lib/demoAuth";
-import { setAuthToken } from "@/lib/authToken";
-import {
-  clearRememberedLogin,
-  readRememberedLogin,
-  saveRememberedLogin,
-  type RememberedLogin,
-} from "@/lib/rememberLogin";
-import { saveUserSettings, defaultUserSettings } from "@/lib/userSettings";
 import { assetPath } from "@/lib/paths";
 import {
   getSignupEmailValidationError,
@@ -39,81 +31,60 @@ import {
   validateSimpleMobileContact,
 } from "@/lib/simpleMobileContact";
 import AuthGoogleButton from "@/components/AuthGoogleButton";
+import AuthBackgroundSvg from "@/components/AuthBackgroundSvg";
 import {
   PASSWORD_WHITESPACE_ERROR,
   passwordContainsWhitespace,
 } from "@/lib/resetFlowValidation";
-
+ 
 function normalizeLoginEmail(raw: string): string {
   return raw.replace(/\s/g, "").trim().toLowerCase();
 }
-
+ 
 type LoginFormState = {
   email: string;
   password: string;
   rememberMe: boolean;
 };
-
+ 
 type LoginFormErrors = {
   email?: string;
   password?: string;
   form?: string;
 };
-
+ 
 const initialLoginState: LoginFormState = {
   email: "",
   password: "",
   rememberMe: false,
 };
-
+ 
 const EMAIL_MAX_LENGTH = 254;
 const PASSWORD_MAX_LENGTH = 60;
 const EMAIL_MAX_ERROR = `Email or mobile number cannot exceed ${EMAIL_MAX_LENGTH} characters`;
 const PASSWORD_MAX_ERROR = `Password cannot exceed ${PASSWORD_MAX_LENGTH} characters`;
-
+ 
 const loginContainerVariants: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
 };
-
+ 
 const loginFadeUp: Variants = {
   hidden: { opacity: 0, y: 18 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: "easeOut" } },
 };
-
+ 
 const loginCardVariants: Variants = {
   hidden: { opacity: 0, y: 24, scale: 0.985 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
 };
-
+ 
 const loginErrorVariants: Variants = {
   hidden: { opacity: 0, y: -5 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
   exit: { opacity: 0, y: -5, transition: { duration: 0.16, ease: "easeIn" } },
 };
-
-function resolvePostLoginPath(): string {
-  if (typeof window === "undefined") return "/landing";
-  const redirect = new URLSearchParams(window.location.search).get("redirect");
-  return redirect && redirect.startsWith("/") ? redirect : "/landing";
-}
-
-async function persistAuthenticatedUser(token: string): Promise<void> {
-  try {
-    const { user } = await getUserProfile(token);
-    saveUserSettings({
-      name: user.name?.trim() || defaultUserSettings.name,
-      email: user.email?.trim() || defaultUserSettings.email,
-      avatar:
-        typeof user.avatar === "string" && user.avatar.trim()
-          ? user.avatar
-          : defaultUserSettings.avatar,
-    });
-  } catch {
-    /* Token may still work for APIs; profile hydrate is best-effort after login. */
-  }
-}
-
+ 
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState<LoginFormState>(initialLoginState);
@@ -122,31 +93,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false); // New state for popup
   const emailInputRef = useRef<HTMLInputElement>(null);
-  const rememberedLoginRef = useRef<RememberedLogin | null>(null);
-  const rememberedHydratedRef = useRef(false);
-
-  useEffect(() => {
-    rememberedLoginRef.current = readRememberedLogin();
-  }, []);
-
-  const hydrateRememberedLogin = useCallback(() => {
-    if (rememberedHydratedRef.current) return;
-    const remembered = rememberedLoginRef.current;
-    if (!remembered) return;
-
-    setForm((prev) => {
-      if (prev.email.trim() || prev.password) {
-        return prev;
-      }
-      rememberedHydratedRef.current = true;
-      return {
-        email: remembered.email,
-        password: remembered.password,
-        rememberMe: true,
-      };
-    });
-  }, []);
-
+ 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
     const setup = () => observeAuthPlaceholderFit(emailInputRef.current, mql.matches);
@@ -161,7 +108,7 @@ export default function LoginPage() {
       cleanup();
     };
   }, []);
-
+ 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 1024px)");
     const setOverflow = () => {
@@ -175,7 +122,7 @@ export default function LoginPage() {
       document.body.style.overflow = "";
     };
   }, []);
-
+ 
   // Mobile outer-scroll lock should apply only to login/signup screens.
   useEffect(() => {
     document.documentElement.classList.add("auth-visible");
@@ -187,23 +134,23 @@ export default function LoginPage() {
       unmountAndroid();
     };
   }, []);
-
+ 
   useEffect(() => {
     const scrollEl = getAuthPullScrollRoot(true);
     if (!scrollEl) return;
-
+ 
     let startY = 0;
     let canPull = false;
     let triggered = false;
     const threshold = 88;
-
+ 
     const onTouchStart = (event: TouchEvent) => {
       if (window.innerWidth >= 1024 || event.touches.length !== 1 || isAuthPageZoomed()) return;
       startY = event.touches[0].clientY;
       canPull = scrollEl.scrollTop <= 0;
       triggered = false;
     };
-
+ 
     const onTouchMove = (event: TouchEvent) => {
       if (
         !canPull ||
@@ -222,17 +169,17 @@ export default function LoginPage() {
         canPull = false;
       }
     };
-
+ 
     const onTouchEnd = () => {
       canPull = false;
       triggered = false;
     };
-
+ 
     scrollEl.addEventListener("touchstart", onTouchStart, { passive: true });
     scrollEl.addEventListener("touchmove", onTouchMove, { passive: true });
     scrollEl.addEventListener("touchend", onTouchEnd);
     scrollEl.addEventListener("touchcancel", onTouchEnd);
-
+ 
     return () => {
       scrollEl.removeEventListener("touchstart", onTouchStart);
       scrollEl.removeEventListener("touchmove", onTouchMove);
@@ -240,10 +187,10 @@ export default function LoginPage() {
       scrollEl.removeEventListener("touchcancel", onTouchEnd);
     };
   }, []);
-
+ 
   const validate = (values: LoginFormState): LoginFormErrors => {
     const newErrors: LoginFormErrors = {};
-
+ 
     const trimmedContact = values.email.trim();
     if (!trimmedContact) {
       newErrors.email = "Email or mobile number is required";
@@ -263,7 +210,7 @@ export default function LoginPage() {
         }
       }
     }
-
+ 
     if (!values.password) {
       newErrors.password = "Password is required";
     } else if (passwordContainsWhitespace(values.password)) {
@@ -273,10 +220,10 @@ export default function LoginPage() {
     } else if (values.password.length < 8) {
       newErrors.password = "Enter valid password";
     }
-
+ 
     return newErrors;
   };
-
+ 
   const handleChange =
     (field: keyof LoginFormState) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -285,17 +232,17 @@ export default function LoginPage() {
         setErrors((prev) => ({ ...prev, form: undefined }));
         return;
       }
-
+ 
       let rawValue = event.target.value;
       const contactValue =
         field === "email" ? rawValue.replace(/\s+/g, "") : rawValue;
-
+ 
       let passwordWhitespaceRemoved = false;
       if (field === "password" && passwordContainsWhitespace(rawValue)) {
         rawValue = rawValue.replace(/\s/g, "");
         passwordWhitespaceRemoved = true;
       }
-
+ 
       if (field === "email") {
         const treatAsMobile = looksLikeMobileContactInput(contactValue);
         if (treatAsMobile) {
@@ -324,7 +271,7 @@ export default function LoginPage() {
           return;
         }
       }
-
+ 
       if (field === "password" && rawValue.length > PASSWORD_MAX_LENGTH) {
         setForm((prev) => ({
           ...prev,
@@ -337,12 +284,12 @@ export default function LoginPage() {
         }));
         return;
       }
-
+ 
       setForm((prev) => ({
         ...prev,
         [field]: field === "email" ? contactValue : rawValue,
       }));
-
+ 
       if (field === "email") {
         const trimmed = contactValue.trim();
         if (looksLikeMobileContactInput(trimmed)) {
@@ -373,13 +320,13 @@ export default function LoginPage() {
         setErrors((prev) => ({ ...prev, [field]: undefined, form: undefined }));
       }
     };
-
+ 
   const handlePasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === " ") {
       e.preventDefault();
     }
   };
-
+ 
   const handleRememberMeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -387,7 +334,7 @@ export default function LoginPage() {
       setErrors((prev) => ({ ...prev, form: undefined }));
     }
   };
-
+ 
   const handleContactBlur = () => {
     const trimmed = form.email.trim();
     setForm((prev) => ({ ...prev, email: trimmed }));
@@ -410,41 +357,36 @@ export default function LoginPage() {
       form: undefined,
     }));
   };
-
+ 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
-
+ 
     const validationErrors = validate(form);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-
+ 
     try {
       setIsSubmitting(true);
       setErrors((prev) => ({ ...prev, form: undefined }));
-
+ 
       const contact = form.email.trim();
-
+ 
       // Frontend-only demo account (no backend). Grants a default subscription
       // so template "Edit" buttons open the builder. Remove once auth is wired up.
       if (isDemoLoginCredentials(contact, form.password)) {
-        if (form.rememberMe) {
-          saveRememberedLogin(contact, form.password);
-        } else {
-          clearRememberedLogin();
-        }
-        activateDemoSession(form.rememberMe);
+        activateDemoSession();
         setForm(initialLoginState);
         setErrors((prev) => ({ ...prev, form: "Login successful!" }));
         setShowSuccessModal(true);
         setTimeout(() => {
           setShowSuccessModal(false);
-          router.push(resolvePostLoginPath());
+          router.push("/landing");
         }, 2000);
         return;
       }
-
+ 
       const isMobileContact = isValidSimpleMobileContact(contact);
       const result = await loginApi({
         ...(isMobileContact
@@ -452,24 +394,18 @@ export default function LoginPage() {
           : { email: normalizeLoginEmail(contact) }),
         password: form.password,
       });
-
+ 
       if (result.token) {
-        setAuthToken(result.token, form.rememberMe);
-        if (form.rememberMe) {
-          saveRememberedLogin(contact, form.password);
-        } else {
-          clearRememberedLogin();
-        }
-        await persistAuthenticatedUser(result.token);
+        window.localStorage.setItem("stackly-auth-token", result.token);
       }
-
+ 
       setForm(initialLoginState);
       setErrors((prev) => ({ ...prev, form: "Login successful!" }));
       // Trigger success popup and delay redirect
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
-        router.push(resolvePostLoginPath());
+        router.push("/landing");
       }, 2000);
     } catch (error) {
       if (isApiConnectionError(error)) {
@@ -485,18 +421,21 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
-
+ 
   return (
     <>
-      <motion.div className="login-page auth-page min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto bg-white px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto" initial="hidden" animate="visible" variants={loginContainerVariants}>
-        <motion.div className="w-full max-lg:max-w-none max-w-6xl mx-auto flex flex-1 flex-col max-lg:h-full lg:flex-none lg:flex-row gap-0 lg:gap-8 auth-layout" variants={loginContainerVariants}>
+      <motion.div className="login-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto overflow-hidden bg-gradient-to-br from-[#f6fcfe] via-[#e2f2f9] to-[#b2dbeb]" initial="hidden" animate="visible" variants={loginContainerVariants}>
+        {/* Background SVG decorative arcs matching reference design */}
+        <AuthBackgroundSvg />
+ 
+        <motion.div className="relative z-10 w-full max-lg:max-w-none max-w-6xl mx-auto flex flex-1 flex-col max-lg:h-full lg:flex-none lg:flex-row gap-0 lg:gap-8 auth-layout" variants={loginContainerVariants}>
           {/* Card first on mobile (top), right on desktop */}
           <motion.div className="flex w-full flex-1 flex-col items-stretch max-lg:justify-stretch justify-center max-lg:h-full order-1 lg:order-2 lg:w-1/2 lg:flex-none" variants={loginCardVariants}>
             <motion.div className="relative flex w-full max-w-[520px] flex-1 flex-col overflow-hidden max-lg:overflow-auto lg:overflow-visible self-center max-lg:self-stretch bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] px-6 sm:px-10 max-lg:max-w-none max-lg:w-full max-lg:h-full max-lg:flex-1 lg:flex-none lg:rounded-[10px] login-card auth-form-card" whileHover={{ y: -3, boxShadow: "0 28px 70px rgba(2,15,38,0.22)", transition: { duration: 0.24 } }}>
               <div className="auth-inner-panel pointer-events-none absolute inset-y-0 left-1/2 w-[78%] -translate-x-1/2 bg-gradient-to-b from-white/10 via-black/10 to-black/35" />
               <div className="pointer-events-none absolute inset-0 rounded-none lg:rounded-[10px] shadow-[inset_20px_0_45px_rgba(0,0,0,0.55),inset_-20px_0_45px_rgba(0,0,0,0.55)]" />
               <div className="pointer-events-none absolute inset-0 rounded-none lg:rounded-[10px] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.25)]" />
-
+ 
               <motion.div className="relative z-10 flex flex-col flex-1 min-h-0 min-w-0 auth-card-content login-card-inner px-4 sm:px-6 pt-4 sm:pt-8 pb-4 sm:pb-8 lg:pt-14 lg:pb-10 text-white text-left justify-start lg:justify-center lg:min-h-0 max-lg:overflow-auto" variants={loginContainerVariants}>
                 <motion.div variants={loginContainerVariants}>
                   <motion.div className="w-full flex justify-center flex-shrink-0 min-w-0" variants={loginFadeUp}>
@@ -504,7 +443,7 @@ export default function LoginPage() {
                       WELCOME
                     </h1>
                   </motion.div>
-
+ 
                   <motion.div className="flex justify-center mb-8 sm:mb-4 lg:mb-8 flex-shrink-0" variants={loginFadeUp}>
                     <motion.div className="bg-white w-[120px] h-[44px] sm:w-[160px] sm:h-[60px] lg:w-[200px] lg:h-[80px] rounded-[50%] flex items-center justify-center shadow-lg overflow-hidden" whileHover={{ scale: 1.04, transition: { duration: 0.2 } }}>
                       <img
@@ -514,7 +453,7 @@ export default function LoginPage() {
                       />
                     </motion.div>
                   </motion.div>
-
+ 
                   <motion.form onSubmit={handleLogin} noValidate variants={loginContainerVariants}>
                     <motion.div className="space-y-6 sm:space-y-4 lg:space-y-6 flex-shrink-0" variants={loginContainerVariants}>
                     <motion.div className="flex flex-col" variants={loginFadeUp}>
@@ -523,12 +462,9 @@ export default function LoginPage() {
                         <input
                           ref={emailInputRef}
                           type="text"
-                          name="username"
-                          autoComplete="username"
                           placeholder="Email or Mobile number"
                           value={form.email}
                           onChange={handleChange("email")}
-                          onFocus={hydrateRememberedLogin}
                           onBlur={() => {
                             handleContactBlur();
                             requestAnimationFrame(() =>
@@ -558,18 +494,15 @@ export default function LoginPage() {
                         )}
                       </AnimatePresence>
                     </motion.div>
-
+ 
                     <motion.div className="flex flex-col" variants={loginFadeUp}>
                       <motion.div className="flex items-center border-b border-white/60 pb-2 relative min-w-0" whileHover={{ borderColor: "rgba(255,255,255,0.95)", transition: { duration: 0.2 } }}>
                         <FaLock className="mr-2 sm:mr-4 text-sm opacity-80 flex-shrink-0" />
                         <input
                           type={showPassword ? "text" : "password"}
-                          name="password"
-                          autoComplete="current-password"
                           placeholder="Password"
                           value={form.password}
                           onChange={handleChange("password")}
-                          onFocus={hydrateRememberedLogin}
                           onKeyDown={handlePasswordKeyDown}
                           maxLength={PASSWORD_MAX_LENGTH}
                           className="bg-transparent outline-none w-full min-w-0 placeholder-white text-sm pr-9"
@@ -639,7 +572,7 @@ export default function LoginPage() {
                       </AnimatePresence>
                     </motion.div>
                   </motion.div>
-
+ 
                   <motion.div className="login-remember-forgot mt-5 sm:mt-4 text-xs opacity-90 w-full min-w-0" variants={loginFadeUp}>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -658,7 +591,7 @@ export default function LoginPage() {
                       Forgot Password?
                     </Link>
                   </motion.div>
-
+ 
                   <AnimatePresence>
                     {errors.form && (
                       <motion.p
@@ -672,7 +605,7 @@ export default function LoginPage() {
                       </motion.p>
                     )}
                   </AnimatePresence>
-
+ 
                     <motion.button
                       type="submit"
                       disabled={isSubmitting}
@@ -685,7 +618,7 @@ export default function LoginPage() {
                     </motion.button>
                   </motion.form>
                 </motion.div>
-
+ 
                 <motion.div className="flex-shrink-0 mt-2 max-lg:mt-2 lg:mt-4" variants={loginFadeUp}>
                   <p className="text-center text-xs mb-2 sm:mb-2.5 lg:mb-3 text-white/80">
                     Don&apos;t have an account?{" "}
@@ -696,9 +629,9 @@ export default function LoginPage() {
                       Sign Up
                     </Link>
                   </p>
-
+ 
                   <div className="mt-1.5 mb-1 lg:mt-1 lg:mb-0.5 border-t border-white/50" />
-
+ 
                   <div className="pt-0.5 pb-1 sm:pt-1 sm:pb-3 lg:pb-2">
                     <AuthGoogleButton intent="login" label="Login with Google" />
                   </div>
@@ -706,16 +639,13 @@ export default function LoginPage() {
               </motion.div>
             </motion.div>
           </motion.div>
-
+ 
           {/* Illustration below on mobile, left on desktop */}
           <motion.div
             className="auth-image-col w-full lg:w-1/2 flex justify-center order-2 lg:order-1 mt-6 sm:mt-8 lg:mt-0"
             initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: [0, -8, 0] }}
-            transition={{
-              opacity: { duration: 0.45, ease: "easeOut" },
-              y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
-            }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
           >
             <motion.img
               src={assetPath("/login.webp")}
@@ -726,7 +656,7 @@ export default function LoginPage() {
           </motion.div>
         </motion.div>
       </motion.div>
-
+ 
       {/* Success Modal */}
       <AnimatePresence>
         {showSuccessModal && (
@@ -757,3 +687,5 @@ export default function LoginPage() {
     </>
   );
 }
+ 
+ 

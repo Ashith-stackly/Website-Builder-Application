@@ -1,6 +1,6 @@
 "use client";
-
-import { Suspense, useState } from "react";
+ 
+import { Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { isApiConnectionError, resetPassword } from "@/lib/api";
 import { assetPath } from "@/lib/paths";
@@ -9,24 +9,25 @@ import {
   passwordContainsWhitespace,
 } from "@/lib/resetFlowValidation";
 import ResetFlowBackButton from "@/components/ResetFlowBackButton";
+import AuthBackgroundSvg from "@/components/AuthBackgroundSvg";
 import {
   handleResetFlowInputFocus,
   handleResetFlowInputMouseDown,
 } from "@/lib/resetFlowInputHandlers";
-
+ 
 const resetFlowCardStyle = {
   background:
     "linear-gradient(180deg, #4A76F3 0%, #2C4FAD 50%, #0A193F 100%)",
   boxShadow: "4px 4px 4px 0 rgba(0,0,0,0.25)",
 } as const;
-
+ 
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 60;
 const PASSWORD_LENGTH_ERROR = "Password must be 8-60 characters.";
 const PASSWORD_MAX_ERROR = "Password cannot exceed 60 characters.";
 const PASSWORD_UPDATE_ERROR =
   "Cannot update password. Please follow password requirements.";
-
+ 
 function CreateNewPasswordContent() {
   const router = useRouter();
   const [newPassword, setNewPassword] = useState("");
@@ -36,11 +37,20 @@ function CreateNewPasswordContent() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+ 
+  useEffect(() => {
+    document.documentElement.classList.add("auth-visible");
+    document.body.classList.add("auth-visible");
+    return () => {
+      document.documentElement.classList.remove("auth-visible");
+      document.body.classList.remove("auth-visible");
+    };
+  }, []);
+ 
   const requirementText =
     "Password must be 8-60 characters and include uppercase, lowercase, number, and symbol.";
   const isPasswordValidationError = Boolean(error);
-
+ 
   const applyPasswordInput = (
     raw: string,
     setter: (value: string) => void
@@ -57,7 +67,7 @@ function CreateNewPasswordContent() {
     setter(raw);
     setError("");
   };
-
+ 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -89,13 +99,13 @@ function CreateNewPasswordContent() {
       setError(PASSWORD_UPDATE_ERROR);
       return;
     }
-
+ 
     const token = window.sessionStorage.getItem("stackly-reset-token");
     if (!token) {
       setError("Verification session expired. Please verify OTP again.");
       return;
     }
-
+ 
     try {
       setIsSubmitting(true);
       const result = await resetPassword({
@@ -120,16 +130,17 @@ function CreateNewPasswordContent() {
       setIsSubmitting(false);
     }
   };
-
+ 
   return (
-    <div className="reset-flow-page relative min-h-[100dvh] flex flex-col justify-start lg:justify-center items-stretch overflow-y-auto px-0 py-0 lg:px-6 lg:py-6 max-lg:bg-transparent bg-white">
-      <ResetFlowBackButton onClick={() => router.push("/verified")} />
-      <div className="w-full max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row items-stretch lg:items-center justify-start lg:justify-center gap-0 lg:gap-12 auth-layout">
+    <div className="reset-flow-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col justify-start lg:justify-center items-stretch max-lg:overflow-auto overflow-hidden lg:overflow-y-auto px-0 py-0 lg:px-6 lg:py-6 bg-gradient-to-br from-[#f6fcfe] via-[#e2f2f9] to-[#b2dbeb]">
+      <AuthBackgroundSvg />
+      <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row items-stretch lg:items-center justify-start lg:justify-center gap-0 lg:gap-12 auth-layout">
+        <ResetFlowBackButton onClick={() => router.push("/verified")} />
         <div className="reset-flow-illustration hidden lg:flex w-full lg:w-1/2 items-center justify-center order-2 lg:order-1">
           <img
-            src={assetPath("/new.webp")}
+            src={assetPath("/new1.webp")}
             alt="Create new password"
-            className="w-[85%] sm:w-[80%] lg:w-[88%] max-w-[480px] object-contain"
+            className="w-[85%] sm:w-[100%] lg:w-[100%] max-w-[680px] object-contain"
           />
         </div>
         {/* Right: Create New Password form card */}
@@ -278,7 +289,7 @@ function CreateNewPasswordContent() {
     </div>
   );
 }
-
+ 
 export default function CreateNewPasswordPage() {
   return (
     <Suspense fallback={null}>
@@ -286,3 +297,5 @@ export default function CreateNewPasswordPage() {
     </Suspense>
   );
 }
+ 
+ 

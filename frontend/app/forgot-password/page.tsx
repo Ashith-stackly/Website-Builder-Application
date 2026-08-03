@@ -1,6 +1,6 @@
 "use client";
-
-import { Suspense, useState } from "react";
+ 
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { forgotPassword, isApiConnectionError } from "@/lib/api";
@@ -17,10 +17,11 @@ import {
   validateSimpleMobileContact,
 } from "@/lib/simpleMobileContact";
 import { startOtpSession } from "@/lib/otpSession";
-
+import AuthBackgroundSvg from "@/components/AuthBackgroundSvg";
+ 
 const EMAIL_MAX_LENGTH = 254;
 const EMAIL_MAX_ERROR = `Email cannot exceed ${EMAIL_MAX_LENGTH} characters.`;
-
+ 
 function ForgotPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,43 +31,52 @@ function ForgotPasswordContent() {
   const [messageTone, setMessageTone] = useState<"success" | "info">("success");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const changeFrom = searchParams.get("changeFrom");
-
+ 
+  useEffect(() => {
+    document.documentElement.classList.add("auth-visible");
+    document.body.classList.add("auth-visible");
+    return () => {
+      document.documentElement.classList.remove("auth-visible");
+      document.body.classList.remove("auth-visible");
+    };
+  }, []);
+ 
   const contactPlaceholder =
     changeFrom === "verify-email"
       ? "Alternative email address"
       : changeFrom === "verify-mobile"
         ? "Alternative mobile number"
         : "Email or mobile number";
-
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setMessage("");
     setMessageTone("success");
-
+ 
     const trimmed = contactInput.trim();
     if (!trimmed) {
       setError("Enter a valid email or mobile number");
       return;
     }
-
+ 
     const isMobileFlow = looksLikeMobileContactInput(trimmed);
     let verifyRoute: "/verify-email" | "/verify-mobile";
     let apiInput: string;
     let verifyContact: string;
-
+ 
     if (isMobileFlow) {
       const mobileError = validateSimpleMobileContact(trimmed);
       if (mobileError) {
         setError(mobileError);
         return;
       }
-
+ 
       if (!isValidSimpleMobileContact(trimmed)) {
         setError("Enter a valid email or mobile number");
         return;
       }
-
+ 
       verifyRoute = "/verify-mobile";
       apiInput = trimmed;
       verifyContact = trimmed;
@@ -76,12 +86,12 @@ function ForgotPasswordContent() {
         setError(emailError);
         return;
       }
-
+ 
       verifyRoute = "/verify-email";
       apiInput = trimmed.toLowerCase();
       verifyContact = apiInput;
     }
-
+ 
     try {
       setIsSubmitting(true);
       const data = await forgotPassword({
@@ -89,18 +99,18 @@ function ForgotPasswordContent() {
         isChange: Boolean(changeFrom),
         primaryUser: searchParams.get("primaryUser") || undefined,
       });
-
+ 
       const successMessage = data.message || "OTP sent successfully.";
       setMessage(successMessage);
       setMessageTone(
         successMessage.toLowerCase().includes("account exists") ? "info" : "success",
       );
-
+ 
       startOtpSession(
         verifyContact,
         verifyRoute === "/verify-email" ? "email" : "mobile",
       );
-
+ 
       router.push(
         `${verifyRoute}?contact=${encodeURIComponent(verifyContact)}`,
       );
@@ -118,22 +128,27 @@ function ForgotPasswordContent() {
       setIsSubmitting(false);
     }
   };
-
+ 
   return (
-    <div className="reset-flow-page forgot-password-page min-h-[100dvh] bg-white flex flex-col justify-start lg:justify-center items-stretch lg:items-center overflow-y-auto px-0 py-0 lg:px-6 lg:py-6">
-      <div className="w-full max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row items-stretch lg:items-center justify-start lg:justify-center gap-0 lg:gap-12 auth-layout">
+    <div className="reset-flow-page forgot-password-page auth-page relative min-h-[100dvh] lg:min-h-screen bg-gradient-to-br from-[#f6fcfe] via-[#e2f2f9] to-[#b2dbeb] flex flex-col justify-start lg:justify-center items-stretch lg:items-center max-lg:overflow-auto overflow-hidden lg:overflow-y-auto px-0 py-0 lg:px-6 lg:py-6">
+      <AuthBackgroundSvg />
+      <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row items-stretch lg:items-center justify-start lg:justify-center gap-0 lg:gap-12 auth-layout">
         {/* LEFT: Illustration */}
         <div className="auth-image-col hidden lg:flex w-full lg:w-1/2 items-center justify-center order-2 lg:order-1">
-          <img
-            src={assetPath("/password.webp")}
-            alt="Password reset illustration"
-            className="auth-image w-[88%] max-w-[480px] object-contain"
-          />
+          <div
+            className="auth-image-wrapper relative flex items-center justify-center lg:w-[520px] lg:h-[380px] lg:translate-x-[2cm]"
+          >
+            <img
+              src={assetPath("/password1.webp")}
+              alt="Password reset illustration"
+              className="auth-image absolute inset-0 w-full h-full object-contain object-center"
+            />
+          </div>
         </div>
         {/* RIGHT: Forgot password form card */}
         <div className="flex w-full flex-1 flex-col items-stretch justify-center order-1 lg:order-2 lg:w-1/2 lg:flex-none min-h-0">
           <div
-            className="reset-flow-card forgot-password-card relative flex w-full max-w-[420px] flex-1 flex-col justify-center self-center overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:flex-none lg:min-h-0 lg:rounded-xl"
+            className="reset-flow-card forgot-password-card relative flex w-full max-w-[420px] lg:w-[420px] lg:h-[380px] flex-1 flex-col justify-center self-center overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:flex-none lg:min-h-0 lg:rounded-xl"
             style={{
               background:
                 "linear-gradient(180deg, #4A76F3 0%, #2C4FAD 50%, #0A193F 100%)",
@@ -207,9 +222,8 @@ function ForgotPasswordContent() {
                 </button>
                 {message && (
                   <p
-                    className={`text-center text-xs ${
-                      messageTone === "info" ? "text-white/95" : "auth-success-text"
-                    }`}
+                    className={`text-center text-xs ${messageTone === "info" ? "text-white/95" : "auth-success-text"
+                      }`}
                   >
                     {message}
                   </p>
@@ -231,7 +245,7 @@ function ForgotPasswordContent() {
     </div>
   );
 }
-
+ 
 export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={null}>
@@ -239,3 +253,5 @@ export default function ForgotPasswordPage() {
     </Suspense>
   );
 }
+ 
+ 

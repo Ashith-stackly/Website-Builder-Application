@@ -130,7 +130,7 @@ input[type="password"]::-ms-reveal {
   max-width: 100%;
   box-sizing: border-box;
 }
-
+ 
 .login-page .login-remember-forgot > label {
   display: inline-flex;
   align-items: center;
@@ -139,7 +139,7 @@ input[type="password"]::-ms-reveal {
   min-width: max-content;
   white-space: nowrap;
 }
-
+ 
 .login-page .login-remember-forgot .forgot-password-link {
   flex: 0 0 auto;
   margin-left: auto;
@@ -429,6 +429,14 @@ input[type="password"]::-ms-reveal {
     overscroll-behavior-y: auto;
     background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
   }
+  html:has(.login-page),
+  body:has(.login-page),
+  html:has(.signup-page),
+  body:has(.signup-page),
+  html:has(.reset-flow-page),
+  body:has(.reset-flow-page) {
+    background: radial-gradient(ellipse at 30% 25%, #f6fcfe 0%, #e2f2f9 40%, #cae7f4 75%, #b2dbeb 100%) !important;
+  }
  
   .auth-page {
     justify-content: flex-start;
@@ -453,6 +461,11 @@ input[type="password"]::-ms-reveal {
     overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
     background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
+  }
+  .login-page,
+  .signup-page,
+  .reset-flow-page {
+    background: radial-gradient(ellipse at 30% 25%, #f6fcfe 0%, #e2f2f9 40%, #cae7f4 75%, #b2dbeb 100%) !important;
   }
   .auth-page .auth-layout {
     flex: 1 1 auto;
@@ -545,6 +558,14 @@ input[type="password"]::-ms-reveal {
     overscroll-behavior-y: auto;
     background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
   }
+  html:has(.login-page),
+  body:has(.login-page),
+  html:has(.signup-page),
+  body:has(.signup-page),
+  html:has(.reset-flow-page),
+  body:has(.reset-flow-page) {
+    background: radial-gradient(ellipse at 30% 25%, #f6fcfe 0%, #e2f2f9 40%, #cae7f4 75%, #b2dbeb 100%) !important;
+  }
   .auth-page {
     position: fixed;
     inset: 0;
@@ -560,6 +581,11 @@ input[type="password"]::-ms-reveal {
     overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
     background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
+  }
+  .login-page,
+  .signup-page,
+  .reset-flow-page {
+    background: radial-gradient(ellipse at 30% 25%, #f6fcfe 0%, #e2f2f9 40%, #cae7f4 75%, #b2dbeb 100%) !important;
   }
   .auth-page .auth-layout {
     width: 100% !important;
@@ -854,3 +880,5 @@ input[type="password"]::-ms-reveal {
 .forgot-input::placeholder {
   color: #cccccc;
 }
+ 
+ 
