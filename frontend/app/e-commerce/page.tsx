@@ -29,8 +29,6 @@ import {
   formatStorePrice,
 } from "@/lib/storefrontApi";
 import type { Product } from "@/types/ecommerce";
-import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
-import BlockpagesSectionEnd from "@/components/blockpages/BlockpagesSectionEnd";
 
 const buyCategoryNavClass =
   "buyscreen-category-item shrink-0 rounded-md px-2 py-1 text-left transition-colors duration-150 bg-transparent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
@@ -427,9 +425,7 @@ export default function ECommercePage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const blockpagesEditor = useBlockpagesEditor();
-  const isBlockpages = Boolean(blockpagesEditor?.enabled);
-  const isEmbeddedPreview = isBlockpages || searchParams.get(BUY_PREVIEW_QUERY_KEY) === "embed";
+  const isEmbeddedPreview = searchParams.get(BUY_PREVIEW_QUERY_KEY) === "embed";
   const requestedStorefrontWorkspaceId =
     searchParams.get("workspaceId")?.trim() ||
     process.env.NEXT_PUBLIC_ECOMMERCE_WORKSPACE_ID?.trim() ||
@@ -516,6 +512,11 @@ export default function ECommercePage() {
   const [activeCategoryLabel, setActiveCategoryLabel] = useState("All Categories");
   const [activeSubCategoryKey, setActiveSubCategoryKey] = useState<string | null>(null);
   const [isAllCategoriesDropdownOpen, setIsAllCategoriesDropdownOpen] = useState(false);
+  const [isTopHeaderMenuOpen, setIsTopHeaderMenuOpen] = useState(false);
+  const [topHeaderSearchQuery, setTopHeaderSearchQuery] = useState("");
+  const [isTopHeaderSearchOpen, setIsTopHeaderSearchOpen] = useState(false);
+  const [isTopHeaderProfileMenuOpen, setIsTopHeaderProfileMenuOpen] = useState(false);
+  const [activeTopHeaderItem, setActiveTopHeaderItem] = useState("Home");
   const [showHeroScrollNote, setShowHeroScrollNote] = useState(false);
   const [hasLoadedFavorites, setHasLoadedFavorites] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -540,7 +541,9 @@ export default function ECommercePage() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
   const [paymentSuccessDetails, setPaymentSuccessDetails] = useState<{ paymentId: string; orderId: string; amount: number; currency: string } | null>(null);
+  const [contactSuccess, setContactSuccess] = useState(false);
   const toastTimerRef = useRef<number | null>(null);
+  const contactSuccessTimerRef = useRef<number | null>(null);
   const contentStartRef = useRef<HTMLDivElement | null>(null);
   const allCategoriesWrapRef = useRef<HTMLDivElement | null>(null);
   const allCategoriesCloseTimerRef = useRef<number | null>(null);
@@ -560,21 +563,16 @@ export default function ECommercePage() {
 
   const handleAllCategoriesMouseLeave = () => {
     clearAllCategoriesCloseTimer();
-    const closeDelayMs = isBlockpages ? 450 : 200;
     allCategoriesCloseTimerRef.current = window.setTimeout(() => {
-      if (isBlockpages) {
-        const active = document.activeElement;
-        if (active instanceof HTMLElement && active.closest("#buyscreen-all-categories-menu")) {
-          return;
-        }
-      }
       setIsAllCategoriesDropdownOpen(false);
-    }, closeDelayMs);
+    }, 200);
   };
   const featuredProductsRef = useRef<HTMLElement | null>(null);
   const blogSectionRef = useRef<HTMLElement | null>(null);
   const contactSectionRef = useRef<HTMLElement | null>(null);
   const heroContentRef = useRef<HTMLDivElement | null>(null);
+  const topHeaderBarRef = useRef<HTMLDivElement | null>(null);
+  const topHeaderSearchInputRef = useRef<HTMLInputElement | null>(null);
   const productsViewportRef = useRef<HTMLDivElement | null>(null);
   const productsTouchStartXRef = useRef<number | null>(null);
   const productsTouchStartYRef = useRef<number | null>(null);
@@ -913,6 +911,9 @@ export default function ECommercePage() {
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
       }
+      if (contactSuccessTimerRef.current) {
+        window.clearTimeout(contactSuccessTimerRef.current);
+      }
       clearAllCategoriesCloseTimer();
     };
   }, []);
@@ -994,6 +995,7 @@ export default function ECommercePage() {
     setIsAllCategoriesDropdownOpen(false);
     setIsUserMenuOpen(false);
     setIsCategoryMenuOpen(false);
+    setActiveTopHeaderItem("Blog");
     window.requestAnimationFrame(() => {
       blogSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -1003,6 +1005,7 @@ export default function ECommercePage() {
     setIsAllCategoriesDropdownOpen(false);
     setIsUserMenuOpen(false);
     setIsCategoryMenuOpen(false);
+    setActiveTopHeaderItem("Contact");
     window.requestAnimationFrame(() => {
       contactSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -1010,8 +1013,6 @@ export default function ECommercePage() {
 
   const handleCategoryClick = useCallback(
     (label: string) => {
-      if (isBlockpages) return;
-
       if (label === "Blog") {
         scrollToBlogSection();
         return;
@@ -1032,12 +1033,10 @@ export default function ECommercePage() {
         featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
     },
-    [scrollToBlogSection, scrollToContactSection, isBlockpages]
+    [scrollToBlogSection, scrollToContactSection]
   );
 
   const handleSubCategoryClick = useCallback((key: string) => {
-    if (isBlockpages) return;
-
     setActiveCategoryLabel("All Categories");
     setActiveSubCategoryKey(key);
     setIsAllCategoriesDropdownOpen(false);
@@ -1049,7 +1048,36 @@ export default function ECommercePage() {
     setTimeout(() => {
       featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
-  }, [isBlockpages]);
+  }, []);
+
+  const handleTopHeaderItemClick = useCallback(
+    (item: string) => {
+      setActiveTopHeaderItem(item);
+      setIsTopHeaderMenuOpen(false);
+      setIsTopHeaderSearchOpen(false);
+      setIsTopHeaderProfileMenuOpen(false);
+
+      if (item === "Home") {
+        window.requestAnimationFrame(() => {
+          contentStartRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        return;
+      }
+
+      if (item === "Contact") {
+        scrollToContactSection();
+        return;
+      }
+
+      if (item === "Blog") {
+        scrollToBlogSection();
+        return;
+      }
+
+      router.push("/page-not-found");
+    },
+    [router, scrollToBlogSection, scrollToContactSection],
+  );
 
   const handleProductsTouchStart = useCallback(
     (e: React.TouchEvent<HTMLDivElement>) => {
@@ -1203,8 +1231,6 @@ export default function ECommercePage() {
 
   const previewParams = new URLSearchParams(searchParams.toString());
   previewParams.set(BUY_PREVIEW_QUERY_KEY, "embed");
-  // Also mark iframe mode so global layout chrome (NavBar) stays out of the framed preview.
-  previewParams.set("mode", "iframe");
   const previewQuery = previewParams.toString();
   const previewSrc = routePath(
     previewQuery ? `${pathname}?${previewQuery}` : pathname,
@@ -1290,15 +1316,14 @@ export default function ECommercePage() {
   }, [previewSrc, previewDevice, activePreviewFrame.height]);
 
   return (
-    <main className={`buyscreen-page flex w-full max-w-full min-w-0 flex-col overflow-visible text-[#111827] ${isBlockpages ? "@container bg-white" : "bg-[#f5f7fb]"}`}>
+    <main className="buyscreen-page flex w-full max-w-full min-w-0 flex-col overflow-visible bg-[#f5f7fb] text-[#111827]">
 
       {isEmbeddedPreview && (
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* Hide app layout chrome only inside the block-pages canvas (not preview export). */
-            [data-textblock-canvas] header:not(.buyscreen-header),
-            [data-textblock-canvas] nav:not(.buyscreen-categories),
-            [data-textblock-canvas] .buyscreen-top-header {
+            /* Hide the Global Layout Navbar inside the preview iframe */
+            header:not(.buyscreen-header),
+            nav:not(.buyscreen-categories) {
               display: none !important;
             }
 
@@ -1321,21 +1346,6 @@ export default function ECommercePage() {
           .buyscreen-page img:not(.stackly-footer-logo) {
             max-width: 100% !important;
             height: auto !important;
-          }
-
-          .buyscreen-page .buyscreen-top-header img,
-          .buyscreen-page .buyscreen-header img {
-            width: auto !important;
-            max-width: 160px !important;
-            height: auto !important;
-            max-height: 40px !important;
-            object-fit: contain !important;
-          }
-
-          .buyscreen-page .buyscreen-top-header .buyscreen-user-menu-wrap img {
-            max-width: 36px !important;
-            max-height: 36px !important;
-            object-fit: cover !important;
           }
 
           /* Ensure parent containers do not clip absolutely positioned user dropdown and stack correctly */
@@ -1445,17 +1455,6 @@ export default function ECommercePage() {
             }
             .buyscreen-page .flex-row {
               flex-wrap: wrap !important;
-            }
-            .buyscreen-page .buyscreen-products-row,
-            .buyscreen-page .buyscreen-products--carousel,
-            .buyscreen-page .buyscreen-product-hover-actions > div {
-              flex-wrap: nowrap !important;
-            }
-            .buyscreen-page .buyscreen-products-row > .min-w-0,
-            .buyscreen-page .buyscreen-products-row > .flex-1 {
-              flex: 1 1 0% !important;
-              min-width: 0 !important;
-              max-width: 100% !important;
             }
 
             /* Protect icons/buttons from shrinking or wrapping unreadably */
@@ -2059,30 +2058,17 @@ export default function ECommercePage() {
             .buyscreen-page .flex-col,
             .buyscreen-page .buyscreen-product-card,
             .buyscreen-page .buyscreen-products--carousel,
-            .buyscreen-page .buyscreen-products-row,
             .buyscreen-page .buyscreen-product-actions-mobile,
             .buyscreen-page .buyscreen-product-hover-actions > div {
               flex-wrap: nowrap !important;
             }
 
             /* Image styling */
-            .buyscreen-page img:not(.stackly-footer-logo):not(.buyscreen-header-action-icon) {
-              width: auto !important;
+            .buyscreen-page img:not(.stackly-footer-logo) {
+              width: 100% !important;
               max-width: 100% !important;
               height: auto !important;
               object-fit: cover !important;
-            }
-            .buyscreen-page .buyscreen-top-header img,
-            .buyscreen-page .buyscreen-header img {
-              width: auto !important;
-              max-width: 160px !important;
-              height: auto !important;
-              max-height: 40px !important;
-              object-fit: contain !important;
-            }
-            .buyscreen-page .buyscreen-top-header .buyscreen-user-menu-wrap img {
-              max-width: 36px !important;
-              max-height: 36px !important;
             }
             .buyscreen-page .buyscreen-category-card img,
             .buyscreen-page .buyscreen-update-product img,
@@ -2398,8 +2384,6 @@ export default function ECommercePage() {
       ) : null}
 
 
-      {/* Duplicate Stackly chrome — global NavBar already provides this. */}
-
       <div ref={contentStartRef} className={`w-full ${!isEmbeddedPreview && isPreviewOpen ? "bg-[#F3F4F6]" : "bg-white"}`}>
 
         <section className={`buyscreen-shell ${!isEmbeddedPreview && isPreviewOpen ? "bg-transparent" : "bg-white"}`}>
@@ -2424,7 +2408,7 @@ export default function ECommercePage() {
           ) : (
             <>
               {/* RESTORED E-SHOP NAVIGATION SECTION */}
-              <header data-blockpages-template-header="true" className="buyscreen-header flex flex-col gap-4 border-b border-[#e7edf5] bg-white/95 px-4 py-4 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4">
+              <header className="buyscreen-header flex flex-col gap-4 border-b border-[#e7edf5] bg-white/95 px-4 py-4 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4">
                 <div className="flex shrink-0 items-center justify-between lg:justify-start">
                   <span className="inline-flex items-center gap-2 text-base font-black tracking-tight text-[#06224C] sm:text-lg">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_5px_rgba(34,197,94,0.14)]" aria-hidden />
@@ -2504,10 +2488,7 @@ export default function ECommercePage() {
                     aria-expanded={isCategoryMenuOpen}
                     aria-controls="buyscreen-category-menu"
                     className="inline-flex items-center gap-2 rounded-md border border-white/30 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors duration-150 hover:bg-white hover:text-[#06224C]"
-                    onClick={() => {
-                      if (isBlockpages) return;
-                      setIsCategoryMenuOpen((prev) => !prev);
-                    }}
+                    onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
                       <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -2529,7 +2510,6 @@ export default function ECommercePage() {
                         onMouseLeave={handleAllCategoriesMouseLeave}
                         onFocus={() => setIsAllCategoriesDropdownOpen(true)}
                         onBlur={(e) => {
-                          if (isBlockpages) return;
                           if (!e.currentTarget.contains(e.relatedTarget)) {
                             setIsAllCategoriesDropdownOpen(false);
                           }
@@ -2541,10 +2521,7 @@ export default function ECommercePage() {
                           aria-controls="buyscreen-all-categories-menu"
                           aria-haspopup="menu"
                           className={`${buyCategoryNavClass} buyscreen-all-categories-toggle inline-flex items-center gap-1 text-[10px] font-semibold sm:text-xs`}
-                          onClick={() => {
-                            if (isBlockpages) return;
-                            setIsAllCategoriesDropdownOpen((prev) => !prev);
-                          }}
+                          onClick={() => setIsAllCategoriesDropdownOpen((prev) => !prev)}
                         >
                           All Categories
                           <svg width="12" height="12" viewBox="0 0 20 20" fill="none" aria-hidden>
@@ -2554,7 +2531,6 @@ export default function ECommercePage() {
                         <div
                           id="buyscreen-all-categories-menu"
                           role="menu"
-                          data-blockpages-dropdown-panel="true"
                           className={`buyscreen-all-categories-dropdown ${isAllCategoriesDropdownOpen ? "buyscreen-all-categories-dropdown--open" : ""}`}
                         >
                           {buyAllSubCategories.map((subCategory) => (
@@ -2587,7 +2563,7 @@ export default function ECommercePage() {
               {/* -------------------------------------- */}
 
               <div className="space-y-10 px-4 py-8 sm:space-y-12 sm:px-8 sm:py-10 lg:py-12">
-                <section id="buyscreen-home" className="buyscreen-hero relative flex min-h-[400px] items-center overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] px-5 py-12 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] sm:min-h-[500px] sm:p-8 lg:min-h-0 lg:aspect-[16/8] lg:p-12">
+                <section className="buyscreen-hero relative flex min-h-[400px] items-center overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] px-5 py-12 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] sm:min-h-[500px] sm:p-8 lg:min-h-0 lg:aspect-[16/8] lg:p-12">
                   <picture className="absolute inset-0 block h-full w-full">
                     <source media="(max-width: 767px)" srcSet={assetPath("/mobilebackground.png")} />
                     <img src={assetPath("/background.webp")} alt="Electronics hero background" className="h-full w-full object-cover object-center" loading="eager" fetchPriority="high" decoding="async" />
@@ -2611,14 +2587,13 @@ export default function ECommercePage() {
                     </div>
                   </div>
                 </section>
-                <div data-blockpages-section-end="buyscreen-home" className="h-0 w-full" aria-hidden="true" />
                 {showHeroScrollNote ? (
                   <p className="buyscreen-hero-scroll-note" aria-hidden>
                     Scroll inside the banner to read full text.
                   </p>
                 ) : null}
 
-                <section id="buyscreen-about" className="buyscreen-features grid gap-4 border-b border-[#e7edf5] pb-10 text-sm text-[#4b5563] sm:grid-cols-2 lg:grid-cols-4">
+                <section className="buyscreen-features grid gap-4 border-b border-[#e7edf5] pb-10 text-sm text-[#4b5563] sm:grid-cols-2 lg:grid-cols-4">
                   {buyFeatures.map((feature) => (
                     <div key={feature.title} className="buyscreen-feature-card flex items-start gap-4 rounded-2xl border border-[#e7edf5] bg-[#f8fafc] p-4 transition duration-300">
                       <span aria-hidden className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0f3b89] shadow-sm">
@@ -2631,9 +2606,8 @@ export default function ECommercePage() {
                     </div>
                   ))}
                 </section>
-                <div data-blockpages-section-end="buyscreen-about" className="h-0 w-full" aria-hidden="true" />
 
-                <section id="buyscreen-categories" className="buyscreen-section-reveal">
+                <section className="buyscreen-section-reveal">
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">Popular departments</p>
@@ -2684,7 +2658,6 @@ export default function ECommercePage() {
                     ))}
                   </div>
                 </section>
-                <div data-blockpages-section-end="buyscreen-categories" className="h-0 w-full" aria-hidden="true" />
 
                 <section className="buyscreen-deal-banner buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] bg-[#06224C] p-5 text-white shadow-[0_24px_70px_rgba(6,34,76,0.22)] sm:p-7 lg:p-8">
                   <div className="grid gap-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] lg:items-center">
@@ -2730,7 +2703,7 @@ export default function ECommercePage() {
                   </div>
                 </section>
 
-                <section ref={featuredProductsRef} id="buyscreen-products" className="scroll-mt-24">
+                <section ref={featuredProductsRef} className="scroll-mt-24">
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">Curated collection</p>
@@ -2892,7 +2865,6 @@ export default function ECommercePage() {
                     </p>
                   ) : null}
                 </section>
-                <div data-blockpages-section-end="buyscreen-products" className="h-0 w-full" aria-hidden="true" />
 
                 <section className="buyscreen-section-reveal grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
                   <div className="relative overflow-hidden rounded-[1.75rem] border border-[#e7edf5] bg-[#f8fafc] p-5 sm:p-7">
@@ -2980,7 +2952,7 @@ export default function ECommercePage() {
                   </div>
                 </section>
 
-                <section id="buyscreen-contact" className="buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#bfdbfe] bg-white p-5 shadow-[0_20px_60px_rgba(37,99,235,0.12)] sm:p-7">
+                <section className="buyscreen-section-reveal overflow-hidden rounded-[1.75rem] border border-[#bfdbfe] bg-white p-5 shadow-[0_20px_60px_rgba(37,99,235,0.12)] sm:p-7">
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.85fr)] lg:items-center">
                     <div className="min-w-0">
                       <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eff6ff] text-[#2563eb]">
@@ -3031,7 +3003,6 @@ export default function ECommercePage() {
                     </div>
                   </div>
                 </section>
-                <div data-blockpages-section-end="buyscreen-contact" className="h-0 w-full" aria-hidden="true" />
 
                 <section
                   ref={blogSectionRef}
@@ -3164,8 +3135,15 @@ export default function ECommercePage() {
                         className="mt-4 space-y-4 sm:mt-5"
                         onSubmit={(e) => {
                           e.preventDefault();
-                          showActionToast("Message sent");
+                          setContactSuccess(true);
                           e.currentTarget.reset();
+                          if (contactSuccessTimerRef.current) {
+                            window.clearTimeout(contactSuccessTimerRef.current);
+                          }
+                          contactSuccessTimerRef.current = window.setTimeout(() => {
+                            setContactSuccess(false);
+                            contactSuccessTimerRef.current = null;
+                          }, 5000);
                         }}
                       >
                         <div className="buyscreen-contact-fields grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -3218,13 +3196,26 @@ export default function ECommercePage() {
                             className="w-full min-w-0 max-w-full resize-y rounded-xl border border-[#dbe3ef] bg-[#f8fafc] px-3 py-2.5 font-semibold text-[#111827] outline-none transition focus:border-[#2563eb] focus:bg-white sm:px-4 sm:py-3 sm:text-sm"
                           />
                         </div>
-                        <button
-                          type="submit"
-                          className="buyscreen-contact-submit inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#06224C] px-4 text-xs font-black uppercase tracking-[0.1em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#0f3b89] sm:px-5 sm:tracking-[0.14em]"
-                        >
-                          Send message
-                          <BuySendIcon />
-                        </button>
+                        <div className="flex flex-col items-start gap-3">
+                          <button
+                            type="submit"
+                            className="buyscreen-contact-submit inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#06224C] px-4 text-xs font-black uppercase tracking-[0.1em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#0f3b89] sm:px-5 sm:tracking-[0.14em]"
+                          >
+                            Send message
+                            <BuySendIcon />
+                          </button>
+                          {contactSuccess && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              className="flex items-center gap-2 text-sm font-semibold text-emerald-600"
+                            >
+                              <CheckCircle2 className="h-4.5 w-4.5 shrink-0 text-emerald-500" />
+                              <span>Message sent successfully</span>
+                            </motion.div>
+                          )}
+                        </div>
                       </form>
                     </div>
                   </div>

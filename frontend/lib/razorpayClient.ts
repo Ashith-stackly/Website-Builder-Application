@@ -79,30 +79,28 @@ declare global {
   }
 }
  
-const PLACEHOLDER_KEY_RE = /xxxx|your_secret|placeholder/i;
- 
+const PLACEHOLDER_KEY_RE = /xxxx|your_secret|placeholder|rzp_test_demo/i;
+
 export function getRazorpayConfigError(): string | null {
-  const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
-  if (!key.trim()) {
-    return "Add NEXT_PUBLIC_RAZORPAY_KEY_ID to .env.local (Razorpay Dashboard → Test keys), then restart npm run dev.";
-  }
-  if (PLACEHOLDER_KEY_RE.test(key)) {
-    return null; // demo mode — see isRazorpayDemoMode()
+  // Checkout key can come from the backend create-order response; public env is optional.
+  if (isRazorpayDemoMode()) {
+    return "Razorpay is in demo mode (NEXT_PUBLIC_RAZORPAY_DEMO=true). Set it to false and redeploy for live checkout.";
   }
   return null;
 }
- 
-/** True when Razorpay keys are missing/placeholder — use demo checkout for local UI testing. */
+
+/**
+ * Demo checkout is opt-in only.
+ * Previously a missing NEXT_PUBLIC_RAZORPAY_KEY_ID forced demo mode, which made
+ * production/server builds complete fake payments even when the backend was live.
+ */
 export function isRazorpayDemoMode(): boolean {
-  if (process.env.NEXT_PUBLIC_RAZORPAY_DEMO === "true") return true;
-  const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
-  if (!key.trim()) return true;
-  return PLACEHOLDER_KEY_RE.test(key);
+  return process.env.NEXT_PUBLIC_RAZORPAY_DEMO === "true";
 }
- 
+
 export function getRazorpaySetupHint(): string | null {
   if (!isRazorpayDemoMode()) return null;
-  return "Demo mode: payment completes locally without Razorpay keys. Add real Test keys to .env.local for live checkout.";
+  return "Demo mode: payment completes locally. Set NEXT_PUBLIC_RAZORPAY_DEMO=false and redeploy for Razorpay Checkout.";
 }
  
 /** Backend API base URL for Razorpay payment routes (/api/razorpay). */
@@ -169,7 +167,7 @@ async function postRazorpayApi<T>(path: string, body: unknown): Promise<T> {
     });
   } catch {
     throw new Error(
-      "Backend Payment API not reachable. Please ensure the backend server is running on http://localhost:5000.",
+      `Backend Payment API not reachable (${getRazorpayApiBase()}). Check NEXT_PUBLIC_API_BASE_URL and that the backend is running.`,
     );
   }
   const data = (await res.json()) as T & { error?: string; message?: string };
@@ -263,9 +261,22 @@ export function openRazorpayCheckout(options: {
   if (!Razorpay) {
     throw new Error("Razorpay checkout is not loaded");
   }
+
+  // Prefer key from backend order; fall back to public env for older API responses.
+  const keyId = (options.order.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "").trim();
+  if (!keyId || PLACEHOLDER_KEY_RE.test(keyId)) {
+    throw new Error(
+      "Razorpay key missing from create-order response. Set backend RAZORPAY_KEY_ID (and matching NEXT_PUBLIC_RAZORPAY_KEY_ID), then retry.",
+    );
+  }
+  if (!options.order.orderId || String(options.order.orderId).startsWith("order_demo_")) {
+    throw new Error(
+      "Invalid Razorpay order from backend (demo/empty order id). Check server Razorpay keys and create-order.",
+    );
+  }
  
   const rzp = new Razorpay({
-    key: options.order.keyId,
+    key: keyId,
     amount: options.order.amount,
     currency: options.order.currency,
     name: "Stackly",

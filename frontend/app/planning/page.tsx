@@ -496,6 +496,8 @@ function PlanningPageContent() {
       return;
     }
 
+    // Demo only when NEXT_PUBLIC_RAZORPAY_DEMO=true (explicit). Missing public key
+    // must not fake a successful payment on deployed servers.
     if (isRazorpayDemoMode()) {
       setPaymentError(null);
       setPaymentLoading(true);
@@ -503,7 +505,7 @@ function PlanningPageContent() {
       finalizeCheckout({
         isFree: false,
         paymentMethodLabel: "Razorpay (demo)",
-        paymentDetail: "Demo payment — add real Razorpay Test keys in .env.local for live checkout.",
+        paymentDetail: "Demo payment — set NEXT_PUBLIC_RAZORPAY_DEMO=false and redeploy for live Razorpay.",
       });
       return;
     }
