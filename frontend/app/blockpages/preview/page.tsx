@@ -1,6 +1,5 @@
 "use client";
  
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FaLaptop, FaMobileAlt, FaTabletAlt } from "react-icons/fa";
@@ -8,7 +7,10 @@ import { bindPortfolioProjectsSliderNavDelegation } from "@/lib/portfolioProject
 import { animateStatCounterElement } from "@/lib/blockpagesStatCounter";
 import { bindBlockpagesPreviewInteractions } from "@/lib/blockpagesPreviewInteractions";
 import { sanitizeBlockpagesPreviewHtml } from "@/lib/blockpagesPreviewSanitize";
-import { readBlockpagesPreviewCaptureDevice } from "@/lib/blockpagesOverlayLayers";
+import {
+  applyBlockpagesPreviewViewportDevice,
+  type BlockpagesPreviewCaptureDevice,
+} from "@/lib/blockpagesOverlayLayers";
 import type { TextTemplateType } from "@/app/blockpages/textblock/types";
 import {
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
@@ -20,7 +22,16 @@ import { routePath } from "@/lib/paths";
 import { loadBlockPagesDraft, type BlockPagesDraftPayload } from "@/lib/blockPagesDraftApi";
 import { BLOCKPAGES_PREVIEW_ROUTES } from "@/lib/blockpagesTemplates";
 
-const PREVIEW_IFRAME_SRC = routePath("/blockpages/preview?mode=iframe");
+/** Templates whose live "Desktop" control uses a framed ~1200px canvas (not full-bleed). */
+const FRAMED_DESKTOP_TEMPLATES = new Set<TextTemplateType>([
+  "ecommerce",
+  "blog",
+  "digital-marketing",
+  "business",
+  "restaurant",
+  "portfolio",
+  "construction",
+]);
 
 /**
  * Render a simple HTML summary for a saved draft.
@@ -104,6 +115,7 @@ export default function BlockPreviewPage() {
   const [draftError, setDraftError] = useState<string | null>(null);
  
   const isIframeMode = typeof window !== "undefined" && window.location.search.includes("mode=iframe");
+  const iframeViewportDevice = (searchParams.get("device") as BlockpagesPreviewCaptureDevice | null) ?? "desktop";
  
   useEffect(() => bindPortfolioProjectsSliderNavDelegation(), []);
  
@@ -120,21 +132,18 @@ export default function BlockPreviewPage() {
           const { project, draft } = await loadBlockPagesDraft(projectIdParam, controller.signal);
           if (cancelled) return;
 
-          if (project.htmlContent?.trim()) {
-            setPreviewHtml(project.htmlContent);
-            return;
-          }
-
           const targetTemplate = draft?.template ?? templateParam ?? "construction";
           const snapshotKey = getBlockpagesPreviewSnapshotKey(targetTemplate);
           const snapshotHtml = readBlockpagesStorageItem(snapshotKey);
 
           if (snapshotHtml?.trim()) {
-            const capturedDevice = readBlockpagesPreviewCaptureDevice(snapshotHtml);
-            if (capturedDevice) {
-              setPreviewDevice(capturedDevice);
-            }
+            setPreviewDevice("desktop");
             setPreviewHtml(sanitizeBlockpagesPreviewHtml(snapshotHtml));
+            return;
+          }
+
+          if (project.htmlContent?.trim()) {
+            setPreviewHtml(project.htmlContent);
             return;
           }
 
@@ -168,10 +177,7 @@ export default function BlockPreviewPage() {
     const loadPreview = () => {
       const templateHtml = readBlockpagesStorageItem(templateSnapshotKey);
       const rawHtml = (templateHtml && templateHtml.trim()) ? templateHtml : (readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? "");
-      const capturedDevice = readBlockpagesPreviewCaptureDevice(rawHtml);
-      if (capturedDevice) {
-        setPreviewDevice(capturedDevice);
-      }
+      setPreviewDevice("desktop");
       setPreviewHtml(sanitizeBlockpagesPreviewHtml(rawHtml));
     };
  
@@ -189,10 +195,6 @@ export default function BlockPreviewPage() {
       if (!event.key || !previewKeys.has(event.key)) return;
       const templateHtml = readBlockpagesStorageItem(templateSnapshotKey);
       const nextHtml = event.newValue ?? ((templateHtml && templateHtml.trim()) ? templateHtml : (readBlockpagesStorageItem(TEXTBLOCK_PREVIEW_STORAGE_KEY) ?? ""));
-      const capturedDevice = readBlockpagesPreviewCaptureDevice(nextHtml);
-      if (capturedDevice) {
-        setPreviewDevice(capturedDevice);
-      }
       setPreviewHtml(sanitizeBlockpagesPreviewHtml(nextHtml));
     };
  
@@ -209,6 +211,11 @@ export default function BlockPreviewPage() {
 
     let unbindPreviewInteractions = () => {};
     const timeoutId = window.setTimeout(() => {
+      const viewportDevice = isIframeMode ? iframeViewportDevice : previewDevice;
+      applyBlockpagesPreviewViewportDevice(document, viewportDevice);
+      document.querySelector<HTMLElement>("[data-blockpages-preview-root]")?.scrollTo(0, 0);
+      window.scrollTo(0, 0);
+
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
@@ -264,7 +271,7 @@ export default function BlockPreviewPage() {
       window.clearTimeout(timeoutId);
       unbindPreviewInteractions();
     };
-  }, [previewHtml]);
+  }, [previewHtml, isIframeMode, iframeViewportDevice, previewDevice]);
  
   if (previewHtml === null) {
     return <main className="min-h-screen bg-[#f5f7fb]" />;
@@ -287,19 +294,23 @@ export default function BlockPreviewPage() {
   }
 
   if (isIframeMode) {
-    return <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />;
+    return <main className="min-h-0 bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />;
   }
 
   const activeTemplateForIframe =
     templateParam ?? (readBlockpagesStorageItem("stackly-last-active-template") as TextTemplateType | null) ?? "construction";
   const responsiveIframeSrc = routePath(
-    `/blockpages/preview?mode=iframe&template=${encodeURIComponent(activeTemplateForIframe)}${projectIdParam ? `&projectId=${projectIdParam}` : ""}`
+    `/blockpages/preview?mode=iframe&template=${encodeURIComponent(activeTemplateForIframe)}&device=${encodeURIComponent(previewDevice)}${projectIdParam ? `&projectId=${projectIdParam}` : ""}`
   );
+  const useFramedDesktop =
+    previewDevice === "desktop" && FRAMED_DESKTOP_TEMPLATES.has(activeTemplateForIframe);
+  const useDeviceFrame = previewDevice !== "desktop" || useFramedDesktop;
 
   return (
     <>
       <div
-        className="pointer-events-none fixed bottom-4 left-1/2 z-50 -translate-x-1/2"
+        className="pointer-events-none fixed bottom-5 left-1/2 z-50 -translate-x-1/2 sm:bottom-6"
+        data-device-preview-toolbar="true"
       >
         <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
           <button
@@ -328,23 +339,32 @@ export default function BlockPreviewPage() {
           </button>
         </div>
       </div>
-      <div className={`min-h-screen transition-colors duration-500 ${previewDevice !== "desktop" ? "bg-slate-200 py-8 flex justify-center items-start overflow-y-auto" : "bg-[#f5f7fb]"}`}>
+      <div
+        className={`min-h-screen transition-colors duration-500 ${
+          useDeviceFrame
+            ? "bg-[#F3F4F6] py-4 pb-24 flex justify-center items-start overflow-y-auto md:py-8 md:px-4 px-2"
+            : "bg-[#f5f7fb] pb-24"
+        }`}
+      >
         <div
-          className={`mx-auto w-full min-w-0 transition-all duration-500 ease-in-out ${previewDevice === "mobile"
-              ? "max-w-[375px] shadow-2xl h-[812px] flex flex-col shrink-0"
+          className={`mx-auto w-full min-w-0 transition-all duration-500 ease-in-out ${
+            previewDevice === "mobile"
+              ? "max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl bg-white overflow-hidden relative flex flex-col shrink-0"
               : previewDevice === "tablet"
-                ? "max-w-[768px] shadow-2xl h-[1024px] flex flex-col shrink-0"
-                : "max-w-full"
-            } ${previewDevice !== "desktop" ? "rounded-[2.5rem] border-[12px] border-slate-800 bg-white overflow-hidden relative" : ""}`}
+                ? "max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl bg-white overflow-hidden relative flex flex-col shrink-0"
+                : useFramedDesktop
+                  ? "max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl bg-white overflow-hidden relative flex flex-col shrink-0"
+                  : "max-w-full"
+          }`}
         >
-          {previewDevice === "desktop" ? (
-            <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-          ) : (
+          {useDeviceFrame ? (
             <iframe
               src={responsiveIframeSrc}
-              className="w-full h-full border-none bg-[#f5f7fb]"
-              title="Responsive Preview"
+              className="w-full h-full border-none bg-white"
+              title={`${previewDevice} Preview`}
             />
+          ) : (
+            <main className="min-h-screen bg-[#f5f7fb]" dangerouslySetInnerHTML={{ __html: previewHtml }} />
           )}
         </div>
       </div>

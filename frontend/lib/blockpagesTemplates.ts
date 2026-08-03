@@ -41,6 +41,8 @@ const TEMPLATE_LABELS: Record<BlockpagesTemplateId, string> = {
 
 /** Preview routes for templates rendered inside the block-pages editor iframe. */
 export const BLOCKPAGES_PREVIEW_ROUTES: Partial<Record<BlockpagesTemplateId, string>> = {
+  portfolio: "/portfolio",
+  ecommerce: "/e-commerce",
   blog: "/blog",
   construction: "/construction",
   restaurant: "/restaurant",

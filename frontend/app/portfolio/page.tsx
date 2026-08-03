@@ -28,8 +28,12 @@ import {
   FaPaperPlane as FaPaperPlane6,
 } from "react-icons/fa6";
 
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaPlay } from "react-icons/fa";
 import { assetPath } from "@/lib/paths";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import BlockpagesSectionEnd from "@/components/blockpages/BlockpagesSectionEnd";
+import PortfolioVideoSlot from "@/components/blockpages/PortfolioVideoSlot";
+import { playPortfolioBlockpagesVideo } from "@/lib/blockpagesPortfolioVideo";
 
 function useLocalInView<T extends HTMLElement>({
   threshold = 0.3,
@@ -362,7 +366,7 @@ function Footer() {
   return (
     <>
       <motion.footer
-        id="contact"
+        id="footer"
         className="stackly-footer relative mt-auto w-full overflow-hidden bg-[#071936] pt-10 pb-24 md:pt-12 md:pb-32"
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -515,6 +519,8 @@ export default function Portfolioedit() {
   const { scrollY: canvasScrollY } = useScroll();
   const prefersReducedMotion = useReducedMotion();
   const router = useRouter();
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled);
 
 
   const [heroImageProps] = useState({
@@ -605,15 +611,15 @@ export default function Portfolioedit() {
   const portfolioNavHidden = innerNavHidden && !innerMobileMenuOpen && !prefersReducedMotion;
 
   return (
-    <main className="site-page flex flex-col min-h-screen bg-white w-full max-w-full overflow-x-hidden">
+    <main className={isBlockpages ? "@container w-full min-w-0 max-w-full overflow-x-hidden bg-[#F2F2F2] font-sans text-gray-900" : "site-page flex flex-col min-h-screen bg-white w-full max-w-full overflow-x-hidden"}>
       {/* ====== MAIN BUILDER LAYOUT ====== */}
-      <div className="flex flex-1 overflow-x-hidden max-w-full w-full">
+      <div className={isBlockpages ? "w-full min-w-0 max-w-full" : "flex flex-1 overflow-x-hidden max-w-full w-full"}>
         {/* MAIN CONTENT */}
-        <div className="flex-1 bg-white p-4 @md:p-7 flex justify-center min-w-0 overflow-x-hidden max-w-full w-full">
-          <div className="w-full max-w-[1200px] relative flex flex-col min-w-0 overflow-x-hidden">
-            {/* FIXED/FLOATING PREVIEW TOOLBAR */}
-            <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block">
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
+        <div className={isBlockpages ? "w-full min-w-0 max-w-full bg-white p-0" : "flex-1 bg-white p-4 @md:p-7 flex justify-center min-w-0 overflow-x-hidden max-w-full w-full"}>
+          <div className={isBlockpages ? "w-full min-w-0 max-w-full relative flex flex-col" : "w-full max-w-[1200px] relative flex flex-col min-w-0 overflow-x-hidden"}>
+            {!isBlockpages && (
+            <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block pointer-events-none">
+              <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
                  <button
                     onClick={() => router.push("/landing#categories")}
                     className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#06224C] focus-visible:ring-offset-2 ${
@@ -661,11 +667,14 @@ export default function Portfolioedit() {
                  </button>
               </div>
             </div>
+            )}
 
             {/* Canvas Box */}
-            <div ref={canvasScrollRef} className={`flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300 ${(previewMode === "tablet" || previewMode === "mobile") ? "bg-gray-200/50 p-2 @sm:p-4 rounded-xl" : ""}`}>
+            <div ref={canvasScrollRef} className={isBlockpages ? "flex-1 min-w-0 w-full max-w-full relative z-0" : `flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300 ${(previewMode === "tablet" || previewMode === "mobile") ? "bg-gray-200/50 p-2 @sm:p-4 rounded-xl" : ""}`}>
               <div className={`@container mx-auto min-h-[530px] bg-[#F2F2F2] flex flex-col relative portfolio-shell overflow-hidden box-border transition-all duration-500 ease-in-out ${
-                previewMode === "mobile"
+                isBlockpages
+                  ? "w-full max-w-full rounded-none border-0 shadow-none"
+                  : previewMode === "mobile"
                   ? "w-[375px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
                   : previewMode === "tablet"
                     ? "w-[768px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
@@ -677,6 +686,7 @@ export default function Portfolioedit() {
 
                 {/* <div className="flex w-full flex-wrap items-center justify-between gap-2 @sm:gap-4 px-3 @sm:px-4 py-2 @sm:py-3 @md:px-8 @xl:flex-nowrap border-b border-gray-300 bg-[#06224C] rounded-t-xl"> */}
                 <motion.div
+                  data-blockpages-template-header="true"
                   className="sticky top-0 z-50 backdrop-blur-md bg-[#06224C]/95 flex w-full flex-wrap items-center justify-between gap-2 @sm:gap-4 px-3 @sm:px-4 py-2 @sm:py-3 @md:px-8 @xl:flex-nowrap border-b border-gray-300 rounded-t-xl"
                   animate={{
                     y: portfolioNavHidden ? -96 : 0,
@@ -942,6 +952,7 @@ export default function Portfolioedit() {
                   </div>
 
                 </div>
+                <BlockpagesSectionEnd sectionId="home" />
                 {/* FLOAT ANIMATION */}
                 <style jsx>{`
                   @keyframes float {
@@ -1337,7 +1348,7 @@ export default function Portfolioedit() {
 
                   </div>
                 </div>
-                <div data-blockpages-section-end="about" className="h-0 w-full" aria-hidden="true" />
+                <BlockpagesSectionEnd sectionId="about" />
                 {/* </div> */}
 
                 {/* MY SERVICES SECTION */}
@@ -1507,27 +1518,71 @@ export default function Portfolioedit() {
                     ))}
                   </div>
                 </div>
+                <BlockpagesSectionEnd sectionId="projects" />
+
+                {/* VIDEO SECTION */}
+                <div id="video" className="w-full px-4 @sm:px-6 @md:px-12 @lg:px-20 py-16 @lg:py-24 relative overflow-hidden portfolio-hero bg-[#0B1D40]">
+                  <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col-reverse @lg:flex-row items-center justify-between gap-12 @lg:gap-8">
+                    <div className="flex w-full flex-col justify-center space-y-6 @lg:w-5/12 relative z-10">
+                      <p className="text-[#38BDF8] font-bold tracking-widest uppercase text-sm @md:text-base mb-4">Creative Marketing</p>
+                      <h2 className="text-[clamp(2rem,5cqi,4.5rem)] font-black text-white leading-[1.1] tracking-tight mb-6">Showreel 2026</h2>
+                      <p className="text-gray-300 text-base @sm:text-lg @md:text-xl font-medium max-w-md leading-relaxed mb-8">
+                        We create digital experiences that drive results.
+                      </p>
+                      <button
+                        type="button"
+                        data-blockpages-interactive="true"
+                        data-blockpages-watch-video="video_block"
+                        className="group flex cursor-pointer items-center justify-center gap-3 @sm:gap-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-5 @sm:px-8 py-3 @sm:py-4 rounded-[30px] @sm:rounded-full font-bold uppercase text-xs @sm:text-sm tracking-wider transition-all shadow-lg shadow-blue-500/30 max-w-full w-fit"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          const root =
+                            (event.currentTarget as HTMLElement).closest(".portfolio-shell") ??
+                            (event.currentTarget as HTMLElement).closest("[data-blockpages-template-root]") ??
+                            document;
+                          playPortfolioBlockpagesVideo(root);
+                        }}
+                      >
+                        Watch Now
+                        <span className="bg-white text-blue-600 rounded-full w-7 h-7 @sm:w-8 @sm:h-8 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                          <FaPlay className="text-[10px] @sm:text-xs ml-0.5" aria-hidden="true" />
+                        </span>
+                      </button>
+                    </div>
+                    <div className="relative w-full @lg:w-7/12 flex justify-center @lg:justify-end">
+                      <PortfolioVideoSlot useStoredProps />
+                    </div>
+                  </div>
+                </div>
+                <BlockpagesSectionEnd sectionId="video" />
 
                 {/* TESTIMONIALS SECTION */}
-                <div ref={testimonialsRef} className="w-full max-w-full overflow-x-hidden bg-[#F2F2F2] px-4 @sm:px-6 @md:px-12 @lg:px-20 pb-16 @lg:pb-24">
-                  <div className="grid grid-cols-1 @lg:grid-cols-[0.8fr_1.2fr] gap-6 @lg:gap-10 items-stretch min-w-0 max-w-full">
-                    <div className={`portfolio-reveal rounded-2xl bg-white p-6 @md:p-8 shadow-lg border border-gray-100 min-w-0 max-w-full break-words overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}>
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#1a3636] mb-4 min-w-0 break-words">Client Words</p>
-                      <h2 className="text-[clamp(1.5rem,4cqi,2.25rem)] @md:text-4xl font-extrabold text-gray-900 leading-tight mb-4 min-w-0 break-words">
-                        Designs that feel clear before they feel clever.
-                      </h2>
-                      <p className="text-gray-600 text-sm @md:text-base leading-relaxed min-w-0 break-words">
-                        Strong visuals are only useful when they help people understand, trust, and take action.
-                      </p>
-                    </div>
+                <div
+                  ref={testimonialsRef}
+                  className="w-full max-w-full overflow-x-hidden bg-[#F2F2F2] px-4 @sm:px-6 @md:px-12 @lg:px-20 py-12 @lg:py-16 pb-16 @lg:pb-24"
+                >
+                  <div className="mx-auto w-full max-w-7xl min-w-0">
+                    <div className="grid grid-cols-1 @min-[56rem]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-6 @min-[56rem]:gap-8 @xl:gap-10 items-start min-w-0 max-w-full">
+                      <div
+                        className={`portfolio-reveal relative z-0 rounded-2xl bg-white p-6 @md:p-8 shadow-lg border border-gray-100 min-w-0 max-w-full break-words overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
+                      >
+                        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#1a3636] mb-4 min-w-0 break-words">Client Words</p>
+                        <h2 className="text-[clamp(1.5rem,4cqi,2.25rem)] @md:text-4xl font-extrabold text-gray-900 leading-tight mb-4 min-w-0 break-words">
+                          Designs that feel clear before they feel clever.
+                        </h2>
+                        <p className="text-gray-600 text-sm @md:text-base leading-relaxed min-w-0 break-words">
+                          Strong visuals are only useful when they help people understand, trust, and take action.
+                        </p>
+                      </div>
 
-                    <div className="grid grid-cols-1 @lg:grid-cols-2 gap-4 min-w-0 max-w-full">
-                      {testimonials.map((item, i) => (
-                        <div
-                          key={item.name}
-                          className={`portfolio-reveal rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl min-w-0 max-w-full break-words overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
-                          style={{ transitionDelay: `${i * 140}ms` }}
-                        >
+                      <div className="grid grid-cols-1 @sm:grid-cols-2 @min-[56rem]:grid-cols-2 gap-4 @min-[56rem]:gap-5 min-w-0 max-w-full auto-rows-fr">
+                        {testimonials.map((item, i) => (
+                          <div
+                            key={item.name}
+                            className={`portfolio-reveal relative z-0 flex h-full min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm min-w-0 max-w-full break-words overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
+                            style={{ transitionDelay: `${i * 140}ms` }}
+                          >
                           <div className="mb-5 text-5xl font-black leading-none text-[#63e5ff] shrink-0">“</div>
                           <p className="mb-6 text-[clamp(0.875rem,2.5cqi,1rem)] leading-relaxed text-gray-600 min-w-0 break-words">{item.quote}</p>
                           <div className="flex flex-wrap items-center gap-3 min-w-0">
@@ -1613,14 +1668,18 @@ export default function Portfolioedit() {
                       </form>
                     </div>
 
+                  </div>
                 </div>
+                <BlockpagesSectionEnd sectionId="contact" />
+                {isBlockpages ? <Footer /> : null}
+
               </div>
             </div>
           </div>
         </div>
       </div>
       </div>
-      {(previewMode === "desktop" || previewMode === "preview" || previewMode === "tablet" || previewMode === "mobile") && <Footer />}
+      {!isBlockpages && (previewMode === "desktop" || previewMode === "preview" || previewMode === "tablet" || previewMode === "mobile") && <Footer />}
     </main>
   );
 }

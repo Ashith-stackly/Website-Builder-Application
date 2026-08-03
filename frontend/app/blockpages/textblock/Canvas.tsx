@@ -29,6 +29,7 @@ import type { BlockpagesOverlayPosition } from "@/lib/blockpagesOverlayLayers";
 import type { DraftSaveStatus } from "../BlockPagesClient";
 import { injectPortfolioProjectsSliderNavAttributes } from "@/lib/portfolioProjectsSlider";
 import { buildPreviewHtmlFromCanvas, finalizeBlockpagesEditorMotion, finalizeCanvasBeforePreview, persistPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
+import { buildBlogThemeCss } from "@/lib/blogPreviewTheme";
 import {
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
   BLOCKPAGES_REQUEST_PREVIEW_EVENT,
@@ -75,6 +76,7 @@ type TextCanvasProps = {
   editingButtonId?: string | null;
   videoBlocks?: VideoBlockData[];
   isVideoEditingMode?: boolean;
+  editingVideoId?: string | null;
   onEditVideo?: (videoId: string) => void;
   appliedDividers?: { id: string, props: DividerBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveDivider?: (id: string) => void;
@@ -142,6 +144,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   editingButtonId,
   videoBlocks = [],
   isVideoEditingMode = false,
+  editingVideoId = null,
   onEditVideo,
   isIconEditingMode = false,
   customIcons = {},
@@ -244,29 +247,6 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     template,
     refreshHiddenElementsState,
   ]);
-
-  useLayoutEffect(() => {
-    if (template !== "ecommerce" || !canvasRef.current || isRestoringCanvasRef.current) return;
-    scrubAndPersistEcommerceCanvas(canvasRef.current);
-  }, [template]);
-
-  useEffect(() => {
-    if (template !== "ecommerce") return;
-
-    const cleanupRetiredChrome = () => {
-      if (!canvasRef.current) return;
-      scrubAndPersistEcommerceCanvas(canvasRef.current);
-    };
-
-    cleanupRetiredChrome();
-    const frameId = window.requestAnimationFrame(cleanupRetiredChrome);
-    window.addEventListener(BLOCKPAGES_CANVAS_RESTORED_EVENT, cleanupRetiredChrome);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      window.removeEventListener(BLOCKPAGES_CANVAS_RESTORED_EVENT, cleanupRetiredChrome);
-    };
-  }, [template]);
 
   useLayoutEffect(() => {
     if (!canvasRef.current) return;
@@ -618,16 +598,6 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     const makeEditable = (node: Element) => {
       if (node.closest("[data-builder-chrome='true']")) return;
       if (node.closest('[data-blockpages-interactive="true"], .buyscreen-search, input, textarea, select')) return;
-      if (
-        node instanceof HTMLElement &&
-        node.tagName === "BUTTON" &&
-        node.closest("nav.buyscreen-categories") &&
-        (node.classList.contains("buyscreen-category-item") || node.hasAttribute("data-blockpages-interactive"))
-      ) {
-        node.removeAttribute("contenteditable");
-        node.classList.remove("editable-text-active");
-        return;
-      }
 
       const isInDropdown = node.closest('[data-blockpages-dropdown-panel="true"]') !== null;
       const isHeader = !isInDropdown && nodeIsInBlockpagesHeaderChrome(node);
@@ -643,11 +613,37 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         else if (selectedTarget === "text") shouldBeEditable = true;
       }
 
+      if (
+        node instanceof HTMLElement &&
+        node.tagName === "BUTTON" &&
+        node.closest("nav.buyscreen-categories") &&
+        (node.classList.contains("buyscreen-category-item") ||
+          node.classList.contains("buyscreen-all-categories-toggle") ||
+          node.classList.contains("buyscreen-all-categories-item"))
+      ) {
+        const htmlNode = node as HTMLElement;
+        if (shouldBeEditable && (selectedTarget === "header" || selectedTarget === "text")) {
+          node.setAttribute("contenteditable", "true");
+          htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
+        } else {
+          if (activeEditableRef.current === htmlNode) {
+            activeEditableRef.current = null;
+          }
+          node.removeAttribute("contenteditable");
+          htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
+          node.classList.remove("editable-text-active");
+        }
+        Array.from(node.children).forEach(makeEditable);
+        return;
+      }
+
+      const isInteractiveOnly = false;
+
       if (textTags.includes(node.tagName)) {
         const htmlNode = node as HTMLElement;
-        const isInteractiveOnly = isBlockpagesInteractiveControl(node, textEditingOptions) && !shouldBeEditable;
+        const blockInteractive = isBlockpagesInteractiveControl(node, textEditingOptions) && !shouldBeEditable;
 
-        if (shouldBeEditable && !isInteractiveOnly) {
+        if (shouldBeEditable && !blockInteractive) {
           node.setAttribute("contenteditable", "true");
           if (node.tagName === "BUTTON") {
             htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
@@ -737,6 +733,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       (canvasRoot.getAttribute("data-blockpages-device") as "desktop" | "tablet" | "mobile" | null) ?? "desktop";
 
     finalizeCanvasBeforePreview(canvasRoot);
+    canvasRoot.scrollTop = 0;
+    canvasRoot.scrollLeft = 0;
+    canvasRoot.querySelector<HTMLElement>(".buyscreen-page")?.scrollIntoView({ block: "start" });
     const previewHtml = buildPreviewHtmlFromCanvas(canvasRoot, {
       captureDevice,
       appliedDividers,
@@ -863,10 +862,13 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                   outline: 2px dashed #63e5ff !important;
                   outline-offset: 4px;
                 }
-                [data-textblock-canvas][data-blockpages-text-editing="true"] .portfolio-reveal {
+                [data-textblock-canvas] .portfolio-reveal {
                   opacity: 1 !important;
                   transform: none !important;
                   transition: none !important;
+                }
+                [data-textblock-canvas][data-blockpages-text-editing="true"] .portfolio-reveal {
+                  outline: none;
                 }
               `}</style>
             ) : null}
@@ -880,6 +882,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
               ${buildBlockpagesCardShadowCss(section.shadow)}
 
               ${hiddenElementsCss}
+
+              ${template === "blog" ? buildBlogThemeCss("[data-textblock-canvas] .blog-page, [data-textblock-canvas] .blog-blockpages-root") : ""}
             `}</style>
             <div className="relative flex min-h-0 flex-1 flex-col">
               <div className="mx-auto w-full min-w-0 max-w-full flex-1">
@@ -964,6 +968,28 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                       margin-top: 0;
                       width: auto;
                     }
+                    [data-textblock-canvas] [data-blog-explore-cta="true"] {
+                      display: flex !important;
+                      visibility: visible !important;
+                      opacity: 1 !important;
+                      justify-content: center !important;
+                      align-items: center !important;
+                      background: #0a192f !important;
+                      padding-top: 1.5rem !important;
+                      padding-bottom: 1.5rem !important;
+                    }
+                    [data-textblock-canvas] [data-blog-explore-button="true"] {
+                      display: inline-flex !important;
+                      visibility: visible !important;
+                      opacity: 1 !important;
+                      color: #ffffff !important;
+                      border: 2px solid #ffffff !important;
+                      background-color: transparent !important;
+                      text-decoration: none !important;
+                      min-height: 2.75rem !important;
+                      align-items: center !important;
+                      justify-content: center !important;
+                    }
                     [data-textblock-canvas] h1,
                     [data-textblock-canvas] h2,
                     [data-textblock-canvas] h3,
@@ -981,6 +1007,15 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                       max-width: 100%;
                     }
                     @container (max-width: 768px) {
+                      ${
+                        template === "blog"
+                          ? `
+                      [data-textblock-canvas] .flex,
+                      [data-textblock-canvas] .grid {
+                        min-width: 0;
+                      }
+                      `
+                          : `
                       [data-textblock-canvas] h1 {
                         font-size: clamp(1.5rem, 5cqi, 2.25rem) !important;
                         line-height: 1.2 !important;
@@ -1006,6 +1041,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                       [data-textblock-canvas] .grid {
                         min-width: 0;
                       }
+                      `
+                      }
                     }
                   `}</style>
                   <div ref={contentRef} className="min-w-0 max-w-full">
@@ -1021,6 +1058,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         onEditButton={onEditButton}
                         editingButtonId={editingButtonId}
                         isVideoEditingMode={isVideoEditingMode}
+                        editingVideoId={editingVideoId}
                         onEditVideo={onEditVideo}
                         videoBlocks={videoBlocks}
                         isIconEditingMode={isIconEditingMode}

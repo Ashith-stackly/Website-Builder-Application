@@ -1,6 +1,6 @@
 "use client";
 
-import { createElement, memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createElement, memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { FaPen } from "react-icons/fa";
 import type { BlockData } from "../buttonblock/types";
@@ -12,7 +12,6 @@ import {
   collectEditableIconAnchors,
   isInsideTemplateHeader,
 } from "@/lib/blockpagesEditTargets";
-import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 import { BLOCKPAGES_CANVAS_RESTORED_EVENT } from "@/lib/blockpagesEditorPersistence";
 import { useBlockpagesOverlayToolbar } from "@/lib/blockpagesOverlayToolbar";
 import {
@@ -32,9 +31,37 @@ import {
 } from "@/lib/blockpagesDropdownStyles";
 import DividerPreview from "../dividerblock/DividerPreview";
 import IconPreview from "../iconsblock/IconPreview";
+import BlockpagesInlineVideo from "../videoblock/BlockpagesInlineVideo";
 import BlockpagesPositionedOverlay from "./BlockpagesPositionedOverlay";
+import { assetPath } from "@/lib/paths";
+import { resolveVideoBlockPropsForSlot, getDefaultPortfolioVideoProps } from "@/lib/blockpagesVideoStorage";
+import { playPortfolioBlockpagesVideo } from "@/lib/blockpagesPortfolioVideo";
+import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 
 type OverlayKind = "image" | "button" | "video" | "icon";
+
+function unmountVideoRoots(roots: Root[]) {
+  roots.forEach((root) => {
+    try {
+      root.unmount();
+    } catch {
+      // Root may already be unmounted or its container detached.
+    }
+  });
+}
+
+/** Drop editor video mounts without unmounting during an active React render. */
+function releaseVideoRoots(
+  rootsRef: MutableRefObject<Map<string, Root>>,
+  container: ParentNode | null | undefined
+) {
+  const roots = [...rootsRef.current.values()];
+  rootsRef.current.clear();
+  container?.querySelectorAll("[data-blockpages-custom-video-mount]").forEach((node) => node.remove());
+  if (roots.length > 0) {
+    queueMicrotask(() => unmountVideoRoots(roots));
+  }
+}
 
 type EditOverlayTarget = {
   id: string;
@@ -55,6 +82,7 @@ type BlockpagesCanvasEnhancerProps = {
   onEditButton?: (buttonId: string) => void;
   editingButtonId?: string | null;
   isVideoEditingMode?: boolean;
+  editingVideoId?: string | null;
   onEditVideo?: (videoId: string) => void;
   isIconEditingMode?: boolean;
   onEditIcon?: (iconId: string) => void;
@@ -325,6 +353,7 @@ function BlockpagesCanvasEnhancer({
   onEditButton,
   editingButtonId,
   isVideoEditingMode = false,
+  editingVideoId = null,
   onEditVideo,
   isIconEditingMode = false,
   onEditIcon,
@@ -345,6 +374,7 @@ function BlockpagesCanvasEnhancer({
 }: BlockpagesCanvasEnhancerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iconRootsRef = useRef<Map<string, Root>>(new Map());
+  const videoRootsRef = useRef<Map<string, Root>>(new Map());
   const [overlayTargets, setOverlayTargets] = useState<EditOverlayTarget[]>([]);
 
   useBlockpagesOverlayToolbar(containerRef, {
@@ -695,14 +725,34 @@ function BlockpagesCanvasEnhancer({
         anchor.style.cursor = "";
       }
     });
+
+    container.querySelectorAll<HTMLElement>("[data-blockpages-video-slot='true']").forEach((slot, index) => {
+      const videoId = slot.getAttribute("data-blockpages-video-id") || `video_${index}`;
+      slot.setAttribute("data-blockpages-video-id", videoId);
+
+      if (editingVideoId === videoId) {
+        slot.style.outline = "2px dashed #63e5ff";
+        slot.style.outlineOffset = "4px";
+      } else if (isVideoEditingMode) {
+        slot.style.outline = "2px dashed #60a5fa";
+        slot.style.outlineOffset = "4px";
+        slot.style.cursor = "pointer";
+      } else {
+        slot.style.outline = "";
+        slot.style.outlineOffset = "";
+        slot.style.cursor = "";
+      }
+    });
   }, [
     customImages,
     customButtons,
     editingImageId,
     editingButtonId,
     editingIconId,
+    editingVideoId,
     isButtonEditingMode,
     isIconEditingMode,
+    isVideoEditingMode,
   ]);
 
   useEffect(() => {
@@ -747,6 +797,92 @@ function BlockpagesCanvasEnhancer({
     container.addEventListener("click", handleClick, true);
     return () => container.removeEventListener("click", handleClick, true);
   }, [isIconEditingMode, onEditIcon]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !isVideoEditingMode || !onEditVideo) return;
+
+    const handleClick = (event: MouseEvent) => {
+      const slot = (event.target as Element | null)?.closest('[data-blockpages-video-slot="true"]');
+      if (!slot || !container.contains(slot)) return;
+
+      const videoId = slot.getAttribute("data-blockpages-video-id");
+      if (!videoId) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      onEditVideo(videoId);
+    };
+
+    container.addEventListener("click", handleClick, true);
+    return () => container.removeEventListener("click", handleClick, true);
+  }, [isVideoEditingMode, onEditVideo]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWatchVideoClick = (event: MouseEvent) => {
+      const trigger = (event.target as Element | null)?.closest("[data-blockpages-watch-video]");
+      if (!trigger || !container.contains(trigger)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const videoId = trigger.getAttribute("data-blockpages-watch-video") || "video_block";
+      const templateRoot = container.querySelector<HTMLElement>("[data-blockpages-template-root]") ?? container;
+      playPortfolioBlockpagesVideo(templateRoot, videoId);
+    };
+
+    container.addEventListener("click", handleWatchVideoClick, true);
+    return () => container.removeEventListener("click", handleWatchVideoClick, true);
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || template !== "portfolio") return;
+
+    const roots = videoRootsRef.current;
+
+    container.querySelectorAll<HTMLElement>('[data-blockpages-video-slot="true"]').forEach((slot) => {
+      const slotId = slot.getAttribute("data-blockpages-video-id") || "video_block";
+      const blockProps =
+        resolveVideoBlockPropsForSlot(slotId, videoBlocks) ?? getDefaultPortfolioVideoProps();
+
+      slot.querySelectorAll("[data-blockpages-video-placeholder]").forEach((node) => node.remove());
+
+      let mountPoint = slot.querySelector("[data-blockpages-custom-video-mount]") as HTMLElement | null;
+      let root = roots.get(slotId);
+
+      if (!root || !mountPoint?.isConnected) {
+        if (root) {
+          roots.delete(slotId);
+        }
+        mountPoint?.remove();
+        mountPoint = document.createElement("div");
+        mountPoint.setAttribute("data-blockpages-custom-video-mount", "true");
+        mountPoint.className = "absolute inset-0 z-[1]";
+        slot.appendChild(mountPoint);
+        root = createRoot(mountPoint);
+        roots.set(slotId, root);
+      }
+
+      const posterFallback =
+        customImages["video_block_bg"] || assetPath("/video_block_bg.png");
+      root.render(createElement(BlockpagesInlineVideo, { blockProps, posterFallback }));
+    });
+  }, [template, videoBlocks, customImages]);
+
+  useEffect(() => {
+    if (template === "portfolio") return;
+    releaseVideoRoots(videoRootsRef, containerRef.current);
+  }, [template]);
+
+  useEffect(() => {
+    return () => {
+      releaseVideoRoots(videoRootsRef, containerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;

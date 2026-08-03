@@ -429,9 +429,13 @@ const TEMPLATE_CANVAS_MARKERS: Partial<Record<TextTemplateType, string[]>> = {
   business: ["dm-shell"],
 };
 
-/** Templates whose canvas is a live React tree (not HTML snapshot restore). */
-export function templateUsesHtmlCanvasPersistence(template: TextTemplateType) {
-  return template === "portfolio" || template === "ecommerce";
+/**
+ * When true, the editor restores canvas from localStorage via innerHTML on the template root.
+ * Portfolio and ecommerce mount live React under that root — innerHTML restore and live DOM
+ * scrubbing cause React reconciliation errors (removeChild NotFoundError).
+ */
+export function templateUsesHtmlCanvasPersistence(_template: TextTemplateType) {
+  return false;
 }
 
 export function isPersistedCanvasHtmlValid(template: TextTemplateType, html: string) {
@@ -450,7 +454,17 @@ export function isPersistedCanvasHtmlValid(template: TextTemplateType, html: str
   const markers = TEMPLATE_CANVAS_MARKERS[template];
   if (!markers?.length) return html.length > 200;
 
-  return markers.some((marker) => html.includes(marker));
+  if (!markers.some((marker) => html.includes(marker))) return false;
+
+  if (template === "ecommerce") {
+    return html.includes('id="buyscreen-home"') || html.includes("id='buyscreen-home'");
+  }
+
+  if (template === "portfolio") {
+    return html.includes('id="home"') && html.includes("portfolio-shell");
+  }
+
+  return true;
 }
 
 export function clearPersistedCanvasHtml(template: TextTemplateType) {

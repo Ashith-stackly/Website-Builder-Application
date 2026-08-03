@@ -47,7 +47,9 @@ const UploadedVideoPlayer = ({ blockProps, customImages, assetPath }: any) => {
   return (
     <video
       ref={videoRef}
-      src={blockProps.uploadUrl}
+      src={typeof blockProps.uploadUrl === "string" && !/^(https?:|blob:|data:)/i.test(blockProps.uploadUrl)
+        ? assetPath(blockProps.uploadUrl)
+        : blockProps.uploadUrl}
       poster={blockProps.posterImage || customImages?.["video_block_bg"] || assetPath("/video_block_bg.png")}
       autoPlay={blockProps.autoplay}
       loop={blockProps.loop}
@@ -1388,12 +1390,13 @@ function PortfolioPreview({
                             assetPath={assetPath} 
                           />
                         ) : (
-                          <img
-                            src={videoBlockProps?.posterImage || customImages?.["video_block_bg"] || assetPath("/video_block_bg.png")}
-                            alt="Workspace Desk"
+                          <video
+                            src={assetPath("/portfolio-showreel.mp4")}
+                            controls
+                            playsInline
                             className="w-full h-full object-cover"
-                            data-image-id="video_block_bg"
-                            style={getFilterStyle("video_block_bg")}
+                            data-blockpages-video-id="video_block"
+                            poster={customImages?.["video_block_bg"] || assetPath("/video_block_bg.png")}
                           />
                         )}
                         <div className="absolute inset-0 bg-blue-900/10 mix-blend-overlay pointer-events-none"></div>

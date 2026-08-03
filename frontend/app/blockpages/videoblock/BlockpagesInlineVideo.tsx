@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { assetPath } from "@/lib/paths";
 import type { VideoBlockProps } from "./types";
+import { resolveVideoMediaUrl } from "@/lib/blockpagesVideoStorage";
 
 type BlockpagesInlineVideoProps = {
   blockProps: VideoBlockProps;
@@ -25,7 +26,7 @@ function UploadedVideoPlayer({ blockProps, posterFallback }: BlockpagesInlineVid
   return (
     <video
       ref={videoRef}
-      src={blockProps.uploadUrl}
+      src={resolveVideoMediaUrl(blockProps.uploadUrl)}
       poster={blockProps.posterImage || posterFallback || assetPath("/video_block_bg.png")}
       autoPlay={blockProps.autoplay}
       loop={blockProps.loop}

@@ -3,6 +3,7 @@ import {
   type BlockpagesTemplateSection,
 } from "@/lib/blockpagesTemplateSections";
 import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
+import { playPortfolioBlockpagesVideo } from "@/lib/blockpagesPortfolioVideo";
 
 const OPEN_MAX_HEIGHT = ["max-h-[800px]", "max-h-96", "max-h-48", "max-h-40", "max-h-[75vh]"];
 const CLOSED_MAX_HEIGHT = ["max-h-0"];
@@ -256,6 +257,24 @@ function handlePreviewMenuClick(event: Event) {
   setMenuOpen(button, panel, nextOpen);
 }
 
+function handlePreviewWatchVideoClick(event: Event) {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+
+  const trigger = target.closest("[data-blockpages-watch-video]");
+  if (!(trigger instanceof HTMLElement)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const videoId = trigger.getAttribute("data-blockpages-watch-video") || "video_block";
+  const root =
+    trigger.closest("[data-blockpages-preview-root]") ??
+    trigger.closest(".portfolio-shell") ??
+    trigger.ownerDocument.documentElement;
+  playPortfolioBlockpagesVideo(root, videoId);
+}
+
 function handlePreviewNavigationClick(event: Event) {
   const target = event.target;
   if (!(target instanceof Element)) return;
@@ -348,13 +367,16 @@ export function bindBlockpagesPreviewInteractions(doc: Document = document) {
 
   const menuHandler = (event: Event) => handlePreviewMenuClick(event);
   const navigationHandler = (event: Event) => handlePreviewNavigationClick(event);
+  const watchVideoHandler = (event: Event) => handlePreviewWatchVideoClick(event);
 
   doc.addEventListener("click", menuHandler, true);
   doc.addEventListener("click", navigationHandler, true);
+  doc.addEventListener("click", watchVideoHandler, true);
 
   return () => {
     doc.removeEventListener("click", menuHandler, true);
     doc.removeEventListener("click", navigationHandler, true);
+    doc.removeEventListener("click", watchVideoHandler, true);
     boundWindow.__blockpagesPreviewInteractionsBound = false;
   };
 }

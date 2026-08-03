@@ -5,6 +5,7 @@ const TEMPLATE_HEADER_SELECTORS = [
   "[data-blockpages-template-header='true']",
   "[data-template-header='true']",
   ".buyscreen-header",
+  ".buyscreen-top-header",
   ".buyscreen-categories",
   ".portfolio-shell > .sticky",
   ".portfolio-shell .sticky",

@@ -4,6 +4,7 @@ import { BLOCKPAGES_DROPDOWN_EXCLUDE } from "@/lib/blockpagesDropdownStyles";
 export const BLOCKPAGES_TEMPLATE_HEADER_SELECTOR = `[data-textblock-canvas] [data-blockpages-template-header="true"],
 [data-textblock-canvas] .portfolio-shell > .sticky,
 [data-textblock-canvas] .buyscreen-header,
+[data-textblock-canvas] .buyscreen-top-header,
 [data-textblock-canvas] .restaurant-shell header,
 [data-textblock-canvas] .construction-shell header,
 [data-textblock-canvas] .blog-page header,

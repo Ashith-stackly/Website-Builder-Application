@@ -21,10 +21,15 @@ function NavBarInner() {
   const searchParams = useSearchParams();
   const [NavBar, setNavBar] = useState<ComponentType<{ keepVisible?: boolean }> | null>(null);
   const normalizedPathname = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  // Hide marketing chrome inside device-preview iframes (e-commerce uses preview=embed;
+  // blockpages preview uses mode=iframe). Otherwise Stackly nav appears as a duplicate
+  // "uploaded" bar above the template header.
+  const isPreviewEmbed =
+    searchParams.get("mode") === "iframe" || searchParams.get("preview") === "embed";
   const shouldRenderNav = !(
     navbarHiddenRoutes.has(normalizedPathname) ||
     normalizedPathname.startsWith("/dashboard") ||
-    searchParams.get("mode") === "iframe"
+    isPreviewEmbed
   );
 
   // A top-level dynamic() declaration is still preloaded by Next for every

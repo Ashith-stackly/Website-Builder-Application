@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Edit, Copy, Trash2, Play, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import type { BlockpagesTemplateId } from '@/lib/blockpagesTemplates';
-import { saveBlockpagesVideoProps } from '@/lib/blockpagesVideoStorage';
+import { saveBlockpagesVideoProps, resolveVideoMediaUrl } from '@/lib/blockpagesVideoStorage';
 import { VideoBlockData } from './types';
 import type { DraftSaveStatus } from '../BlockPagesClient';
 import MyWebsiteDropdown from '../MyWebsiteDropdown';
@@ -23,7 +23,7 @@ const UploadedVideoPlayer = ({ block, uploadUrl, posterImage, autoplay, loop, mu
   return (
     <video
       ref={videoRef}
-      src={uploadUrl}
+      src={resolveVideoMediaUrl(uploadUrl)}
       poster={posterImage}
       autoPlay={autoplay}
       loop={loop}

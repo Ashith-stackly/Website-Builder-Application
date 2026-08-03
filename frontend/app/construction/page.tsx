@@ -31,6 +31,7 @@ import { assetPath } from "@/lib/paths";
 import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
 import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import BlockpagesSectionEnd from "@/components/blockpages/BlockpagesSectionEnd";
 
 const START_BUILDING_HREF = "/signup";
 
@@ -725,6 +726,7 @@ export default function ConstructionTemplatePage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="const-home" />
 
             {/* =================================================================
                 2. PROJECTS
@@ -811,6 +813,7 @@ export default function ConstructionTemplatePage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="const-projects" />
 
             {/* =================================================================
                 3. STATS + SERVICES
@@ -881,6 +884,7 @@ export default function ConstructionTemplatePage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="const-features" />
 
             {/* =================================================================
                 4. PROCESS
@@ -1000,6 +1004,7 @@ export default function ConstructionTemplatePage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="const-process" />
 
             {/* =================================================================
                 6. FAQ
@@ -1249,6 +1254,7 @@ export default function ConstructionTemplatePage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="const-faq" />
 
             {/* =================================================================
                 9. CONTACT
@@ -1377,6 +1383,7 @@ export default function ConstructionTemplatePage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="const-contact" />
 
             {/* Construction Template Footer (Matched to Digital Marketing Layout) */}
             <footer id="const-footer" data-blockpages-template-footer="true" className="@container bg-[#0A1E3D] text-white relative z-20">
@@ -1568,6 +1575,7 @@ export default function ConstructionTemplatePage() {
                 )}
               </AnimatePresence>
             </footer>
+            <BlockpagesSectionEnd sectionId="const-footer" />
 
           </div>
         </div>

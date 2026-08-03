@@ -26,6 +26,7 @@ import {
   isBlockpagesVideoApplied,
   loadBlockpagesVideoProps,
   saveBlockpagesVideoProps,
+  DEFAULT_PORTFOLIO_VIDEO_PROPS,
 } from "@/lib/blockpagesVideoStorage";
 import {
   getBlockpagesTemplateLabel,
@@ -89,18 +90,9 @@ import { defaultIconProps } from "./iconsblock/types";
 import type { IconBlockProps } from "./iconsblock/types";
  
 const initialVideoBlock: VideoBlockData = {
-  id: "video-default",
+  id: "video_block",
   type: "video",
-  props: {
-    sourceType: "upload",
-    uploadUrl: "https://cdn.pixabay.com/video/2015/09/04/529-137258380_tiny.mp4",
-    uploadFileName: "Nature -travel.mp4",
-    uploadFileSize: "24.5 MB",
-    autoplay: false,
-    loop: false,
-    muted: false,
-    showControls: true
-  },
+  props: { ...DEFAULT_PORTFOLIO_VIDEO_PROPS },
 };
  
 const initialDividerBlock: DividerBlockData = {
@@ -604,14 +596,24 @@ export default function BlockPagesClient() {
     if (isBlockpagesVideoApplied(textTemplate)) {
       const storedProps = loadBlockpagesVideoProps(textTemplate);
       if (storedProps) {
-        setVideoBlocks([{ id: "video-default", type: "video", props: storedProps }]);
-        setSelectedVideoBlockId("video-default");
+        setVideoBlocks([{ id: "video_block", type: "video", props: storedProps }]);
+        setSelectedVideoBlockId("video_block");
         return;
       }
     }
     setVideoBlocks([initialVideoBlock]);
     setSelectedVideoBlockId(initialVideoBlock.id);
   }, [textTemplate]);
+
+  useEffect(() => {
+    if (textTemplate !== "portfolio") return;
+    const primary = videoBlocks[0];
+    if (!primary) return;
+    saveBlockpagesVideoProps("portfolio", primary.props);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("stackly-portfolio-video-updated"));
+    }
+  }, [textTemplate, videoBlocks]);
  
   useEffect(() => {
     const scrollRoot = document.querySelector<HTMLElement>("[data-textblock-canvas]");
@@ -1133,12 +1135,16 @@ export default function BlockPagesClient() {
               }}
               videoBlocks={videoBlocks}
               isVideoEditingMode={isVideoEditingMode}
+              editingVideoId={editingVideoId}
               onEditVideo={(videoId) => {
                 if (!templateHasBuiltInVideoSlots(textTemplate)) {
                   showNoVideoAlert();
                   return;
                 }
                 flushBlockpagesPreviewSnapshot(textTemplate, appliedDividers);
+                if (videoBlocks[0]) {
+                  setSelectedVideoBlockId(videoBlocks[0].id);
+                }
                 setEditingVideoId(videoId);
                 setActiveBlockPage("video");
               }}

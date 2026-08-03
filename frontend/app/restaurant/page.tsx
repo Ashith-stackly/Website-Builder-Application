@@ -7,6 +7,7 @@ import { assetPath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt, FaEnvelope, FaPaperPlane, FaUtensils, FaUsers, FaCouch, FaLeaf, FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaBars, FaXmark } from "react-icons/fa6";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import BlockpagesSectionEnd from "@/components/blockpages/BlockpagesSectionEnd";
 import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
 import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
 import { motion, AnimatePresence } from "framer-motion";
@@ -380,6 +381,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </div>
+            <BlockpagesSectionEnd sectionId="restaurant-home" />
 
             {/* 2. MENU GRID (Changed from Templates to Foods) */}
             <section id="restaurant-menu" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
@@ -412,6 +414,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="restaurant-menu" />
 
             {/* 3. ABOUT US SECTION */}
             <section id="restaurant-about" className={`bg-gray-50 border-y border-gray-100 min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
@@ -443,6 +446,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="restaurant-about" />
 
             {/* 3.5 WHY CHOOSE US SECTION */}
             <section id="restaurant-why-choose-us" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
@@ -521,6 +525,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="restaurant-why-choose-us" />
 
             {/* 6. FAQ */}
             <section id="restaurant-faq" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"
@@ -576,6 +581,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="restaurant-faq" />
 
             {/* 6.5 GUEST EXPERIENCES (TESTIMONIALS) */}
             <section id="restaurant-testimonials" className={`bg-white min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
@@ -661,6 +667,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="restaurant-testimonials" />
 
 
             {/* 7. CONTACT SECTION */}
@@ -686,6 +693,7 @@ export default function RestaurantTemplatesPage() {
                 </div>
               </div>
             </section>
+            <BlockpagesSectionEnd sectionId="restaurant-contact" />
 
             <footer id="restaurant-footer" data-blockpages-template-footer="true" className={`@container bg-[#FFF5F5] min-w-0 ${deviceMode === "desktop" ? "py-16 sm:py-24 px-4 sm:px-6 lg:px-8" : "py-12 px-4"}`}>
               <div className="mx-auto max-w-7xl w-full">
@@ -916,6 +924,7 @@ export default function RestaurantTemplatesPage() {
                 )}
               </AnimatePresence>
             </footer>
+            <BlockpagesSectionEnd sectionId="restaurant-footer" />
 
           </div>
         </div>

@@ -12,7 +12,9 @@ import { FaBars, FaChevronDown, FaRightFromBracket, FaUser, FaXmark } from "reac
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesTextEditingActive } from "@/lib/blockpagesDropdownStyles";
 import PublicBlogListing from "@/components/blog/PublicBlogListing";
+import BlockpagesSectionEnd from "@/components/blockpages/BlockpagesSectionEnd";
 import { clearAuthToken } from "@/lib/authToken";
+import { buildBlogThemeCss } from "@/lib/blogPreviewTheme";
 
 const START_BLOGGING_HREF = "/blog/manage/create";
 const EXPLORE_BLOG_HREF = "/blog/manage";
@@ -246,7 +248,7 @@ function BlogHeader({
           Blogify.
         </button>
 
-        <nav className="hidden items-center gap-[clamp(1rem,2.5cqw,2rem)] min-w-0 @[760px]:flex @@max-[850px]:gap-[clamp(0.5rem,1.5cqw,1.1rem)]" aria-label="Blog main navigation">
+        <nav className="hidden items-center gap-[clamp(1rem,2.5cqw,2rem)] min-w-0 @[760px]:flex @max-[850px]:gap-[clamp(0.5rem,1.5cqw,1.1rem)]" aria-label="Blog main navigation">
           {navLinks.map((link) =>
             isCategoriesLink(link) ? (
               <div
@@ -263,7 +265,7 @@ function BlogHeader({
                 <button
                   ref={categoriesTriggerRef}
                   type="button"
-                  className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none @@max-[850px]:py-[0.4rem] @@max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
+                  className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none @max-[850px]:py-[0.4rem] @max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
                   onClick={(event) => {
                     if (event.currentTarget.isContentEditable) return;
                     if (link.hasDropdown) {
@@ -339,7 +341,7 @@ function BlogHeader({
               <button
                 key={link.label}
                 type="button"
-                className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none aria-expanded:bg-[rgba(43,127,255,0.35)] aria-expanded:text-white aria-expanded:shadow-[0_0_0_1px_rgba(43,127,255,0.55)] @@max-[850px]:py-[0.4rem] @@max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
+                className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none aria-expanded:bg-[rgba(43,127,255,0.35)] aria-expanded:text-white aria-expanded:shadow-[0_0_0_1px_rgba(43,127,255,0.55)] @max-[850px]:py-[0.4rem] @max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
                 onClick={() => scrollToSection(link.hash)}
               >
                 {link.label}
@@ -348,7 +350,7 @@ function BlogHeader({
           )}
         </nav>
 
-        <div className="flex items-center gap-[0.75rem] shrink-0 @@max-[759px]:gap-[0.5rem] @max-[340px]:gap-[0.4rem]">
+        <div className="flex items-center gap-[0.75rem] shrink-0 @max-[759px]:gap-[0.5rem] @max-[340px]:gap-[0.4rem]">
 
           <button
             type="button"
@@ -740,14 +742,24 @@ function BlogMarketingTemplate() {
                   />
                 </div>
 
-                <div className="w-full bg-[#0a192f] py-[1.5rem] flex justify-center">
-                  <Link href={EXPLORE_BLOG_HREF} className="inline-flex items-center justify-center min-h-[2.75rem] py-[0.55rem] px-[2.5rem] rounded-full border border-[var(--blog-white)] bg-transparent text-[var(--blog-white)] text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-all duration-300 ease-out max-w-full text-center hover:bg-[var(--blog-white)] hover:text-[#0a192f] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-                    Explore Blog
-                  </Link>
+                <div
+                  className="w-full bg-[#0a192f] py-[1.5rem] flex justify-center items-center"
+                  data-blog-explore-cta="true"
+                  style={{ background: "#0a192f" }}
+                >
+                  <a
+                    href={EXPLORE_BLOG_HREF}
+                    data-blog-explore-button="true"
+                    className="inline-flex items-center justify-center min-h-[2.75rem] py-[0.55rem] px-[2.5rem] rounded-full border-2 bg-transparent text-[clamp(0.85rem,1.8cqw,0.95rem)] font-semibold no-underline cursor-pointer transition-all duration-300 ease-out max-w-full text-center hover:bg-white hover:text-[#0a192f] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,255,255,0.2)] active:scale-95 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    style={{ color: "#ffffff", borderColor: "#ffffff", backgroundColor: "transparent" }}
+                  >
+                    Explore Now
+                  </a>
                 </div>
 
 
               </div>
+              <BlockpagesSectionEnd sectionId="blog-home" />
 
               {/* Build your way */}
               <section className="bg-[var(--blog-blue-bg)] border-t-2 border-b-2 border-[var(--blog-accent)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border bg-[#e6f0ff] py-[clamp(2rem,4cqw,3rem)] @min-[1280px]:py-[3rem]">
@@ -986,6 +998,7 @@ function BlogMarketingTemplate() {
                   </div>
                 </div>
               </section>
+              <BlockpagesSectionEnd sectionId="blog-categories" />
 
               {/* Trending posts */}
               <section
@@ -1010,6 +1023,7 @@ function BlogMarketingTemplate() {
                   </div>
                 </div>
               </section>
+              <BlockpagesSectionEnd sectionId="blog-trending" />
 
               {/* About */}
               <section
@@ -1061,6 +1075,7 @@ function BlogMarketingTemplate() {
                   </div>
                 </div>
               </section>
+              <BlockpagesSectionEnd sectionId="blog-about" />
 
               {/* Contact */}
               <section
@@ -1094,6 +1109,7 @@ function BlogMarketingTemplate() {
                   </div>
                 </div>
               </section>
+              <BlockpagesSectionEnd sectionId="blog-contact" />
 
               {/* FAQ */}
               <section className="w-full min-w-0" aria-labelledby="blog-faq-title">
@@ -1185,69 +1201,10 @@ function BlogMarketingTemplate() {
       )}
 
       <style jsx={false}>{`
-        .blog-page {
-          --blog-navy: #001f3f;
-          --blog-navy-muted: #1a3a5c;
-          --blog-blue-bg: #eaf2ff;
-          --blog-pink-bg: #fff0f0;
-          --blog-accent: #2d8cf0;
-          --blog-white: #ffffff;
-          --blog-container: 72rem;
-          --blog-container-wide: 76rem;
-          --blog-section-y: clamp(2.5rem, 7cqw, 5.5rem);
-          --blog-section-y-lg: clamp(3rem, 8cqw, 6.5rem);
-          --blog-radius-sm: 0.75rem;
-          --blog-radius-md: 1rem;
-          --blog-radius-lg: 1.25rem;
-          --blog-safe-inline: clamp(0.75rem, 4cqw, 3rem);
-          --stackly-nav-height: 3.5rem;
-          --blog-header-height: 3.25rem;
-          --blog-nav-gap: clamp(1rem, 2.5cqw, 1.5rem);
-          --blog-header-content-gap: 0;
-          --blog-scroll-offset: calc(
-            var(--stackly-nav-height-measured, var(--stackly-nav-height)) +
-              var(--blog-nav-gap) +
-              var(--blog-header-height) +
-              0.5rem
-          );
-          --blog-top-split: 38%;
-        }
+        ${buildBlogThemeCss()}
 
         html:has(.blog-page) {
           scroll-padding-top: var(--blog-scroll-offset);
-        }
-
-        #blog-categories,
-        #blog-trending,
-        #blog-about,
-        #blog-contact {
-          scroll-margin-top: var(--blog-scroll-offset) !important;
-        }
-
-        @container (min-width: 768px) {
-          .blog-page {
-            --stackly-nav-height: 3.75rem;
-            --blog-nav-gap: 1.5rem;
-          }
-        }
-
-        @container (max-width: 639px) {
-          .blog-page {
-            --blog-safe-inline: clamp(0.65rem, 4cqw, 1.25rem);
-            --blog-section-y: clamp(2rem, 6cqw, 3rem);
-          }
-        }
-
-        @container (min-width: 1024px) {
-          .blog-top-zone {
-            --blog-top-split: 40%;
-          }
-        }
-
-        @container (min-width: 1280px) {
-          .blog-top-zone {
-            --blog-top-split: 42%;
-          }
         }
 
         @keyframes slideDown {

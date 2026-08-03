@@ -1,14 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowUp } from "lucide-react";
 
 const SHOW_AFTER_PX = 500;
 
+/** Builder / preview surfaces use their own scroll chrome; avoid fixed overlap. */
+function shouldHideScrollToTop(pathname: string | null) {
+  if (!pathname) return false;
+  return pathname.startsWith("/blockpages") || pathname.startsWith("/portfolio");
+}
+
 export default function ScrollToTop() {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    if (shouldHideScrollToTop(pathname)) {
+      setIsVisible(false);
+      return;
+    }
+
     const handleScroll = () => {
       setIsVisible(window.scrollY >= SHOW_AFTER_PX);
     };
@@ -21,7 +34,11 @@ export default function ScrollToTop() {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleScroll);
     };
-  }, []);
+  }, [pathname]);
+
+  if (shouldHideScrollToTop(pathname)) {
+    return null;
+  }
 
   const scrollToTop = () => {
     window.scrollTo({

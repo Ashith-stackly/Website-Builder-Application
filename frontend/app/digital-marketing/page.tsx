@@ -31,6 +31,7 @@ import Footer from "@/components/Footer";
 import { scrollBlockpagesCanvasToSection } from "@/lib/blockpagesTemplateSections";
 import { resolveBlockpagesDeviceMode } from "@/lib/blockpagesEditorInteraction";
 import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
+import BlockpagesSectionEnd from "@/components/blockpages/BlockpagesSectionEnd";
 import {
   animateStatCounterElement,
   formatStatCounterValue,
@@ -653,6 +654,7 @@ export default function DigitalMarketingPreviewPage() {
                     </motion.div>
                   </motion.div>
                 </section>
+                <BlockpagesSectionEnd sectionId="home" />
 
                 {/* Mission & Vision */}
                 <section id="about" className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
@@ -709,6 +711,7 @@ export default function DigitalMarketingPreviewPage() {
                     </div>
                   </motion.div>
                 </section>
+                <BlockpagesSectionEnd sectionId="about" />
 
                 {/* Services */}
                 <section id="services" className="bg-[#0A1E3D] px-4 py-12 @md:px-8 @md:py-20">
@@ -776,6 +779,7 @@ export default function DigitalMarketingPreviewPage() {
                     </motion.div>
                   </motion.div>
                 </section>
+                <BlockpagesSectionEnd sectionId="services" />
 
                 {/* Why Choose Us */}
                 <section id="dm-why-choose" ref={isBlockpages ? statsRef : undefined} className="bg-[#FFF0F0] px-4 pb-12 @md:px-8 @md:pb-20">
@@ -1027,6 +1031,7 @@ export default function DigitalMarketingPreviewPage() {
                     </motion.div>
                   </div>
                 </motion.section>
+                <BlockpagesSectionEnd sectionId="blog" />
 
                 {/* Contact */}
                 <section id="contact" className="bg-[#FFF0F0] px-4 py-12 @md:px-8 @md:py-20">
@@ -1148,8 +1153,10 @@ export default function DigitalMarketingPreviewPage() {
                     </motion.div>
                   </motion.div>
                 </section>
+                <BlockpagesSectionEnd sectionId="contact" />
 
                 <TemplateFooter />
+                <BlockpagesSectionEnd sectionId="footer" />
               </div>
             </div>
           </div>

@@ -27,7 +27,7 @@ export function nodeIsInBlockpagesHeaderDropdown(node: Element) {
 
   return Boolean(
     dropdown.closest(
-      ".buyscreen-header, .buyscreen-categories, .restaurant-shell header, .construction-shell header, .dm-shell > .sticky, .dm-shell header"
+      ".buyscreen-header, .buyscreen-top-header, .buyscreen-categories, .restaurant-shell header, .construction-shell header, .dm-shell > .sticky, .dm-shell header"
     )
   );
 }
@@ -39,7 +39,7 @@ export function nodeIsInBlockpagesHeaderChrome(node: Element) {
 
   return Boolean(
     node.closest(
-      "[data-blockpages-template-header='true'], .buyscreen-header, .buyscreen-categories, .portfolio-shell > .sticky, .portfolio-mobile-menu, .restaurant-shell header, .construction-shell header, .dm-shell > .sticky, .dm-shell header"
+      "[data-blockpages-template-header='true'], .buyscreen-header, .buyscreen-top-header, .buyscreen-categories, .portfolio-shell > .sticky, .portfolio-mobile-menu, .restaurant-shell header, .construction-shell header, .dm-shell > .sticky, .dm-shell header"
     )
   );
 }

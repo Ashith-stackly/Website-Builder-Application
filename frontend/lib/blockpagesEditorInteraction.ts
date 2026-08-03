@@ -14,8 +14,16 @@ export function isBlockpagesInteractiveControl(
   if (node.closest(".portfolio-mobile-menu, .portfolio-mobile-menu-btn, .portfolio-mobile-menu")) return true;
 
   if (options?.allowTextEditing) {
-    if (node.closest("nav.buyscreen-categories .buyscreen-category-item, nav.buyscreen-categories .buyscreen-categories-list > button")) {
-      return true;
+    if (
+      node.closest(
+        "nav.buyscreen-categories .buyscreen-all-categories-toggle, nav.buyscreen-categories .buyscreen-all-categories-item, nav.buyscreen-categories .buyscreen-category-item, nav.buyscreen-categories .buyscreen-categories-list > button"
+      )
+    ) {
+      return false;
+    }
+
+    if (node.closest("header.buyscreen-top-header .buyscreen-top-header-nav-item")) {
+      return false;
     }
 
     const ariaLabel = (node.getAttribute("aria-label") ?? "").toLowerCase();
