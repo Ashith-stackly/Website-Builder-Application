@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
@@ -32,7 +32,7 @@ import { useThemeStore } from "@/lib/theme";
 import BlogSeoHead from "@/components/blog/BlogSeoHead";
 import ThemeToggle from "@/components/blog/ThemeToggle";
 import Footer from "@/components/Footer";
-
+ 
 export function BlogViewPage({
   slugOverride,
   workspaceIdOverride,
@@ -44,15 +44,15 @@ export function BlogViewPage({
   const searchParams = useSearchParams();
   const slug = slugOverride || params.slug;
   const workspaceId = workspaceIdOverride || searchParams.get("workspaceId") || "";
-
+ 
   // Theme integration from lib/theme.ts
   const resolved = useThemeStore((s) => s.resolved);
   const hydrate = useThemeStore((s) => s.hydrate);
-
+ 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
-
+ 
   // Scroll Progress Bar
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -60,7 +60,7 @@ export function BlogViewPage({
     damping: 30,
     restDelta: 0.001,
   });
-
+ 
   const [blog, setBlog] = useState<Blog | null>(null);
   const [project, setProject] = useState<ProjectApiProject | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogListItem[]>([]);
@@ -68,13 +68,13 @@ export function BlogViewPage({
   const [error, setError] = useState<string | null>(null);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
+ 
   const listingHref = workspaceId ? `/blog?workspaceId=${encodeURIComponent(workspaceId)}` : "/blog";
   const canonicalUrl = useMemo(() => {
     if (typeof window === "undefined" || !workspaceId || !slug) return undefined;
     return `${window.location.origin}${getPublicBlogPath(workspaceId, slug)}`;
   }, [slug, workspaceId]);
-
+ 
   const fetchPost = useCallback(async () => {
     if (!slug || !workspaceId) {
       setBlog(null);
@@ -83,21 +83,21 @@ export function BlogViewPage({
       setLoading(false);
       return;
     }
-
+ 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
+ 
     setLoading(true);
     setError(null);
     setBlog(null);
     setRelatedPosts([]);
     setShareMessage(null);
-
+ 
     try {
       const post = await getPublishedBlog(workspaceId, slug, controller.signal);
       setBlog(post);
-
+ 
       // Fetch project info to show project name
       getProjects(controller.signal)
         .then((projectsList) => {
@@ -105,7 +105,7 @@ export function BlogViewPage({
           if (match) setProject(match);
         })
         .catch(() => {});
-
+ 
       const related = await getPublishedBlogs(
         workspaceId,
         { limit: 4, category: post.category },
@@ -125,12 +125,12 @@ export function BlogViewPage({
       setLoading(false);
     }
   }, [slug, workspaceId]);
-
+ 
   useEffect(() => {
     void fetchPost();
     return () => abortRef.current?.abort();
   }, [fetchPost]);
-
+ 
   const handleShare = useCallback(async () => {
     const href = canonicalUrl || window.location.href;
     try {
@@ -146,7 +146,7 @@ export function BlogViewPage({
       window.setTimeout(() => setShareMessage(null), 1800);
     }
   }, [blog, canonicalUrl]);
-
+ 
   if (!slug || !workspaceId) {
     return (
       <main data-theme={resolved} className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 text-slate-900 dark:text-slate-100 transition-colors duration-200">
@@ -160,7 +160,7 @@ export function BlogViewPage({
       </main>
     );
   }
-
+ 
   if (loading) {
     return (
       <main data-theme={resolved} className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
@@ -174,7 +174,7 @@ export function BlogViewPage({
       </main>
     );
   }
-
+ 
   if (error || !blog) {
     return (
       <main data-theme={resolved} className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 text-slate-900 dark:text-slate-100 transition-colors duration-200">
@@ -200,7 +200,7 @@ export function BlogViewPage({
       </main>
     );
   }
-
+ 
   return (
     <div data-theme={resolved} className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 relative overflow-hidden">
       <BlogSeoHead
@@ -213,29 +213,29 @@ export function BlogViewPage({
         publishedAt={blog.publishedAt}
         updatedAt={blog.updatedAt}
       />
-
+ 
       {/* Top Animated Reading Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 z-50 origin-left"
         style={{ scaleX }}
       />
-
+ 
       {/* Ambient Radial Background Glows */}
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[32rem] bg-gradient-to-b from-blue-100/60 dark:from-blue-950/40 via-indigo-50/30 dark:via-indigo-950/20 to-transparent blur-3xl -z-10" />
-
+ 
       <main className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 pb-16">
         {/* Sticky Glassmorphic Header */}
         <header className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl shadow-2xs">
-          <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
             <Link
               href={listingHref}
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 no-underline transition hover:text-blue-600 dark:hover:text-blue-400 group"
+              className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 no-underline transition hover:text-blue-600 dark:hover:text-blue-400 group shrink-0"
             >
               <ArrowLeft size={15} className="transition-transform group-hover:-translate-x-0.5" />
-              <span>Back to Blog</span>
+              <span className="whitespace-nowrap">Back to Blog</span>
             </Link>
-            
-            <div className="flex items-center gap-3">
+           
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-start sm:justify-end mt-1 sm:mt-0">
               <ThemeToggle />
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -259,7 +259,7 @@ export function BlogViewPage({
             </div>
           </div>
         </header>
-
+ 
         {/* Main Segregated Article Container */}
         <motion.article
           initial="hidden"
@@ -282,7 +282,7 @@ export function BlogViewPage({
             className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-10 shadow-xl shadow-blue-500/5 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 dark:bg-blue-400/5 rounded-full blur-2xl pointer-events-none" />
-
+ 
             {/* Badges & Meta Info */}
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-4">
               {project && (
@@ -291,27 +291,27 @@ export function BlogViewPage({
                   <span>{project.projectName}</span>
                 </div>
               )}
-
+ 
               {blog.category && (
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/70 dark:to-indigo-950/70 px-3.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60 shadow-2xs">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
                   <span>{blog.category}</span>
                 </div>
               )}
-
+ 
               <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                 <CalendarDays size={14} className="text-slate-400 dark:text-slate-500" />
                 {getPublishDate(blog)}
               </span>
-
+ 
               <span className="text-slate-300 dark:text-slate-700">·</span>
-
+ 
               <span className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                 <Clock size={14} className="text-slate-400 dark:text-slate-500" />
                 {getReadingTime(blog.content)}
               </span>
             </div>
-
+ 
             {/* Main Title Section */}
             <div className="space-y-3">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
@@ -322,7 +322,7 @@ export function BlogViewPage({
                 {blog.title}
               </h1>
             </div>
-
+ 
             {/* Subtitle / Excerpt Lead Paragraph */}
             {getBlogExcerpt(blog) && (
               <p className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300 font-medium border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-1 m-0">
@@ -330,7 +330,7 @@ export function BlogViewPage({
               </p>
             )}
           </motion.div>
-
+ 
           {/* SECTION 2: Standardized Featured Image Card (Constrained Width & Height) */}
           {blog.featuredImage && (
             <motion.div
@@ -351,7 +351,7 @@ export function BlogViewPage({
               </div>
             </motion.div>
           )}
-
+ 
           {/* SECTION 3: Standardized Content Body Card */}
           <motion.div
             variants={{
@@ -368,11 +368,11 @@ export function BlogViewPage({
                 Article Story Content
               </h3>
             </div>
-
+ 
             <div className="whitespace-pre-wrap break-words text-base leading-relaxed sm:leading-loose text-slate-800 dark:text-slate-200 sm:text-lg">
               {blog.content}
             </div>
-
+ 
             {/* Tag Pills Footer */}
             {blog.tags && blog.tags.length > 0 && (
               <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-6">
@@ -394,7 +394,7 @@ export function BlogViewPage({
             )}
           </motion.div>
         </motion.article>
-
+ 
         {/* Related Posts Cards */}
         {relatedPosts.length > 0 && (
           <section className="border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 py-12 sm:py-16 mt-8">
@@ -407,7 +407,7 @@ export function BlogViewPage({
                   More From This Blog
                 </h2>
               </div>
-
+ 
               <motion.div
                 initial="hidden"
                 whileInView="show"
@@ -454,11 +454,13 @@ export function BlogViewPage({
             </div>
           </section>
         )}
-
+ 
         <Footer />
       </main>
     </div>
   );
 }
-
+ 
 export default BlogViewPage;
+ 
+ 

@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -45,57 +45,57 @@ import { useThemeStore } from "@/lib/theme";
 import BlogDeleteDialog from "@/components/blog/BlogDeleteDialog";
 import BlogToast from "@/components/blog/BlogToast";
 import ThemeToggle from "@/components/blog/ThemeToggle";
-
+ 
 /* ─── Modern Blog Management Dashboard ──────────────────────────────── */
-
+ 
 export default function BlogManagePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const workspaceId = searchParams.get("workspaceId") || "";
-
+ 
   // Theme integration from lib/theme.ts
   const resolved = useThemeStore((s) => s.resolved);
   const hydrate = useThemeStore((s) => s.hydrate);
-
+ 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
-
+ 
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [projects, setProjects] = useState<ProjectApiProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+ 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
-
+ 
   // Delete dialog state
   const [deleteTarget, setDeleteTarget] = useState<BlogListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
+ 
   // Toast state
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
-
+ 
   const abortRef = useRef<AbortController | null>(null);
-
+ 
   // Success toast on redirect after create/edit
   useEffect(() => {
     const created = searchParams.get("created");
     const updated = searchParams.get("updated");
     if (!created && !updated) return;
-
+ 
     setToast({
       message: created
         ? "Blog post created successfully."
         : "Blog post updated successfully.",
       type: "success",
     });
-
+ 
     const params = new URLSearchParams(searchParams.toString());
     params.delete("created");
     params.delete("updated");
@@ -103,7 +103,7 @@ export default function BlogManagePage() {
       `/blog/manage${params.toString() ? `?${params.toString()}` : ""}`
     );
   }, [router, searchParams]);
-
+ 
   // Authenticate & Load Projects
   useEffect(() => {
     const token = typeof window !== "undefined" ? getAuthToken() : null;
@@ -115,7 +115,7 @@ export default function BlogManagePage() {
       );
       return;
     }
-
+ 
     const controller = new AbortController();
     void getProjects(controller.signal)
       .then(async (items) => {
@@ -148,7 +148,7 @@ export default function BlogManagePage() {
       });
     return () => controller.abort();
   }, [router, workspaceId]);
-
+ 
   // Fetch blogs for active workspace
   const fetchBlogs = useCallback(async () => {
     if (!workspaceId) {
@@ -156,14 +156,14 @@ export default function BlogManagePage() {
       setLoading(false);
       return;
     }
-
+ 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
+ 
     setLoading(true);
     setError(null);
-
+ 
     try {
       const data = await getBlogs(workspaceId, controller.signal);
       setBlogs(data);
@@ -182,19 +182,19 @@ export default function BlogManagePage() {
       setLoading(false);
     }
   }, [workspaceId]);
-
+ 
   useEffect(() => {
     fetchBlogs();
     return () => {
       abortRef.current?.abort();
     };
   }, [fetchBlogs]);
-
+ 
   // Delete Handler
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
-
+ 
     try {
       await deleteBlog(deleteTarget._id);
       setDeleteTarget(null);
@@ -213,7 +213,7 @@ export default function BlogManagePage() {
       setIsDeleting(false);
     }
   }, [deleteTarget, workspaceId]);
-
+ 
   // Date Formatter
   const formatDate = (dateStr: string): string => {
     try {
@@ -226,7 +226,7 @@ export default function BlogManagePage() {
       return dateStr;
     }
   };
-
+ 
   // Filtered Blogs computation
   const filteredBlogs = useMemo(() => {
     return blogs.filter((blog) => {
@@ -238,7 +238,7 @@ export default function BlogManagePage() {
       return matchesSearch && matchesStatus;
     });
   }, [blogs, searchQuery, statusFilter]);
-
+ 
   // Statistics
   const stats = useMemo(() => {
     const total = blogs.length;
@@ -246,9 +246,9 @@ export default function BlogManagePage() {
     const drafts = blogs.filter((b) => b.status === "draft").length;
     return { total, published, drafts };
   }, [blogs]);
-
+ 
   const activeProject = projects.find((p) => p._id === workspaceId);
-
+ 
   return (
     <div
       data-theme={resolved}
@@ -256,7 +256,7 @@ export default function BlogManagePage() {
     >
       {/* Top Glassmorphic Navigation Header */}
       <header className="sticky top-0 z-40 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-2xs">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           {/* Left: Breadcrumbs & Project Selector */}
           <div className="flex items-center gap-3 flex-wrap min-w-0">
             <Link
@@ -275,22 +275,22 @@ export default function BlogManagePage() {
                 Blog Management
               </h1>
             </div>
-
+ 
             {/* Website Project Selector Dropdown */}
             {projects.length > 0 && (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setProjectDropdownOpen((p) => !p)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-2xs"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 px-2 sm:px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-2xs max-w-full"
                 >
-                  <Globe className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <span className="max-w-[140px] sm:max-w-[200px] truncate">
+                  <Globe className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0 self-start mt-0.5" />
+                  <span className="max-w-[120px] sm:max-w-[200px] text-[10px] sm:text-[11px] whitespace-normal break-words leading-snug text-left">
                     {activeProject ? activeProject.projectName : "Select Project"}
                   </span>
-                  <ChevronDown className={`h-3 w-3 text-slate-400 dark:text-slate-500 transition-transform ${projectDropdownOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-3 w-3 text-slate-400 dark:text-slate-500 transition-transform shrink-0 self-start mt-1 ${projectDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
-
+ 
                 <AnimatePresence>
                   {projectDropdownOpen && (
                     <>
@@ -300,12 +300,12 @@ export default function BlogManagePage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.96 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-0 top-full mt-2 z-40 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-xl text-left"
+                        className="absolute left-0 top-full mt-2 z-40 w-[240px] max-w-[80vw] sm:w-72 sm:max-w-none rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-xl text-left"
                       >
                         <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                           Select Website Project
                         </div>
-                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                        <div className="space-y-1">
                           {projects.map((proj) => {
                             const isSelected = proj._id === workspaceId;
                             return (
@@ -316,15 +316,14 @@ export default function BlogManagePage() {
                                   setProjectDropdownOpen(false);
                                   router.replace(`/blog/manage?workspaceId=${encodeURIComponent(proj._id)}`);
                                 }}
-                                className={`w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition text-left cursor-pointer ${
-                                  isSelected
-                                    ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60"
-                                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                }`}
+                                className={`w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition text-left cursor-pointer ${isSelected
+                                  ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60"
+                                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  }`}
                               >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <Layers className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                                  <span className="truncate">{proj.projectName}</span>
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <Layers className="h-3.5 w-3.5 shrink-0 text-blue-500 mt-0.5 self-start" />
+                                  <span className="text-[10px] sm:text-[11px] whitespace-normal break-words leading-snug text-left">{proj.projectName}</span>
                                 </div>
                                 {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />}
                               </button>
@@ -338,21 +337,21 @@ export default function BlogManagePage() {
               </div>
             )}
           </div>
-
+ 
           {/* Right: Theme Switcher & Primary Action Button */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
             <ThemeToggle />
-
+ 
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link
                 href={
                   workspaceId
                     ? `/blog/manage/create?workspaceId=${encodeURIComponent(
-                        workspaceId
-                      )}`
+                      workspaceId
+                    )}`
                     : "/blog/manage"
                 }
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 dark:bg-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/20 hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-blue-600/30 transition-all no-underline cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 dark:bg-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/20 hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-blue-600/30 transition-all no-underline cursor-pointer whitespace-nowrap"
               >
                 <Plus className="h-4 w-4" />
                 <span>New Blog Post</span>
@@ -361,7 +360,7 @@ export default function BlogManagePage() {
           </div>
         </div>
       </header>
-
+ 
       {/* Main Container */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Workspace Greeting & Header */}
@@ -383,7 +382,7 @@ export default function BlogManagePage() {
               Manage, edit, publish, and monitor your blog posts in real-time.
             </p>
           </div>
-
+ 
           <button
             type="button"
             onClick={fetchBlogs}
@@ -394,7 +393,7 @@ export default function BlogManagePage() {
             <span>Refresh</span>
           </button>
         </div>
-
+ 
         {/* Quick Statistics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Card 1: Total Posts */}
@@ -416,7 +415,7 @@ export default function BlogManagePage() {
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">articles created</span>
             </div>
           </motion.div>
-
+ 
           {/* Card 2: Published */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -436,7 +435,7 @@ export default function BlogManagePage() {
               <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">live on site</span>
             </div>
           </motion.div>
-
+ 
           {/* Card 3: Drafts */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -457,21 +456,20 @@ export default function BlogManagePage() {
             </div>
           </motion.div>
         </div>
-
+ 
         {/* Toolbar: Search & Filter bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs">
           {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 self-start md:self-auto">
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 w-full sm:w-auto">
             {(["all", "published", "draft"] as const).map((filterOption) => (
               <button
                 key={filterOption}
                 type="button"
                 onClick={() => setStatusFilter(filterOption)}
-                className={`relative rounded-lg px-3.5 py-1.5 text-xs font-bold capitalize transition-all cursor-pointer ${
-                  statusFilter === filterOption
-                    ? "text-slate-900 dark:text-slate-100 shadow-xs"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                }`}
+                className={`relative flex-auto sm:flex-none rounded-lg px-3 sm:px-3.5 py-1.5 text-xs font-bold capitalize transition-all cursor-pointer ${statusFilter === filterOption
+                  ? "text-slate-900 dark:text-slate-100 shadow-xs"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  }`}
               >
                 {statusFilter === filterOption && (
                   <motion.div
@@ -493,14 +491,14 @@ export default function BlogManagePage() {
                     {filterOption === "all"
                       ? stats.total
                       : filterOption === "published"
-                      ? stats.published
-                      : stats.drafts}
+                        ? stats.published
+                        : stats.drafts}
                   </span>
                 </span>
               </button>
             ))}
           </div>
-
+ 
           {/* Search Bar */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
@@ -522,7 +520,7 @@ export default function BlogManagePage() {
             )}
           </div>
         </div>
-
+ 
         {/* Loading State Skeleton */}
         {loading && (
           <div className="space-y-4">
@@ -544,7 +542,7 @@ export default function BlogManagePage() {
             ))}
           </div>
         )}
-
+ 
         {/* Error State */}
         {!loading && error && (
           <motion.div
@@ -564,7 +562,7 @@ export default function BlogManagePage() {
             </button>
           </motion.div>
         )}
-
+ 
         {/* Empty State: No Blogs Exist */}
         {!loading && !error && blogs.length === 0 && (
           <motion.div
@@ -588,8 +586,8 @@ export default function BlogManagePage() {
                 href={
                   workspaceId
                     ? `/blog/manage/create?workspaceId=${encodeURIComponent(
-                        workspaceId
-                      )}`
+                      workspaceId
+                    )}`
                     : "/blog/manage"
                 }
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 dark:bg-blue-500 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 dark:hover:bg-blue-600 transition-all no-underline cursor-pointer"
@@ -600,7 +598,7 @@ export default function BlogManagePage() {
             </motion.div>
           </motion.div>
         )}
-
+ 
         {/* Empty Search/Filter Result State */}
         {!loading && !error && blogs.length > 0 && filteredBlogs.length === 0 && (
           <motion.div
@@ -625,7 +623,7 @@ export default function BlogManagePage() {
             </button>
           </motion.div>
         )}
-
+ 
         {/* Blog Post Cards List */}
         {!loading && !error && filteredBlogs.length > 0 && (
           <motion.div
@@ -658,26 +656,24 @@ export default function BlogManagePage() {
                       <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                         {blog.title}
                       </h3>
-
+ 
                       {/* Status Badge */}
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold shrink-0 ${
-                          blog.status === "published"
-                            ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/60"
-                            : "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold shrink-0 ${blog.status === "published"
+                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/60"
+                          : "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60"
+                          }`}
                       >
                         <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            blog.status === "published"
-                              ? "bg-emerald-500 animate-pulse"
-                              : "bg-amber-500"
-                          }`}
+                          className={`h-1.5 w-1.5 rounded-full ${blog.status === "published"
+                            ? "bg-emerald-500 animate-pulse"
+                            : "bg-amber-500"
+                            }`}
                         />
                         <span className="capitalize">{blog.status}</span>
                       </span>
                     </div>
-
+ 
                     {/* Metadata line */}
                     <div className="mt-2 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500 flex-wrap">
                       <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
@@ -694,9 +690,9 @@ export default function BlogManagePage() {
                       )}
                     </div>
                   </div>
-
+ 
                   {/* Right Actions Toolbar */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-end">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-end mt-3 sm:mt-0">
                     {blog.status === "published" && (
                       <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                         <Link
@@ -711,7 +707,7 @@ export default function BlogManagePage() {
                         </Link>
                       </motion.div>
                     )}
-
+ 
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
@@ -728,7 +724,7 @@ export default function BlogManagePage() {
                       <Edit3 className="h-3.5 w-3.5" />
                       <span>Edit</span>
                     </motion.button>
-
+ 
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
@@ -746,7 +742,7 @@ export default function BlogManagePage() {
           </motion.div>
         )}
       </main>
-
+ 
       {/* Delete Confirmation Dialog Modal */}
       {deleteTarget && (
         <BlogDeleteDialog
@@ -756,7 +752,7 @@ export default function BlogManagePage() {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
-
+ 
       {/* Toast Notification */}
       <BlogToast
         message={toast?.message ?? null}
@@ -766,3 +762,5 @@ export default function BlogManagePage() {
     </div>
   );
 }
+ 
+ 

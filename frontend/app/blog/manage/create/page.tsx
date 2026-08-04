@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -21,24 +21,24 @@ import { getAuthToken } from "@/lib/authToken";
 import { useThemeStore } from "@/lib/theme";
 import BlogForm from "@/components/blog/BlogForm";
 import ThemeToggle from "@/components/blog/ThemeToggle";
-
+ 
 export default function CreateBlogPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialWorkspaceId = searchParams.get("workspaceId") || "";
-
+ 
   // Theme integration from lib/theme.ts
   const resolved = useThemeStore((s) => s.resolved);
   const hydrate = useThemeStore((s) => s.hydrate);
-
+ 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
-
+ 
   const [workspaceId, setWorkspaceId] = useState(initialWorkspaceId);
   const [loadingProject, setLoadingProject] = useState(!initialWorkspaceId);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+ 
   useEffect(() => {
     const token = typeof window !== "undefined" ? getAuthToken() : null;
     if (!token) {
@@ -49,12 +49,12 @@ export default function CreateBlogPage() {
       );
       return;
     }
-
+ 
     if (workspaceId) return;
-
+ 
     const controller = new AbortController();
     setLoadingProject(true);
-
+ 
     getProjects(controller.signal)
       .then(async (projects) => {
         if (projects[0]?._id) {
@@ -85,14 +85,14 @@ export default function CreateBlogPage() {
       })
       .catch(() => {})
       .finally(() => setLoadingProject(false));
-
+ 
     return () => controller.abort();
   }, [router, workspaceId]);
-
+ 
   const handleSubmit = useCallback(
     async (data: BlogFormData) => {
       setIsSubmitting(true);
-
+ 
       try {
         const token = typeof window !== "undefined" ? getAuthToken() : null;
         if (!token) {
@@ -124,7 +124,7 @@ export default function CreateBlogPage() {
     },
     [router, workspaceId]
   );
-
+ 
   return (
     <motion.main
       data-theme={resolved}
@@ -134,11 +134,11 @@ export default function CreateBlogPage() {
     >
       {/* Soft Ambient Background Elements */}
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-blue-100/40 dark:from-blue-950/20 via-indigo-50/20 dark:via-indigo-950/10 to-transparent blur-3xl -z-10" />
-
+ 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-xs">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400 flex-wrap min-w-0">
             <Link
               href={
                 workspaceId
@@ -158,8 +158,8 @@ export default function CreateBlogPage() {
               Create Blog Post
             </span>
           </div>
-
-          <div className="flex items-center gap-3">
+ 
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
             <ThemeToggle />
             {workspaceId && (
               <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/60">
@@ -170,7 +170,7 @@ export default function CreateBlogPage() {
           </div>
         </div>
       </header>
-
+ 
       {/* Main Content Area */}
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {/* Title Hero */}
@@ -191,7 +191,7 @@ export default function CreateBlogPage() {
             Craft engaging content for your audience. Save as draft or publish immediately to your live site.
           </p>
         </motion.div>
-
+ 
         {/* Form Container */}
         {loadingProject ? (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-12 text-center shadow-sm flex flex-col items-center justify-center gap-3">
@@ -221,7 +221,7 @@ export default function CreateBlogPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-slate-200/40 dark:shadow-slate-950/40 p-6 sm:p-9"
+            className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-slate-200/40 dark:shadow-slate-950/40 p-4 sm:p-9"
           >
             <BlogForm
               onSubmit={handleSubmit}
@@ -234,3 +234,5 @@ export default function CreateBlogPage() {
     </motion.main>
   );
 }
+ 
+ 
