@@ -36,6 +36,12 @@ import {
   PASSWORD_WHITESPACE_ERROR,
   passwordContainsWhitespace,
 } from "@/lib/resetFlowValidation";
+import { setAuthToken } from "@/lib/authToken";
+import {
+  clearRememberedLogin,
+  readRememberedLogin,
+  saveRememberedLogin,
+} from "@/lib/rememberLogin";
  
 function normalizeLoginEmail(raw: string): string {
   return raw.replace(/\s/g, "").trim().toLowerCase();
@@ -93,7 +99,28 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false); // New state for popup
   const emailInputRef = useRef<HTMLInputElement>(null);
- 
+  const rememberedAppliedRef = useRef(false);
+
+  useEffect(() => {
+    // Keep fields empty on load; only mark Remember Me if we have saved credentials.
+    if (readRememberedLogin()) {
+      setForm((prev) => ({ ...prev, rememberMe: true }));
+    }
+  }, []);
+
+  const applyRememberedCredentials = () => {
+    if (rememberedAppliedRef.current) return;
+    const remembered = readRememberedLogin();
+    if (!remembered) return;
+    rememberedAppliedRef.current = true;
+    // Fill email + password together on first field focus (not browser dropdown).
+    setForm({
+      email: remembered.email,
+      password: remembered.password,
+      rememberMe: true,
+    });
+  };
+
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
     const setup = () => observeAuthPlaceholderFit(emailInputRef.current, mql.matches);
@@ -376,7 +403,12 @@ export default function LoginPage() {
       // Frontend-only demo account (no backend). Grants a default subscription
       // so template "Edit" buttons open the builder. Remove once auth is wired up.
       if (isDemoLoginCredentials(contact, form.password)) {
-        activateDemoSession();
+        activateDemoSession(form.rememberMe);
+        if (form.rememberMe) {
+          saveRememberedLogin(contact, form.password);
+        } else {
+          clearRememberedLogin();
+        }
         setForm(initialLoginState);
         setErrors((prev) => ({ ...prev, form: "Login successful!" }));
         setShowSuccessModal(true);
@@ -386,7 +418,7 @@ export default function LoginPage() {
         }, 2000);
         return;
       }
- 
+
       const isMobileContact = isValidSimpleMobileContact(contact);
       const result = await loginApi({
         ...(isMobileContact
@@ -394,11 +426,19 @@ export default function LoginPage() {
           : { email: normalizeLoginEmail(contact) }),
         password: form.password,
       });
- 
+
       if (result.token) {
-        window.localStorage.setItem("stackly-auth-token", result.token);
+        // Remember Me → localStorage (survives browser restart).
+        // Otherwise → sessionStorage (cleared when the tab/session ends).
+        setAuthToken(result.token, form.rememberMe);
       }
- 
+
+      if (form.rememberMe) {
+        saveRememberedLogin(contact, form.password);
+      } else {
+        clearRememberedLogin();
+      }
+
       setForm(initialLoginState);
       setErrors((prev) => ({ ...prev, form: "Login successful!" }));
       // Trigger success popup and delay redirect
@@ -454,7 +494,13 @@ export default function LoginPage() {
                     </motion.div>
                   </motion.div>
  
-                  <motion.form onSubmit={handleLogin} noValidate variants={loginContainerVariants}>
+                  <motion.form
+                    onSubmit={handleLogin}
+                    noValidate
+                    autoComplete="off"
+                    method="post"
+                    variants={loginContainerVariants}
+                  >
                     <motion.div className="space-y-6 sm:space-y-4 lg:space-y-6 flex-shrink-0" variants={loginContainerVariants}>
                     <motion.div className="flex flex-col" variants={loginFadeUp}>
                       <motion.div className="login-contact-row flex items-center border-b border-white/60 pb-2 min-w-0" whileFocus={{ scale: 1.01 }} whileHover={{ borderColor: "rgba(255,255,255,0.95)", transition: { duration: 0.2 } }}>
@@ -462,9 +508,12 @@ export default function LoginPage() {
                         <input
                           ref={emailInputRef}
                           type="text"
+                          name="login-contact"
+                          autoComplete="off"
                           placeholder="Email or Mobile number"
                           value={form.email}
                           onChange={handleChange("email")}
+                          onFocus={applyRememberedCredentials}
                           onBlur={() => {
                             handleContactBlur();
                             requestAnimationFrame(() =>
@@ -500,9 +549,12 @@ export default function LoginPage() {
                         <FaLock className="mr-2 sm:mr-4 text-sm opacity-80 flex-shrink-0" />
                         <input
                           type={showPassword ? "text" : "password"}
+                          name="login-password"
+                          autoComplete="off"
                           placeholder="Password"
                           value={form.password}
                           onChange={handleChange("password")}
+                          onFocus={applyRememberedCredentials}
                           onKeyDown={handlePasswordKeyDown}
                           maxLength={PASSWORD_MAX_LENGTH}
                           className="bg-transparent outline-none w-full min-w-0 placeholder-white text-sm pr-9"
