@@ -1043,7 +1043,7 @@ export default function Home() {
       >
         <motion.div className="w-full lg:w-1/2 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white flex-shrink-0 aspect-video" variants={fadeUp} whileHover={softHover}>
           <img
-            src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800"
+            src={assetPath("/landing-optimized/aboutus.webp")}
             alt="Stackly office"
             className="w-full h-full object-cover transition duration-700 hover:scale-105"
             loading="lazy"
