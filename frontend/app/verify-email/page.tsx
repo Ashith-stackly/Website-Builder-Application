@@ -2,7 +2,7 @@
  
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { isApiConnectionError, verifyEmailOtp } from "@/lib/api";
+import { isApiConnectionError, verifyEmailOtp, checkOtpPreview } from "@/lib/api";
 import {
   createOtpChangeHandler,
   createOtpFocusHandler,
@@ -41,6 +41,9 @@ function VerifyEmailContent() {
   const isCodeComplete = code.every((digit) => digit !== "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isOtpValid, setIsOtpValid] = useState(false);
+  const [isCheckingOtp, setIsCheckingOtp] = useState(false);
+
  
   useEffect(() => {
     document.documentElement.classList.add("auth-visible");
@@ -58,7 +61,7 @@ function VerifyEmailContent() {
     expireSession,
     updateAttemptsUsed,
   } = useOtpSession(contact, "email");
- 
+
   const clearError = () => setError("");
  
   const hasReachedMaxAttempts = otpAttemptsUsed >= OTP_MAX_ATTEMPTS;
@@ -68,7 +71,43 @@ function VerifyEmailContent() {
     cooldownSecondsLeft > 0
       ? `OTP expires in ${cooldownSecondsLeft}s`
       : "OTP expired";
- 
+  useEffect(() => {
+  if (!info) return;
+
+  const timer = setTimeout(() => {
+    setInfo("");
+  }, 3000);
+
+  return () => clearTimeout(timer);
+}, [info]);
+
+  useEffect(() => {
+  const otp = code.join("");
+
+  const validateOtp = async () => {
+    if (otp.length !== 4) {
+      setIsOtpValid(false);
+      return;
+    }
+
+    try {
+      setIsCheckingOtp(true);
+
+      const result = await checkOtpPreview({
+        input: contact,
+        otp,
+      });
+
+      setIsOtpValid(result.valid);
+    } catch {
+      setIsOtpValid(false);
+    } finally {
+      setIsCheckingOtp(false);
+    }
+  };
+
+  validateOtp();
+}, [code, contact]);
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -103,24 +142,39 @@ function VerifyEmailContent() {
         ? err.message
         : "Verification failed. Please try again.";
  
-      const attemptsLeft =
-        err instanceof Error
-          ? (err as unknown as { attemptsLeft?: number }).attemptsLeft
-          : undefined;
-      if (typeof attemptsLeft === "number") {
-        updateAttemptsUsed(Math.max(0, OTP_MAX_ATTEMPTS - attemptsLeft));
-      } else {
-        const normalized = message.toLowerCase();
-        if (normalized.includes("max attempts")) {
-          updateAttemptsUsed(OTP_MAX_ATTEMPTS);
-          setInfo("");
-        }
-        if (normalized.includes("otp expired")) {
-          updateAttemptsUsed(0);
-          expireSession();
-        }
-      }
-      setError(message);
+      const apiError = err as Error & {
+  attemptsLeft?: number;
+  redirectToForgot?: boolean;
+  redirectDelay?: number;
+};
+
+const attemptsLeft = apiError.attemptsLeft;
+
+if (typeof attemptsLeft === "number") {
+  updateAttemptsUsed(
+    Math.max(0, OTP_MAX_ATTEMPTS - attemptsLeft)
+  );
+}
+
+if (apiError.redirectToForgot) {
+  updateAttemptsUsed(OTP_MAX_ATTEMPTS);
+  setInfo("");
+  setError(message);
+
+  setTimeout(() => {
+    router.push("/forgot-password");
+  }, apiError.redirectDelay || 3000);
+
+  return;
+}
+
+if (message.toLowerCase().includes("otp expired")) {
+  updateAttemptsUsed(0);
+  expireSession();
+}
+
+setError(message);
+
     } finally {
       setIsSubmitting(false);
     }
@@ -197,15 +251,22 @@ function VerifyEmailContent() {
             >
               Want to change your email address?{" "}
               <button
-                type="button"
+              type="button"
+                disabled={!isOtpValid || isCheckingOtp}
                 onClick={() =>
-                  router.push("/forgot-password?changeFrom=verify-email")
+                  router.push(
+                    `/forgot-password?changeFrom=verify-email&primaryUser=${encodeURIComponent(contact)}`
+                  )
                 }
                 className={VERIFY_OTP_LINK_CLASS}
-                style={{ color: "#F2B541" }}
+                style={{
+                  color: isOtpValid ? "#F2B541" : "#999999",
+                  opacity: isOtpValid ? 1 : 0.5,
+                  cursor: isOtpValid ? "pointer" : "not-allowed",
+                }}
               >
                 Click here
-              </button>
+              </button> 
             </p>
  
             <button
@@ -224,11 +285,12 @@ function VerifyEmailContent() {
                 {otpExpiryLabel}
               </p>
  
-              {error && (
+              {error && error !== MAX_ATTEMPTS_REACHED_MESSAGE && (
                 <p className="text-[12px]" style={{ color: "#F2B541" }}>
                   {error}
                 </p>
               )}
+
  
               <p className="text-[11px] sm:text-[12px]" style={{ color: "#F2B541" }}>
                 Attempts used: {otpAttemptsUsed}/{OTP_MAX_ATTEMPTS}

@@ -54,11 +54,20 @@ function ForgotPasswordContent() {
     setMessage("");
     setMessageTone("success");
  
-    const trimmed = contactInput.trim();
-    if (!trimmed) {
-      setError("Enter a valid email or mobile number");
-      return;
-    }
+    // ================= EMPTY INPUT VALIDATION =================
+const trimmed = contactInput.trim();
+
+if (!trimmed) {
+  if (changeFrom === "verify-email") {
+    setError("Enter an Alternative email address");
+  } else if (changeFrom === "verify-mobile") {
+    setError("Enter an Alternative mobile number");
+  } else {
+    setError("Enter an Email or mobile number");
+  }
+  return;
+}
+
  
     const isMobileFlow = looksLikeMobileContactInput(trimmed);
     let verifyRoute: "/verify-email" | "/verify-mobile";

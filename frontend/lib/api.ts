@@ -5,7 +5,10 @@ type ApiErrorBody = {
   message?: string;
   errors?: string[];
   attemptsLeft?: number;
+  redirectToForgot?: boolean;
+  redirectDelay?: number;
 };
+
  
 export type LoginBody = {
   email?: string;
@@ -26,7 +29,11 @@ export type ForgotPasswordBody = {
   isChange?: boolean;
   primaryUser?: string;
 };
- 
+export type CheckOtpPreviewBody = {
+  input: string;
+  otp: string;
+};
+
 export type VerifyEmailOtpBody = {
   email: string;
   otp?: string;
@@ -66,16 +73,31 @@ async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
  
   const data = (await response.json().catch(() => ({}))) as ApiErrorBody;
  
-  if (!response.ok) {
-    const message =
-      data.message || data.errors?.join(", ") || "Request failed";
-    const err = new Error(message);
-    // OTP verify endpoints may include `attemptsLeft` in error responses.
-    if (typeof data.attemptsLeft === "number") {
-      (err as unknown as { attemptsLeft: number }).attemptsLeft = data.attemptsLeft;
-    }
-    throw err;
+if (!response.ok) {
+  const message =
+    data.message || data.errors?.join(", ") || "Request failed";
+
+  const err = new Error(message) as Error & {
+    attemptsLeft?: number;
+    redirectToForgot?: boolean;
+    redirectDelay?: number;
+  };
+
+  if (typeof data.attemptsLeft === "number") {
+    err.attemptsLeft = data.attemptsLeft;
   }
+
+  if (typeof data.redirectToForgot === "boolean") {
+    err.redirectToForgot = data.redirectToForgot;
+  }
+
+  if (typeof data.redirectDelay === "number") {
+    err.redirectDelay = data.redirectDelay;
+  }
+
+  throw err;
+}
+
  
   return data as T;
 }
@@ -123,7 +145,16 @@ export async function forgotPassword(body: ForgotPasswordBody): Promise<{ messag
     body: JSON.stringify(body),
   });
 }
- 
+/** POST /api/auth/check Otp Preview */
+export async function checkOtpPreview(
+  body: CheckOtpPreviewBody
+): Promise<{ valid: boolean }> {
+  return apiRequest("/auth/check-otp-preview", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 /** POST /api/auth/verify-email */
 export async function verifyEmailOtp(body: VerifyEmailOtpBody): Promise<{ token?: string; message?: string; otp?: string }> {
   return apiRequest("/auth/verify-email", {
