@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
@@ -15,9 +15,9 @@ import { EffectsTab } from "./panel/EffectsTab";
 import LayersPanel from "./LayersPanel";
 import { ImagePanel } from "@/components/blocks/image/ImagePanel";
 import { ROW_LAYOUTS } from "@/components/draggable/RowComponent";
-
+ 
 type Tab = "content" | "style" | "effects" | "layers";
-
+ 
 const SECTION_AI_BLOCKS = new Set([
   "hero",
   "contact",
@@ -37,11 +37,11 @@ const SECTION_AI_BLOCKS = new Set([
   "button",
   "feature-item",
 ]);
-
+ 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
-
+ 
 /**
  * Only accept generated values that preserve the current block's top-level
  * shape. This keeps a provider response from turning a typed array/object
@@ -53,30 +53,30 @@ function getCompatibleSectionProps(
   generatedFields?: Record<string, unknown>,
 ): Record<string, unknown> {
   if (!isRecord(current) || !generatedFields) return {};
-
+ 
   const patch: Record<string, unknown> = {};
   for (const [key, nextValue] of Object.entries(generatedFields)) {
     if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
     if (!(key in current)) continue;
-
+ 
     const currentValue = current[key];
     const compatible =
       (typeof currentValue === "string" && typeof nextValue === "string") ||
       (Array.isArray(currentValue) && Array.isArray(nextValue)) ||
       (isRecord(currentValue) && isRecord(nextValue));
-
+ 
     if (compatible) patch[key] = nextValue;
   }
   return patch;
 }
-
+ 
 const TABS: Array<{ id: Tab; label: string; Icon: LucideIcon }> = [
   { id: "content",  label: "Content",  Icon: SquareMousePointer },
   { id: "style",    label: "Style",    Icon: Paintbrush },
   { id: "effects",  label: "Effects",  Icon: Sparkles },
   { id: "layers",   label: "Layers",   Icon: Layers2 },
 ];
-
+ 
 export default function PropertyEditor({
   component,
   onUpdate,
@@ -89,7 +89,7 @@ export default function PropertyEditor({
   onClose?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("content");
-
+ 
   useEffect(() => {
     const handleSetTab = (event: Event) => {
       const tab = (event as CustomEvent<{ tab?: Tab }>).detail?.tab;
@@ -97,14 +97,14 @@ export default function PropertyEditor({
         setActiveTab(tab);
       }
     };
-
+ 
     window.addEventListener("stackly:set-property-tab", handleSetTab);
     return () => window.removeEventListener("stackly:set-property-tab", handleSetTab);
   }, []);
-
+ 
   const renderContentEditor = () => {
     if (!component) return null;
-
+ 
     const spec = blockRegistry[component.type];
     if (spec) {
       const data = spec.read(component);
@@ -139,11 +139,11 @@ export default function PropertyEditor({
         </AIAssistProvider>
       );
     }
-
+ 
     if (component.type === "image") {
       return <ImagePanel component={component} onUpdate={onUpdate} />;
     }
-
+ 
     if (component.type === "columns") {
       const cur = component.content || "3";
       return (
@@ -152,7 +152,7 @@ export default function PropertyEditor({
           <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-[#0B1D40]">
             {(["2", "3", "4"] as const).map((n) => (
               <button key={n} type="button"
-                className={`py-2.5 text-sm font-bold transition ${cur === n ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
+                className={`py-2.5 cursor-pointer text-sm font-bold transition ${cur === n ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
                 onClick={() => onUpdate(component.id, { content: n })}>
                 {n}
               </button>
@@ -164,7 +164,7 @@ export default function PropertyEditor({
         </div>
       );
     }
-
+ 
     if (component.type === "row") {
       const currentLayout = String(component.props?.layout || component.content || "50/50");
       return (
@@ -175,7 +175,7 @@ export default function PropertyEditor({
               <button
                 key={layout}
                 type="button"
-                className={`rounded-lg border px-2 py-2.5 text-[12px] font-bold transition ${
+                className={`rounded-lg cursor-pointer border px-2 py-2.5 text-[12px] font-bold transition ${
                   currentLayout === layout
                     ? "border-[#0B1D40] bg-[#0B1D40] text-white"
                     : "border-[#dbe3ef] bg-white/60 text-[#0B1D40] hover:border-blue-300 hover:bg-blue-50"
@@ -192,7 +192,7 @@ export default function PropertyEditor({
         </div>
       );
     }
-
+ 
     if (component.type === "icon") {
       return (
         <div className="space-y-3">
@@ -204,7 +204,7 @@ export default function PropertyEditor({
               const active = component.content === name;
               return (
                 <button key={name} title={name} type="button"
-                  className={`flex items-center justify-center rounded p-2 transition-all duration-150 ${active ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-[#0B1D40]/10"}`}
+                  className={`flex cursor-pointer items-center justify-center rounded p-2 transition-all duration-150 ${active ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-[#0B1D40]/10"}`}
                   onClick={() => onUpdate(component.id, { content: name })}>
                   <Icon size={16} color={active ? "white" : "#0B1D40"} />
                 </button>
@@ -217,7 +217,7 @@ export default function PropertyEditor({
         </div>
       );
     }
-
+ 
     if (component.type === "spacer") {
       const height = String(component.props?.height || component.content || "60px");
       return (
@@ -234,7 +234,7 @@ export default function PropertyEditor({
         </div>
       );
     }
-
+ 
     if (component.type === "map") {
       const p = (component.props || {}) as Record<string, unknown>;
       return (
@@ -250,7 +250,7 @@ export default function PropertyEditor({
         </div>
       );
     }
-
+ 
     if (component.type === "countdown") {
       const p = (component.props || {}) as Record<string, unknown>;
       return (
@@ -266,7 +266,7 @@ export default function PropertyEditor({
         </div>
       );
     }
-
+ 
     return (
       <AIAssistProvider blockType={component.type}>
         <TextareaField
@@ -278,13 +278,13 @@ export default function PropertyEditor({
       </AIAssistProvider>
     );
   };
-
-
-
+ 
+ 
+ 
   const asideClass =
     className ??
     "relative hidden h-full w-[300px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-[#f4d8cc] bg-[#fff7f4] shadow-[0_18px_45px_rgba(113,63,18,0.10)] xl:flex";
-
+ 
   return (
     <aside className={asideClass}>
       {/* ── Close handle (mobile sheet) ── */}
@@ -301,7 +301,7 @@ export default function PropertyEditor({
           </button>
         </div>
       )}
-
+ 
       {/* ── Block name header ── */}
       {component && (
         <div className="flex items-center gap-2 border-b border-[#f0eae6] px-5 py-3">
@@ -315,7 +315,7 @@ export default function PropertyEditor({
           </span>
         </div>
       )}
-
+ 
       {/* ── Tabs ── */}
       <div className="flex border-b border-[#f2d8cf] bg-white/40 px-1 pt-1">
         {TABS.map(({ id, label, Icon }) => (
@@ -324,7 +324,7 @@ export default function PropertyEditor({
             type="button"
             title={label}
             onClick={() => setActiveTab(id)}
-            className={`flex flex-1 flex-col items-center gap-0.5 rounded-t-md pb-2.5 pt-2 text-[10px] font-bold uppercase tracking-wider transition-colors duration-150 ${
+            className={`flex flex-1 cursor-pointer flex-col items-center gap-0.5 rounded-t-md pb-2.5 pt-2 text-[10px] font-bold uppercase tracking-wider transition-colors duration-150 ${
               activeTab === id
                 ? "border-b-2 border-[#0B1D40] text-[#0B1D40]"
                 : "border-b-2 border-transparent text-[#566583] hover:text-[#0B1D40]"
@@ -335,7 +335,7 @@ export default function PropertyEditor({
           </button>
         ))}
       </div>
-
+ 
       {/* ── Tab body ── */}
       <div className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <AnimatePresence mode="wait">
@@ -375,3 +375,5 @@ export default function PropertyEditor({
     </aside>
   );
 }
+ 
+ 

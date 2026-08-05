@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -29,18 +29,18 @@ import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
 import type { Project } from "@/types/project";
 import type { ProjectSortKey } from "@/types/project";
-
+ 
 type ViewMode = "grid" | "list";
 type Segment = "all" | "favorites" | "archived";
-
+ 
 const TONES = ["#4f6bed", "#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#f43f5e"];
-
+ 
 const SORTS: { key: ProjectSortKey; label: string }[] = [
   { key: "updatedAt", label: "Last edited" },
   { key: "createdAt", label: "Date created" },
   { key: "name", label: "Name" },
 ];
-
+ 
 function relTime(iso?: string): string {
   if (!iso) return "just now";
   const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -51,7 +51,7 @@ function relTime(iso?: string): string {
   const d = Math.floor(h / 24);
   return d < 7 ? `${d}d ago` : `${Math.floor(d / 7)}w ago`;
 }
-
+ 
 export default function ProjectsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,43 +73,43 @@ export default function ProjectsPage() {
     deleteProject: state.deleteProject,
     duplicateProject: state.duplicateProject,
   })));
-
+ 
   const [view, setView] = usePersistentState<ViewMode>("stackly-projects-view", "grid");
   const [segment, setSegment] = useState<Segment>("all");
   const [favorites, setFavorites] = usePersistentState<string[]>("stackly-favorites", []);
   const [createOpen, setCreateOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const sortRef = useClickOutside<HTMLDivElement>(() => setSortOpen(false), sortOpen);
-
+ 
   useEffect(() => {
     const c = new AbortController();
     void loadProjects(c.signal);
     return () => c.abort();
   }, [loadProjects]);
-
+ 
   useEffect(() => {
     if (searchParams.get("new") === "1") {
       setCreateOpen(true);
       router.replace("/dashboard/projects");
     }
   }, [searchParams, router]);
-
+ 
   const toggleFav = (id: string) =>
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
+ 
   const visible = useMemo(() => {
     let list = getFilteredProjects();
     if (segment === "favorites") list = list.filter((p) => favorites.includes(p.id));
     else if (segment === "archived") list = list.filter((p) => p.status === "archived");
     return list;
   }, [getFilteredProjects, segment, favorites]);
-
+ 
   const segments: { key: Segment; label: string; count: number }[] = [
     { key: "all", label: "All", count: projects.length },
     { key: "favorites", label: "Favorites", count: favorites.length },
     { key: "archived", label: "Archived", count: projects.filter((p) => p.status === "archived").length },
   ];
-
+ 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6">
@@ -122,11 +122,11 @@ export default function ProjectsPage() {
             </p>
           </div>
           <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} transition={spring.snappy} onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
             <Plus className="h-4 w-4" /> New Project
           </motion.button>
         </motion.div>
-
+ 
         {/* Toolbar */}
         <motion.div variants={staggerChild} className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <LayoutGroup id="projects-seg">
@@ -135,7 +135,7 @@ export default function ProjectsPage() {
                 const active = segment === s.key;
                 return (
                   <button key={s.key} onClick={() => setSegment(s.key)}
-                    className="relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold"
+                    className="relative flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold"
                     style={{ color: active ? "#fff" : "var(--text-muted)" }}>
                     {active && <motion.span layoutId="projects-seg-active" transition={spring.snappy} className="absolute inset-0 rounded-lg" style={{ background: "var(--accent)" }} />}
                     <span className="relative z-10">{s.label}</span>
@@ -145,7 +145,7 @@ export default function ProjectsPage() {
               })}
             </div>
           </LayoutGroup>
-
+ 
           <div className="flex items-center gap-2">
             {/* Search */}
             <div className="relative flex-1 lg:w-64">
@@ -158,11 +158,11 @@ export default function ProjectsPage() {
                 style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}
               />
             </div>
-
+ 
             {/* Sort */}
             <div ref={sortRef} className="relative">
               <button onClick={() => setSortOpen((v) => !v)}
-                className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-muted)" }}>
+                className="flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-muted)" }}>
                 <ArrowUpDown className="h-4 w-4" />
                 <span className="hidden sm:inline">{SORTS.find((s) => s.key === sort.key)?.label}</span>
               </button>
@@ -172,7 +172,7 @@ export default function ProjectsPage() {
                     className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border p-1 shadow-xl" style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}>
                     {SORTS.map((s) => (
                       <button key={s.key} onClick={() => { setSort(s.key); setSortOpen(false); }}
-                        className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+                        className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
                         style={{ color: "var(--text)" }}>
                         {s.label}
                         {sort.key === s.key && <span className="text-xs" style={{ color: "var(--accent)" }}>{sort.order === "desc" ? "↓" : "↑"}</span>}
@@ -182,11 +182,11 @@ export default function ProjectsPage() {
                 )}
               </AnimatePresence>
             </div>
-
+ 
             {/* View toggle */}
             <div className="flex items-center gap-0.5 rounded-xl border p-1" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               {(["grid", "list"] as ViewMode[]).map((m) => (
-                <button key={m} onClick={() => setView(m)} className="relative grid h-7 w-7 place-items-center rounded-lg" aria-label={m} style={{ color: view === m ? "#fff" : "var(--text-faint)" }}>
+                <button key={m} onClick={() => setView(m)} className="relative grid h-7 w-7 cursor-pointer place-items-center rounded-lg" aria-label={m} style={{ color: view === m ? "#fff" : "var(--text-faint)" }}>
                   {view === m && <motion.span layoutId="projects-view-active" transition={spring.snappy} className="absolute inset-0 rounded-lg" style={{ background: "var(--accent)" }} />}
                   <span className="relative z-10">{m === "grid" ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}</span>
                 </button>
@@ -194,7 +194,7 @@ export default function ProjectsPage() {
             </div>
           </div>
         </motion.div>
-
+ 
         {/* Content */}
         {isLoading ? (
           <SkeletonGrid view={view} />
@@ -256,14 +256,14 @@ export default function ProjectsPage() {
           </motion.div>
         )}
       </motion.div>
-
+ 
       <CreateProjectModal isOpen={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
   );
 }
-
+ 
 /* ─── card ─────────────────────────────────────────────────────────────── */
-
+ 
 function ProjectCard({
   project, view, tone, fav, onToggleFav, onOpen, onRename, onDelete, onDuplicate,
 }: {
@@ -273,7 +273,7 @@ function ProjectCard({
   const [menu, setMenu] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setMenu(false), menu);
-
+ 
   const doRename = () => {
     setMenu(false);
     setRenameModalOpen(true);
@@ -282,10 +282,10 @@ function ProjectCard({
     setMenu(false);
     if (window.confirm(`Delete “${project.name}”?`)) onDelete(project.id);
   };
-
+ 
   const Menu = (
     <div ref={ref} className="relative">
-      <button onClick={() => setMenu((v) => !v)} className="grid h-8 w-8 place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]" style={{ color: "var(--text-faint)" }} aria-label="Actions">
+      <button onClick={() => setMenu((v) => !v)} className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]" style={{ color: "var(--text-faint)" }} aria-label="Actions">
         <MoreHorizontal className="h-4 w-4" />
       </button>
       <AnimatePresence>
@@ -301,22 +301,22 @@ function ProjectCard({
       </AnimatePresence>
     </div>
   );
-
+ 
   const Fav = (
-    <button onClick={onToggleFav} className="grid h-8 w-8 place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]" aria-label="Favorite">
+    <button onClick={onToggleFav} className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]" aria-label="Favorite">
       <Star className="h-4 w-4" style={{ color: fav ? "#f59e0b" : "var(--text-faint)", fill: fav ? "#f59e0b" : "transparent" }} />
     </button>
   );
-
+ 
   return (
     <>
       {view === "list" ? (
         <motion.div layout variants={cardItem} exit={{ opacity: 0, scale: 0.97 }} whileHover={{ x: 3 }} transition={spring.snappy}
           className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
-          <button onClick={onOpen} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ background: tone }}>
+          <button onClick={onOpen} className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl text-white" style={{ background: tone }}>
             <Blocks className="h-5 w-5" />
           </button>
-          <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+          <button onClick={onOpen} className="min-w-0 flex-1 cursor-pointer text-left">
             <p className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</p>
             <p className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
               <span className="truncate">{project.category || "Website"}</span><span>·</span>
@@ -329,7 +329,7 @@ function ProjectCard({
       ) : (
         <motion.div layout variants={cardItem} exit={{ opacity: 0, scale: 0.96 }} whileHover={{ y: -4 }} transition={spring.snappy}
           className={`group relative flex flex-col rounded-2xl border ${menu ? "z-40" : "z-0 hover:z-20"}`} style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
-          <button onClick={onOpen} className="relative h-32 w-full overflow-hidden rounded-t-2xl" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
+          <button onClick={onOpen} className="relative h-32 w-full cursor-pointer overflow-hidden rounded-t-2xl" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
             <span className="absolute inset-0 grid place-items-center">
               <span className="grid h-12 w-12 place-items-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ background: tone }}>
                 <Blocks className="h-5 w-5" />
@@ -338,7 +338,7 @@ function ProjectCard({
             <span className="absolute left-3 top-3 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase backdrop-blur" style={{ background: "var(--glass)", color: "var(--text-muted)" }}>{project.status || "draft"}</span>
           </button>
           <div className="flex items-center gap-1 p-3">
-            <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+            <button onClick={onOpen} className="min-w-0 flex-1 cursor-pointer text-left">
               <p className="truncate text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</p>
               <p className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
                 <span className="truncate">{project.category || "Website"}</span><span>·</span>
@@ -349,7 +349,7 @@ function ProjectCard({
           </div>
         </motion.div>
       )}
-
+ 
       <RenameProjectModal
         isOpen={renameModalOpen}
         onClose={() => setRenameModalOpen(false)}
@@ -359,15 +359,15 @@ function ProjectCard({
     </>
   );
 }
-
+ 
 function MItem({ icon: Icon, label, onClick, danger }: { icon: React.ElementType; label: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button onClick={onClick} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]" style={{ color: danger ? "#f43f5e" : "var(--text)" }}>
+    <button onClick={onClick} className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]" style={{ color: danger ? "#f43f5e" : "var(--text)" }}>
       <Icon className="h-4 w-4" /> {label}
     </button>
   );
 }
-
+ 
 function SkeletonGrid({ view }: { view: ViewMode }) {
   return (
     <div className={view === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-2.5"}>
@@ -386,3 +386,5 @@ function SkeletonGrid({ view }: { view: ViewMode }) {
     </div>
   );
 }
+ 
+ 

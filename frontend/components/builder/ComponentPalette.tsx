@@ -101,7 +101,7 @@ function PaletteItem({ item, onAdd }: { item: (typeof paletteItems)[number]; onA
       variants={staggerChild}
       whileHover={{ y: -3, scale: 1.03 }}
       whileTap={{ scale: 0.94 }}
-      className={`group flex flex-col items-center gap-2.5 rounded-xl border border-white/5 bg-[#112248] px-2 py-4 text-center transition-colors hover:border-blue-500/40 hover:bg-[#162C58] ${isDragging ? "opacity-40" : ""}`}
+      className={`group flex cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-white/5 bg-[#112248] px-2 py-4 text-center transition-colors hover:border-blue-500/40 hover:bg-[#162C58] ${isDragging ? "opacity-40" : ""}`}
       onClick={() => {
         if (suppressClickAfterDrag.current) { suppressClickAfterDrag.current = false; return; }
         onAdd(item.type);
@@ -180,7 +180,7 @@ export default function ComponentPalette({
               key={g}
               type="button"
               onClick={() => setActiveGroup(g)}
-              className="relative z-10 flex-1 rounded-md py-1.5 text-[10px] font-bold transition-colors"
+              className="relative z-10 flex-1 cursor-pointer rounded-md py-1.5 text-[10px] font-bold transition-colors"
             >
               <span className={activeGroup === g ? "text-white" : "text-gray-500 hover:text-gray-300"}>
                 {GROUP_LABELS[g]}
@@ -203,7 +203,7 @@ export default function ComponentPalette({
         <motion.button
           whileHover={{ scale: 1.02, y: -1 }}
           whileTap={{ scale: 0.97 }}
-          className="mb-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-gradient-to-br from-violet-600/25 to-fuchsia-600/15 px-3 py-2.5 text-[12px] font-bold text-violet-100 shadow-[0_0_20px_rgba(139,92,246,0.12)] transition hover:border-violet-300/60 hover:text-white"
+          className="mb-2.5 flex cursor-pointer w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-gradient-to-br from-violet-600/25 to-fuchsia-600/15 px-3 py-2.5 text-[12px] font-bold text-violet-100 shadow-[0_0_20px_rgba(139,92,246,0.12)] transition hover:border-violet-300/60 hover:text-white"
           onClick={() => setIsAILayoutOpen(true)}
           type="button"
         >
@@ -214,7 +214,7 @@ export default function ComponentPalette({
         <motion.button
           whileHover={{ scale: 1.02, y: -1 }}
           whileTap={{ scale: 0.97 }}
-          className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 to-violet-600/20 px-3 py-2.5 text-[12px] font-bold text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.1)] transition hover:border-blue-400/50 hover:text-white"
+          className="mb-4 flex cursor-pointer w-full items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 to-violet-600/20 px-3 py-2.5 text-[12px] font-bold text-blue-200 shadow-[0_0_20px_rgba(59,130,246,0.1)] transition hover:border-blue-400/50 hover:text-white"
           onClick={onLoadStarter}
           type="button"
         >
@@ -258,6 +258,8 @@ export default function ComponentPalette({
     </aside>
   );
 }
+ 
+ 
  
  
  

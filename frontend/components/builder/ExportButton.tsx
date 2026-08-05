@@ -1,10 +1,10 @@
 "use client";
-
+ 
 import { useState } from "react";
 import { AlertCircle, Download, Loader2 } from "lucide-react";
 import { createStandaloneHtml } from "@/lib/deploymentPackage";
 import { useBuilderStore } from "@/store/builderStore";
-
+ 
 function downloadStandaloneHtml(html: string, filename = "stackly-page.html") {
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -16,7 +16,7 @@ function downloadStandaloneHtml(html: string, filename = "stackly-page.html") {
   link.remove();
   URL.revokeObjectURL(url);
 }
-
+ 
 /**
  * A single-file download remains convenient for local handoff. It is now
  * derived from the same manifest-backed deployment package used by Publish,
@@ -26,7 +26,7 @@ export default function ExportButton() {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const prepareDeploymentPackage = useBuilderStore((state) => state.prepareDeploymentPackage);
-
+ 
   const handleExport = async () => {
     if (isExporting) return;
     setIsExporting(true);
@@ -43,10 +43,10 @@ export default function ExportButton() {
       setIsExporting(false);
     }
   };
-
+ 
   return (
     <button
-      className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition hover:bg-[#152B52] active:scale-95 disabled:cursor-wait disabled:opacity-70"
+      className="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0B1D40] px-3 py-2 text-[13px] font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition hover:bg-[#152B52] active:scale-95 disabled:cursor-wait disabled:opacity-70"
       disabled={isExporting}
       onClick={() => void handleExport()}
       title={error || "Prepare a validated standalone HTML export"}
@@ -57,3 +57,5 @@ export default function ExportButton() {
     </button>
   );
 }
+ 
+ 

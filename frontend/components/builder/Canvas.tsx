@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { memo, useCallback, useEffect, useRef, useState, useMemo, useLayoutEffect, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, RefreshCw, Rocket, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
@@ -21,7 +21,7 @@ import { summarizeDeploymentPackage } from "@/lib/deploymentPackage";
 import type { BuilderComponent, ComponentType, Viewport } from "@/types/builder";
 import { VIEWPORT_WIDTHS } from "@/types/builder";
 import { staggerContainer } from "@/lib/motion";
-
+ 
 // Asset browsing and publishing are modal workflows. Loading them only when a
 // user opens the corresponding tool keeps their dependencies out of the first
 // interactive editor payload.
@@ -30,7 +30,7 @@ const AssetManager = dynamic(
   { ssr: false },
 );
 const PublishDialog = dynamic(() => import("./PublishDialog"), { ssr: false });
-
+ 
 function Canvas({
   components,
   onSelect,
@@ -61,7 +61,7 @@ function Canvas({
     [components],
   );
   const sortableIds = useMemo(() => flowComponents.map((c) => c.id), [flowComponents]);
-
+ 
   /* ── Store actions for new features ── */
   const undo = useBuilderStore((s) => s.undo);
   const redo = useBuilderStore((s) => s.redo);
@@ -98,7 +98,7 @@ function Canvas({
   const canvasBackground = useBuilderUiStore((s) => s.canvasBackground);
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
-
+ 
   /* ── Quick-insert helpers ── */
   const handleQuickInsertBefore = useCallback(
     (type: ComponentType, beforeId: string) => {
@@ -106,14 +106,14 @@ function Canvas({
     },
     [insertComponentBefore],
   );
-
+ 
   const handleQuickInsertAfter = useCallback(
     (type: ComponentType, afterId: string) => {
       storeAddComponent(type, null, afterId);
     },
     [storeAddComponent],
   );
-
+ 
   /* ── Project name (local state, persisted via save) ── */
   const [projectName, setProjectName] = useState("My Website");
   const [editingName, setEditingName] = useState(false);
@@ -124,11 +124,11 @@ function Canvas({
   const toolsMenuRef = useRef<HTMLDivElement>(null);
   const toolsBtnRef = useRef<HTMLButtonElement>(null);
   const [toolsPos, setToolsPos] = useState<{ top: number; left: number } | null>(null);
-
+ 
   useEffect(() => {
     if (editingName) nameInputRef.current?.select();
   }, [editingName]);
-
+ 
   useEffect(() => {
     if (!toolsOpen) return;
     const onPointerDown = (event: MouseEvent) => {
@@ -147,7 +147,7 @@ function Canvas({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [toolsOpen]);
-
+ 
   // Calculate dropdown position from button rect
   useLayoutEffect(() => {
     if (!toolsOpen || !toolsBtnRef.current) { setToolsPos(null); return; }
@@ -159,13 +159,13 @@ function Canvas({
     if (left + dropdownWidth > window.innerWidth - 8) left = window.innerWidth - dropdownWidth - 8;
     setToolsPos({ top: rect.bottom + 6, left });
   }, [toolsOpen]);
-
+ 
   /* ── Save feedback ── */
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedProjectRef = useRef<string | null>(null);
   const autosaveFingerprintRef = useRef<string | null>(null);
-
+ 
   useEffect(() => {
     if (!projectId || loadedProjectRef.current === projectId) return;
     loadedProjectRef.current = projectId;
@@ -177,14 +177,14 @@ function Canvas({
       loadedProjectRef.current = null;
     };
   }, [loadProject, projectId]);
-
+ 
   useEffect(() => {
     if (currentProjectName) {
       const id = window.setTimeout(() => setProjectName(currentProjectName), 0);
       return () => window.clearTimeout(id);
     }
   }, [currentProjectName]);
-
+ 
   useEffect(() => {
     const queryProjectName = searchParams.get("projectName");
     if (!projectId && queryProjectName) {
@@ -192,42 +192,42 @@ function Canvas({
       return () => window.clearTimeout(id);
     }
   }, [projectId, searchParams]);
-
+ 
   const handleSave = async () => {
     useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
     const ok = await saveDraft();
     if (!ok) return;
-
+ 
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 2200);
     setLastSavedAt(Date.now());
   };
-
+ 
   const handlePreparePublish = useCallback(async () => {
     useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
     return prepareForPublish();
   }, [currentProjectName, prepareForPublish, projectName]);
-
+ 
   const handleInspectPublishPackage = useCallback(async () => {
     const deploymentPackage = await prepareDeploymentPackage();
     return summarizeDeploymentPackage(deploymentPackage);
   }, [prepareDeploymentPackage]);
-
+ 
   /* ── Backend autosave after a 5-second debounce ── */
   useEffect(() => {
     if (!autoSaveEnabled || !currentProjectId || components.length === 0) return;
-
+ 
     const fingerprint = JSON.stringify({ components, tokens, seo, canvasMode });
     if (autosaveFingerprintRef.current === null) {
       autosaveFingerprintRef.current = fingerprint;
       return;
     }
     if (autosaveFingerprintRef.current === fingerprint) return;
-
+ 
     autosaveFingerprintRef.current = fingerprint;
     markDirty();
-
+ 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       useBuilderStore.setState({ currentProjectName: projectName.trim() || currentProjectName || "My Website" });
@@ -235,13 +235,13 @@ function Canvas({
         if (ok) setLastSavedAt(Date.now());
       });
     }, 5000);
-
+ 
     return () => {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
   }, [autoSaveEnabled, autosave, canvasMode, components, currentProjectId, currentProjectName, markDirty, projectName, seo, setLastSavedAt, tokens]);
-
+ 
   const handleLoad = () => {
     if (!currentProjectId) {
       alert("Open a saved backend project to reload it.");
@@ -250,12 +250,12 @@ function Canvas({
     const controller = new AbortController();
     void loadProject(currentProjectId, controller.signal);
   };
-
+ 
   const runTool = (action: () => void) => {
     action();
     setToolsOpen(false);
   };
-
+ 
   const handleImportJSON = async () => {
     const { openJSONFile } = await import("@/lib/jsonExportImport");
     const content = await openJSONFile();
@@ -265,7 +265,7 @@ function Canvas({
       alert(`Import failed: ${error}`);
     }
   };
-
+ 
   return (
     <main
       className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#dbe3ef] bg-[#f7f9fc] shadow-sm"
@@ -296,9 +296,9 @@ function Canvas({
           >
             <Redo2 className="h-4 w-4" />
           </button>
-
+ 
           <div className="mx-1 h-5 w-px bg-[#dbe3ef]" />
-
+ 
           {/* Editable project name */}
           {editingName ? (
             <input
@@ -322,7 +322,7 @@ function Canvas({
             </button>
           )}
         </div>
-
+ 
         {/* Right: actions */}
         <div className="flex flex-shrink-0 items-center gap-1.5 md:gap-2">
           <div className="relative">
@@ -331,7 +331,7 @@ function Canvas({
               type="button"
               title="Builder tools"
               onClick={() => setToolsOpen((open) => !open)}
-              className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-bold text-[#0B1D40] shadow-sm transition hover:bg-gray-50 active:scale-95 sm:px-3"
+              className="flex h-9 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-bold text-[#0B1D40] shadow-sm transition hover:bg-gray-50 active:scale-95 sm:px-3"
             >
               <MoreHorizontal className="h-4 w-4 text-gray-500" />
               <span className="hidden sm:inline">Tools</span>
@@ -341,12 +341,12 @@ function Canvas({
             type="button"
             title="Preview page"
             onClick={onPreview}
-            className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-blue-100 bg-blue-50 px-2.5 text-[12px] font-bold text-blue-700 shadow-sm transition hover:bg-blue-100 active:scale-95 sm:px-3"
+            className="flex h-9 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-blue-100 bg-blue-50 px-2.5 text-[12px] font-bold text-blue-700 shadow-sm transition hover:bg-blue-100 active:scale-95 sm:px-3"
           >
             <Eye className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Preview</span>
           </button>
-
+ 
           {/* Animated save-status pill (backend persistence feedback) */}
           {(() => {
             const status = isSaving
@@ -383,7 +383,7 @@ function Canvas({
               </div>
             );
           })()}
-
+ 
           <ExportButton />
           <motion.button
             type="button"
@@ -393,14 +393,14 @@ function Canvas({
             onClick={() => setIsPublishOpen(true)}
             whileHover={components.length ? { y: -1 } : undefined}
             whileTap={components.length ? { scale: 0.97 } : undefined}
-            className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 text-[12px] font-extrabold text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-45 sm:px-3"
+            className="flex h-9 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 text-[12px] font-extrabold text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-45 sm:px-3"
           >
             <Rocket className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Publish</span>
           </motion.button>
         </div>
       </div>
-
+ 
       {/* ── Viewport / device switcher ── */}
       <div
         className="flex h-9 flex-shrink-0 items-center justify-center gap-1 border-b border-[#dbe3ef] bg-white/80 px-4"
@@ -416,7 +416,7 @@ function Canvas({
             type="button"
             title={`${label} (${VIEWPORT_WIDTHS[id]}px)`}
             onClick={() => setViewport(id)}
-            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition ${
+            className={`flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition ${
               viewport === id
                 ? "bg-[#0B1D40] text-white shadow-sm"
                 : "text-[#566583] hover:bg-gray-100 hover:text-[#0B1D40]"
@@ -437,7 +437,7 @@ function Canvas({
             title="Flow layout — the default responsive section editor"
             aria-pressed={canvasMode === "flow"}
             onClick={() => setCanvasMode("flow")}
-            className={`rounded px-2 py-1 text-[10px] font-bold transition ${
+            className={`rounded cursor-pointer px-2 py-1 text-[10px] font-bold transition ${
               canvasMode === "flow"
                 ? "bg-[#0B1D40] text-white"
                 : "text-[#566583] hover:bg-slate-100 hover:text-[#0B1D40]"
@@ -450,7 +450,7 @@ function Canvas({
             title="Freeform layout — position and resize blocks on an absolute canvas"
             aria-pressed={canvasMode === "freeform"}
             onClick={() => setCanvasMode("freeform")}
-            className={`rounded px-2 py-1 text-[10px] font-bold transition ${
+            className={`rounded cursor-pointer px-2 py-1 text-[10px] font-bold transition ${
               canvasMode === "freeform"
                 ? "bg-blue-600 text-white"
                 : "text-[#566583] hover:bg-slate-100 hover:text-[#0B1D40]"
@@ -473,7 +473,7 @@ function Canvas({
           )}
         </AnimatePresence>
       </div>
-
+ 
       {/* ── Canvas drop zone ── */}
       {canvasMode === "freeform" ? (
         <FreeformCanvas
@@ -564,7 +564,7 @@ function Canvas({
               </p>
               <button
                 type="button"
-                className="mt-6 flex items-center gap-2 rounded-md bg-[#0B1D40] px-5 py-3 text-sm font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition hover:bg-[#152B52] active:scale-95"
+                className="mt-6 flex cursor-pointer items-center gap-2 rounded-md bg-[#0B1D40] px-5 py-3 text-sm font-bold text-white shadow-[0_2px_4px_rgba(11,29,64,0.3)] transition hover:bg-[#152B52] active:scale-95"
                 onClick={(e) => { e.stopPropagation(); onLoadStarter(); }}
               >
                 <Sparkles className="h-4 w-4" />
@@ -595,7 +595,7 @@ function Canvas({
               ))}
             </SortableContext>
           )}
-
+ 
           {floatingComponents.length > 0 && (
             <div className="pointer-events-none absolute inset-0 z-40">
               {floatingComponents.map((component) => (
@@ -611,7 +611,7 @@ function Canvas({
         </motion.div>
       </div>
       )}
-
+ 
       {isAssetsOpen && (
         <AssetManager open onClose={() => setIsAssetsOpen(false)} />
       )}
@@ -626,7 +626,7 @@ function Canvas({
           onInspectPackage={handleInspectPublishPackage}
         />
       )}
-
+ 
       {/* ── Tools dropdown (portal to escape stacking context) ── */}
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
@@ -657,7 +657,7 @@ function Canvas({
     </main>
   );
 }
-
+ 
 function ToolMenuButton({
   label,
   Icon,
@@ -682,10 +682,10 @@ function ToolMenuButton({
     </button>
   );
 }
-
+ 
 const isFloatingComponent = (component: BuilderComponent) =>
   (component.type === "icon" || component.type === "button") && component.props?.floating === true;
-
+ 
 function FloatingCanvasItem({
   component,
   onDelete,
@@ -700,32 +700,32 @@ function FloatingCanvasItem({
   const isSelected = selectedComponentId === component.id;
   const position = component.position ?? { x: 32, y: 32 };
   const zIndex = Number(component.styles.zIndex || component.zIndex || 60);
-
+ 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || component.locked) return;
-
+ 
     event.preventDefault();
     event.stopPropagation();
     onSelect(component.id);
-
+ 
     const startPointer = { x: event.clientX, y: event.clientY };
     const startPosition = component.position ?? { x: 32, y: 32 };
-
+ 
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const dx = moveEvent.clientX - startPointer.x;
       const dy = moveEvent.clientY - startPointer.y;
       moveComponent(component.id, startPosition.x + dx, startPosition.y + dy);
     };
-
+ 
     const handlePointerUp = () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-
+ 
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp, { once: true });
   };
-
+ 
   return (
     <motion.div
       className="pointer-events-auto absolute"
@@ -769,5 +769,7 @@ function FloatingCanvasItem({
     </motion.div>
   );
 }
-
+ 
 export default memo(Canvas);
+ 
+ 

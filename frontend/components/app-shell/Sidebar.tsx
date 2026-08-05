@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,14 +16,14 @@ import {
 } from "lucide-react";
 import { spring, staggerChild } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
-import { useModKeyLabel } from "@/lib/hooks";
+import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { primaryNav, isActivePath, type NavItem } from "./navConfig";
-
+ 
 const WORKSPACES = [
   { id: "personal", name: "Personal", initial: "P", tone: "#4f6bed" },
   { id: "team", name: "Team (soon)", initial: "T", tone: "#8b5cf6", disabled: true },
 ];
-
+ 
 export default function Sidebar({
   collapsed,
   onToggleCollapse,
@@ -41,12 +41,13 @@ export default function Sidebar({
   const recent = projects.slice(0, 4);
   const [wsOpen, setWsOpen] = useState(false);
   const [ws, setWs] = useState(WORKSPACES[0]);
+  const wsRef = useClickOutside<HTMLDivElement>(() => setWsOpen(false), wsOpen);
   const modKey = useModKeyLabel();
-
+ 
   return (
     <div className="flex h-full flex-col" style={{ background: "var(--surface)" }}>
       {/* Brand + collapse */}
-      <div className="flex h-16 items-center gap-2.5 px-3">
+      <div className="relative flex h-16 items-center gap-2.5 px-3">
         <Link
           href="/dashboard"
           onClick={onNavigate}
@@ -73,20 +74,26 @@ export default function Sidebar({
         <motion.button
           onClick={onToggleCollapse}
           whileTap={{ scale: 0.9 }}
-          className="ml-auto hidden h-8 w-8 shrink-0 place-items-center rounded-lg lg:grid"
-          style={{ color: "var(--text-faint)" }}
+          className={`hidden h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)] lg:grid ${
+            collapsed ? "absolute -right-3 z-10 border shadow-sm" : "ml-auto"
+          }`}
+          style={{
+            color: "var(--text-faint)",
+            borderColor: collapsed ? "var(--border)" : "transparent",
+            background: collapsed ? "var(--surface)" : "transparent"
+          }}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </motion.button>
       </div>
-
+ 
       {/* Workspace selector */}
-      <div className="relative px-3 pb-2">
+      <div ref={wsRef} className="relative px-3 pb-2">
         <motion.button
           onClick={() => setWsOpen((v) => !v)}
           whileTap={{ scale: 0.98 }}
-          className="flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors"
+          className="flex w-full cursor-pointer items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors"
           style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
         >
           <span
@@ -114,7 +121,7 @@ export default function Sidebar({
           </AnimatePresence>
           {!collapsed && <ChevronDown className="h-4 w-4" style={{ color: "var(--text-faint)" }} />}
         </motion.button>
-
+ 
         <AnimatePresence>
           {wsOpen && !collapsed && (
             <motion.ul
@@ -134,7 +141,7 @@ export default function Sidebar({
                       setWs(w);
                       setWsOpen(false);
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-2)] disabled:opacity-40"
+                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ color: "var(--text)" }}
                   >
                     <span
@@ -152,13 +159,13 @@ export default function Sidebar({
           )}
         </AnimatePresence>
       </div>
-
+ 
       {/* Search / command trigger */}
       <div className="px-3 pb-2">
         <motion.button
           onClick={onOpenCommand}
           whileTap={{ scale: 0.98 }}
-          className="flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors"
+          className="flex w-full cursor-pointer items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors"
           style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-faint)" }}
         >
           <Search className="h-4 w-4 shrink-0" />
@@ -184,7 +191,7 @@ export default function Sidebar({
           )}
         </motion.button>
       </div>
-
+ 
       {/* Primary nav */}
       <LayoutGroup id="sidebar">
         <nav className="app-scroll flex-1 overflow-y-auto px-3 py-1">
@@ -199,7 +206,7 @@ export default function Sidebar({
               />
             ))}
           </ul>
-
+ 
           {/* Recent projects */}
           <AnimatePresence initial={false}>
             {!collapsed && recent.length > 0 && (
@@ -223,7 +230,7 @@ export default function Sidebar({
                           router.push(`/builder?projectId=${p.id}`);
                           onNavigate?.();
                         }}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-2)]"
+                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-2)]"
                         style={{ color: "var(--text-muted)" }}
                       >
                         <span
@@ -240,7 +247,7 @@ export default function Sidebar({
           </AnimatePresence>
         </nav>
       </LayoutGroup>
-
+ 
       {/* New project CTA */}
       <div className="p-3">
         <motion.button
@@ -251,7 +258,7 @@ export default function Sidebar({
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
           transition={spring.snappy}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-3 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/25"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-3 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/25"
         >
           <Plus className="h-4 w-4 shrink-0" />
           <AnimatePresence initial={false}>
@@ -266,7 +273,7 @@ export default function Sidebar({
     </div>
   );
 }
-
+ 
 function NavRow({
   item,
   active,
@@ -280,7 +287,7 @@ function NavRow({
 }) {
   const [hover, setHover] = useState(false);
   const Icon = item.icon;
-
+ 
   return (
     <li className="relative">
       <Link
@@ -288,7 +295,7 @@ function NavRow({
         onClick={onNavigate}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
-        className="relative flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-[13.5px] font-medium transition-colors"
+        className="relative flex cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2.5 text-[13.5px] font-medium transition-colors"
         style={{ color: active ? "var(--accent-strong)" : "var(--text-muted)" }}
       >
         {active && (
@@ -319,7 +326,7 @@ function NavRow({
           <PanelsTopLeft className="relative z-10 h-3.5 w-3.5 opacity-50" />
         )}
       </Link>
-
+ 
       {/* Collapsed tooltip */}
       <AnimatePresence>
         {collapsed && hover && (
@@ -338,3 +345,5 @@ function NavRow({
     </li>
   );
 }
+ 
+ 

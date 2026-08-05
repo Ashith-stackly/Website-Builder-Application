@@ -180,7 +180,7 @@ const templates = [
   { title: "Restaurant", category: "restaurant", image: "/landing-optimized/foodd03.webp", alt: "Restaurant template", description: "Appetizing menu and dining layout.", badge: "Free" },
   { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
   { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
-  { title: "Store", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "Store template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
+  { title: "E-Commerce", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "E-Commerce template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
   { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
   { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 250, badge: "Premium" },
   { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 290, badge: "Premium" },
@@ -453,6 +453,8 @@ export default function Home() {
   const [checkoutProduct, setCheckoutProduct] = useState<WishlistItem | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [productRatings, setProductRatings] = useState<Record<string, number>>({});
+  const [successModalProduct, setSuccessModalProduct] = useState<string | null>(null);
+  const [purchasedTemplates, setPurchasedTemplates] = useState<string[]>([]);
   const [hoveredStar, setHoveredStar] = useState<{ productTitle: string; starIndex: number } | null>(null);
   const [ratingSubmitting, setRatingSubmitting] = useState<Record<string, boolean>>({});
 
@@ -514,7 +516,12 @@ export default function Home() {
             const verified = await verifyRazorpayPayment(response);
             if (!verified) throw new Error("Payment verification failed");
 
-            alert(`Payment Successful for ${product.title}!`);
+            setSuccessModalProduct(product.title);
+            setPurchasedTemplates((prev) => {
+              const next = prev.includes(product.title) ? prev : [...prev, product.title];
+              window.localStorage.setItem("stackly-purchased-templates", JSON.stringify(next));
+              return next;
+            });
           } catch (err) {
             alert(err instanceof Error ? err.message : "Payment verification failed");
           } finally {
@@ -540,37 +547,61 @@ export default function Home() {
     return () => mql.removeEventListener("change", updateSpread);
   }, []);
 
-  // Scroll Restoration on Refresh (Hard Reload)
+  // Scroll Restoration Logic
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Prevent native browser scroll restoration to avoid race conditions/clashing
+    // Prevent native browser scroll restoration to avoid clashes
     if (window.history && "scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
     const navigationEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
     const isReload = navigationEntry?.type === "reload";
+    const isBack = sessionStorage.getItem("landing-page-is-back") === "true";
 
-    if (isReload) {
-      const savedScrollPos = sessionStorage.getItem("landing-page-scroll-position");
+    // Clear the back flag immediately
+    sessionStorage.removeItem("landing-page-is-back");
+
+    if (isReload || isBack) {
+      const savedScrollPos = sessionStorage.getItem("landing-scroll-y");
       if (savedScrollPos) {
         const scrollPos = parseInt(savedScrollPos, 10);
-        // Wait two animation frames to ensure hydration and layout are stable
-        requestAnimationFrame(() => {
+        if (!isNaN(scrollPos) && scrollPos > 0) {
+          // Perform progressive scroll restoration to handle dynamic layouts
+          window.scrollTo(0, scrollPos);
+
           requestAnimationFrame(() => {
-            window.scrollTo(0, scrollPos);
+            requestAnimationFrame(() => {
+              window.scrollTo(0, scrollPos);
+            });
           });
-        });
+
+          const restorationIntervals = [50, 100, 200, 400, 800];
+          restorationIntervals.forEach((delay) => {
+            setTimeout(() => {
+              window.scrollTo(0, scrollPos);
+            }, delay);
+          });
+        }
       }
+    } else {
+      // If it's a fresh navigation, clear any saved scroll position
+      sessionStorage.removeItem("landing-scroll-y");
     }
 
     const saveScrollPosition = () => {
-      sessionStorage.setItem("landing-page-scroll-position", window.scrollY.toString());
+      if (window.scrollY > 0) {
+        sessionStorage.setItem("landing-scroll-y", window.scrollY.toString());
+      }
     };
 
+    window.addEventListener("scroll", saveScrollPosition, { passive: true });
     window.addEventListener("beforeunload", saveScrollPosition);
+
     return () => {
+      saveScrollPosition();
+      window.removeEventListener("scroll", saveScrollPosition);
       window.removeEventListener("beforeunload", saveScrollPosition);
     };
   }, []);
@@ -608,6 +639,17 @@ export default function Home() {
     Promise.resolve().then(() => {
       setHasActiveSubscription(hasDemoSubscription());
     });
+  }, []);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("stackly-purchased-templates");
+      if (stored) {
+        setPurchasedTemplates(JSON.parse(stored) as string[]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
@@ -1168,7 +1210,6 @@ export default function Home() {
             };
 
             const isWishlisted = wishlistItems.some((item) => item.title === product.title);
-            const isInCart = cartTitles.includes(product.title);
 
             return (
               <motion.article key={product.title} className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={scaleIn} whileHover={softHover}>
@@ -1176,102 +1217,29 @@ export default function Home() {
                   <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                 </div>
                 <div className="flex flex-1 flex-col px-2">
-                  <div className="flex items-center justify-between gap-3 mb-1 w-full min-w-0">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-lg font-bold text-[#06224C] sm:text-xl truncate" title={product.title}>
-                        {product.title}
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => toggleWishlistItem(productWithCurrentRating)}
-                      aria-label={`${isWishlisted ? "Remove" : "Add"} ${product.title} ${isWishlisted ? "from" : "to"} wishlist`}
-                      aria-pressed={isWishlisted}
-                      className={`p-1 transition hover:text-red-500 shrink-0 ${isWishlisted ? "text-red-500" : "text-gray-300"}`}
-                    >
-                      <FaHeart className="text-xl" />
-                    </button>
+                  <div className="mb-1 w-full min-w-0">
+                    <h3 className="text-lg font-bold text-[#06224C] sm:text-xl truncate" title={product.title}>
+                      {product.title}
+                    </h3>
                   </div>
                   <p className="mb-4 text-xs italic text-gray-500">{product.type}</p>
-                  <div className="mb-6 mt-auto flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span
-                        className="font-black text-[#06224C] whitespace-nowrap"
-                        style={{ fontSize: "clamp(16px, 5.5vw, 24px)" }}
-                      >
-                        ₹ {product.price}
-                      </span>
-                      <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap">({product.sales} Sales)</span>
-                    </div>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span
-                        className="font-black text-[#06224C] whitespace-nowrap"
-                        style={{ fontSize: "clamp(16px, 5.5vw, 24px)" }}
-                      >
-                        {displayRating.toFixed(1)}
-                      </span>
-                      <div className="flex items-center gap-0.5 text-yellow-400" aria-label={`Rating ${displayRating} out of 5`}>
-                        {Array.from({ length: 5 }).map((_, idx) => {
-                          const starValue = idx + 1;
-                          const fullStars = Math.floor(displayRating);
-                          const hasHalf = displayRating % 1 >= 0.25 && displayRating % 1 < 0.75;
-                          const extraFull = displayRating % 1 >= 0.75 ? 1 : 0;
-                          const totalFull = fullStars + extraFull;
-
-                          let starType: "full" | "half" | "empty" = "empty";
-                          if (idx < totalFull) {
-                            starType = "full";
-                          } else if (idx === totalFull && hasHalf) {
-                            starType = "half";
-                          }
-
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              disabled={ratingSubmitting[product.title]}
-                              onClick={() => handleRateProduct(product.title, starValue)}
-                              onMouseEnter={() => setHoveredStar({ productTitle: product.title, starIndex: starValue })}
-                              onMouseLeave={() => setHoveredStar(null)}
-                              className="cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 focus-visible:rounded-sm transition duration-150 hover:scale-125 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={`Rate ${starValue} star${starValue > 1 ? "s" : ""}`}
-                            >
-                              {starType === "full" ? (
-                                <FaStar style={{ fontSize: "clamp(12px, 5vw, 24px)" }} />
-                              ) : starType === "half" ? (
-                                <FaStarHalfStroke style={{ fontSize: "clamp(12px, 5vw, 24px)" }} />
-                              ) : (
-                                <FaRegStar className="text-gray-300" style={{ fontSize: "clamp(12px, 5vw, 24px)" }} />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                  <div className="mb-6 mt-auto flex flex-wrap items-center gap-2">
+                    <span
+                      className="font-black text-[#06224C] whitespace-nowrap"
+                      style={{ fontSize: "clamp(16px, 5.5vw, 24px)" }}
+                    >
+                      ₹ {product.price}
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap">({product.sales} Sales)</span>
                   </div>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2.5">
-                    <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
-                      <button
-                        type="button"
-                        onClick={() => addToCart(productWithCurrentRating)}
-                        disabled={isInCart}
-                        aria-label={isInCart ? `${product.title} is already in cart` : `Add ${product.title} to cart`}
-                        className={`cursor-pointer flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition ${isInCart ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
-                      >
-                        {isInCart ? <FaCheck className="text-sm" /> : <FaCartShopping />}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={paymentLoading}
-                        onClick={() => handleBuyNow(productWithCurrentRating)}
-                        className="cursor-pointer flex h-10 flex-1 items-center justify-center rounded-xl bg-[#06224C] text-sm font-bold text-white transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-95 shadow-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Buy Now
-                      </button>
-                    </div>
-                    <a href="#templates" className="flex h-10 w-full sm:flex-1 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105 whitespace-nowrap">
+                  <div className="flex">
+                    <button
+                      type="button"
+                      onClick={() => setSuccessModalProduct(product.title)}
+                      className="cursor-pointer flex h-10 w-full items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105 whitespace-nowrap"
+                    >
                       View Template
-                    </a>
+                    </button>
                   </div>
                 </div>
               </motion.article>
@@ -1304,14 +1272,43 @@ export default function Home() {
           </div>
 
           {/* Added key to force re-render/re-animation when state changes */}
-          <motion.div key={`templates-${activeFilter}-${submittedSearch}`} className="grid grid-cols-1 gap-x-6 gap-y-8 sm:gap-x-10 sm:gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            {visibleTemplates.map((template) => (
-              <motion.article key={template.title} className="group" variants={scaleIn} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
+          <motion.div key={`templates-${activeFilter}-${submittedSearch}`} className="grid grid-cols-1 gap-x-6 gap-y-8 sm:gap-x-10 sm:gap-y-14 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
+            {visibleTemplates.map((template) => {
+              const isWishlistableTemplate = ["Classic Portfolio", "Digital Marketing", "Restaurant", "Blogging Page", "E-Commerce", "Construction", "Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title);
+              const isTemplateWishlisted = wishlistItems.some((item) => item.title === template.title);
+              const isUnderDevelopment = ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title);
+              const isPurchased = ["Digital Marketing", "E-Commerce", "Construction"].includes(template.title) && purchasedTemplates.includes(template.title);
+
+              return (
+                <motion.article key={template.title} className="group" variants={scaleIn} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
                 <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-md">
                   <img src={assetPath(template.image)} alt={template.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                   <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase ${template.badge === "Free" ? "bg-green-500 text-white" : "bg-yellow-400 text-[#06224C]"}`}>
                     {template.badge}
                   </span>
+                  {isWishlistableTemplate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isUnderDevelopment) {
+                          setSuccessModalProduct(template.title);
+                        } else {
+                          toggleWishlistItem({
+                            title: template.title,
+                            type: template.price ? "Premium Template" : "Free Template",
+                            price: template.price || 0,
+                            image: template.image,
+                            alt: template.alt,
+                          });
+                        }
+                      }}
+                      className={`absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-xs transition hover:scale-110 active:scale-95 ${isTemplateWishlisted ? "text-red-500" : "text-gray-400"}`}
+                      aria-label={`${isTemplateWishlisted ? "Remove" : "Add"} ${template.title} to wishlist`}
+                      aria-pressed={isTemplateWishlisted}
+                    >
+                      <FaHeart className="text-sm" />
+                    </button>
+                  )}
                 </div>
                 <div className="px-1">
                   <div className="flex items-start justify-between gap-2">
@@ -1326,61 +1323,103 @@ export default function Home() {
                     {template.price ? (
                       <span className="hidden text-sm font-bold text-blue-600 shrink-0 sm:block">₹ {template.price}</span>
                     ) : (
-                      <FaArrowRight className="mt-1 text-[#06224C] shrink-0" />
+                      <FaArrowRight className="mt-1 text-[#06224C] shrink-0 hidden sm:block" />
                     )}
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-gray-500">{template.description}</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Link
-                      href={
-                        template.title === "Digital Marketing"
-                          ? "/digital-marketing"
-                          : template.title === "Restaurant"
-                            ? "/restaurant"
-                            : template.title === "Construction"
-                              ? "/construction"
-                              : ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)
-                                ? "/coming-soon"
-                                : template.category === "portfolio"
-                                  ? "/portfolio"
-                                  : template.category === "ecommerce"
-                                    ? "/e-commerce"
-                                    : template.category === "blog"
-                                      ? "/blog"
-                                      : "#features"
-                      }
-                      onClick={(e) => {
-                        if (["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)) {
-                          // Intercept normal left click (no ctrl, shift, meta, alt or right click)
-                          const isNormalClick = e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey;
-                          if (isNormalClick) {
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isUnderDevelopment) {
+                          setSuccessModalProduct(template.title);
+                        } else {
+                          addToCart({
+                            title: template.title,
+                            type: template.badge === "Free" ? "Free Template" : "Premium Template",
+                            price: template.price || 0,
+                            image: template.image,
+                            alt: template.alt,
+                          });
+                        }
+                      }}
+                      disabled={!isUnderDevelopment && cartTitles.includes(template.title)}
+                      aria-label={cartTitles.includes(template.title) ? `${template.title} is already in cart` : `Add ${template.title} to cart`}
+                      className={`cursor-pointer flex h-10 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition w-full sm:w-12 sm:flex-shrink-0 ${!isUnderDevelopment && cartTitles.includes(template.title) ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
+                    >
+                      <span className="flex items-center justify-center gap-2 text-sm font-bold">
+                        {!isUnderDevelopment && cartTitles.includes(template.title) ? (
+                          <>
+                            <FaCheck className="text-sm" />
+                            <span className="sm:hidden">In Cart</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaCartShopping />
+                            <span className="sm:hidden">Add to Cart</span>
+                          </>
+                        )}
+                      </span>
+                    </button>
+                    <div className="flex gap-2 w-full sm:flex-1">
+                      <Link
+                        href={
+                          template.title === "Digital Marketing"
+                            ? "/digital-marketing"
+                            : template.title === "Restaurant"
+                              ? "/restaurant"
+                              : template.title === "Construction"
+                                ? "/construction"
+                                : ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)
+                                  ? "/coming-soon"
+                                  : template.category === "portfolio"
+                                    ? "/portfolio"
+                                    : template.category === "ecommerce"
+                                      ? "/e-commerce"
+                                      : template.category === "blog"
+                                        ? "/blog"
+                                        : "#features"
+                        }
+                        onClick={(e) => {
+                          if (isUnderDevelopment) {
                             e.preventDefault();
-                            setComingSoonTemplate(template.title);
-                            setShowComingSoon(true);
+                            setSuccessModalProduct(template.title);
                           }
-                        }
-                      }}
-                      className="min-w-[80px] flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap"
-                    >
-                      Preview
-                    </Link>
-                    <Link
-                      href={template.price || !hasActiveSubscription ? "/planning" : `/blockpages?template=${template.category}`}
-                      onClick={(e) => {
-                        // Only intercept if it's the "Edit" button (no price)
-                        if (!template.price) {
-                          checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
-                        }
-                      }}
-                      className="min-w-[80px] flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap"
-                    >
-                      {template.price ? "Buy" : "Edit"}
-                    </Link>
+                        }}
+                        className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap flex items-center justify-center"
+                      >
+                        Preview
+                      </Link>
+                      <Link
+                        href={template.price && !isPurchased ? "/planning" : `/blockpages?template=${template.category}`}
+                        onClick={(e) => {
+                          if (isUnderDevelopment) {
+                            e.preventDefault();
+                            setSuccessModalProduct(template.title);
+                          } else if (template.price && !isPurchased) {
+                            e.preventDefault();
+                            handleBuyNow({
+                              title: template.title,
+                              type: template.price ? "Premium Template" : "Free Template",
+                              price: template.price,
+                              image: template.image,
+                              alt: template.alt,
+                            });
+                          } else if (!template.price || isPurchased) {
+                            checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
+                          }
+                        }}
+                        className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center"
+                      >
+                        {template.price && !isPurchased ? "Buy" : "Edit"}
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </motion.article>
-            ))}
-          </motion.div>
+            );
+          })}
+        </motion.div>
           {visibleTemplates.length === 0 && (
             <div className="py-16 text-center">
               <p className="text-sm font-black uppercase tracking-widest text-[#06224C]">No matching websites found</p>
@@ -1592,6 +1631,70 @@ export default function Home() {
               >
                 Got It
               </button>
+            </motion.div>
+          </div>
+        )}
+
+        {successModalProduct !== null && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSuccessModalProduct(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="relative w-full max-w-[390px] bg-white rounded-[2rem] p-6 shadow-2xl z-10 overflow-hidden font-sans border border-gray-100"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setSuccessModalProduct(null)}
+                className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition p-1"
+                aria-label="Close success modal"
+              >
+                <FaXmark className="text-xl" />
+              </button>
+
+              {/* Header: Branding */}
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-4 text-left">
+                <span className="bg-[#06224C] text-white px-3 py-1.5 rounded-lg text-sm font-black tracking-tight select-none">
+                  Stackly
+                </span>
+                <span className="text-sm font-semibold text-gray-500 tracking-wide">
+                  Template Status
+                </span>
+              </div>
+
+              {/* Coming Soon Body */}
+              <div className="mt-6 flex flex-col items-center text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <FaWandMagicSparkles className="text-2xl animate-pulse" />
+                </div>
+                <h3 className="text-lg font-black text-[#0B2545]">Template Coming Soon!</h3>
+                <p className="mt-2 text-sm font-semibold text-gray-500 leading-relaxed px-2">
+                  The <span className="font-bold text-[#06224C]">{successModalProduct}</span> template is currently being prepared and will be available soon.
+                </p>
+              </div>
+
+              {/* Footer Button */}
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => setSuccessModalProduct(null)}
+                  className="w-full rounded-2xl bg-[#06224C] hover:bg-blue-900 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Got It
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

@@ -111,7 +111,7 @@ export default function MockCheckoutModal({
               onClick={onSuccess}
               className="w-full mt-6 py-4 bg-[#06224C] hover:bg-blue-900 text-white font-extrabold text-base rounded-2xl shadow-lg shadow-blue-500/10 transition active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
             >
-              Pay Now (Demo)
+              Pay Now
             </button>
           </motion.div>
         </div>

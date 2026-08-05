@@ -787,7 +787,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               <button
                 type="button"
                 onClick={() => toggleMenu("products")}
-                className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
                 aria-haspopup="true"
                 aria-expanded={activeMenu === "products"}
               >
@@ -795,7 +795,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               </button>
               <AnimatePresence>{activeMenu === "products" && (<motion.div key="products-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-48 rounded-xl border border-gray-100 bg-white py-3 shadow-2xl">
                 {products.map((product) => (
-                  <Link key={product} href="/landing#templates" onClick={(event) => { closeMenus(); scrollLandingSection(event, "templates"); }} className="block border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-800 transition last:border-0 hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                  <Link key={product} href="/landing#templates" onClick={(event) => { closeMenus(); scrollLandingSection(event, "templates"); }} className="block border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-800 transition last:border-0 hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
                     {product}
                   </Link>
                 ))}
@@ -813,7 +813,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               <button
                 type="button"
                 onClick={() => toggleMenu("categories")}
-                className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
                 aria-haspopup="true"
                 aria-expanded={activeMenu === "categories"}
               >
@@ -822,7 +822,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               <AnimatePresence>{activeMenu === "categories" && (<motion.div key="categories-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-[200px] rounded-xl border border-gray-100 bg-white py-2 shadow-2xl">
                 {navCategories.map(({ title, label, icon: Icon, items }) => (
                   <div key={title} className="group/category relative">
-                    <Link href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="flex items-center justify-between border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition group-hover/category:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                    <Link href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="flex items-center justify-between border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition group-hover/category:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
                       <span className="flex items-center gap-2">
                         <Icon className="w-4 opacity-50" />
                         {title}
@@ -834,7 +834,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                     }`}>
                       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-5 py-3 text-[11px] font-black text-blue-600">{label}</div>
                       {items.map((categoryItem) => (
-                        <Link key={`${title}-${categoryItem}`} href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="block border-b border-black/[0.03] px-5 py-2.5 text-[10px] font-extrabold uppercase text-slate-700 transition hover:bg-blue-50 hover:pl-6 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                        <Link key={`${title}-${categoryItem}`} href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="block border-b border-black/[0.03] px-5 py-2.5 text-[10px] font-extrabold uppercase text-slate-700 transition hover:bg-blue-50 hover:pl-6 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
                           {categoryItem}
                         </Link>
                       ))}
@@ -844,7 +844,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               </motion.div>)}</AnimatePresence>
             </div>
  
-            <Link href="/landing#contact" onClick={(event) => scrollLandingSection(event, "contact")} className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>CONTACT</MotionNavItem></Link>
+            <Link href="/landing#contact" onClick={(event) => scrollLandingSection(event, "contact")} className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>CONTACT</MotionNavItem></Link>
           </div>
         </div>
  
@@ -863,7 +863,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             aria-pressed={activePanel === "cart"}
             onFocus={() => setFocusedAction("cart")}
             onBlur={() => setFocusedAction(null)}
-            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
+            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
               activePanel === "cart" || focusedAction === "cart"
                 ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
                 : "text-[#06224C]"
@@ -895,7 +895,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             aria-pressed={activePanel === "wishlist"}
             onFocus={() => setFocusedAction("wishlist")}
             onBlur={() => setFocusedAction(null)}
-            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
+            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
               activePanel === "wishlist" || focusedAction === "wishlist"
                 ? "scale-105 text-red-600 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
                 : "text-red-500"
@@ -927,7 +927,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             aria-pressed={isSearchPanelOpen || searchSelected}
             onFocus={() => setFocusedAction("search")}
             onBlur={() => setFocusedAction(null)}
-            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
+            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
               isSearchPanelOpen || searchSelected || focusedAction === "search"
                 ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
                 : "text-[#06224C]"
@@ -958,7 +958,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                 setIsProfileMenuOpen((value) => !value);
                 setActiveMenu(null);
               }}
-              className={`relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white p-[3px] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] active:scale-95 ${
+              className={`relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white p-[3px] shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] active:scale-95 ${
                 isProfileMenuOpen || focusedAction === "profile"
                   ? "scale-105 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
                   : ""
@@ -1048,7 +1048,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                   event.preventDefault();
                   submitNavbarSearch();
                 }}
-                className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner transition focus-within:border-sky-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-sky-500/10"
+                className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner transition focus-within:border-sky-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-sky-500/10 cursor-pointer"
               >
                 <FaMagnifyingGlass className="ml-4 flex-shrink-0 text-sm text-slate-400" />
                 <input
@@ -1057,20 +1057,20 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                   value={navbarSearchQuery}
                   onChange={(event) => setNavbarSearchQuery(event.target.value)}
                   placeholder="Search websites..."
-                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 cursor-pointer"
                   aria-label="Search websites"
                 />
                 <button
                   type="button"
                   onClick={closeSearchPanel}
-                  className="mx-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-95"
+                  className="mx-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-95 cursor-pointer"
                   aria-label="Close search"
                 >
                   <FaXmark />
                 </button>
                 <button
                   type="submit"
-                  className="m-1 flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#06224C] text-white shadow-lg transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-1 active:scale-95"
+                  className="m-1 flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#06224C] text-white shadow-lg transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-1 active:scale-95 cursor-pointer"
                   aria-label="Submit search"
                 >
                   <FaMagnifyingGlass />
@@ -1099,7 +1099,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               <button
                 type="button"
                 onClick={() => setMobileSection((section) => (section === "products" ? null : "products"))}
-                className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15"
+                className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15 cursor-pointer"
               >
                 <span className="flex items-center gap-3"><FaBoxOpen className="opacity-70" /> Our Products</span>
                 <FaPlus className={`text-[8px] transition-transform ${mobileSection === "products" ? "rotate-45" : ""}`} />
@@ -1119,7 +1119,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               <button
                 type="button"
                 onClick={() => setMobileSection((section) => (section === "categories" ? null : "categories"))}
-                className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15"
+                className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15 cursor-pointer"
               >
                 <span className="flex items-center gap-3"><FaLayerGroup className="opacity-70" /> Categories</span>
                 <FaPlus className={`text-[8px] transition-transform ${mobileSection === "categories" ? "rotate-45" : ""}`} />

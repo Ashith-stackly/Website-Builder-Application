@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,22 +33,22 @@ import { useShallow } from "zustand/react/shallow";
 import { getProjectAnalytics } from "@/lib/projectApi";
 import { useCountUp } from "@/lib/hooks";
 import type { AnalyticsData, AnalyticsDateFilter, DailyTraffic } from "@/types/analytics";
-
+ 
 const FILTERS: { value: AnalyticsDateFilter; label: string; icon: React.ElementType }[] = [
   { value: "today", label: "Today", icon: Clock },
   { value: "7days", label: "7 days", icon: Calendar },
   { value: "30days", label: "30 days", icon: CalendarDays },
 ];
-
+ 
 /* ─── page ─────────────────────────────────────────────────────────────── */
-
+ 
 function AnalyticsInner() {
   const [filter, setFilter] = useState<AnalyticsDateFilter>("7days");
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-
+ 
   const { projects, loadProjects, isLoading: projectsLoading } = useProjectStore(
     useShallow((state) => ({
       projects: state.projects,
@@ -57,27 +57,27 @@ function AnalyticsInner() {
     })),
   );
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
-
+ 
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
     return () => controller.abort();
   }, [loadProjects]);
-
+ 
   useEffect(() => {
     if (projects.length > 0 && !selectedProjectId) {
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, selectedProjectId]);
-
+ 
   const fetchAnalytics = async (projectId: string, f: AnalyticsDateFilter, showRefreshing = false) => {
     if (!projectId) return;
     if (showRefreshing) setRefreshing(true);
     else setLoading(true);
     setError(null);
-
+ 
     const days = f === "today" ? 1 : f === "7days" ? 7 : 30;
-
+ 
     try {
       const res = await getProjectAnalytics(projectId, days);
       setData(res);
@@ -93,19 +93,19 @@ function AnalyticsInner() {
       setRefreshing(false);
     }
   };
-
+ 
   useEffect(() => {
     if (selectedProjectId) {
       void fetchAnalytics(selectedProjectId, filter);
     }
   }, [selectedProjectId, filter]);
-
+ 
   const refresh = () => {
     if (selectedProjectId) {
       void fetchAnalytics(selectedProjectId, filter, true);
     }
   };
-
+ 
   const exportCsv = () => {
     if (!data) return;
     const rows = [
@@ -130,9 +130,9 @@ function AnalyticsInner() {
     a.click();
     URL.revokeObjectURL(url);
   };
-
+ 
   if (projectsLoading || (loading && !data)) return <AnalyticsSkeleton />;
-
+ 
   if (projects.length === 0) {
     return (
       <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -149,7 +149,7 @@ function AnalyticsInner() {
       </div>
     );
   }
-
+ 
   if (error) {
     return (
       <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -167,11 +167,11 @@ function AnalyticsInner() {
       </div>
     );
   }
-
+ 
   if (!data) return <AnalyticsSkeleton />;
-
+ 
   const isEmpty = data.totalViews === 0;
-
+ 
   const sessions = Math.round(data.totalViews * 0.82);
   const bounce = data.totalViews ? Math.min(72, 34 + (data.totalViews % 20)) : 0;
   const kpis = [
@@ -180,7 +180,7 @@ function AnalyticsInner() {
     { label: "Sessions", value: sessions, delta: 3.6, up: true, icon: MousePointerClick, tone: "#8b5cf6" },
     { label: "Bounce rate", value: bounce, suffix: "%", delta: 2.2, up: false, icon: Activity, tone: "#f59e0b" },
   ];
-
+ 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6 lg:space-y-8">
@@ -212,7 +212,7 @@ function AnalyticsInner() {
                   <button
                     key={f.value}
                     onClick={() => setFilter(f.value)}
-                    className="relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold"
+                    className="relative flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold"
                     style={{ color: active ? "#fff" : "var(--text-muted)" }}
                   >
                     {active && (
@@ -232,7 +232,7 @@ function AnalyticsInner() {
             </IconBtn>
           </div>
         </motion.div>
-
+ 
         {isEmpty ? (
           <EmptyAnalytics />
         ) : (
@@ -241,7 +241,7 @@ function AnalyticsInner() {
             <motion.section variants={gridContainer} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {kpis.map((k) => <KpiCard key={k.label} {...k} />)}
             </motion.section>
-
+ 
             {/* Chart + sources */}
             <div className="grid gap-6 lg:grid-cols-3">
               <motion.div variants={staggerChild} className="lg:col-span-2">
@@ -251,7 +251,7 @@ function AnalyticsInner() {
                 <DeviceBreakdown visitors={data.uniqueVisitors} />
               </motion.div>
             </div>
-
+ 
             {/* Top pages + sources + activity */}
             <div className="grid gap-6 lg:grid-cols-3">
               <motion.div variants={staggerChild} className="lg:col-span-2">
@@ -261,7 +261,7 @@ function AnalyticsInner() {
                 <SourcesCard views={data.totalViews} />
               </motion.div>
             </div>
-
+ 
             <motion.div variants={staggerChild}>
               <ActivityCard events={data.recentActivity} />
             </motion.div>
@@ -271,9 +271,9 @@ function AnalyticsInner() {
     </div>
   );
 }
-
+ 
 /* ─── KPI ──────────────────────────────────────────────────────────────── */
-
+ 
 function KpiCard({
   label, value, suffix, delta, up, icon: Icon, tone,
 }: {
@@ -305,20 +305,20 @@ function KpiCard({
     </motion.div>
   );
 }
-
+ 
 /* ─── Traffic area chart (theme-aware SVG + Framer) ────────────────────── */
-
+ 
 function TrafficChart({ dailyData, weeklyData }: { dailyData: DailyTraffic[]; weeklyData: any[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const [chartMode, setChartMode] = useState<"daily" | "weekly">("daily");
   const W = 640, H = 220, PAD = 12;
-
+ 
   const points = chartMode === "daily"
     ? (dailyData.length ? dailyData : [{ date: "", views: 0, visitors: 0 }])
     : (weeklyData.length ? weeklyData.map(w => ({ date: w.week, views: w.views, visitors: w.visitors })) : [{ date: "", views: 0, visitors: 0 }]);
-
+ 
   const max = Math.max(...points.map((p) => p.views), 1);
-
+ 
   const coords = points.map((p, i) => {
     const x = PAD + (i / Math.max(points.length - 1, 1)) * (W - PAD * 2);
     const y = H - PAD - (p.views / max) * (H - PAD * 2);
@@ -326,7 +326,7 @@ function TrafficChart({ dailyData, weeklyData }: { dailyData: DailyTraffic[]; we
   });
   const line = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x} ${c.y}`).join(" ");
   const area = `${line} L ${coords[coords.length - 1].x} ${H - PAD} L ${coords[0].x} ${H - PAD} Z`;
-
+ 
   return (
     <motion.div
       variants={revealSection}
@@ -367,7 +367,7 @@ function TrafficChart({ dailyData, weeklyData }: { dailyData: DailyTraffic[]; we
           </span>
         </div>
       </div>
-
+ 
       <div className="relative w-full" style={{ aspectRatio: `${W} / ${H}` }}>
         <svg viewBox={`0 0 ${W} ${H}`} className="h-full w-full" preserveAspectRatio="none" onMouseLeave={() => setHover(null)}>
           <defs>
@@ -428,9 +428,9 @@ function TrafficChart({ dailyData, weeklyData }: { dailyData: DailyTraffic[]; we
     </motion.div>
   );
 }
-
+ 
 /* ─── Device breakdown (donut) ─────────────────────────────────────────── */
-
+ 
 function DeviceBreakdown({ visitors }: { visitors: number }) {
   const devices = [
     { label: "Desktop", pct: 58, icon: Monitor, tone: "#4f6bed" },
@@ -439,7 +439,7 @@ function DeviceBreakdown({ visitors }: { visitors: number }) {
   ];
   const R = 52, C = 2 * Math.PI * R;
   let offset = 0;
-
+ 
   return (
     <motion.div
       variants={revealSection}
@@ -492,9 +492,9 @@ function DeviceBreakdown({ visitors }: { visitors: number }) {
     </motion.div>
   );
 }
-
+ 
 /* ─── Top pages ────────────────────────────────────────────────────────── */
-
+ 
 function TopPagesCard({ pages }: { pages: { page: string; views: number; percentage: number }[] }) {
   const list = pages.length ? pages : [{ page: "/", views: 0, percentage: 0 }];
   const max = Math.max(...list.map((p) => p.views), 1);
@@ -519,9 +519,9 @@ function TopPagesCard({ pages }: { pages: { page: string; views: number; percent
     </motion.div>
   );
 }
-
+ 
 /* ─── Sources ──────────────────────────────────────────────────────────── */
-
+ 
 function SourcesCard({ views }: { views: number }) {
   const sources = [
     { label: "Direct", pct: 42, tone: "#4f6bed" },
@@ -553,9 +553,9 @@ function SourcesCard({ views }: { views: number }) {
     </motion.div>
   );
 }
-
+ 
 /* ─── Activity ─────────────────────────────────────────────────────────── */
-
+ 
 function ActivityCard({ events }: { events: { page: string; timestamp: number; sessionId: string }[] }) {
   const list = events.slice(0, 8);
   return (
@@ -584,9 +584,9 @@ function ActivityCard({ events }: { events: { page: string; timestamp: number; s
     </motion.div>
   );
 }
-
+ 
 /* ─── Empty / skeleton ─────────────────────────────────────────────────── */
-
+ 
 function EmptyAnalytics() {
   return (
     <motion.div variants={staggerChild} className="grid place-items-center rounded-3xl border p-16 text-center"
@@ -601,7 +601,7 @@ function EmptyAnalytics() {
     </motion.div>
   );
 }
-
+ 
 function AnalyticsSkeleton() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -615,16 +615,16 @@ function AnalyticsSkeleton() {
     </div>
   );
 }
-
+ 
 function IconBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
   return (
     <motion.button whileTap={{ scale: 0.92 }} onClick={onClick} aria-label={label}
-      className="grid h-9 w-9 place-items-center rounded-xl border" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-muted)" }}>
+      className="grid h-9 w-9 cursor-pointer place-items-center rounded-xl border" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-muted)" }}>
       {children}
     </motion.button>
   );
 }
-
+ 
 export default function AnalyticsPage() {
   return (
     <Suspense fallback={<AnalyticsSkeleton />}>
@@ -632,3 +632,5 @@ export default function AnalyticsPage() {
     </Suspense>
   );
 }
+ 
+ 

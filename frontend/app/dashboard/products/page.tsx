@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,7 +18,8 @@ import {
   DollarSign,
   Tag,
   Warehouse,
-  Image as ImageIcon
+  Image as ImageIcon,
+  IndianRupee
 } from "lucide-react";
 import { useProjectStore } from "@/store/projectStore";
 import { useShallow } from "zustand/react/shallow";
@@ -30,7 +31,7 @@ import {
 } from "@/lib/ecommerceApi";
 import type { Product } from "@/types/ecommerce";
 import { staggerContainer, staggerChild, spring } from "@/lib/motion";
-
+ 
 export default function ProductsPage() {
   const { projects, loadProjects, isLoading: loadingProjects } = useProjectStore(
     useShallow((state) => ({
@@ -43,17 +44,17 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProductsList, setLoadingProductsList] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+ 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "archived">("all");
-
+ 
   // Form Modal State
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-
+ 
   // Form Fields
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -64,21 +65,21 @@ export default function ProductsPage() {
   const [status, setStatus] = useState<"active" | "draft" | "archived">("active");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-
+ 
   // Load projects list on mount
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
     return () => controller.abort();
   }, [loadProjects]);
-
+ 
   // Set default selected project once loaded
   useEffect(() => {
     if (projects.length > 0 && !selectedProjectId) {
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, selectedProjectId]);
-
+ 
   // Load products whenever the selected project changes
   const fetchProducts = async (projectId: string) => {
     if (!projectId) return;
@@ -94,13 +95,13 @@ export default function ProductsPage() {
       setLoadingProductsList(false);
     }
   };
-
+ 
   useEffect(() => {
     if (selectedProjectId) {
       void fetchProducts(selectedProjectId);
     }
   }, [selectedProjectId]);
-
+ 
   // Open Add Modal
   const handleAddOpen = () => {
     setEditingProduct(null);
@@ -116,7 +117,7 @@ export default function ProductsPage() {
     setFormError(null);
     setFormOpen(true);
   };
-
+ 
   // Open Edit Modal
   const handleEditOpen = (product: Product) => {
     setEditingProduct(product);
@@ -132,7 +133,7 @@ export default function ProductsPage() {
     setFormError(null);
     setFormOpen(true);
   };
-
+ 
   // Submit Add / Edit Form
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,10 +147,10 @@ export default function ProductsPage() {
       setFormError("Please enter a valid price (greater than or equal to 0).");
       return;
     }
-
+ 
     setFormSubmitting(true);
     setFormError(null);
-
+ 
     const productData = {
       workspaceId: selectedProjectId,
       name: name.trim(),
@@ -161,7 +162,7 @@ export default function ProductsPage() {
       description: description.trim() || undefined,
       images: imageUrl.trim() ? [imageUrl.trim()] : undefined,
     };
-
+ 
     try {
       if (editingProduct) {
         await updateProduct(editingProduct._id, productData);
@@ -177,7 +178,7 @@ export default function ProductsPage() {
       setFormSubmitting(false);
     }
   };
-
+ 
   // Handle Delete Product
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
@@ -189,7 +190,7 @@ export default function ProductsPage() {
       alert(err?.message || "Failed to delete product.");
     }
   };
-
+ 
   // Filter and Search Logic
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -200,7 +201,7 @@ export default function ProductsPage() {
       return matchesSearch && matchesStatus;
     });
   }, [products, searchQuery, statusFilter]);
-
+ 
   if (loadingProjects) {
     return (
       <div className="flex h-[80vh] w-full flex-col items-center justify-center gap-4">
@@ -209,7 +210,7 @@ export default function ProductsPage() {
       </div>
     );
   }
-
+ 
   if (projects.length === 0) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
@@ -227,7 +228,7 @@ export default function ProductsPage() {
       </div>
     );
   }
-
+ 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Top Header & Project Selector */}
@@ -244,7 +245,7 @@ export default function ProductsPage() {
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="rounded-xl border px-3 py-2 text-sm font-bold shadow-sm focus:outline-none focus:ring-2"
+              className="cursor-pointer rounded-xl border px-3 py-2 text-sm font-bold shadow-sm focus:outline-none focus:ring-2"
               style={{ background: "var(--surface)", color: "var(--text)", borderColor: "var(--border)" }}
             >
               {projects.map((proj) => (
@@ -256,14 +257,14 @@ export default function ProductsPage() {
           </div>
           <button
             onClick={handleAddOpen}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-white shadow-lg transition-transform hover:scale-[1.02]"
+            className="flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-white shadow-lg transition-transform hover:scale-[1.02]"
             style={{ background: "var(--accent)" }}
           >
             <Plus className="h-4 w-4" /> Add Product
           </button>
         </div>
       </div>
-
+ 
       {/* Main View */}
       {error ? (
         <div className="mt-8 rounded-2xl border border-red-500/20 p-6 text-center" style={{ background: "var(--surface)" }}>
@@ -304,14 +305,14 @@ export default function ProductsPage() {
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition-all ${
+                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition-all ${
                     statusFilter === s
                       ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow"
                       : "border hover:bg-black/5"
                   }`}
                   style={{
                     borderColor: statusFilter === s ? "transparent" : "var(--border)",
-                    color: statusFilter === s ? "inherit" : "var(--text-muted)"
+                    color: statusFilter === s ? undefined : "var(--text-muted)"
                   }}
                 >
                   {s}
@@ -319,7 +320,7 @@ export default function ProductsPage() {
               ))}
             </div>
           </div>
-
+ 
           {/* Product Cards Grid */}
           {filteredProducts.length === 0 ? (
             <div className="rounded-2xl border border-dashed py-16 text-center" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
@@ -333,7 +334,7 @@ export default function ProductsPage() {
               {!searchQuery && statusFilter === "all" && (
                 <button
                   onClick={handleAddOpen}
-                  className="mt-5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow"
+                  className="mt-5 cursor-pointer rounded-xl px-4 py-2 text-xs font-bold text-white shadow"
                   style={{ background: "var(--accent)" }}
                 >
                   Add Product
@@ -350,7 +351,7 @@ export default function ProductsPage() {
               {filteredProducts.map((product) => {
                 const isOutOfStock = product.inventory <= 0;
                 const isLowStock = product.inventory > 0 && product.inventory < 5;
-
+ 
                 return (
                   <motion.div
                     key={product._id}
@@ -391,7 +392,7 @@ export default function ProductsPage() {
                           </button>
                         </div>
                       </div>
-
+ 
                       {/* Product Image & Info */}
                       <div className="mt-4 flex gap-4">
                         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
@@ -417,7 +418,7 @@ export default function ProductsPage() {
                           )}
                         </div>
                       </div>
-
+ 
                       {/* Description snippet */}
                       {product.description && (
                         <p className="mt-3 text-xs line-clamp-2 leading-relaxed" style={{ color: "var(--text-muted)" }}>
@@ -425,7 +426,7 @@ export default function ProductsPage() {
                         </p>
                       )}
                     </div>
-
+ 
                     {/* Footer values (Price & Stock level) */}
                     <div className="mt-5 flex items-center justify-between border-t pt-4" style={{ borderColor: "var(--border)" }}>
                       <div>
@@ -467,7 +468,7 @@ export default function ProductsPage() {
           )}
         </div>
       )}
-
+ 
       {/* Edit / Add Slide-over Panel (Modal) */}
       <AnimatePresence>
         {formOpen && (
@@ -507,7 +508,7 @@ export default function ProductsPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-
+ 
               {/* Form Scrollable Body */}
               <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
                 {formError && (
@@ -516,7 +517,7 @@ export default function ProductsPage() {
                     <span>{formError}</span>
                   </div>
                 )}
-
+ 
                 {/* Name */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
@@ -532,12 +533,12 @@ export default function ProductsPage() {
                     style={{ background: "var(--surface-2)", borderColor: "var(--border)", color: "var(--text)" }}
                   />
                 </div>
-
+ 
                 {/* Price & Sale Price */}
                 <div className="grid gap-4 grid-cols-2">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-                      <DollarSign className="h-3 w-3" /> Price (INR) <span className="text-red-500">*</span>
+                      <IndianRupee className="h-3 w-3" /> Price (INR) <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -553,7 +554,7 @@ export default function ProductsPage() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-                      <DollarSign className="h-3 w-3" /> Sale Price (Optional)
+                      <IndianRupee className="h-3 w-3" /> Sale Price (Optional)
                     </label>
                     <input
                       type="number"
@@ -567,7 +568,7 @@ export default function ProductsPage() {
                     />
                   </div>
                 </div>
-
+ 
                 {/* SKU & Category */}
                 <div className="grid gap-4 grid-cols-2">
                   <div className="space-y-1.5">
@@ -597,7 +598,7 @@ export default function ProductsPage() {
                     />
                   </div>
                 </div>
-
+ 
                 {/* Stock Inventory & Status */}
                 <div className="grid gap-4 grid-cols-2">
                   <div className="space-y-1.5">
@@ -631,7 +632,7 @@ export default function ProductsPage() {
                     </select>
                   </div>
                 </div>
-
+ 
                 {/* Image URL */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
@@ -651,7 +652,7 @@ export default function ProductsPage() {
                     </div>
                   )}
                 </div>
-
+ 
                 {/* Description */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
@@ -666,7 +667,7 @@ export default function ProductsPage() {
                     style={{ background: "var(--surface-2)", borderColor: "var(--border)", color: "var(--text)" }}
                   />
                 </div>
-
+ 
                 {/* Submit Actions */}
                 <div className="flex gap-3 pt-6 border-t mt-8" style={{ borderColor: "var(--border)" }}>
                   <button
@@ -700,3 +701,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+ 
+ 

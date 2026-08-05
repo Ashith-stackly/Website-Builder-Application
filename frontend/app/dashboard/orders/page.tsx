@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,7 +33,7 @@ import {
 } from "@/lib/ecommerceApi";
 import type { Order } from "@/types/ecommerce";
 import { staggerContainer, staggerChild, spring } from "@/lib/motion";
-
+ 
 export default function OrdersPage() {
   const { projects, loadProjects, isLoading: loadingProjects } = useProjectStore(
     useShallow((state) => ({
@@ -46,37 +46,37 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrdersList, setLoadingOrdersList] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+ 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-
+ 
   // Selected Order Detail Modal State
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-
+ 
   // Form Fields for Status Update
   const [orderStatus, setOrderStatus] = useState<Order["status"]>("pending");
   const [paymentStatus, setPaymentStatus] = useState<Order["paymentStatus"]>("pending");
   const [paymentId, setPaymentId] = useState("");
-
+ 
   // Load projects list on mount
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
     return () => controller.abort();
   }, [loadProjects]);
-
+ 
   // Set default selected project once loaded
   useEffect(() => {
     if (projects.length > 0 && !selectedProjectId) {
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, selectedProjectId]);
-
+ 
   // Fetch orders when project changes
   const fetchOrders = async (projectId: string) => {
     if (!projectId) return;
@@ -92,13 +92,13 @@ export default function OrdersPage() {
       setLoadingOrdersList(false);
     }
   };
-
+ 
   useEffect(() => {
     if (selectedProjectId) {
       void fetchOrders(selectedProjectId);
     }
   }, [selectedProjectId]);
-
+ 
   // Open Details Modal & Load latest data
   const handleOpenDetails = async (orderId: string) => {
     setLoadingDetail(true);
@@ -117,15 +117,15 @@ export default function OrdersPage() {
       setLoadingDetail(false);
     }
   };
-
+ 
   // Submit Status updates
   const handleStatusSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrder) return;
-
+ 
     setUpdatingStatus(true);
     setUpdateError(null);
-
+ 
     try {
       const updated = await updateOrderStatus(selectedOrder._id, {
         status: orderStatus,
@@ -145,14 +145,15 @@ export default function OrdersPage() {
       setUpdatingStatus(false);
     }
   };
-
+ 
   // Stats Calculations
   const stats = useMemo(() => {
     let totalRevenue = 0;
     let pendingCount = 0;
     let processingCount = 0;
     let fulfilledCount = 0;
-
+    let cancelledCount = 0;
+ 
     orders.forEach((o) => {
       if (o.paymentStatus === "completed" || o.status === "delivered") {
         totalRevenue += o.totalAmount;
@@ -163,18 +164,21 @@ export default function OrdersPage() {
         processingCount++;
       } else if (o.status === "delivered") {
         fulfilledCount++;
+      } else if (o.status === "cancelled") {
+        cancelledCount++;
       }
     });
-
+ 
     return {
       revenue: totalRevenue,
       pending: pendingCount,
       processing: processingCount,
       fulfilled: fulfilledCount,
+      cancelled: cancelledCount,
       total: orders.length
     };
   }, [orders]);
-
+ 
   // Filtered Orders
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -186,7 +190,7 @@ export default function OrdersPage() {
       return matchesSearch && matchesStatus;
     });
   }, [orders, searchQuery, statusFilter]);
-
+ 
   if (loadingProjects) {
     return (
       <div className="flex h-[80vh] w-full flex-col items-center justify-center gap-4">
@@ -195,7 +199,7 @@ export default function OrdersPage() {
       </div>
     );
   }
-
+ 
   if (projects.length === 0) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
@@ -213,7 +217,7 @@ export default function OrdersPage() {
       </div>
     );
   }
-
+ 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Top Header & Project Selector */}
@@ -229,7 +233,7 @@ export default function OrdersPage() {
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="rounded-xl border px-3 py-2 text-sm font-bold shadow-sm focus:outline-none focus:ring-2"
+            className="cursor-pointer rounded-xl border px-3 py-2 text-sm font-bold shadow-sm focus:outline-none focus:ring-2"
             style={{ background: "var(--surface)", color: "var(--text)", borderColor: "var(--border)" }}
           >
             {projects.map((proj) => (
@@ -240,7 +244,7 @@ export default function OrdersPage() {
           </select>
         </div>
       </div>
-
+ 
       {error ? (
         <div className="mt-8 rounded-2xl border border-red-500/20 p-6 text-center" style={{ background: "var(--surface)" }}>
           <AlertCircle className="mx-auto h-8 w-8 text-red-500" />
@@ -253,17 +257,7 @@ export default function OrdersPage() {
       ) : (
         <div className="mt-8 space-y-6">
           {/* Dashboard Quick Stats */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-3xl border p-6 flex items-center justify-between shadow-sm" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-              <div>
-                <span className="text-xs font-bold" style={{ color: "var(--text-faint)" }}>Gross Revenue</span>
-                <h3 className="text-2xl font-black mt-1" style={{ color: "var(--text)" }}>₹{stats.revenue.toLocaleString("en-IN")}</h3>
-              </div>
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-500">
-                <TrendingUp className="h-5 w-5" />
-              </span>
-            </div>
-
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-3xl border p-6 flex items-center justify-between shadow-sm" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div>
                 <span className="text-xs font-bold" style={{ color: "var(--text-faint)" }}>Pending Action</span>
@@ -273,17 +267,17 @@ export default function OrdersPage() {
                 <Clock className="h-5 w-5" />
               </span>
             </div>
-
+ 
             <div className="rounded-3xl border p-6 flex items-center justify-between shadow-sm" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div>
-                <span className="text-xs font-bold" style={{ color: "var(--text-faint)" }}>Processing</span>
-                <h3 className="text-2xl font-black mt-1" style={{ color: "var(--text)" }}>{stats.processing} orders</h3>
+                <span className="text-xs font-bold" style={{ color: "var(--text-faint)" }}>Cancelled</span>
+                <h3 className="text-2xl font-black mt-1" style={{ color: "var(--text)" }}>{stats.cancelled} orders</h3>
               </div>
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-indigo-500/10 text-indigo-500">
-                <Truck className="h-5 w-5" />
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-rose-500/10 text-rose-500">
+                <X className="h-5 w-5" />
               </span>
             </div>
-
+ 
             <div className="rounded-3xl border p-6 flex items-center justify-between shadow-sm" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div>
                 <span className="text-xs font-bold" style={{ color: "var(--text-faint)" }}>Delivered</span>
@@ -294,7 +288,7 @@ export default function OrdersPage() {
               </span>
             </div>
           </div>
-
+ 
           {/* Search & Status Filters */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-md">
@@ -314,18 +308,18 @@ export default function OrdersPage() {
               <span className="flex items-center gap-1.5 text-xs font-bold" style={{ color: "var(--text-muted)" }}>
                 <Filter className="h-3 w-3" /> Fulfill:
               </span>
-              {(["all", "pending", "confirmed", "processing", "shipped", "delivered", "cancelled"] as const).map((s) => (
+              {(["all", "pending", "cancelled", "delivered"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`rounded-lg px-2.5 py-1.5 text-[11px] font-bold capitalize transition-all ${
+                  className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-[11px] font-bold capitalize transition-all ${
                     statusFilter === s
                       ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow"
                       : "border hover:bg-black/5"
                   }`}
                   style={{
                     borderColor: statusFilter === s ? "transparent" : "var(--border)",
-                    color: statusFilter === s ? "inherit" : "var(--text-muted)"
+                    color: statusFilter === s ? undefined : "var(--text-muted)"
                   }}
                 >
                   {s}
@@ -333,7 +327,7 @@ export default function OrdersPage() {
               ))}
             </div>
           </div>
-
+ 
           {/* Orders Table list */}
           {loadingOrdersList ? (
             <div className="flex h-[30vh] w-full flex-col items-center justify-center gap-3">
@@ -433,7 +427,7 @@ export default function OrdersPage() {
           )}
         </div>
       )}
-
+ 
       {/* Order Operations Drawer / Detail Modal */}
       <AnimatePresence>
         {detailOpen && selectedOrder && (
@@ -473,20 +467,20 @@ export default function OrdersPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-
+ 
               {/* Drawer Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* Status Update Form */}
                 <form onSubmit={handleStatusSubmit} className="rounded-2xl border p-5 space-y-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
                   <h4 className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--text)" }}>Fulfillment Controls</h4>
-
+ 
                   {updateError && (
                     <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-xs font-bold text-red-500">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                       <span>{updateError}</span>
                     </div>
                   )}
-
+ 
                   <div className="grid gap-4 grid-cols-2">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
@@ -506,7 +500,7 @@ export default function OrdersPage() {
                         <option value="cancelled">Cancelled</option>
                       </select>
                     </div>
-
+ 
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
                         <CreditCard className="h-3 w-3" /> Payment Status
@@ -525,7 +519,7 @@ export default function OrdersPage() {
                       </select>
                     </div>
                   </div>
-
+ 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
                       <ShieldCheck className="h-3 w-3" /> Transaction Payment ID
@@ -539,7 +533,7 @@ export default function OrdersPage() {
                       style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
                     />
                   </div>
-
+ 
                   <button
                     type="submit"
                     disabled={updatingStatus}
@@ -553,7 +547,7 @@ export default function OrdersPage() {
                     )}
                   </button>
                 </form>
-
+ 
                 {/* Items Ordered List */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--text)" }}>Line Items</h4>
@@ -604,7 +598,7 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 </div>
-
+ 
                 {/* Customer Details */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--text)" }}>Customer Contact</h4>
@@ -621,7 +615,7 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 </div>
-
+ 
                 {/* Shipping Destination */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--text)" }}>Shipping Address</h4>
@@ -653,7 +647,7 @@ export default function OrdersPage() {
                     )}
                   </div>
                 </div>
-
+ 
                 {/* Transaction Metadata */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--text)" }}>Transaction Ledger</h4>
@@ -702,3 +696,5 @@ export default function OrdersPage() {
     </div>
   );
 }
+ 
+ 

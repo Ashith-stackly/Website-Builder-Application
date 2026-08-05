@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,16 +41,16 @@ import { useCountUp, useClickOutside } from "@/lib/hooks";
 import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
 import type { Project } from "@/types/project";
-
+ 
 /* ─── helpers ──────────────────────────────────────────────────────────── */
-
+ 
 function greeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 18) return "Good afternoon";
   return "Good evening";
 }
-
+ 
 function relTime(iso?: string): string {
   if (!iso) return "just now";
   const diff = Date.now() - new Date(iso).getTime();
@@ -62,11 +62,11 @@ function relTime(iso?: string): string {
   const d = Math.floor(hr / 24);
   return d < 7 ? `${d}d ago` : `${Math.floor(d / 7)}w ago`;
 }
-
+ 
 const TILE_TONES = ["#4f6bed", "#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#f43f5e"];
-
+ 
 /* ─── page ─────────────────────────────────────────────────────────────── */
-
+ 
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -87,14 +87,14 @@ export default function DashboardPage() {
     deleteProject: state.deleteProject,
     duplicateProject: state.duplicateProject,
   })));
-
+ 
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("there");
-
+ 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
-
+ 
   const fetchSummary = useCallback(async (signal?: AbortSignal) => {
     setSummaryLoading(true);
     setSummaryError(null);
@@ -108,7 +108,7 @@ export default function DashboardPage() {
       setSummaryLoading(false);
     }
   }, []);
-
+ 
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
@@ -124,7 +124,7 @@ export default function DashboardPage() {
     }
     return () => controller.abort();
   }, [loadProjects, fetchSummary]);
-
+ 
   // Open the create flow from the sidebar / command palette (?new=1).
   useEffect(() => {
     if (searchParams.get("new") === "1") {
@@ -132,9 +132,9 @@ export default function DashboardPage() {
       router.replace("/dashboard");
     }
   }, [searchParams, router]);
-
+ 
   const hasProjects = projects.length > 0;
-
+ 
   const stats = useMemo(() => {
     return [
       { label: "Projects", value: summary?.projects.total ?? projects.length, icon: FolderKanban, tone: TILE_TONES[0], sub: "in this workspace" },
@@ -143,9 +143,9 @@ export default function DashboardPage() {
       { label: "Total Views", value: summary?.analytics.totalViews ?? 0, icon: TrendingUp, tone: TILE_TONES[2], sub: "last 30 days" },
     ];
   }, [summary, projects.length]);
-
+ 
   const progress = Math.min(100, 20 + projects.length * 12);
-
+ 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6 lg:space-y-8">
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                   ? `You have ${projects.length} project${projects.length === 1 ? "" : "s"}. Pick up where you left off or start something new.`
                   : "Let's build your first website. Choose a template or start from a blank canvas."}
               </p>
-
+ 
               {/* Today's progress */}
               <div className="mt-5 max-w-sm">
                 <div className="mb-1.5 flex items-center justify-between text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
@@ -195,19 +195,19 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-
+ 
             <div className="flex flex-col gap-2.5 sm:flex-row lg:flex-col xl:flex-row">
               <motion.button
                 {...hoverLift}
                 onClick={() => setCreateOpen(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25"
               >
                 <Plus className="h-4 w-4" /> Create Website
               </motion.button>
               <motion.button
                 {...hoverLift}
                 onClick={() => router.push("/builder")}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold"
                 style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}
               >
                 <Rocket className="h-4 w-4" /> Open Builder
@@ -215,14 +215,14 @@ export default function DashboardPage() {
             </div>
           </div>
         </motion.section>
-
+ 
         {/* ── Stat row ── */}
         <motion.section variants={gridContainer} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {stats.map((s) => (
             <StatTile key={s.label} {...s} loading={isLoading || summaryLoading} />
           ))}
         </motion.section>
-
+ 
         {/* ── Quick actions ── */}
         <motion.section variants={staggerChild}>
           <SectionHeader title="Quick actions" subtitle="Jump straight into your most-used workflows." />
@@ -240,7 +240,7 @@ export default function DashboardPage() {
                 whileTap={{ scale: 0.98 }}
                 transition={spring.snappy}
                 onClick={a.onClick}
-                className="group flex flex-col items-start gap-3 rounded-2xl border p-4 text-left"
+                className="group flex cursor-pointer flex-col items-start gap-3 rounded-2xl border p-4 text-left"
                 style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
               >
                 <span className="grid h-11 w-11 place-items-center rounded-xl text-white shadow-md" style={{ background: a.tone }}>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
             ))}
           </motion.div>
         </motion.section>
-
+ 
         {/* ── Main + aside ── */}
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Recent projects */}
@@ -293,7 +293,7 @@ export default function DashboardPage() {
               </div>
             )}
           </motion.section>
-
+ 
           {/* Aside */}
           <motion.aside variants={staggerChild} className="space-y-6">
             <ActivityTimeline projects={projects} />
@@ -301,14 +301,14 @@ export default function DashboardPage() {
           </motion.aside>
         </div>
       </motion.div>
-
+ 
       <CreateProjectModal isOpen={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
   );
 }
-
+ 
 /* ─── sub-components ───────────────────────────────────────────────────── */
-
+ 
 function SectionHeader({
   title,
   subtitle,
@@ -328,7 +328,7 @@ function SectionHeader({
         <motion.button
           whileTap={{ scale: 0.96 }}
           onClick={action.onClick}
-          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold"
           style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
         >
           <Plus className="h-3.5 w-3.5" /> {action.label}
@@ -337,7 +337,7 @@ function SectionHeader({
     </div>
   );
 }
-
+ 
 function StatTile({
   label,
   value,
@@ -376,7 +376,7 @@ function StatTile({
     </motion.div>
   );
 }
-
+ 
 function ProjectTile({
   project,
   tone,
@@ -395,7 +395,7 @@ function ProjectTile({
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const menuRef = useClickOutside<HTMLDivElement>(() => setMenuOpen(false), menuOpen);
-
+ 
   const doRename = () => {
     setMenuOpen(false);
     setRenameModalOpen(true);
@@ -404,7 +404,7 @@ function ProjectTile({
     setMenuOpen(false);
     if (window.confirm(`Delete “${project.name}”? This cannot be undone.`)) onDelete(project.id);
   };
-
+ 
   return (
     <>
       <motion.div
@@ -426,7 +426,7 @@ function ProjectTile({
             {project.status || "draft"}
           </span>
         </button>
-
+ 
         {/* Meta */}
         <div className="flex items-center gap-2 p-3">
           <div className="min-w-0 flex-1">
@@ -466,7 +466,7 @@ function ProjectTile({
           </div>
         </div>
       </motion.div>
-
+ 
       <RenameProjectModal
         isOpen={renameModalOpen}
         onClose={() => setRenameModalOpen(false)}
@@ -476,7 +476,7 @@ function ProjectTile({
     </>
   );
 }
-
+ 
 function MenuItem({
   icon: Icon,
   label,
@@ -498,7 +498,7 @@ function MenuItem({
     </button>
   );
 }
-
+ 
 function ActivityTimeline({ projects }: { projects: Project[] }) {
   const items = useMemo(() => {
     const base = projects.slice(0, 4).map((p) => ({
@@ -511,7 +511,7 @@ function ActivityTimeline({ projects }: { projects: Project[] }) {
       ? base
       : [{ icon: CheckCircle2, tone: "#10b981", title: "Welcome to Stackly", time: "now" }];
   }, [projects]);
-
+ 
   return (
     <motion.div
       variants={revealSection}
@@ -542,7 +542,7 @@ function ActivityTimeline({ projects }: { projects: Project[] }) {
     </motion.div>
   );
 }
-
+ 
 function TipCard() {
   const modKey = useModKeyLabel();
   return (
@@ -566,7 +566,7 @@ function TipCard() {
     </motion.div>
   );
 }
-
+ 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
     <kbd className="inline-grid h-5 min-w-5 place-items-center rounded border px-1 font-sans text-[11px] font-bold" style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}>
@@ -574,7 +574,7 @@ function Kbd({ children }: { children: React.ReactNode }) {
     </kbd>
   );
 }
-
+ 
 function ProjectSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
@@ -586,7 +586,7 @@ function ProjectSkeleton() {
     </div>
   );
 }
-
+ 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="rounded-2xl border p-10 text-center" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
@@ -597,3 +597,5 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     </div>
   );
 }
+ 
+ 
