@@ -50,7 +50,7 @@ function NavBarInner() {
     return null;
   }
  
-  return <NavBar keepVisible={normalizedPathname.startsWith("/blockpages")} />;
+  return <NavBar keepVisible={normalizedPathname.startsWith("/blockpages") || normalizedPathname.startsWith("/builder") || normalizedPathname.startsWith("/templates/preview")} />;
 }
  
 export default function NavBarShell() {

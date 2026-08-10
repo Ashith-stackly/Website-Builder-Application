@@ -316,7 +316,7 @@ export default function PublishDialog({
         animate="visible"
         exit="exit"
         variants={backdrop}
-        className="fixed inset-0 z-[500] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+        className="fixed inset-0 z-[6000] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-5"
         onMouseDown={() => { if (!isBusy) onClose(); }}
       >
         <motion.section
