@@ -1,5 +1,5 @@
 "use client";
- 
+
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,12 +18,13 @@ import { spring, staggerChild } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { primaryNav, isActivePath, type NavItem } from "./navConfig";
- 
+import { useLanguageStore } from "@/lib/i18n";
+
 const WORKSPACES = [
   { id: "personal", name: "Personal", initial: "P", tone: "#4f6bed" },
   { id: "team", name: "Team (soon)", initial: "T", tone: "#8b5cf6", disabled: true },
 ];
- 
+
 export default function Sidebar({
   collapsed,
   onToggleCollapse,
@@ -43,7 +44,8 @@ export default function Sidebar({
   const [ws, setWs] = useState(WORKSPACES[0]);
   const wsRef = useClickOutside<HTMLDivElement>(() => setWsOpen(false), wsOpen);
   const modKey = useModKeyLabel();
- 
+  const t = useLanguageStore((s) => s.t);
+
   return (
     <div className="flex h-full flex-col" style={{ background: "var(--surface)" }}>
       {/* Brand + collapse */}
@@ -74,9 +76,8 @@ export default function Sidebar({
         <motion.button
           onClick={onToggleCollapse}
           whileTap={{ scale: 0.9 }}
-          className={`hidden h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)] lg:grid ${
-            collapsed ? "absolute -right-3 z-10 border shadow-sm" : "ml-auto"
-          }`}
+          className={`hidden h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)] lg:grid ${collapsed ? "absolute -right-3 z-10 border shadow-sm" : "ml-auto"
+            }`}
           style={{
             color: "var(--text-faint)",
             borderColor: collapsed ? "var(--border)" : "transparent",
@@ -87,7 +88,7 @@ export default function Sidebar({
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </motion.button>
       </div>
- 
+
       {/* Workspace selector */}
       <div ref={wsRef} className="relative px-3 pb-2">
         <motion.button
@@ -114,14 +115,14 @@ export default function Sidebar({
                   {ws.name}
                 </span>
                 <span className="block text-[11px]" style={{ color: "var(--text-faint)" }}>
-                  Workspace
+                  {t.sidebar.workspace}
                 </span>
               </motion.span>
             )}
           </AnimatePresence>
           {!collapsed && <ChevronDown className="h-4 w-4" style={{ color: "var(--text-faint)" }} />}
         </motion.button>
- 
+
         <AnimatePresence>
           {wsOpen && !collapsed && (
             <motion.ul
@@ -159,7 +160,7 @@ export default function Sidebar({
           )}
         </AnimatePresence>
       </div>
- 
+
       {/* Search / command trigger */}
       <div className="px-3 pb-2">
         <motion.button
@@ -177,7 +178,7 @@ export default function Sidebar({
                 exit={{ opacity: 0 }}
                 className="flex-1 text-[13px]"
               >
-                Search…
+                {t.nav.search}
               </motion.span>
             )}
           </AnimatePresence>
@@ -191,7 +192,7 @@ export default function Sidebar({
           )}
         </motion.button>
       </div>
- 
+
       {/* Primary nav */}
       <LayoutGroup id="sidebar">
         <nav className="app-scroll flex-1 overflow-y-auto px-3 py-1">
@@ -206,7 +207,7 @@ export default function Sidebar({
               />
             ))}
           </ul>
- 
+
           {/* Recent projects */}
           <AnimatePresence initial={false}>
             {!collapsed && recent.length > 0 && (
@@ -247,7 +248,7 @@ export default function Sidebar({
           </AnimatePresence>
         </nav>
       </LayoutGroup>
- 
+
       {/* New project CTA */}
       <div className="p-3">
         <motion.button
@@ -264,7 +265,7 @@ export default function Sidebar({
           <AnimatePresence initial={false}>
             {!collapsed && (
               <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: "auto" }} exit={{ opacity: 0, width: 0 }} className="overflow-hidden whitespace-nowrap">
-                New Project
+                {t.dashboard.newProject}
               </motion.span>
             )}
           </AnimatePresence>
@@ -273,7 +274,7 @@ export default function Sidebar({
     </div>
   );
 }
- 
+
 function NavRow({
   item,
   active,
@@ -287,7 +288,9 @@ function NavRow({
 }) {
   const [hover, setHover] = useState(false);
   const Icon = item.icon;
- 
+  const t = useLanguageStore((s) => s.t);
+  const translatedLabel = t.nav[item.label.toLowerCase() as keyof typeof t.nav] || item.label;
+
   return (
     <li className="relative">
       <Link
@@ -318,7 +321,7 @@ function NavRow({
               transition={{ duration: 0.14 }}
               className="relative z-10 flex-1 truncate"
             >
-              {item.label}
+              {translatedLabel}
             </motion.span>
           )}
         </AnimatePresence>
@@ -326,7 +329,7 @@ function NavRow({
           <PanelsTopLeft className="relative z-10 h-3.5 w-3.5 opacity-50" />
         )}
       </Link>
- 
+
       {/* Collapsed tooltip */}
       <AnimatePresence>
         {collapsed && hover && (
@@ -338,12 +341,11 @@ function NavRow({
             className="pointer-events-none absolute left-full top-1/2 z-30 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-xl"
             style={{ background: "var(--text)", color: "var(--surface)" }}
           >
-            {item.label}
+            {translatedLabel}
           </motion.span>
         )}
       </AnimatePresence>
     </li>
   );
 }
- 
- 
+

@@ -1,5 +1,5 @@
 "use client";
- 
+
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -33,15 +33,16 @@ import { downloadPlanningInvoiceForEntry, type BillingHistoryEntryLike } from "@
 import { staggerContainer, staggerChild, revealSection, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
-import { usePersistentState } from "@/lib/hooks";
 import { fetchProfile, updateProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
+import { useLanguageStore, type LanguageCode } from "@/lib/i18n"
 import ProjectSettingsForm from "@/components/dashboard/ProjectSettingsForm";
 import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
 import { getSignupEmailValidationError } from "@/lib/emailValidation";
- 
+import { usePersistentState } from "@/lib/hooks";
+
 type TabKey = "profile" | "appearance" | "notifications" | "security" | "billing" | "danger";
- 
+
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "profile", label: "Profile", icon: UserIcon },
   { key: "appearance", label: "Appearance", icon: Palette },
@@ -50,50 +51,52 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "billing", label: "Billing", icon: CreditCard },
   { key: "danger", label: "Danger zone", icon: AlertTriangle },
 ];
- 
+
 function SettingsInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams?.get("id") ?? "";
   const loadProjects = useProjectStore((s) => s.loadProjects);
   const [tab, setTab] = useState<TabKey>("profile");
- 
+  const i18n = useLanguageStore((s) => s.t);
+
   useEffect(() => {
     const controller = new AbortController();
     void loadProjects(controller.signal);
     return () => controller.abort();
   }, [loadProjects]);
- 
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       {/* Profile hero */}
       <ProfileHero />
- 
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr]">
         {/* Tab rail */}
         <LayoutGroup id="settings-tabs">
           <nav className="flex gap-2 overflow-x-auto lg:sticky lg:top-20 lg:h-max lg:flex-col lg:overflow-visible">
-            {TABS.map((t) => {
-              const active = tab === t.key;
+            {TABS.map((tabInfo) => {
+              const active = tab === tabInfo.key;
+              const translatedLabel = i18n.settings?.tabs?.[tabInfo.key] || tabInfo.label;
               return (
                 <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
+                  key={tabInfo.key}
+                  onClick={() => setTab(tabInfo.key)}
                   className="relative flex cursor-pointer shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[13.5px] font-semibold transition-colors"
-                  style={{ color: active ? (t.key === "danger" ? "#f43f5e" : "var(--accent-strong)") : "var(--text-muted)" }}
+                  style={{ color: active ? (tabInfo.key === "danger" ? "#f43f5e" : "var(--accent-strong)") : "var(--text-muted)" }}
                 >
                   {active && (
                     <motion.span layoutId="settings-active" transition={spring.soft} className="absolute inset-0 rounded-xl"
-                      style={{ background: t.key === "danger" ? "rgba(244,63,94,0.1)" : "var(--accent-soft)" }} />
+                      style={{ background: tabInfo.key === "danger" ? "rgba(244,63,94,0.1)" : "var(--accent-soft)" }} />
                   )}
-                  <t.icon className="relative z-10 h-4 w-4" />
-                  <span className="relative z-10 whitespace-nowrap">{t.label}</span>
+                  <tabInfo.icon className="relative z-10 h-4 w-4" />
+                  <span className="relative z-10 whitespace-nowrap">{translatedLabel}</span>
                 </button>
               );
             })}
           </nav>
         </LayoutGroup>
- 
+
         {/* Panels */}
         <div className="min-w-0">
           <AnimatePresence mode="wait">
@@ -110,8 +113,8 @@ function SettingsInner() {
               {tab === "notifications" && <NotificationsPanel />}
               {tab === "security" && <SecurityPanel />}
               {tab === "billing" && <BillingPanel onUpgrade={() => router.push("/planning")} />}
-              {tab === "danger" && <DangerPanel onSignOut={() => { try { clearAuthToken(); clearDemoSession(); } catch {} router.push("/login"); }} />}
- 
+              {tab === "danger" && <DangerPanel onSignOut={() => { try { clearAuthToken(); clearDemoSession(); } catch { } router.push("/login"); }} />}
+
               {projectId && (
                 <Card icon={FolderCog} title="Project settings" desc="Settings for the currently selected project.">
                   <ProjectSettingsForm projectId={projectId} />
@@ -124,21 +127,21 @@ function SettingsInner() {
     </div>
   );
 }
- 
+
 /* ─── Profile hero ─────────────────────────────────────────────────────── */
- 
+
 function ProfileHero() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
- 
+
   useEffect(() => {
     const controller = new AbortController();
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
- 
+
     const onUpdated = (e: Event) => {
       const customEvent = e as CustomEvent<UserProfile>;
       if (customEvent.detail) setUser(customEvent.detail);
@@ -149,16 +152,16 @@ function ProfileHero() {
       window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
     };
   }, []);
- 
+
   const name = user?.name || (loading ? "Loading profile..." : "Stackly User");
   const email = user?.email || (loading ? "..." : "user@stackly.com");
   const planLabel = user?.plan ? `${user.plan.charAt(0).toUpperCase()}${user.plan.slice(1)} plan` : "Free plan";
   const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "SU";
- 
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
- 
+
     const reader = new FileReader();
     reader.onload = async (event) => {
       const base64 = event.target?.result as string;
@@ -173,7 +176,7 @@ function ProfileHero() {
     };
     reader.readAsDataURL(file);
   };
- 
+
   return (
     <motion.section
       variants={revealSection}
@@ -219,9 +222,9 @@ function ProfileHero() {
     </motion.section>
   );
 }
- 
+
 /* ─── Panels ───────────────────────────────────────────────────────────── */
- 
+
 function ProfilePanel() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -231,7 +234,7 @@ function ProfilePanel() {
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
- 
+
   useEffect(() => {
     const controller = new AbortController();
     void fetchProfile(controller.signal)
@@ -248,20 +251,20 @@ function ProfilePanel() {
       .finally(() => setLoading(false));
     return () => controller.abort();
   }, []);
- 
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
- 
+
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     const trimmedAddress = address.trim();
- 
+
     if (!trimmedName) return setError("Name can't be empty.");
-   
+
     const emailError = getSignupEmailValidationError(trimmedEmail.toLowerCase());
     if (emailError) return setError(emailError);
- 
+
     // Prevent duplicate submission if values are unchanged
     if (initialProfile && initialProfile.name === trimmedName && initialProfile.email === trimmedEmail && initialProfile.address === trimmedAddress) {
       setError(null);
@@ -269,10 +272,10 @@ function ProfilePanel() {
       window.setTimeout(() => setSaved(false), 1800);
       return;
     }
- 
+
     setError(null);
     setSubmitting(true);
- 
+
     try {
       const updated = await updateProfile({ name: trimmedName, email: trimmedEmail, address: trimmedAddress });
       setName(updated.name);
@@ -287,7 +290,7 @@ function ProfilePanel() {
       setSubmitting(false);
     }
   };
- 
+
   return (
     <Card icon={UserIcon} title="Personal information" desc="Update how your name and email appear across Stackly.">
       {loading ? (
@@ -349,19 +352,23 @@ function ProfilePanel() {
     </Card>
   );
 }
- 
+
 function AppearancePanel() {
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
-  const [lang, setLang] = usePersistentState("stackly-lang", "en");
+  const lang = useLanguageStore((s) => s.lang);
+  const setLang = useLanguageStore((s) => s.setLang);
+  const t = useLanguageStore((s) => s.t).settings.appearance;
+  const tSidebar = useLanguageStore((s) => s.t).sidebar;
+
   const options: { key: ThemeMode; icon: React.ElementType; label: string; hint: string }[] = [
-    { key: "light", icon: Sun, label: "Light", hint: "Clean & bright" },
-    { key: "dark", icon: Moon, label: "Dark", hint: "Easy on the eyes" },
-    { key: "system", icon: Monitor, label: "System", hint: "Match device" },
+    { key: "light", icon: Sun, label: tSidebar.light, hint: t.lightHint },
+    { key: "dark", icon: Moon, label: tSidebar.dark, hint: t.darkHint },
+    { key: "system", icon: Monitor, label: tSidebar.system, hint: t.systemHint },
   ];
   return (
     <>
-      <Card icon={Palette} title="Theme" desc="Choose how Stackly looks. Applies instantly across the app.">
+      <Card icon={Palette} title={t.theme} desc={t.themeDesc}>
         <div className="grid gap-3 sm:grid-cols-3">
           {options.map((o) => {
             const active = mode === o.key;
@@ -379,9 +386,9 @@ function AppearancePanel() {
           })}
         </div>
       </Card>
-      <Card icon={Monitor} title="Language & region" desc="Localize dates, numbers and interface text.">
-        <Field label="Language">
-          <select value={lang} onChange={(e) => setLang(e.target.value)}
+      <Card icon={Monitor} title={t.langRegion} desc={t.langDesc}>
+        <Field label={t.language}>
+          <select value={lang} onChange={(e) => setLang(e.target.value as LanguageCode)}
             className="w-full cursor-pointer rounded-xl border px-3.5 py-2.5 text-sm outline-none"
             style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
             <option value="en">English (US)</option>
@@ -394,7 +401,7 @@ function AppearancePanel() {
     </>
   );
 }
- 
+
 function NotificationsPanel() {
   const [prefs, setPrefs] = usePersistentState("stackly-notif", {
     deploys: true, comments: true, product: false, security: true, weekly: false,
@@ -410,7 +417,7 @@ function NotificationsPanel() {
     <Card icon={Bell} title="Notifications" desc="Decide what Stackly emails you about.">
       <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
         {rows.map((r) => (
-          <li key={r.key} className="flex items-center justify-between gap-4 py-3.5" style={{ borderColor: "var(--border)" }}>
+          <li key={r.key as string} className="flex items-center justify-between gap-4 py-3.5" style={{ borderColor: "var(--border)" }}>
             <div className="min-w-0">
               <p className="text-[13.5px] font-semibold" style={{ color: "var(--text)" }}>{r.label}</p>
               <p className="text-xs" style={{ color: "var(--text-faint)" }}>{r.desc}</p>
@@ -422,7 +429,7 @@ function NotificationsPanel() {
     </Card>
   );
 }
- 
+
 function SecurityPanel() {
   const rows = [
     { icon: KeyRound, label: "Password", value: "Last changed 3 months ago", action: "Change" },
@@ -472,7 +479,7 @@ function SecurityPanel() {
     </>
   );
 }
- 
+
 function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
   const usage = [
     { label: "Projects", used: 3, total: 5 },
@@ -512,16 +519,16 @@ function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
           })}
         </ul>
       </Card>
- 
+
       <DashboardBillingHistory />
     </>
   );
 }
- 
+
 function DashboardBillingHistory() {
   const [history, setHistory] = useState<BillingHistoryEntryLike[]>([]);
   const [user, setUser] = useState<UserProfile | null>(null);
- 
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("stacklyPlanningBillingHistory");
@@ -529,13 +536,13 @@ function DashboardBillingHistory() {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) setHistory(parsed);
       }
-    } catch {}
- 
+    } catch { }
+
     const controller = new AbortController();
-    void fetchProfile(controller.signal).then(setUser).catch(() => {});
+    void fetchProfile(controller.signal).then(setUser).catch(() => { });
     return () => controller.abort();
   }, []);
- 
+
   const downloadInvoice = async (entry: BillingHistoryEntryLike) => {
     const contactDefaults = {
       displayName: user?.name || "User",
@@ -545,7 +552,7 @@ function DashboardBillingHistory() {
     };
     await downloadPlanningInvoiceForEntry(entry, contactDefaults, entry.invoiceId);
   };
- 
+
   return (
     <Card icon={FileText} title="Invoice & Billing History" desc="Past payment invoices and downloadable billing records.">
       {history.length === 0 ? (
@@ -598,13 +605,18 @@ function DashboardBillingHistory() {
     </Card>
   );
 }
- 
+
 function DangerPanel({ onSignOut }: { onSignOut: () => void }) {
   return (
-    <>
-      <Card icon={LogOut} title="Sign out" desc="Sign out of Stackly on this device.">
+    <div className="space-y-6">
+      <Card icon={LogOut} title="Sign Out" desc="Sign out of Stackly on this device.">
         <button onClick={onSignOut} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
-          <LogOut className="h-4 w-4" /> Sign out
+          <LogOut className="h-4 w-4" /> Sign Out
+        </button>
+      </Card>
+      <Card icon={Globe} title="Sign Out from All Accounts" desc="Sign out from all devices and all active account sessions.">
+        <button onClick={() => { if (window.confirm("Are you sure you want to sign out from all devices?")) onSignOut(); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
+          <Globe className="h-4 w-4" /> Sign Out All
         </button>
       </Card>
       <div className="rounded-2xl border-2 border-rose-500/30 p-5" style={{ background: "rgba(244,63,94,0.04)" }}>
@@ -621,12 +633,12 @@ function DangerPanel({ onSignOut }: { onSignOut: () => void }) {
           <Trash2 className="h-4 w-4" /> Delete account
         </button>
       </div>
-    </>
+    </div>
   );
 }
- 
+
 /* ─── primitives ───────────────────────────────────────────────────────── */
- 
+
 function Card({ icon: Icon, title, desc, children }: { icon: React.ElementType; title: string; desc?: string; children: React.ReactNode }) {
   return (
     <motion.section variants={revealSection} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }}
@@ -644,7 +656,7 @@ function Card({ icon: Icon, title, desc, children }: { icon: React.ElementType; 
     </motion.section>
   );
 }
- 
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
@@ -653,7 +665,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
- 
+
 function Input({ value, onChange, placeholder, type = "text" }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return (
     <input
@@ -666,7 +678,7 @@ function Input({ value, onChange, placeholder, type = "text" }: { value: string;
     />
   );
 }
- 
+
 function Switch({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <button
@@ -682,7 +694,7 @@ function Switch({ on, onToggle }: { on: boolean; onToggle: () => void }) {
     </button>
   );
 }
- 
+
 export default function SettingsPage() {
   return (
     <Suspense fallback={<div className="p-8" />}>
@@ -690,5 +702,4 @@ export default function SettingsPage() {
     </Suspense>
   );
 }
- 
- 
+

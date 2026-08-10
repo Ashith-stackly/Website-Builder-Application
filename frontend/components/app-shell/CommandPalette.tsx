@@ -1,5 +1,5 @@
 "use client";
- 
+
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +18,8 @@ import { backdrop, modalPanel, staggerChild } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useThemeStore } from "@/lib/theme";
 import { primaryNav } from "./navConfig";
- 
+import { useLanguageStore } from "@/lib/i18n";
+
 interface Command {
   id: string;
   label: string;
@@ -28,7 +29,7 @@ interface Command {
   run: () => void;
   group: "Navigate" | "Actions" | "Recent projects";
 }
- 
+
 export default function CommandPalette({
   open,
   onClose,
@@ -40,22 +41,23 @@ export default function CommandPalette({
   const projects = useProjectStore((s) => s.projects);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const resolved = useThemeStore((s) => s.resolved);
- 
+
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
- 
+  const t = useLanguageStore((s) => s.t);
+
   const commands = useMemo<Command[]>(() => {
     const nav: Command[] = primaryNav.map((n) => ({
       id: `nav-${n.href}`,
-      label: n.label,
+      label: t.nav[n.label.toLowerCase() as keyof typeof t.nav] || n.label,
       hint: n.href,
       icon: n.icon,
       group: "Navigate",
       run: () => router.push(n.href),
     }));
- 
+
     const actions: Command[] = [
       {
         id: "act-new",
@@ -85,7 +87,7 @@ export default function CommandPalette({
         run: () => toggleTheme(),
       },
     ];
- 
+
     const recent: Command[] = projects.slice(0, 5).map((p) => ({
       id: `proj-${p.id}`,
       label: p.name,
@@ -95,10 +97,10 @@ export default function CommandPalette({
       group: "Recent projects",
       run: () => router.push(`/builder?projectId=${p.id}`),
     }));
- 
+
     return [...actions, ...nav, ...recent];
-  }, [projects, router, toggleTheme, resolved]);
- 
+  }, [projects, router, toggleTheme, resolved, t.nav]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return commands;
@@ -106,7 +108,7 @@ export default function CommandPalette({
       `${c.label} ${c.hint ?? ""} ${c.keywords ?? ""}`.toLowerCase().includes(q),
     );
   }, [commands, query]);
- 
+
   // Group in stable order.
   const groups = useMemo(() => {
     const order: Command["group"][] = ["Actions", "Navigate", "Recent projects"];
@@ -114,7 +116,7 @@ export default function CommandPalette({
       .map((g) => ({ group: g, items: filtered.filter((c) => c.group === g) }))
       .filter((g) => g.items.length > 0);
   }, [filtered]);
- 
+
   useEffect(() => {
     if (open) {
       setQuery("");
@@ -123,9 +125,9 @@ export default function CommandPalette({
       return () => window.clearTimeout(t);
     }
   }, [open]);
- 
+
   useEffect(() => setActive(0), [query]);
- 
+
   const runAt = (i: number) => {
     const cmd = filtered[i];
     if (!cmd) return;
@@ -133,7 +135,7 @@ export default function CommandPalette({
     // Defer so the palette closes cleanly before navigation.
     window.setTimeout(() => cmd.run(), 0);
   };
- 
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -148,10 +150,10 @@ export default function CommandPalette({
       onClose();
     }
   };
- 
+
   // Flat index → for highlight across groups.
   let flatIndex = -1;
- 
+
   return (
     <AnimatePresence>
       {open && (
@@ -186,7 +188,7 @@ export default function CommandPalette({
                 ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search projects, pages, actions…"
+                placeholder={t.nav.searchPlaceholder}
                 className="w-full bg-transparent py-4 text-sm outline-none placeholder:text-[color:var(--text-faint)]"
                 style={{ color: "var(--text)" }}
               />
@@ -197,7 +199,7 @@ export default function CommandPalette({
                 ESC
               </kbd>
             </div>
- 
+
             {/* Results */}
             <div ref={listRef} className="app-scroll max-h-[52vh] overflow-y-auto p-2">
               {groups.length === 0 ? (
@@ -259,7 +261,7 @@ export default function CommandPalette({
                 ))
               )}
             </div>
- 
+
             {/* Footer */}
             <div
               className="flex items-center justify-between border-t px-4 py-2.5 text-[11px]"
@@ -278,7 +280,7 @@ export default function CommandPalette({
     </AnimatePresence>
   );
 }
- 
+
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
     <kbd
@@ -289,5 +291,4 @@ function Kbd({ children }: { children: React.ReactNode }) {
     </kbd>
   );
 }
- 
- 
+

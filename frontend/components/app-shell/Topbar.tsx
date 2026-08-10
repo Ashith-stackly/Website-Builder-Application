@@ -1,5 +1,5 @@
 "use client";
- 
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -25,7 +25,8 @@ import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { fetchProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
- 
+import { useLanguageStore } from "@/lib/i18n";
+
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   analytics: "Analytics",
@@ -33,13 +34,13 @@ const SEGMENT_LABELS: Record<string, string> = {
   builder: "Builder",
   templates: "Templates",
 };
- 
+
 const SAMPLE_NOTIFICATIONS = [
   { id: 1, icon: Rocket, title: "Deployment succeeded", body: "Your site is live.", time: "2m", tone: "#10b981" },
   { id: 2, icon: Sparkles, title: "New templates added", body: "5 fresh layouts in the studio.", time: "1h", tone: "#8b5cf6" },
   { id: 3, icon: Bell, title: "Autosave restored", body: "We recovered a draft from earlier.", time: "3h", tone: "#4f6bed" },
 ];
- 
+
 export default function Topbar({
   onOpenMobileNav,
   onOpenCommand,
@@ -50,7 +51,8 @@ export default function Topbar({
   const pathname = usePathname() || "/dashboard";
   const crumbs = pathname.split("/").filter(Boolean);
   const modKey = useModKeyLabel();
- 
+  const t = useLanguageStore((s) => s.t);
+
   return (
     <header
       className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b px-4 backdrop-blur-xl md:px-6"
@@ -64,12 +66,13 @@ export default function Topbar({
       >
         <Menu className="h-5 w-5" />
       </button>
- 
+
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 sm:flex">
         {crumbs.map((seg, i) => {
           const href = "/" + crumbs.slice(0, i + 1).join("/");
-          const label = SEGMENT_LABELS[seg] || seg;
+          const baseLabel = SEGMENT_LABELS[seg] || seg;
+          const label = t.nav[seg.toLowerCase() as keyof typeof t.nav] || baseLabel;
           const last = i === crumbs.length - 1;
           return (
             <span key={href} className="flex min-w-0 items-center gap-1.5">
@@ -85,7 +88,7 @@ export default function Topbar({
           );
         })}
       </nav>
- 
+
       {/* Search (command) trigger */}
       <button
         onClick={onOpenCommand}
@@ -93,30 +96,31 @@ export default function Topbar({
         style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-faint)" }}
       >
         <Search className="h-4 w-4" />
-        <span className="hidden md:inline">Search everything…</span>
+        <span className="hidden md:inline">{t.nav.searchPlaceholder}</span>
         <kbd className="ml-auto hidden rounded-md border px-1.5 py-0.5 text-[10px] font-semibold md:block" style={{ borderColor: "var(--border)" }}>
           {modKey}K
         </kbd>
       </button>
- 
+
       <ThemeSwitch />
       <Notifications />
       <ProfileMenu />
     </header>
   );
 }
- 
+
 /* ─── Theme switch (segmented light / system / dark) ───────────────────── */
- 
+
 function ThemeSwitch() {
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
+  const t = useLanguageStore((s) => s.t);
   const options: { key: ThemeMode; icon: typeof Sun; label: string }[] = [
-    { key: "light", icon: Sun, label: "Light" },
-    { key: "system", icon: Monitor, label: "System" },
-    { key: "dark", icon: Moon, label: "Dark" },
+    { key: "light", icon: Sun, label: t.sidebar.light },
+    { key: "system", icon: Monitor, label: t.sidebar.system },
+    { key: "dark", icon: Moon, label: t.sidebar.dark },
   ];
- 
+
   return (
     <div
       className="hidden items-center gap-0.5 rounded-xl border p-0.5 sm:flex"
@@ -151,13 +155,13 @@ function ThemeSwitch() {
     </div>
   );
 }
- 
+
 /* ─── Notifications dropdown ───────────────────────────────────────────── */
- 
+
 function Notifications() {
   const [open, setOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
- 
+
   return (
     <div ref={ref} className="relative">
       <motion.button
@@ -170,7 +174,7 @@ function Notifications() {
         <Bell className="h-4.5 w-4.5" />
         <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2" style={{ ["--tw-ring-color" as string]: "var(--surface-2)" }} />
       </motion.button>
- 
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -207,21 +211,22 @@ function Notifications() {
     </div>
   );
 }
- 
+
 /* ─── Profile menu ─────────────────────────────────────────────────────── */
- 
+
 function ProfileMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
   const [user, setUser] = useState<UserProfile | null>(null);
- 
+  const t = useLanguageStore((s) => s.t);
+
   useEffect(() => {
     const controller = new AbortController();
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
-      .catch(() => {});
- 
+      .catch(() => { });
+
     const onUpdated = (e: Event) => {
       const customEvent = e as CustomEvent<UserProfile>;
       if (customEvent.detail) setUser(customEvent.detail);
@@ -232,14 +237,14 @@ function ProfileMenu() {
       window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
     };
   }, []);
- 
+
   const initials = (user?.name || "Stackly User")
     .split(" ")
     .map((p) => p[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
- 
+
   const signOut = () => {
     try {
       clearAuthToken();
@@ -249,7 +254,7 @@ function ProfileMenu() {
     }
     router.push("/login");
   };
- 
+
   return (
     <div ref={ref} className="relative">
       <motion.button
@@ -264,7 +269,7 @@ function ProfileMenu() {
         </span>
         <ChevronRight className="h-3.5 w-3.5 rotate-90" style={{ color: "var(--text-faint)" }} />
       </motion.button>
- 
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -285,8 +290,8 @@ function ProfileMenu() {
               </span>
             </div>
             <div className="p-1.5">
-              <MenuLink icon={UserIcon} label="Profile" onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
-              <MenuLink icon={Settings} label="Settings" onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
+              <MenuLink icon={UserIcon} label={t.sidebar.profile} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
+              <MenuLink icon={Settings} label={t.nav.settings} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
               <MenuLink icon={Check} label="Plan: Free" muted onClick={() => { setOpen(false); router.push("/planning"); }} />
             </div>
             <div className="border-t p-1.5" style={{ borderColor: "var(--border)" }}>
@@ -294,7 +299,7 @@ function ProfileMenu() {
                 onClick={signOut}
                 className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-rose-500 transition-colors hover:bg-rose-500/10"
               >
-                <LogOut className="h-4 w-4" /> Sign out
+                <LogOut className="h-4 w-4" /> {t.sidebar.logOut}
               </button>
             </div>
           </motion.div>
@@ -303,7 +308,7 @@ function ProfileMenu() {
     </div>
   );
 }
- 
+
 function MenuLink({
   icon: Icon,
   label,
@@ -325,5 +330,4 @@ function MenuLink({
     </button>
   );
 }
- 
- 
+
