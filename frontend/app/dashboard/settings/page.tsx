@@ -153,10 +153,9 @@ function ProfileHero() {
     };
   }, []);
 
-  const name = user?.name || (loading ? "Loading profile..." : "Stackly User");
-  const email = user?.email || (loading ? "..." : "user@stackly.com");
-  const planLabel = user?.plan ? `${user.plan.charAt(0).toUpperCase()}${user.plan.slice(1)} plan` : "Free plan";
-  const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "SU";
+  const name = user?.name || (loading ? "Loading profile..." : "Balaji B");
+  const email = user?.email || (loading ? "..." : "balajib@gmail.com");
+  const planLabel = user?.plan ? user.plan.toUpperCase() : "FREE";
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -177,32 +176,47 @@ function ProfileHero() {
     reader.readAsDataURL(file);
   };
 
+  const currentAvatarSrc = user?.avatar && user.avatar !== "/profile.webp"
+    ? user.avatar
+    : "/profile_avatar_balaji.png";
+
   return (
     <motion.section
       variants={revealSection}
       initial="hidden"
       animate="visible"
-      className="relative overflow-hidden rounded-3xl border p-6 sm:p-7"
-      style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+      className="relative overflow-hidden rounded-[28px] border shadow-sm flex flex-col md:flex-row items-center justify-between p-6 sm:p-8 min-h-[190px]"
+      style={{
+        borderColor: "rgba(147, 197, 253, 0.4)",
+        background: "linear-gradient(90deg, #ffffff 0%, #e0f2fe 25%, #7dd3fc 60%, #60a5fa 100%)",
+      }}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-[#4f6bed] via-[#6d5ef0] to-[#8b5cf6] opacity-90" />
-      <div className="relative flex flex-col items-start gap-4 pt-8 sm:flex-row sm:items-center">
-        <div className="relative">
-          <span className="grid h-20 w-20 place-items-center overflow-hidden rounded-2xl border-4 bg-gradient-to-br from-[#4f6bed] to-[#8b5cf6] text-2xl font-black text-white shadow-xl" style={{ borderColor: "var(--surface)" }}>
-            {loading ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : (
-              user?.avatar && user.avatar !== "/profile.webp" ? (
-                <img src={user.avatar} alt="Avatar" className="h-full w-full object-cover" />
-              ) : initials
-            )}
-          </span>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute -bottom-1 -right-1 grid h-7 w-7 cursor-pointer place-items-center rounded-lg border text-white shadow-md transition-transform hover:scale-105"
-            style={{ background: "var(--accent)", borderColor: "var(--surface)" }}
-            aria-label="Change avatar"
-          >
-            <Camera className="h-3.5 w-3.5" />
-          </button>
+      {/* Left section: Avatar & user info */}
+      <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left w-full md:w-auto">
+        {/* Avatar with purple container frame */}
+        <div className="relative shrink-0">
+          <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-[24px] bg-[#818cf8] p-1 shadow-md">
+            <div className="h-full w-full overflow-hidden rounded-[20px] bg-slate-900 flex items-center justify-center font-bold text-2xl text-white">
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+              ) : (
+                <img
+                  src={currentAvatarSrc}
+                  alt="Avatar"
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+            {/* Camera badge icon */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-1 -right-1 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-white text-white shadow-lg transition-transform hover:scale-110 active:scale-95"
+              style={{ background: "#818cf8" }}
+              aria-label="Change avatar"
+            >
+              <Camera className="h-4 w-4" />
+            </button>
+          </div>
           <input
             type="file"
             ref={fileInputRef}
@@ -211,13 +225,30 @@ function ProfileHero() {
             className="hidden"
           />
         </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-black sm:text-2xl" style={{ color: "var(--text)" }}>{name}</h1>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>{email}</p>
+
+        {/* User Details */}
+        <div className="flex flex-col items-center sm:items-start gap-1">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0f2744]">
+            {name}
+          </h1>
+          <p className="text-sm sm:text-base font-semibold text-[#2563eb]">
+            {email}
+          </p>
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-[#818cf8]/25 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-[#4338ca]">
+            <Sparkles className="h-3.5 w-3.5 text-[#6366f1]" />
+            <span>{planLabel}</span>
+          </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold" style={{ borderColor: "var(--border)", background: "var(--accent-soft)", color: "var(--accent-strong)" }}>
-          <Sparkles className="h-3.5 w-3.5" /> {planLabel}
-        </span>
+      </div>
+
+      {/* Right section: Top-down Laptop Graphic (Full Uncropped Laptop) */}
+      <div className="hidden md:flex relative h-[210px] sm:h-[220px] shrink-0 items-center justify-end overflow-hidden -my-8 -mr-6 sm:-mr-8 pointer-events-none">
+        <img
+          src="/settings_profile_laptop.webp"
+          alt="Laptop overhead view"
+          className="h-full w-auto object-contain object-right"
+          style={{ WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 15%, black 100%)", maskImage: "linear-gradient(to right, transparent 0%, black 15%, black 100%)" }}
+        />
       </div>
     </motion.section>
   );
