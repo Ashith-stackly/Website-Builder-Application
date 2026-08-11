@@ -24,6 +24,38 @@ export type UpdateProfilePayload = {
 
 export const PROFILE_UPDATED_EVENT = "stackly-profile-updated";
 
+export function normalizePlanKey(plan?: string): string {
+  const normalized = String(plan || "free").toLowerCase().trim();
+  if (normalized.includes("advanced")) return "advanced";
+  if (normalized.includes("business")) return "business";
+  if (normalized.includes("basic")) return "basic";
+  if (normalized.includes("premium")) return "premium";
+  if (normalized.includes("free")) return "free";
+  return "free";
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  free: "Free",
+  basic: "Basic",
+  business: "Business",
+  advanced: "Advanced",
+  premium: "Premium",
+};
+
+export function formatPlanLabel(plan?: string): string {
+  return PLAN_LABELS[normalizePlanKey(plan)] || "Free";
+}
+
+/** Prefer a specific purchased plan when the profile still has a generic tier. */
+export function resolveActivePlan(userPlan?: string, recentPurchasePlan?: string): string {
+  const userKey = normalizePlanKey(userPlan);
+  const purchaseKey = normalizePlanKey(recentPurchasePlan);
+  if (userKey === "premium" && purchaseKey !== "free" && purchaseKey !== "premium") {
+    return purchaseKey;
+  }
+  return userKey;
+}
+
 export function notifyProfileUpdated(profile: UserProfile): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, { detail: profile }));

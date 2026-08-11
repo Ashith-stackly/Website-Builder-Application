@@ -1,24 +1,18 @@
 "use client";
 
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   User as UserIcon,
   Palette,
-  Bell,
-  ShieldCheck,
   CreditCard,
   AlertTriangle,
   Check,
   Sun,
   Moon,
   Monitor,
-  Mail,
-  Phone,
-  KeyRound,
   Globe,
-  Smartphone,
   LogOut,
   Trash2,
   Camera,
@@ -27,27 +21,23 @@ import {
   Loader2,
   Download,
   FileText,
-  ExternalLink,
 } from "lucide-react";
 import { downloadPlanningInvoiceForEntry, type BillingHistoryEntryLike } from "@/lib/planningInvoiceHtml";
-import { staggerContainer, staggerChild, revealSection, spring } from "@/lib/motion";
+import { revealSection, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
-import { fetchProfile, updateProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
+import { fetchProfile, formatPlanLabel, resolveActivePlan, updateProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 import { useLanguageStore, type LanguageCode } from "@/lib/i18n"
 import ProjectSettingsForm from "@/components/dashboard/ProjectSettingsForm";
 import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
 import { getSignupEmailValidationError } from "@/lib/emailValidation";
-import { usePersistentState } from "@/lib/hooks";
 
-type TabKey = "profile" | "appearance" | "notifications" | "security" | "billing" | "danger";
+type TabKey = "profile" | "appearance" | "billing" | "danger";
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "profile", label: "Profile", icon: UserIcon },
   { key: "appearance", label: "Appearance", icon: Palette },
-  { key: "notifications", label: "Notifications", icon: Bell },
-  { key: "security", label: "Security", icon: ShieldCheck },
   { key: "billing", label: "Billing", icon: CreditCard },
   { key: "danger", label: "Danger zone", icon: AlertTriangle },
 ];
@@ -110,8 +100,6 @@ function SettingsInner() {
             >
               {tab === "profile" && <ProfilePanel />}
               {tab === "appearance" && <AppearancePanel />}
-              {tab === "notifications" && <NotificationsPanel />}
-              {tab === "security" && <SecurityPanel />}
               {tab === "billing" && <BillingPanel onUpgrade={() => router.push("/planning")} />}
               {tab === "danger" && <DangerPanel onSignOut={() => { try { clearAuthToken(); clearDemoSession(); } catch { } router.push("/login"); }} />}
 
@@ -132,10 +120,22 @@ function SettingsInner() {
 
 function ProfileHero() {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [recentPurchasePlan, setRecentPurchasePlan] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed[0]) {
+          const latest = parsed[0] as BillingHistoryEntryLike;
+          setRecentPurchasePlan(latest.planTier || latest.planName);
+        }
+      }
+    } catch { /* ignore */ }
+
     const controller = new AbortController();
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
@@ -155,7 +155,7 @@ function ProfileHero() {
 
   const name = user?.name || (loading ? "Loading profile..." : "Balaji B");
   const email = user?.email || (loading ? "..." : "balajib@gmail.com");
-  const planLabel = user?.plan ? user.plan.toUpperCase() : "FREE";
+  const planLabel = formatPlanLabel(resolveActivePlan(user?.plan, recentPurchasePlan)).toUpperCase();
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -433,85 +433,53 @@ function AppearancePanel() {
   );
 }
 
-function NotificationsPanel() {
-  const [prefs, setPrefs] = usePersistentState("stackly-notif", {
-    deploys: true, comments: true, product: false, security: true, weekly: false,
-  });
-  const rows: { key: keyof typeof prefs; label: string; desc: string }[] = [
-    { key: "deploys", label: "Deployment updates", desc: "When a site publishes or fails." },
-    { key: "comments", label: "Collaborator activity", desc: "Comments and shared edits." },
-    { key: "product", label: "Product news", desc: "New features and templates." },
-    { key: "security", label: "Security alerts", desc: "Sign-ins and account changes." },
-    { key: "weekly", label: "Weekly digest", desc: "Traffic summary every Monday." },
-  ];
-  return (
-    <Card icon={Bell} title="Notifications" desc="Decide what Stackly emails you about.">
-      <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
-        {rows.map((r) => (
-          <li key={r.key as string} className="flex items-center justify-between gap-4 py-3.5" style={{ borderColor: "var(--border)" }}>
-            <div className="min-w-0">
-              <p className="text-[13.5px] font-semibold" style={{ color: "var(--text)" }}>{r.label}</p>
-              <p className="text-xs" style={{ color: "var(--text-faint)" }}>{r.desc}</p>
-            </div>
-            <Switch on={prefs[r.key]} onToggle={() => setPrefs({ ...prefs, [r.key]: !prefs[r.key] })} />
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-function SecurityPanel() {
-  const rows = [
-    { icon: KeyRound, label: "Password", value: "Last changed 3 months ago", action: "Change" },
-    { icon: Mail, label: "Email", value: "Verified", action: "Update" },
-    { icon: Phone, label: "Phone", value: "Not added", action: "Add" },
-    { icon: Globe, label: "Google account", value: "Connected", action: "Manage" },
-    { icon: ShieldCheck, label: "Two-factor auth", value: "Recommended", action: "Enable" },
-  ];
-  return (
-    <>
-      <Card icon={ShieldCheck} title="Security" desc="Keep your account protected.">
-        <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
-          {rows.map((r) => (
-            <li key={r.label} className="flex items-center gap-3 py-3.5" style={{ borderColor: "var(--border)" }}>
-              <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}>
-                <r.icon className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[13.5px] font-semibold" style={{ color: "var(--text)" }}>{r.label}</p>
-                <p className="text-xs" style={{ color: "var(--text-faint)" }}>{r.value}</p>
-              </div>
-              <button className="rounded-lg cursor-pointer border px-3 py-1.5 text-xs font-bold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
-                {r.action}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Card>
-      <Card icon={Smartphone} title="Active sessions" desc="Devices currently signed in to your account.">
-        <ul className="space-y-3">
-          {[{ d: "Chrome · Windows", loc: "This device", now: true }, { d: "Safari · iPhone", loc: "Mumbai, IN", now: false }].map((s) => (
-            <li key={s.d} className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-              <span className="grid h-9 w-9 place-items-center rounded-lg" style={{ background: "var(--surface-3)", color: "var(--text-muted)" }}><Monitor className="h-4 w-4" /></span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-semibold" style={{ color: "var(--text)" }}>{s.d}</p>
-                <p className="text-xs" style={{ color: "var(--text-faint)" }}>{s.loc}</p>
-              </div>
-              {s.now ? (
-                <span className="rounded-full px-2 py-0.5 text-[11px] font-bold text-emerald-600" style={{ background: "rgba(16,185,129,0.12)" }}>Active now</span>
-              ) : (
-                <button className="text-xs cursor-pointer font-bold text-rose-500">Revoke</button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </Card>
-    </>
-  );
-}
+const PLAN_DESCRIPTIONS: Record<string, string> = {
+  free: "Upgrade for custom domains, more storage and analytics.",
+  basic: "20 GB storage, multi-cloud hosting, and light marketing suite.",
+  business: "100 GB storage, payments, eCommerce, and standard marketing suite.",
+  advanced: "300 GB storage, legacy marketing suite, and 10 site collaborators.",
+  premium: "Unlimited projects and pages with full platform access.",
+};
 
 function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [recentPurchasePlan, setRecentPurchasePlan] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed[0]) {
+          const latest = parsed[0] as BillingHistoryEntryLike;
+          setRecentPurchasePlan(latest.planTier || latest.planName);
+        }
+      }
+    } catch { /* ignore */ }
+
+    const controller = new AbortController();
+    void fetchProfile(controller.signal)
+      .then((data) => setUser(data))
+      .catch(() => { })
+      .finally(() => setLoading(false));
+
+    const onUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfile>;
+      if (customEvent.detail) setUser(customEvent.detail);
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    return () => {
+      controller.abort();
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    };
+  }, []);
+
+  const planKey = resolveActivePlan(user?.plan, recentPurchasePlan);
+  const planLabel = formatPlanLabel(planKey);
+  const planDesc = PLAN_DESCRIPTIONS[planKey] || PLAN_DESCRIPTIONS.free;
+  const isFreePlan = planKey === "free";
+
   const usage = [
     { label: "Projects", used: 3, total: 5 },
     { label: "Published sites", used: 1, total: 1 },
@@ -519,15 +487,19 @@ function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
   ];
   return (
     <>
-      <Card icon={CreditCard} title="Current plan" desc="You're on the Free plan.">
+      <Card icon={CreditCard} title="Current plan" desc={`You're on the ${planLabel} plan.`}>
         <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center" style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, var(--accent-soft), var(--surface))" }}>
           <div>
-            <p className="text-lg font-black" style={{ color: "var(--text)" }}>Free</p>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Upgrade for custom domains, more storage and analytics.</p>
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+            ) : (
+              <p className="text-lg font-black" style={{ color: "var(--text)" }}>{planLabel}</p>
+            )}
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>{planDesc}</p>
           </div>
           <motion.button whileTap={{ scale: 0.97 }} onClick={onUpgrade}
             className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
-            <Sparkles className="h-4 w-4" /> Upgrade
+            <Sparkles className="h-4 w-4" /> {isFreePlan ? "Upgrade" : "Change plan"}
           </motion.button>
         </div>
       </Card>
@@ -641,14 +613,22 @@ function DangerPanel({ onSignOut }: { onSignOut: () => void }) {
   return (
     <div className="space-y-6">
       <Card icon={LogOut} title="Sign Out" desc="Sign out of Stackly on this device.">
-        <button onClick={onSignOut} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onSignOut}
+          className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25"
+        >
           <LogOut className="h-4 w-4" /> Sign Out
-        </button>
+        </motion.button>
       </Card>
       <Card icon={Globe} title="Sign Out from All Accounts" desc="Sign out from all devices and all active account sessions.">
-        <button onClick={() => { if (window.confirm("Are you sure you want to sign out from all devices?")) onSignOut(); }} className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold" style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => { if (window.confirm("Are you sure you want to sign out from all devices?")) onSignOut(); }}
+          className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25"
+        >
           <Globe className="h-4 w-4" /> Sign Out All
-        </button>
+        </motion.button>
       </Card>
       <div className="rounded-2xl border-2 border-rose-500/30 p-5" style={{ background: "rgba(244,63,94,0.04)" }}>
         <div className="flex items-center gap-2.5">
@@ -707,22 +687,6 @@ function Input({ value, onChange, placeholder, type = "text" }: { value: string;
       className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-shadow focus:shadow-[0_0_0_4px_var(--ring)]"
       style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text)" }}
     />
-  );
-}
-
-function Switch({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button
-      onClick={onToggle}
-      role="switch"
-      aria-checked={on}
-      className="relative cursor-pointer h-6 w-11 shrink-0 rounded-full transition-colors"
-      style={{ background: on ? "var(--accent)" : "var(--surface-3)" }}
-    >
-      <motion.span layout transition={spring.snappy}
-        className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow"
-        style={{ left: on ? "calc(100% - 22px)" : "2px" }} />
-    </button>
   );
 }
 

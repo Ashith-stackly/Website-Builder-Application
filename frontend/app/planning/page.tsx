@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { activateFrontendSubscription } from "@/lib/demoAuth";
+import { notifyProfileUpdated } from "@/lib/profileApi";
 import { downloadPlanningInvoiceForEntry } from "@/lib/planningInvoiceHtml";
 import type { PlanningInvoiceContactDefaults } from "@/lib/planningInvoiceHtml";
 import {
@@ -474,8 +475,31 @@ function PlanningPageContent() {
     setPaymentLoading(false);
     setIsFreeCheckout(false);
     activateFrontendSubscription();
+
+    if (verifiedUser?.plan) {
+      notifyProfileUpdated({
+        name: verifiedUser.name || userName,
+        email: verifiedUser.email || userEmail,
+        mobile: verifiedUser.mobile || userPhone,
+        plan: verifiedUser.plan,
+        subscriptionStatus: verifiedUser.subscriptionStatus,
+      });
+    }
+
     setPlanningView("invoice");
     syncPlanningUrl({ view: "invoice" });
+  }
+
+  async function activateSelectedPlanOnServer(amountPaise: number, billingPeriod: string) {
+    if (!selectedPlan) return null;
+    return verifyRazorpayPayment({
+      razorpay_payment_id: `pay_demo_${Math.random().toString(36).substring(2, 11)}`,
+      razorpay_order_id: `order_demo_${Date.now()}`,
+      razorpay_signature: "demo_signature",
+      amount: amountPaise,
+      planName: selectedPlan.name,
+      billingPeriod,
+    });
   }
 
   async function handlePayWithRazorpay() {
@@ -484,15 +508,26 @@ function PlanningPageContent() {
     const customerName = userProfile?.name || "User";
     const customerEmail = userProfile?.email || "";
     const customerPhone = userProfile?.mobile || "";
+    const billingPeriod = billingYearly ? "Yearly" : "Monthly";
+    const active = getActivePrice(selectedPlan);
+    const amountPaise = isFreeCheckout ? 0 : parseDisplayPriceToPaise(active.newPrice);
 
     if (isFreeCheckout) {
       setPaymentError(null);
       setPaymentLoading(true);
-      finalizeCheckout({
-        isFree: true,
-        paymentMethodLabel: "Complimentary",
-        paymentDetail: "No charge — complimentary activation.",
-      });
+      try {
+        const verifyResult = await activateSelectedPlanOnServer(0, billingPeriod);
+        if (!verifyResult?.verified) throw new Error("Could not activate complimentary plan.");
+        finalizeCheckout({
+          isFree: true,
+          paymentMethodLabel: "Complimentary",
+          paymentDetail: "No charge — complimentary activation.",
+          verifyResponse: verifyResult,
+        });
+      } catch (e) {
+        setPaymentError(e instanceof Error ? e.message : "Could not activate plan.");
+        setPaymentLoading(false);
+      }
       return;
     }
 
@@ -501,12 +536,20 @@ function PlanningPageContent() {
     if (isRazorpayDemoMode()) {
       setPaymentError(null);
       setPaymentLoading(true);
-      await new Promise((r) => window.setTimeout(r, 900));
-      finalizeCheckout({
-        isFree: false,
-        paymentMethodLabel: "Razorpay (demo)",
-        paymentDetail: "Demo payment — set NEXT_PUBLIC_RAZORPAY_DEMO=false and redeploy for live Razorpay.",
-      });
+      try {
+        await new Promise((r) => window.setTimeout(r, 900));
+        const verifyResult = await activateSelectedPlanOnServer(amountPaise, billingPeriod);
+        if (!verifyResult?.verified) throw new Error("Demo payment verification failed.");
+        finalizeCheckout({
+          isFree: false,
+          paymentMethodLabel: "Razorpay (demo)",
+          paymentDetail: "Demo payment — set NEXT_PUBLIC_RAZORPAY_DEMO=false and redeploy for live Razorpay.",
+          verifyResponse: verifyResult,
+        });
+      } catch (e) {
+        setPaymentError(e instanceof Error ? e.message : "Demo payment failed.");
+        setPaymentLoading(false);
+      }
       return;
     }
 
@@ -515,15 +558,11 @@ function PlanningPageContent() {
 
     try {
       await loadRazorpayCheckoutScript();
-      const active = getActivePrice(selectedPlan);
-      const amountPaise = parseDisplayPriceToPaise(active.newPrice);
       if (amountPaise < 100) {
         setPaymentError("Invalid plan amount for payment.");
         setPaymentLoading(false);
         return;
       }
-
-      const billingPeriod = billingYearly ? "Yearly" : "Monthly";
 
       const order = await createRazorpayOrder({
         amountPaise,

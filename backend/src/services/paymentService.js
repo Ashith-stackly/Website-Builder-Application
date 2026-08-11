@@ -30,13 +30,14 @@ function hasRazorpayConfig() {
     && !isPlaceholderRazorpayValue(process.env.RAZORPAY_KEY_SECRET);
 }
 
-function normalizePlanName(planName = 'premium') {
+function normalizePlanName(planName = '') {
   const normalized = String(planName).toLowerCase();
   if (normalized.includes('advanced')) return 'advanced';
   if (normalized.includes('business')) return 'business';
   if (normalized.includes('basic')) return 'basic';
   if (normalized.includes('free')) return 'free';
-  return 'premium';
+  if (normalized.includes('premium')) return 'premium';
+  return 'free';
 }
 
 async function createStripeCheckout(user, body = {}) {
@@ -156,7 +157,7 @@ async function verifyRazorpay(user, body = {}) {
     razorpay_signature,
     amount,
     currency = 'INR',
-    planName = 'Premium',
+    planName = '',
     billingPeriod = 'Monthly',
     paymentMethod,
     bankName,
@@ -227,7 +228,23 @@ async function verifyRazorpay(user, body = {}) {
 
   const startDate = new Date();
   const expiryDate = buildExpiryDate(billingPeriod);
-  const plan = normalizePlanName(planName);
+
+  let resolvedPlanName = planName;
+  if (hasRazorpayConfig() && razorpay_order_id && !String(razorpay_order_id).startsWith('order_demo')) {
+    try {
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+      const order = await razorpay.orders.fetch(razorpay_order_id);
+      if (order?.notes?.planName) resolvedPlanName = order.notes.planName;
+    } catch {
+      /* keep planName from request body */
+    }
+  }
+
+  const plan = normalizePlanName(resolvedPlanName);
 
   if (user) {
     await Subscription.findOneAndUpdate(

@@ -22,7 +22,7 @@ import {
 import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
-import { fetchProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
+import { fetchProfile, formatPlanLabel, resolveActivePlan, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
 import { useLanguageStore } from "@/lib/i18n";
@@ -219,9 +219,21 @@ function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [recentPurchasePlan, setRecentPurchasePlan] = useState<string | undefined>();
   const t = useLanguageStore((s) => s.t);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed[0]) {
+          const latest = parsed[0] as { planTier?: string; planName?: string };
+          setRecentPurchasePlan(latest.planTier || latest.planName);
+        }
+      }
+    } catch { /* ignore */ }
+
     const controller = new AbortController();
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
@@ -244,6 +256,7 @@ function ProfileMenu() {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+  const planLabel = formatPlanLabel(resolveActivePlan(user?.plan, recentPurchasePlan));
 
   const signOut = () => {
     try {
@@ -292,7 +305,7 @@ function ProfileMenu() {
             <div className="p-1.5">
               <MenuLink icon={UserIcon} label={t.sidebar.profile} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
               <MenuLink icon={Settings} label={t.nav.settings} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
-              <MenuLink icon={Check} label="Plan: Free" muted onClick={() => { setOpen(false); router.push("/planning"); }} />
+              <MenuLink icon={Check} label={`Plan: ${planLabel}`} muted onClick={() => { setOpen(false); router.push("/planning"); }} />
             </div>
             <div className="border-t p-1.5" style={{ borderColor: "var(--border)" }}>
               <button

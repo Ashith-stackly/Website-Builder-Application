@@ -174,18 +174,7 @@ type CartItem = WishlistItem & {
 
 const STORAGE_SYNC_EVENT = "stackly-storage-change";
 
-const templates = [
-  { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", badge: "Free" },
-  { title: "Digital Marketing", category: "digital-marketing", image: "/landing-optimized/digital01.webp", alt: "Digital Marketing template", description: "A polished showcase for marketing agencies.", price: 190, badge: "Premium" },
-  { title: "Restaurant", category: "restaurant", image: "/landing-optimized/foodd03.webp", alt: "Restaurant template", description: "Appetizing menu and dining layout.", badge: "Free" },
-  { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", badge: "Free" },
-  { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
-  { title: "E-Commerce", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "E-Commerce template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
-  { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
-  { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 250, badge: "Premium" },
-  { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 290, badge: "Premium" },
-  { title: "Construction", category: "construction", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 250, badge: "Premium" },
-] satisfies Array<{
+const templates: Array<{
   title: string;
   category: TemplateCategory;
   image: string;
@@ -193,7 +182,18 @@ const templates = [
   description: string;
   price?: number;
   badge: "Free" | "Premium";
-}>;
+}> = [
+  { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", price: 300, badge: "Premium" },
+  { title: "Digital Marketing", category: "digital-marketing", image: "/landing-optimized/digital01.webp", alt: "Digital Marketing template", description: "A polished showcase for marketing agencies.", price: 190, badge: "Premium" },
+  { title: "Restaurant", category: "restaurant", image: "/landing-optimized/foodd03.webp", alt: "Restaurant template", description: "Appetizing menu and dining layout.", price: 250, badge: "Premium" },
+  { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", price: 200, badge: "Premium" },
+  { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
+  { title: "E-Commerce", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "E-Commerce template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
+  { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
+  { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 250, badge: "Premium" },
+  { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 290, badge: "Premium" },
+  { title: "Construction", category: "construction", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 250, badge: "Premium" },
+];
 
 const features = [
   {
@@ -516,12 +516,14 @@ export default function Home() {
             const verified = await verifyRazorpayPayment(response);
             if (!verified) throw new Error("Payment verification failed");
 
-            setSuccessModalProduct(product.title);
             setPurchasedTemplates((prev) => {
               const next = prev.includes(product.title) ? prev : [...prev, product.title];
               window.localStorage.setItem("stackly-purchased-templates", JSON.stringify(next));
               return next;
             });
+            window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
+            setWishlistToast(`Successfully purchased ${product.title}!`);
+            window.setTimeout(() => setWishlistToast(null), 3000);
           } catch (err) {
             alert(err instanceof Error ? err.message : "Payment verification failed");
           } finally {
@@ -642,14 +644,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("stackly-purchased-templates");
-      if (stored) {
-        setPurchasedTemplates(JSON.parse(stored) as string[]);
+    const syncPurchased = () => {
+      try {
+        const stored = window.localStorage.getItem("stackly-purchased-templates");
+        if (stored) {
+          setPurchasedTemplates(JSON.parse(stored) as string[]);
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    }
+    };
+
+    syncPurchased();
+    window.addEventListener("storage", syncPurchased);
+    window.addEventListener(STORAGE_SYNC_EVENT, syncPurchased);
+
+    return () => {
+      window.removeEventListener("storage", syncPurchased);
+      window.removeEventListener(STORAGE_SYNC_EVENT, syncPurchased);
+    };
   }, []);
 
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
@@ -1277,7 +1290,7 @@ export default function Home() {
               const isWishlistableTemplate = ["Classic Portfolio", "Digital Marketing", "Restaurant", "Blogging Page", "E-Commerce", "Construction", "Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title);
               const isTemplateWishlisted = wishlistItems.some((item) => item.title === template.title);
               const isUnderDevelopment = ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title);
-              const isPurchased = ["Digital Marketing", "E-Commerce", "Construction"].includes(template.title) && purchasedTemplates.includes(template.title);
+              const isPurchased = purchasedTemplates.includes(template.title);
 
               return (
                 <motion.article key={template.title} className="group" variants={scaleIn} whileHover={{ y: -5, transition: { duration: 0.22 } }}>

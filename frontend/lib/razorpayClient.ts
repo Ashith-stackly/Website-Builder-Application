@@ -200,9 +200,6 @@ export async function verifyRazorpayPayment(
     billingPeriod?: string;
   },
 ): Promise<RazorpayVerifyResponse> {
-  if (isRazorpayDemoMode()) {
-    return { verified: true };
-  }
   return postRazorpayApi<RazorpayVerifyResponse>("/razorpay/verify", payload);
 }
  
