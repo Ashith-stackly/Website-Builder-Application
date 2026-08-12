@@ -253,12 +253,12 @@ export default function FreeformCanvas({
   return (
     <div
       ref={scrollRef}
-      className={`relative flex flex-1 items-start justify-center overflow-auto bg-[#e9eef6] p-8 ${isPanning ? "cursor-grabbing" : ""}`}
+      className={`relative flex flex-1 items-start overflow-auto bg-[#e9eef6] p-8 ${isPanning ? "cursor-grabbing" : ""}`}
       onPointerDownCapture={beginPan}
       onWheel={handleWheel}
     >
       <div
-        className="relative shrink-0"
+        className="relative mx-auto shrink-0"
         style={{
           width: canvasWidth,
           transform: zoom !== 100 ? `scale(${scale})` : undefined,

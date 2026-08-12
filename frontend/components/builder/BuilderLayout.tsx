@@ -306,7 +306,7 @@ export default function BuilderLayout() {
           </button>
 
           <div className="hidden lg:flex">
-            <ComponentPalette onAdd={addComponent} onLoadStarter={loadStarterWebsite} onApplyAILayout={applyAILayout} />
+            <ComponentPalette onAdd={addComponent} onLoadStarter={loadStarterWebsite} onApplySmartLayout={(config) => { loadWebsiteFromRequirements({ projectName: "My Website", category: config.category, style: config.style, sections: config.sections }); }} />
           </div>
 
           <AnimatePresence>
@@ -328,7 +328,7 @@ export default function BuilderLayout() {
                   className="absolute bottom-0 left-0 flex h-[65vh] max-h-[800px] w-full flex-col overflow-hidden rounded-t-3xl bg-[#0A193A] shadow-2xl"
                 >
                   <div className="mx-auto mt-3 h-1 w-10 flex-shrink-0 rounded-full bg-white/20" />
-                  <ComponentPalette className="w-full flex-1 rounded-none border-0" onAdd={(type) => { addComponent(type); setIsLeftOpen(false); }} onLoadStarter={() => { loadStarterWebsite(); setIsLeftOpen(false); }} onApplyAILayout={(suggestion) => { applyAILayout(suggestion); setIsLeftOpen(false); }} />
+                  <ComponentPalette className="w-full flex-1 rounded-none border-0" onAdd={(type) => { addComponent(type); setIsLeftOpen(false); }} onLoadStarter={() => { loadStarterWebsite(); setIsLeftOpen(false); }} onApplySmartLayout={(config) => { loadWebsiteFromRequirements({ projectName: "My Website", category: config.category, style: config.style, sections: config.sections }); setIsLeftOpen(false); }} />
                 </motion.div>
               </motion.div>
             )}

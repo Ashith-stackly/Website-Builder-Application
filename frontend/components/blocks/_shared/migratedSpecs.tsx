@@ -16,13 +16,17 @@ import {
   Minus,
   MousePointerClick,
   PanelTop,
+  Plus,
   Quote,
+  RefreshCw,
   Rows3,
   Share2,
   Square,
   Star,
   Timer,
+  Trash2,
   Type,
+  GripVertical,
 } from "lucide-react";
 import type { BlockSpec, PanelProps } from "@/lib/blockRegistry";
 import type {
@@ -38,6 +42,7 @@ import type {
   SpacerProps,
   TabItem,
   TabsProps,
+  TestimonialItem,
   TestimonialProps,
   RowProps,
 } from "@/types/builder";
@@ -68,7 +73,6 @@ import { ImagePicker } from "@/components/assets/ImagePicker";
 import { useAssetStore } from "@/store/assetStore";
 import { escapeHtml } from "@/lib/htmlUtils";
 import { useState, useCallback } from "react";
-import { RefreshCw, Trash2, Plus, GripVertical } from "lucide-react";
 
 type ContentProps = { content: string };
 type ImageBlockProps = { src: string; alt?: string; assetId?: string };
@@ -610,10 +614,115 @@ function PricingTablePanel({ data, setProp }: PanelProps<PricingTableProps>) {
 }
 
 function TestimonialPanel({ data, setProp }: PanelProps<TestimonialProps>) {
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const updateItem = (index: number, field: keyof TestimonialItem, value: unknown) => {
+    const updated = items.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    );
+    setProp("items", updated);
+  };
+
+  const addItem = () => {
+    const newItem: TestimonialItem = {
+      quote: "Great experience working with this team! Highly recommended.",
+      name: "New Client",
+      role: "Customer",
+      rating: 5,
+    };
+    setProp("items", [...items, newItem]);
+  };
+
+  const removeItem = (index: number) => {
+    const updated = items.filter((_, i) => i !== index);
+    setProp("items", updated);
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <ContentField label="Heading" value={data.heading ?? ""} onChange={(value) => setProp("heading", value)} />
-      <JsonArrayField label="Testimonials" value={data.items} onChange={(value) => setProp("items", value)} />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold text-[#0B1D40]">Testimonials ({items.length})</span>
+          <button
+            type="button"
+            onClick={addItem}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#0B1D40] px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-[#152B52]"
+          >
+            <Plus className="h-3 w-3" />
+            Add Item
+          </button>
+        </div>
+
+        {items.length === 0 ? (
+          <p className="py-4 text-center text-xs italic text-gray-500">No testimonials added yet.</p>
+        ) : (
+          items.map((item, index) => (
+            <div key={index} className="space-y-3 rounded-xl border border-[#dbe3ef] bg-white p-3.5 shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                <span className="text-xs font-bold text-[#0B1D40]">Testimonial #{index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => removeItem(index)}
+                  className="cursor-pointer rounded p-1 text-red-500 transition hover:bg-red-50 hover:text-red-700"
+                  title="Remove testimonial"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Quote</label>
+                <textarea
+                  className={`${contentInputClass} min-h-[64px] resize-none text-[12px]`}
+                  value={item.quote || ""}
+                  onChange={(e) => updateItem(index, "quote", e.target.value)}
+                  placeholder="Enter testimonial text..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Author Name</label>
+                  <input
+                    className={`${contentInputClass} text-[12px] py-1.5`}
+                    type="text"
+                    value={item.name || ""}
+                    onChange={(e) => updateItem(index, "name", e.target.value)}
+                    placeholder="e.g. Sarah Johnson"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Role / Title</label>
+                  <input
+                    className={`${contentInputClass} text-[12px] py-1.5`}
+                    type="text"
+                    value={item.role || ""}
+                    onChange={(e) => updateItem(index, "role", e.target.value)}
+                    placeholder="e.g. CEO, TechStart"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Rating (Stars)</label>
+                <select
+                  className={`${contentInputClass} text-[12px] py-1.5 cursor-pointer bg-white`}
+                  value={item.rating ?? 5}
+                  onChange={(e) => updateItem(index, "rating", Number(e.target.value))}
+                >
+                  <option value={5}>5 Stars ★★★★★</option>
+                  <option value={4}>4 Stars ★★★★☆</option>
+                  <option value={3}>3 Stars ★★★☆☆</option>
+                  <option value={2}>2 Stars ★★☆☆☆</option>
+                  <option value={1}>1 Star ★☆☆☆☆</option>
+                </select>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

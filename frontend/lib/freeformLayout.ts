@@ -25,9 +25,28 @@ export const FREEFORM_DEFAULT_HEIGHT_BY_TYPE: Partial<Record<ComponentType, numb
   spacer: 80,
 };
 
+export const SECTION_COMPONENT_TYPES: Set<ComponentType> = new Set([
+  "navigation",
+  "hero",
+  "features",
+  "gallery",
+  "contact",
+  "footer",
+  "pricing-table",
+  "product-collection",
+  "testimonial",
+  "form",
+  "columns",
+  "container",
+]);
+
 export const getFreeformDefaultHeight = (type: ComponentType) =>
   FREEFORM_DEFAULT_HEIGHT_BY_TYPE[type] ?? 180;
 
 /** Keep a readable canvas frame while allowing narrow responsive artboards. */
-export const getFreeformDefaultWidth = (canvasWidth: number) =>
-  Math.min(FREEFORM_DEFAULT_WIDTH, Math.max(280, canvasWidth - 96));
+export const getFreeformDefaultWidth = (canvasWidth: number, type?: ComponentType) => {
+  if (type && SECTION_COMPONENT_TYPES.has(type)) {
+    return Math.min(1200, Math.max(320, canvasWidth - 64));
+  }
+  return Math.min(FREEFORM_DEFAULT_WIDTH, Math.max(280, canvasWidth - 96));
+};
