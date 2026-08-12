@@ -774,7 +774,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
           <div className="hidden items-center justify-center gap-12 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
             <Link href="/landing" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>HOME</MotionNavItem></Link>
             <Link href="/aboutus" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>ABOUT US</MotionNavItem></Link>
-            <Link href="/templates" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
+            <Link href="/landing#categories" onClick={(event) => scrollLandingSection(event, "categories")} className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
  
             <div
               className="relative"

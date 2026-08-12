@@ -480,11 +480,6 @@ function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
   const planDesc = PLAN_DESCRIPTIONS[planKey] || PLAN_DESCRIPTIONS.free;
   const isFreePlan = planKey === "free";
 
-  const usage = [
-    { label: "Projects", used: 3, total: 5 },
-    { label: "Published sites", used: 1, total: 1 },
-    { label: "Storage", used: 42, total: 100, unit: " MB" },
-  ];
   return (
     <>
       <Card icon={CreditCard} title="Current plan" desc={`You're on the ${planLabel} plan.`}>
@@ -502,25 +497,6 @@ function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
             <Sparkles className="h-4 w-4" /> {isFreePlan ? "Upgrade" : "Change plan"}
           </motion.button>
         </div>
-      </Card>
-      <Card icon={Monitor} title="Usage" desc="Resource usage this billing period.">
-        <ul className="space-y-4">
-          {usage.map((u) => {
-            const pct = Math.min(100, Math.round((u.used / u.total) * 100));
-            return (
-              <li key={u.label}>
-                <div className="mb-1 flex items-center justify-between text-[13px]">
-                  <span className="font-semibold" style={{ color: "var(--text)" }}>{u.label}</span>
-                  <span className="tabular-nums" style={{ color: "var(--text-faint)" }}>{u.used}{u.unit || ""} / {u.total}{u.unit || ""}</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
-                  <motion.div initial={{ width: 0 }} whileInView={{ width: `${pct}%` }} viewport={{ once: true }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#4f6bed] to-[#8b5cf6]" />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
       </Card>
 
       <DashboardBillingHistory />
