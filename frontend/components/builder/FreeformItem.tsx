@@ -267,18 +267,29 @@ function FreeformItem({
 
   const handleItemPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || isLocked) return;
-    event.stopPropagation();
+    
+    const target = event.target as HTMLElement | null;
+    const isInteractive = Boolean(
+      target?.closest('button, input, textarea, select, a, [contenteditable="true"], [data-freeform-control]')
+    );
+
     if (event.shiftKey) {
+      event.stopPropagation();
       toggleSelectComponent(component.id);
       return;
     }
     if (!isSelected || selectedComponentIds.length > 1) selectComponent(component.id);
-  }, [component.id, isLocked, isSelected, selectComponent, selectedComponentIds.length, toggleSelectComponent]);
+    if (!isInteractive) {
+      beginDrag(event);
+    }
+  }, [beginDrag, component.id, isLocked, isSelected, selectComponent, selectedComponentIds.length, toggleSelectComponent]);
 
   const zIndexFromStyles = Number.parseInt(component.styles.zIndex ?? "", 10);
   const zIndex = Number.isFinite(zIndexFromStyles)
     ? zIndexFromStyles
     : component.zIndex ?? index + 1;
+
+  const isHeaderClamped = frame.y < 32;
 
   if (!Renderer) return null;
 
@@ -300,7 +311,9 @@ function FreeformItem({
     >
       <div
         data-freeform-control
-        className={`absolute -top-8 left-0 right-0 flex items-center justify-between gap-1 rounded-t-lg px-2 py-1 transition-all duration-150 ${
+        className={`absolute left-0 right-0 flex items-center justify-between gap-1 px-2 py-1 transition-all duration-150 ${
+          isHeaderClamped ? "top-0 rounded-b-lg" : "-top-8 rounded-t-lg"
+        } ${
           isSelected
             ? "bg-blue-600 opacity-100"
             : "bg-[#0B1D40] opacity-0 group-hover:opacity-100"

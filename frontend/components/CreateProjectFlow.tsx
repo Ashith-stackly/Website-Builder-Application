@@ -18,13 +18,43 @@ const templateStyles = [
   { title: "Bold", description: "Stronger hero area and clearer action" },
 ];
 
-const websiteSections = [
-  { id: "navigation", label: "Navigation", description: "Header with links and action" },
-  { id: "hero", label: "Hero", description: "Main headline section" },
-  { id: "features", label: "Features", description: "Service or value cards" },
-  { id: "gallery", label: "Gallery", description: "Multiple image showcase" },
-  { id: "contact", label: "Contact", description: "Lead capture section" },
-];
+/** All possible sections a category template can use. */
+const allSections: Record<string, { label: string; description: string }> = {
+  navigation:      { label: "Navigation",    description: "Header with links and action" },
+  hero:            { label: "Hero",          description: "Main headline section" },
+  features:        { label: "Features",      description: "Service or value cards" },
+  gallery:         { label: "Gallery",       description: "Multiple image showcase" },
+  contact:         { label: "Contact",       description: "Lead capture section" },
+  "pricing-table": { label: "Pricing Table", description: "Plan comparison cards" },
+  testimonial:     { label: "Testimonial",   description: "Customer review quotes" },
+  form:            { label: "Form",          description: "Custom input form" },
+  footer:          { label: "Footer",        description: "Bottom links and branding" },
+  tabs:            { label: "Tabs",          description: "Tabbed content panels" },
+  map:             { label: "Map",           description: "Embedded location map" },
+};
+
+/**
+ * Maps each project category to the section IDs used by its
+ * `buildCategoryTemplate` in the builder store.
+ */
+const categorySections: Record<string, string[]> = {
+  "E-commerce":  ["navigation", "hero", "features", "gallery", "pricing-table", "testimonial", "contact", "footer"],
+  Portfolio:     ["navigation", "hero", "gallery", "features", "testimonial", "form", "footer"],
+  Blog:          ["navigation", "hero", "features", "gallery", "tabs", "contact", "footer"],
+  Business:      ["navigation", "hero", "features", "pricing-table", "testimonial", "form", "footer"],
+  Restaurant:    ["navigation", "hero", "gallery", "features", "testimonial", "map", "contact", "footer"],
+};
+
+/** Fallback sections when no category-specific mapping exists. */
+const defaultSectionIds = ["navigation", "hero", "features", "contact"];
+
+/** Return the section list for a given category (with metadata for rendering). */
+const getSectionsForCategory = (category: string) => {
+  const ids = categorySections[category] ?? defaultSectionIds;
+  return ids
+    .map((id) => ({ id, ...(allSections[id] ?? { label: id, description: "" }) }))
+    .filter((s) => s.label !== s.id || allSections[s.id]); // drop unknown ids
+};
  
 const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const router = useRouter();
@@ -33,7 +63,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     name: "",
     category: "",
     template: "",
-    sections: ["navigation", "hero", "features", "contact"],
+    sections: defaultSectionIds,
   });
   const [error, setError] = useState("");
 
@@ -153,7 +183,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
     onClose();
     setStep(1);
-    setProjectData({ name: "", category: "", template: "", sections: ["navigation", "hero", "features", "contact"] });
+    setProjectData({ name: "", category: "", template: "", sections: defaultSectionIds });
     router.push(`/builder?${params.toString()}`);
   };
  
@@ -242,7 +272,8 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     type="button"
                     aria-pressed={projectData.category === cat.title}
                     onClick={() => {
-                      setProjectData({ ...projectData, category: cat.title });
+                      const newSections = categorySections[cat.title] ?? defaultSectionIds;
+                      setProjectData({ ...projectData, category: cat.title, sections: [...newSections] });
                       setError("");
                     }}
                     className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all cursor-pointer focus:outline-none focus-visible:outline-none focus-visible:border-blue-600 dark:focus-visible:border-blue-400 focus-visible:ring-2 focus-visible:ring-blue-600/30 ${
@@ -300,7 +331,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 <p className="mt-1 text-xs font-bold uppercase text-gray-400 dark:text-slate-500">These will be added to your builder canvas.</p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 p-0.5">
-                {websiteSections.map((section) => {
+                {getSectionsForCategory(projectData.category).map((section) => {
                   const isSelected = projectData.sections.includes(section.id);
 
                   return (

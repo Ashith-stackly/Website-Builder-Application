@@ -48,7 +48,7 @@ export function getFreeformFrame(
   measuredHeight?: number,
 ): FreeformFrame {
   const width = clamp(
-    component.freeformSize?.width ?? getFreeformDefaultWidth(canvasWidth),
+    component.freeformSize?.width ?? getFreeformDefaultWidth(canvasWidth, component.type),
     FREEFORM_MIN_WIDTH,
     Math.max(FREEFORM_MIN_WIDTH, canvasWidth - 32),
   );
@@ -56,7 +56,7 @@ export function getFreeformFrame(
     FREEFORM_MIN_HEIGHT,
     component.freeformSize?.height ?? measuredHeight ?? getFreeformDefaultHeight(component.type),
   );
-  const fallbackX = 40 + (index % 5) * 24;
+  const fallbackX = Math.max(0, Math.round((canvasWidth - width) / 2));
   const fallbackY = 40 + index * 36;
 
   return {

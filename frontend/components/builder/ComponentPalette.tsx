@@ -9,8 +9,8 @@ import {
   ShoppingBag, Sparkles, Star, Table, TextCursorInput, Type
 } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
-import { AILayoutDialog } from "./AILayoutDialog";
-import type { AILayoutSuggestion, ComponentType } from "@/types/builder";
+import { SmartLayoutPicker } from "./SmartLayoutPicker";
+import type { ComponentType } from "@/types/builder";
 import { staggerContainer, staggerChild } from "@/lib/motion";
  
 type PaletteGroup = "Website Sections" | "Basic Blocks" | "Advanced Blocks";
@@ -130,16 +130,16 @@ export default function ComponentPalette({
   className = "w-[248px]",
   onAdd,
   onLoadStarter,
-  onApplyAILayout,
+  onApplySmartLayout,
 }: {
   className?: string;
   onAdd: (type: ComponentType) => void;
   onLoadStarter: () => void;
-  onApplyAILayout: (suggestion: AILayoutSuggestion) => void;
+  onApplySmartLayout: (config: { category: string; style: string; sections: string[] }) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<PaletteGroup>("Website Sections");
-  const [isAILayoutOpen, setIsAILayoutOpen] = useState(false);
+  const [isSmartLayoutOpen, setIsSmartLayoutOpen] = useState(false);
  
   const filtered = paletteItems.filter(
     (item) =>
@@ -205,12 +205,12 @@ export default function ComponentPalette({
           whileHover={{ scale: 1.03, y: -2 }}
           whileTap={{ scale: 0.96 }}
           className="group/ai relative mb-2.5 flex cursor-pointer w-full items-center justify-center gap-2 overflow-hidden rounded-xl border border-violet-400/40 bg-gradient-to-r from-violet-600/30 via-fuchsia-600/20 to-purple-600/30 px-3 py-2.5 text-[12px] font-bold text-violet-100 shadow-[0_0_24px_rgba(139,92,246,0.18)] transition-all hover:border-violet-300/70 hover:text-white hover:shadow-[0_0_32px_rgba(139,92,246,0.28)]"
-          onClick={() => setIsAILayoutOpen(true)}
+          onClick={() => setIsSmartLayoutOpen(true)}
           type="button"
         >
           <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(168,85,247,0.15),transparent_70%)]" />
           <Sparkles className="relative h-3.5 w-3.5 text-violet-300 transition-transform group-hover/ai:rotate-12 group-hover/ai:scale-110" />
-          <span className="relative">AI Layout Assistant</span>
+          <span className="relative">Smart Layout Picker</span>
         </motion.button>
         {/* Generate Starter Website — distinct teal/emerald rocket CTA */}
         <motion.button
@@ -252,10 +252,10 @@ export default function ComponentPalette({
           Click to add · Drag to reorder
         </p>
       </div>
-      <AILayoutDialog
-        open={isAILayoutOpen}
-        onClose={() => setIsAILayoutOpen(false)}
-        onApply={onApplyAILayout}
+      <SmartLayoutPicker
+        open={isSmartLayoutOpen}
+        onClose={() => setIsSmartLayoutOpen(false)}
+        onApply={onApplySmartLayout}
       />
     </aside>
   );

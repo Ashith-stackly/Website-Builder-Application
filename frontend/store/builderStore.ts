@@ -9,7 +9,7 @@ import {
   summarizeDeploymentPackage,
   type DeploymentPackage,
 } from "@/lib/deploymentPackage";
-import { getFreeformDefaultHeight } from "@/lib/freeformLayout";
+import { getFreeformDefaultHeight, getFreeformDefaultWidth } from "@/lib/freeformLayout";
 import { autosaveProject, createProject, getProject, isProjectConnectionError, saveHtml as saveProjectHtml, type ProjectBuilderData } from "@/lib/projectApi";
 import { saveWorkspaceState } from "@/lib/publishApi";
 import { featureItemDefaults } from "@/components/blocks/feature-item/spec";
@@ -443,20 +443,41 @@ const templateFooter = (brand: string, tagline: string) => ({
   copyright: `Copyright ${new Date().getFullYear()} ${brand}. All rights reserved.`,
 });
 
-const buildCategoryTemplate = (category: string, projectName: string, style: string): BuilderComponent[] | null => {
+const buildCategoryTemplate = (category: string, projectName: string, style: string, selectedSections?: string[]): BuilderComponent[] | null => {
   const bold = style === "Bold";
   const minimal = style === "Minimal";
-  const surface = minimal ? "#ffffff" : "#f7f9fc";
-  const heroBg = bold ? "#0B1D40" : minimal ? "#ffffff" : "#eef4fb";
+
+  // ── Style-driven design tokens ──────────────────────────────────────────
+  // These tokens propagate the user's Modern / Minimal / Bold choice across
+  // every section, not just the hero.
+  const surface        = minimal ? "#ffffff" : bold ? "#f0f4fa" : "#f7f9fc";
+  const cardBg         = minimal ? "#ffffff" : bold ? "#f8fafd" : "#ffffff";
+  const sectionRadius  = minimal ? "0" : bold ? "20px" : "16px";
+  const sectionPadding = minimal ? "32px" : bold ? "44px 28px" : "36px";
+  const cardPadding    = minimal ? "28px 20px" : bold ? "44px 28px" : "40px 24px";
+  const footerRadius   = minimal ? "0" : bold ? "20px" : "16px";
+  const galleryBg      = minimal ? "#fafafa" : bold ? "#eef2f9" : "#ffffff";
+  const galleryPadding = minimal ? "20px" : bold ? "32px" : "28px";
+  const contactBg      = minimal ? "#ffffff" : bold ? "#0B1D40" : undefined;
+  const contactColor   = bold ? "#ffffff" : undefined;
+
+  const heroBg    = bold ? "#0B1D40" : minimal ? "#ffffff" : "#eef4fb";
   const heroColor = bold ? "#ffffff" : "#0B1D40";
 
   const baseHeroStyles = {
     backgroundColor: heroBg,
     color: heroColor,
-    padding: "56px 40px",
-    borderRadius: minimal ? "0" : "18px",
+    padding: bold ? "64px 48px" : minimal ? "48px 32px" : "56px 40px",
+    borderRadius: minimal ? "0" : bold ? "22px" : "18px",
     margin: "0 0 20px",
   };
+
+  const featuresStyles  = { backgroundColor: surface, padding: sectionPadding, borderRadius: sectionRadius };
+  const galleryStyles   = { backgroundColor: galleryBg, padding: galleryPadding, borderRadius: sectionRadius };
+  const pricingStyles   = { backgroundColor: surface, padding: cardPadding, borderRadius: sectionRadius };
+  const testimonialStyles = { backgroundColor: cardBg, padding: cardPadding, borderRadius: sectionRadius };
+  const footerStyles    = { borderRadius: footerRadius };
+  const contactStyles   = contactBg ? { backgroundColor: contactBg, color: contactColor, borderRadius: sectionRadius } : undefined;
 
   // Persisted template categories use the API value "store", while the
   // original requirements flow used the display value "E-Commerce".
@@ -484,13 +505,13 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
           { title: "Trust-first layout", description: "Use reviews, guarantees, and clear CTAs to reduce friction." },
           { title: "Mobile shopping", description: "Responsive sections keep carts and offers easy to reach." },
         ] },
-        styles: { backgroundColor: surface, padding: "36px", borderRadius: "16px" },
+        styles: featuresStyles,
       }),
-      withComponentOverrides("gallery", 3, { content: "/landing-optimized/store11.webp|Featured store layout\n/landing-optimized/fashion06.webp|Fashion collection\n/landing-optimized/jewellery07.webp|Premium product showcase", styles: { backgroundColor: "#ffffff", padding: "28px", borderRadius: "16px" } }),
-      withComponentOverrides("pricing-table", 4, { props: { ...pricingTableDefaults, heading: "Simple launch packages" }, styles: { backgroundColor: surface, padding: "42px 24px", borderRadius: "16px" } }),
-      withComponentOverrides("testimonial", 5, { props: { ...testimonialDefaults, heading: "Loved by growing stores" }, styles: { backgroundColor: "#ffffff", padding: "40px 24px", borderRadius: "16px" } }),
-      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Ready to open your store?", description: "Share your email and start shaping your product-first website.", cta: { label: "Start Selling", href: "#contact" } } }),
-      withComponentOverrides("footer", 7, { props: templateFooter(projectName, "A modern storefront built with Stackly."), styles: { borderRadius: "16px" } }),
+      withComponentOverrides("gallery", 3, { content: "/landing-optimized/store11.webp|Featured store layout\n/landing-optimized/fashion06.webp|Fashion collection\n/landing-optimized/jewellery07.webp|Premium product showcase", styles: galleryStyles }),
+      withComponentOverrides("pricing-table", 4, { props: { ...pricingTableDefaults, heading: "Simple launch packages" }, styles: pricingStyles }),
+      withComponentOverrides("testimonial", 5, { props: { ...testimonialDefaults, heading: "Loved by growing stores" }, styles: testimonialStyles }),
+      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Ready to open your store?", description: "Share your email and start shaping your product-first website.", cta: { label: "Start Selling", href: "#contact" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("footer", 7, { props: templateFooter(projectName, "A modern storefront built with Stackly."), styles: footerStyles }),
     ],
     portfolio: () => [
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Work" }, { label: "About" }, { label: "Services" }, { label: "Contact" }], "Hire Me") }),
@@ -498,15 +519,15 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
         props: { ...heroDefaults, title: "Showcase your work with clarity", description: "Present your best projects, tell your story, and make it simple for clients to start a conversation.", cta: { label: "View Work", href: "#work" }, layout: "split" },
         styles: baseHeroStyles,
       }),
-      withComponentOverrides("gallery", 2, { content: "/landing-optimized/port.webp|Signature portfolio homepage\n/landing-optimized/portfolio03.webp|Agency case study\n/landing-optimized/portfolio04.webp|Minimal project grid", styles: { backgroundColor: "#ffffff", padding: "28px", borderRadius: "16px" } }),
+      withComponentOverrides("gallery", 2, { content: "/landing-optimized/port.webp|Signature portfolio homepage\n/landing-optimized/portfolio03.webp|Agency case study\n/landing-optimized/portfolio04.webp|Minimal project grid", styles: galleryStyles }),
       withComponentOverrides("features", 3, { props: { ...featuresDefaults, heading: "What you bring to clients", items: [
         { title: "Project storytelling", description: "Frame outcomes, process, and creative thinking." },
         { title: "Personal brand", description: "Shape a memorable introduction around your strengths." },
         { title: "Easy inquiries", description: "Turn interest into contact with clear next steps." },
-      ] }, styles: { backgroundColor: surface, padding: "36px", borderRadius: "16px" } }),
-      withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "Client notes" }, styles: { backgroundColor: "#ffffff", padding: "40px 24px", borderRadius: "16px" } }),
+      ] }, styles: featuresStyles }),
+      withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "Client notes" }, styles: testimonialStyles }),
       withComponentOverrides("form", 5, { props: { ...formDefaults, heading: "Start a project", description: "Tell visitors how to reach you for work, collaborations, or speaking.", submitLabel: "Send Inquiry" } }),
-      withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Portfolio, selected work, and contact."), styles: { borderRadius: "16px" } }),
+      withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Portfolio, selected work, and contact."), styles: footerStyles }),
     ],
     blog: () => [
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Stories" }, { label: "Categories" }, { label: "Guides" }, { label: "Subscribe" }], "Subscribe") }),
@@ -518,15 +539,15 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
         { title: "Featured posts", description: "Lead with timely stories and high-value guides." },
         { title: "Clear categories", description: "Help readers browse topics without friction." },
         { title: "Newsletter path", description: "Convert loyal readers into subscribers." },
-      ] }, styles: { backgroundColor: surface, padding: "36px", borderRadius: "16px" } }),
-      withComponentOverrides("gallery", 3, { content: "/landing-optimized/blog1.webp|Personal blog layout\n/landing-optimized/blog2.webp|Tech insights template\n/blog/template-food.webp|Restaurant story blog", styles: { backgroundColor: "#ffffff", padding: "28px", borderRadius: "16px" } }),
+      ] }, styles: featuresStyles }),
+      withComponentOverrides("gallery", 3, { content: "/landing-optimized/blog1.webp|Personal blog layout\n/landing-optimized/blog2.webp|Tech insights template\n/blog/template-food.webp|Restaurant story blog", styles: galleryStyles }),
       withComponentOverrides("tabs", 4, { props: { ...tabsDefaults, items: [
         { label: "Ideas", content: "Publish essays, explainers, guides, and behind-the-scenes stories." },
         { label: "Categories", content: "Organize posts around practical topics your readers revisit." },
         { label: "Growth", content: "Use subscription CTAs and featured content to build an audience." },
       ] } }),
-      withComponentOverrides("contact", 5, { props: { ...contactDefaults, title: "Join the newsletter", description: "Invite readers to subscribe for new posts and updates.", inputPlaceholder: "reader@example.com", cta: { label: "Subscribe", href: "#subscribe" } } }),
-      withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Stories, ideas, and reader updates."), styles: { borderRadius: "16px" } }),
+      withComponentOverrides("contact", 5, { props: { ...contactDefaults, title: "Join the newsletter", description: "Invite readers to subscribe for new posts and updates.", inputPlaceholder: "reader@example.com", cta: { label: "Subscribe", href: "#subscribe" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Stories, ideas, and reader updates."), styles: footerStyles }),
     ],
     business: () => [
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Results" }, { label: "Pricing" }, { label: "Contact" }], "Book a Call") }),
@@ -538,11 +559,11 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
         { title: "Service clarity", description: "Explain what you offer with structured, scannable sections." },
         { title: "Trust signals", description: "Use testimonials and proof points to support decisions." },
         { title: "Lead capture", description: "Make contact simple with forms and strong CTAs." },
-      ] }, styles: { backgroundColor: surface, padding: "36px", borderRadius: "16px" } }),
-      withComponentOverrides("pricing-table", 3, { props: { ...pricingTableDefaults, heading: "Service packages" }, styles: { backgroundColor: "#ffffff", padding: "42px 24px", borderRadius: "16px" } }),
-      withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "What clients say" }, styles: { backgroundColor: surface, padding: "40px 24px", borderRadius: "16px" } }),
+      ] }, styles: featuresStyles }),
+      withComponentOverrides("pricing-table", 3, { props: { ...pricingTableDefaults, heading: "Service packages" }, styles: pricingStyles }),
+      withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "What clients say" }, styles: testimonialStyles }),
       withComponentOverrides("form", 5, { props: { ...formDefaults, heading: "Talk to our team", description: "Collect qualified business inquiries with a focused contact form.", submitLabel: "Request Consultation" } }),
-      withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Professional services and business growth."), styles: { borderRadius: "16px" } }),
+      withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Professional services and business growth."), styles: footerStyles }),
     ],
     restaurant: () => [
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Menu" }, { label: "About" }, { label: "Reservations" }, { label: "Contact" }], "Reserve") }),
@@ -550,16 +571,16 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
         props: { ...heroDefaults, title: "Create a mouth-watering restaurant website", description: "Showcase signature dishes, share your story, and help guests find, call, or reserve from any device.", cta: { label: "View Menu", href: "#menu" }, layout: "split" },
         styles: { ...baseHeroStyles, backgroundColor: bold ? "#3A1111" : minimal ? "#ffffff" : "#FFF5F5", color: bold ? "#ffffff" : "#0A1E3D" },
       }),
-      withComponentOverrides("gallery", 2, { content: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop|Premium ribeye steak\nhttps://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=800&auto=format&fit=crop|Wood-fired pizza\nhttps://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop|Classic cheeseburger", styles: { backgroundColor: "#ffffff", padding: "28px", borderRadius: "16px" } }),
+      withComponentOverrides("gallery", 2, { content: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop|Premium ribeye steak\nhttps://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=800&auto=format&fit=crop|Wood-fired pizza\nhttps://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop|Classic cheeseburger", styles: galleryStyles }),
       withComponentOverrides("features", 3, { props: { ...featuresDefaults, heading: "Restaurant essentials", items: [
         { title: "Signature menu", description: "Highlight best sellers, prices, and seasonal dishes." },
         { title: "Guest confidence", description: "Tell your story and show atmosphere before guests arrive." },
         { title: "Reservation path", description: "Make contact, hours, and booking details easy to find." },
-      ] }, styles: { backgroundColor: "#FFF5F5", padding: "36px", borderRadius: "16px" } }),
-      withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "Guest reviews" }, styles: { backgroundColor: "#ffffff", padding: "40px 24px", borderRadius: "16px" } }),
-      withComponentOverrides("map", 5, { props: { ...mapDefaults, address: "123 Culinary Avenue, Food District", zoom: 14, height: "320px" }, styles: { backgroundColor: "#ffffff", padding: "20px", borderRadius: "16px" } }),
-      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Book a table", description: "Invite guests to reserve, call, or ask about private dining.", inputPlaceholder: "guest@example.com", cta: { label: "Reserve Now", href: "#contact" } } }),
-      withComponentOverrides("footer", 7, { props: templateFooter(projectName, "Fresh flavors, warm service, and easy reservations."), styles: { borderRadius: "16px" } }),
+      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#2D0E0E" : minimal ? "#ffffff" : "#FFF5F5", ...(bold ? { color: "#ffffff" } : {}) } }),
+      withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "Guest reviews" }, styles: testimonialStyles }),
+      withComponentOverrides("map", 5, { props: { ...mapDefaults, address: "123 Culinary Avenue, Food District", zoom: 14, height: "320px" }, styles: { backgroundColor: cardBg, padding: "20px", borderRadius: sectionRadius } }),
+      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Book a table", description: "Invite guests to reserve, call, or ask about private dining.", inputPlaceholder: "guest@example.com", cta: { label: "Reserve Now", href: "#contact" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("footer", 7, { props: templateFooter(projectName, "Fresh flavors, warm service, and easy reservations."), styles: footerStyles }),
     ],
     construction: () => [
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Projects" }, { label: "Safety" }, { label: "Contact" }], "Request Quote") }),
@@ -571,10 +592,10 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
         { title: "Commercial Construction", description: "State-of-the-art office buildings and retail developments." },
         { title: "Heavy Civil & Infrastructure", description: "Roads, bridges, and large-scale site preparation." },
         { title: "Safety & Quality Control", description: "Uncompromising safety standards on every job site." },
-      ] }, styles: { backgroundColor: "#F8F9FA", padding: "36px", borderRadius: "16px" } }),
-      withComponentOverrides("gallery", 3, { content: "/landing-optimized/construction02.webp|Industrial project site\n/landing-optimized/constrctio10.webp|Heavy equipment operation", styles: { backgroundColor: "#ffffff", padding: "28px", borderRadius: "16px" } }),
-      withComponentOverrides("contact", 4, { props: { ...contactDefaults, title: "Request a Project Quote", description: "Speak with our contracting engineers about your next build.", inputPlaceholder: "contractor@example.com", cta: { label: "Get Quote", href: "#contact" } } }),
-      withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Heavy construction, infrastructure, and contracting."), styles: { borderRadius: "16px" } }),
+      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#0F2A4D" : "#F8F9FA", ...(bold ? { color: "#ffffff" } : {}) } }),
+      withComponentOverrides("gallery", 3, { content: "/landing-optimized/construction02.webp|Industrial project site\n/landing-optimized/constrctio10.webp|Heavy equipment operation", styles: galleryStyles }),
+      withComponentOverrides("contact", 4, { props: { ...contactDefaults, title: "Request a Project Quote", description: "Speak with our contracting engineers about your next build.", inputPlaceholder: "contractor@example.com", cta: { label: "Get Quote", href: "#contact" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Heavy construction, infrastructure, and contracting."), styles: footerStyles }),
     ],
     "digital-marketing": () => [
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Growth Stats" }, { label: "Reviews" }, { label: "Contact" }], "Book Strategy Call") }),
@@ -586,14 +607,27 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
         { title: "SEO & Organic Search", description: "Drive targeted search traffic and rank higher." },
         { title: "Performance Marketing", description: "Data-driven ad campaigns focused on ROI." },
         { title: "Brand & Content Strategy", description: "Position your brand as an industry authority." },
-      ] }, styles: { backgroundColor: surface, padding: "36px", borderRadius: "16px" } }),
-      withComponentOverrides("testimonial", 3, { props: { ...testimonialDefaults, heading: "Client Growth Reviews" }, styles: { backgroundColor: "#ffffff", padding: "40px 24px", borderRadius: "16px" } }),
+      ] }, styles: featuresStyles }),
+      withComponentOverrides("testimonial", 3, { props: { ...testimonialDefaults, heading: "Client Growth Reviews" }, styles: testimonialStyles }),
       withComponentOverrides("form", 4, { props: { ...formDefaults, heading: "Schedule a Growth Consultation", description: "Let us analyze your current marketing channels.", submitLabel: "Request Call" } }),
-      withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Digital marketing, brand growth, and performance ads."), styles: { borderRadius: "16px" } }),
+      withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Digital marketing, brand growth, and performance ads."), styles: footerStyles }),
     ],
   };
 
-  return templates[categoryKey]?.() ?? null;
+  const allComponents = templates[categoryKey]?.() ?? null;
+
+  // ── Filter to user-selected sections ────────────────────────────────────
+  // When selectedSections is provided and non-empty, keep only the
+  // components whose type matches a section id the user checked in step 4.
+  if (!allComponents || !selectedSections || selectedSections.length === 0) {
+    return allComponents;
+  }
+
+  const allowed = new Set(selectedSections);
+  const filtered = allComponents.filter((c) => allowed.has(c.type));
+
+  // Re-index the order field so there are no gaps after filtering.
+  return filtered.map((c, i) => ({ ...c, order: i }));
 };
 
 const categoryCopy: Record<string, { hero: string; description: string; features: FeatureRecord[] }> = {
@@ -666,11 +700,12 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
   const projectName = requirements.projectName || "Stackly Studio";
   const category = requirements.category || "Business";
   const style = requirements.style || "Modern";
-  const categoryTemplate = buildCategoryTemplate(category, projectName, style);
+  const selectedSections = requirements.sections.length > 0 ? requirements.sections : undefined;
+  const categoryTemplate = buildCategoryTemplate(category, projectName, style, selectedSections);
   if (categoryTemplate) return categoryTemplate;
   const copy = categoryCopy[category] || categoryCopy.Business;
-  const selectedSections = requirements.sections.length > 0 ? requirements.sections : ["navigation", "hero", "features", "contact"];
-  const sectionTypes: ComponentType[] = selectedSections
+  const fallbackSections = requirements.sections.length > 0 ? requirements.sections : ["navigation", "hero", "features", "contact"];
+  const sectionTypes: ComponentType[] = fallbackSections
     .map((section) => {
       if (section === "gallery") return "gallery";
       if (section === "leadForm") return "contact";
@@ -759,10 +794,13 @@ function captureHistory(
  */
 function materializeFreeformFrames(components: BuilderComponent[]): BuilderComponent[] {
   let nextY = 40;
+  const canvasWidth = 1280;
   return components.map((component) => {
+    const width = component.freeformSize?.width ?? getFreeformDefaultWidth(canvasWidth, component.type);
     const estimatedHeight = component.freeformSize?.height
       ?? getFreeformDefaultHeight(component.type);
-    const position = component.position ?? { x: 40, y: nextY };
+    const defaultX = Math.max(0, Math.round((canvasWidth - width) / 2));
+    const position = component.position ?? { x: defaultX, y: nextY };
     nextY = Math.max(nextY, position.y + estimatedHeight + 24);
     return component.position ? component : { ...component, position };
   });
@@ -774,13 +812,18 @@ function positionNewFreeformRoot(
   siblings: BuilderComponent[],
 ): BuilderComponent {
   let nextY = 40;
+  const canvasWidth = 1280;
   siblings.forEach((sibling, index) => {
+    const width = sibling.freeformSize?.width ?? getFreeformDefaultWidth(canvasWidth, sibling.type);
+    const defaultX = Math.max(0, Math.round((canvasWidth - width) / 2));
     const fallbackY = 40 + index * (getFreeformDefaultHeight(sibling.type) + 24);
-    const position = sibling.position ?? { x: 40, y: fallbackY };
+    const position = sibling.position ?? { x: defaultX, y: fallbackY };
     const height = sibling.freeformSize?.height ?? getFreeformDefaultHeight(sibling.type);
     nextY = Math.max(nextY, position.y + height + 24);
   });
-  return { ...component, position: { x: 40, y: nextY } };
+  const width = component.freeformSize?.width ?? getFreeformDefaultWidth(canvasWidth, component.type);
+  const defaultX = Math.max(0, Math.round((canvasWidth - width) / 2));
+  return { ...component, position: { x: defaultX, y: nextY } };
 }
 
 /** Freeform frames belong to top-level blocks; nested children retain flow layout. */
@@ -1880,7 +1923,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         selectedIds.flatMap((id) => {
           const component = findComponentById(state.components, id);
           if (!component) return [];
-          const position = component.position ?? { x: 40, y: 40 };
+          const defaultX = Math.max(0, Math.round((1280 - (component.freeformSize?.width ?? getFreeformDefaultWidth(1280, component.type))) / 2));
+          const position = component.position ?? { x: defaultX, y: 40 };
           return [[id, { x: position.x + x, y: position.y + y }] as const];
         }),
       );
