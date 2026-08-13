@@ -17,7 +17,7 @@ export default function FeaturedImagePicker({
   onChange,
   disabled = false,
 }: FeaturedImagePickerProps) {
-  const { uploadFiles, getUrl } = useAssetStore();
+  const { uploadFiles, getDataUrl } = useAssetStore();
   const [isUploading, setIsUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerTab, setPickerTab] = useState<"library" | "upload" | "url" | "ai">("library");
@@ -29,7 +29,7 @@ export default function FeaturedImagePicker({
     try {
       const uploadedAssets = await uploadFiles(files);
       if (uploadedAssets[0]) {
-        const url = await getUrl(uploadedAssets[0].id);
+        const url = await getDataUrl(uploadedAssets[0].id);
         if (url) {
           onChange(url);
         }
@@ -46,8 +46,15 @@ export default function FeaturedImagePicker({
     setPickerOpen(true);
   };
  
-  const handleSelectFromPicker = (url: string) => {
-    onChange(url);
+  const handleSelectFromPicker = async (url: string, assetId?: string) => {
+    // If the ImagePicker returned a blob: URL (ephemeral, session-scoped),
+    // resolve it to a persistent data URL so it survives in MongoDB.
+    if (assetId && url.startsWith("blob:")) {
+      const dataUrl = await getDataUrl(assetId);
+      onChange(dataUrl || url);
+    } else {
+      onChange(url);
+    }
     setPickerOpen(false);
   };
  
