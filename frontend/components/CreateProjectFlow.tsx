@@ -1,6 +1,7 @@
 "use client";
  
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { FaXmark, FaArrowRight, FaWandMagicSparkles, FaImage, FaPlay, FaCheck } from "react-icons/fa6";
 
@@ -58,6 +59,7 @@ const getSectionsForCategory = (category: string) => {
  
 const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState(1);
   const [projectData, setProjectData] = useState({
     name: "",
@@ -70,23 +72,95 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const stepContainerRef = useRef<HTMLDivElement>(null);
+  const backBtnRef = useRef<HTMLButtonElement>(null);
+  const continueBtnRef = useRef<HTMLButtonElement>(null);
+  const buildBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Focus management when modal opens or step changes
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock both body and html scroll while modal is open, and prevent arrow keys from scrolling the window
   useEffect(() => {
     if (!isOpen) return;
 
-    const timer = setTimeout(() => {
-      if (step === 1) {
-        inputRef.current?.focus();
-      } else if (stepContainerRef.current) {
-        const firstFocusable = stepContainerRef.current.querySelector<HTMLElement>(
-          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        firstFocusable?.focus();
-      }
-    }, 60);
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
 
-    return () => clearTimeout(timer);
+    // Capture arrow keys and navigation keys to prevent window/background scrolling
+    const handleWindowKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === "PageUp" ||
+        e.key === "PageDown" ||
+        e.key === "Home" ||
+        e.key === "End"
+      ) {
+        const isTextInput =
+          document.activeElement &&
+          (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
+
+        if (isTextInput) {
+          if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "PageUp" || e.key === "PageDown") {
+            e.preventDefault();
+          }
+          return;
+        }
+
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("keydown", handleWindowKeyDown, { capture: true });
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      window.removeEventListener("keydown", handleWindowKeyDown, { capture: true });
+    };
+  }, [isOpen]);
+
+  // Focus and default selection management when modal opens or step changes
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (step === 1) {
+      setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 50);
+    } else if (step === 2) {
+      if (!projectData.category) {
+        const initialCategory = categories[0].title;
+        const initialSections = categorySections[initialCategory] ?? defaultSectionIds;
+        setProjectData((prev) => ({
+          ...prev,
+          category: initialCategory,
+          sections: [...initialSections],
+        }));
+      }
+      setTimeout(() => {
+        const activeCat = projectData.category || categories[0].title;
+        const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-category="${activeCat}"]`);
+        btn?.focus({ preventScroll: true });
+      }, 50);
+    } else if (step === 3) {
+      if (!projectData.template) {
+        setProjectData((prev) => ({ ...prev, template: templateStyles[0].title }));
+      }
+      setTimeout(() => {
+        const activeTpl = projectData.template || templateStyles[0].title;
+        const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-template="${activeTpl}"]`);
+        btn?.focus({ preventScroll: true });
+      }, 50);
+    } else if (step === 4) {
+      setTimeout(() => {
+        const firstBtn = stepContainerRef.current?.querySelector<HTMLElement>('button[data-section]');
+        firstBtn?.focus({ preventScroll: true });
+      }, 50);
+    }
   }, [isOpen, step]);
 
   // Keyboard trap and Escape key handler
@@ -110,18 +184,16 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
           e.preventDefault();
-          lastElement.focus();
+          lastElement.focus({ preventScroll: true });
         }
       } else {
         if (document.activeElement === lastElement) {
           e.preventDefault();
-          firstElement.focus();
+          firstElement.focus({ preventScroll: true });
         }
       }
     }
   };
- 
-  if (!isOpen) return null;
  
   // Validation: Only allow Alphanumeric and Spaces
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,6 +245,207 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     setError("");
   };
 
+  // Step 2 Arrow navigation (Categories -> Back -> Continue)
+  const navigateStep2 = (currentIndex: number, direction: 1 | -1) => {
+    const total = categories.length + 2; // 5 categories + Back + Continue = 7
+    const nextIndex = (currentIndex + direction + total) % total;
+    if (nextIndex < categories.length) {
+      const nextCat = categories[nextIndex];
+      const newSections = categorySections[nextCat.title] ?? defaultSectionIds;
+      setProjectData((prev) => ({ ...prev, category: nextCat.title, sections: [...newSections] }));
+      setError("");
+      const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-category="${nextCat.title}"]`);
+      btn?.focus({ preventScroll: true });
+      btn?.scrollIntoView({ block: "nearest" });
+    } else if (nextIndex === categories.length) {
+      backBtnRef.current?.focus({ preventScroll: true });
+    } else if (nextIndex === categories.length + 1) {
+      continueBtnRef.current?.focus({ preventScroll: true });
+    }
+  };
+
+  const handleCategoryKeyDown = (e: React.KeyboardEvent, catIndex: number) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateStep2(catIndex, 1);
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateStep2(catIndex, -1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      const cat = categories[catIndex];
+      const newSections = categorySections[cat.title] ?? defaultSectionIds;
+      setProjectData((prev) => ({ ...prev, category: cat.title, sections: [...newSections] }));
+      setError("");
+      setStep(3);
+    }
+  };
+
+  // Step 3 Arrow navigation (Template Styles -> Back -> Continue)
+  const navigateStep3 = (currentIndex: number, direction: 1 | -1) => {
+    const total = templateStyles.length + 2; // 3 styles + Back + Continue = 5
+    const nextIndex = (currentIndex + direction + total) % total;
+    if (nextIndex < templateStyles.length) {
+      const nextStyle = templateStyles[nextIndex];
+      setProjectData((prev) => ({ ...prev, template: nextStyle.title }));
+      setError("");
+      const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-template="${nextStyle.title}"]`);
+      btn?.focus({ preventScroll: true });
+      btn?.scrollIntoView({ block: "nearest" });
+    } else if (nextIndex === templateStyles.length) {
+      backBtnRef.current?.focus({ preventScroll: true });
+    } else if (nextIndex === templateStyles.length + 1) {
+      continueBtnRef.current?.focus({ preventScroll: true });
+    }
+  };
+
+  const handleTemplateKeyDown = (e: React.KeyboardEvent, styleIndex: number) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateStep3(styleIndex, 1);
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateStep3(styleIndex, -1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      const style = templateStyles[styleIndex];
+      setProjectData((prev) => ({ ...prev, template: style.title }));
+      setError("");
+      setStep(4);
+    }
+  };
+
+  // Step 4 Arrow navigation (Dynamic Sections -> Back -> Build)
+  const currentSections = getSectionsForCategory(projectData.category);
+
+  const navigateStep4 = (currentIndex: number, direction: 1 | -1) => {
+    const total = currentSections.length + 2; // dynamic sections count + Back + Build
+    const nextIndex = (currentIndex + direction + total) % total;
+    if (nextIndex < currentSections.length) {
+      const section = currentSections[nextIndex];
+      const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-section="${section.id}"]`);
+      btn?.focus({ preventScroll: true });
+      btn?.scrollIntoView({ block: "nearest" });
+    } else if (nextIndex === currentSections.length) {
+      backBtnRef.current?.focus({ preventScroll: true });
+    } else if (nextIndex === currentSections.length + 1) {
+      buildBtnRef.current?.focus({ preventScroll: true });
+    }
+  };
+
+  const handleSectionKeyDown = (e: React.KeyboardEvent, sectionIndex: number) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateStep4(sectionIndex, 1);
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      e.stopPropagation();
+      navigateStep4(sectionIndex, -1);
+    } else if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSection(currentSections[sectionIndex].id);
+    }
+  };
+
+  // Back button keyboard navigation
+  const handleBackKeyDown = (e: React.KeyboardEvent) => {
+    if (step === 4) {
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        buildBtnRef.current?.focus({ preventScroll: true });
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        const lastSection = currentSections[currentSections.length - 1];
+        const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-section="${lastSection.id}"]`);
+        btn?.focus({ preventScroll: true });
+        btn?.scrollIntoView({ block: "nearest" });
+      }
+    } else if (step === 2) {
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        continueBtnRef.current?.focus({ preventScroll: true });
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        const lastCat = categories[categories.length - 1];
+        const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-category="${lastCat.title}"]`);
+        btn?.focus({ preventScroll: true });
+        btn?.scrollIntoView({ block: "nearest" });
+      }
+    } else if (step === 3) {
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        continueBtnRef.current?.focus({ preventScroll: true });
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        const lastStyle = templateStyles[templateStyles.length - 1];
+        const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-template="${lastStyle.title}"]`);
+        btn?.focus({ preventScroll: true });
+        btn?.scrollIntoView({ block: "nearest" });
+      }
+    }
+  };
+
+  // Continue button keyboard navigation
+  const handleContinueKeyDown = (e: React.KeyboardEvent) => {
+    if (step === 2) {
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        const firstCat = categories[0];
+        const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-category="${firstCat.title}"]`);
+        btn?.focus({ preventScroll: true });
+        btn?.scrollIntoView({ block: "nearest" });
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        backBtnRef.current?.focus({ preventScroll: true });
+      }
+    } else if (step === 3) {
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        const firstStyle = templateStyles[0];
+        const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-template="${firstStyle.title}"]`);
+        btn?.focus({ preventScroll: true });
+        btn?.scrollIntoView({ block: "nearest" });
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        backBtnRef.current?.focus({ preventScroll: true });
+      }
+    }
+  };
+
+  // Build button keyboard navigation
+  const handleBuildKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      e.stopPropagation();
+      const firstSection = currentSections[0];
+      const btn = stepContainerRef.current?.querySelector<HTMLElement>(`[data-section="${firstSection.id}"]`);
+      btn?.focus({ preventScroll: true });
+      btn?.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      e.stopPropagation();
+      backBtnRef.current?.focus({ preventScroll: true });
+    }
+  };
+
   const handleBuild = () => {
     const params = new URLSearchParams({
       projectName: projectData.name.trim(),
@@ -186,10 +459,12 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     setProjectData({ name: "", category: "", template: "", sections: defaultSectionIds });
     router.push(`/builder?${params.toString()}`);
   };
+
+  if (!isOpen || !mounted) return null;
  
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-6 overflow-hidden"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-6 overflow-hidden"
       role="dialog"
       aria-modal="true"
       aria-labelledby="create-project-title"
@@ -223,7 +498,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         </div>
  
         {/* Content Area */}
-        <div ref={stepContainerRef} className="p-4 sm:p-8 overflow-y-auto flex-grow min-h-0">
+        <div ref={stepContainerRef} className="p-4 sm:p-8 overflow-y-auto flex-grow min-h-0 overscroll-contain">
          
           {/* STEP 1: Name Validation */}
           {step === 1 && (
@@ -266,9 +541,10 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <div className="space-y-4 sm:space-y-6">
               <h4 className="text-xl sm:text-2xl font-black text-[#06224C] dark:text-slate-100 break-words">What are you building?</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-0.5">
-                {categories.map((cat) => (
+                {categories.map((cat, index) => (
                   <button
                     key={cat.title}
+                    data-category={cat.title}
                     type="button"
                     aria-pressed={projectData.category === cat.title}
                     onClick={() => {
@@ -276,10 +552,11 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                       setProjectData({ ...projectData, category: cat.title, sections: [...newSections] });
                       setError("");
                     }}
-                    className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all cursor-pointer focus:outline-none focus-visible:outline-none focus-visible:border-blue-600 dark:focus-visible:border-blue-400 focus-visible:ring-2 focus-visible:ring-blue-600/30 ${
+                    onKeyDown={(e) => handleCategoryKeyDown(e, index)}
+                    className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all cursor-pointer focus:outline-none focus-visible:outline-none ${
                       projectData.category === cat.title
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60 shadow-xs"
-                        : "border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60 shadow-xs focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/30"
+                        : "border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50 focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/30"
                     }`}
                   >
                     <p className="font-black text-sm sm:text-base text-[#06224C] dark:text-slate-100">{cat.title}</p>
@@ -296,19 +573,21 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <div className="space-y-4 sm:space-y-6">
               <h4 className="text-xl sm:text-2xl font-black text-[#06224C] dark:text-slate-100 break-words">Pick a template style.</h4>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 p-0.5">
-                {templateStyles.map((style) => (
+                {templateStyles.map((style, index) => (
                   <button
                     key={style.title}
+                    data-template={style.title}
                     type="button"
                     aria-pressed={projectData.template === style.title}
                     onClick={() => {
                       setProjectData({ ...projectData, template: style.title });
                       setError("");
                     }}
-                    className={`group cursor-pointer space-y-2 rounded-xl sm:rounded-2xl border-2 p-3 text-left transition-all focus:outline-none focus-visible:outline-none focus-visible:border-blue-600 dark:focus-visible:border-blue-400 focus-visible:ring-2 focus-visible:ring-blue-600/30 ${
+                    onKeyDown={(e) => handleTemplateKeyDown(e, index)}
+                    className={`group cursor-pointer space-y-2 rounded-xl sm:rounded-2xl border-2 p-3 text-left transition-all focus:outline-none focus-visible:outline-none ${
                       projectData.template === style.title
-                        ? "border-blue-500 bg-blue-50/30 dark:bg-blue-950/40 shadow-xs"
-                        : "border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50"
+                        ? "border-blue-500 bg-blue-50/30 dark:bg-blue-950/40 shadow-xs focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/30"
+                        : "border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50 focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/30"
                     }`}
                   >
                     <div className="aspect-video bg-gray-100 dark:bg-slate-800 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center text-gray-300 dark:text-slate-600">
@@ -331,20 +610,22 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 <p className="mt-1 text-xs font-bold uppercase text-gray-400 dark:text-slate-500">These will be added to your builder canvas.</p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 p-0.5">
-                {getSectionsForCategory(projectData.category).map((section) => {
+                {currentSections.map((section, index) => {
                   const isSelected = projectData.sections.includes(section.id);
 
                   return (
                     <button
                       key={section.id}
+                      data-section={section.id}
                       type="button"
                       role="checkbox"
                       aria-checked={isSelected}
                       onClick={() => toggleSection(section.id)}
-                      className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl sm:p-4 cursor-pointer focus:outline-none focus-visible:outline-none focus-visible:border-blue-600 dark:focus-visible:border-blue-400 focus-visible:ring-2 focus-visible:ring-blue-600/30 ${
+                      onKeyDown={(e) => handleSectionKeyDown(e, index)}
+                      className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all sm:rounded-2xl sm:p-4 cursor-pointer focus:outline-none focus-visible:outline-none ${
                         isSelected
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60 shadow-xs"
-                          : "border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/60 shadow-xs focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/30"
+                          : "border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50 focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/30"
                       }`}
                     >
                       <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border ${isSelected ? "border-blue-500 bg-blue-600 text-white" : "border-gray-200 dark:border-slate-700 text-gray-300 dark:text-slate-600"}`}>
@@ -367,9 +648,11 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         <div className="p-4 sm:p-6 bg-gray-50 dark:bg-slate-950 border-t border-gray-100 dark:border-slate-800 flex flex-wrap items-center gap-2 shrink-0">
           {step > 1 && (
             <button
+              ref={backBtnRef}
               type="button"
               onClick={handleBack}
-              className="px-4 py-2 sm:px-8 sm:py-3 font-black text-[10px] sm:text-xs uppercase tracking-widest text-gray-400 dark:text-slate-500 hover:text-[#06224C] dark:hover:text-slate-200 transition-colors cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-slate-950"
+              onKeyDown={handleBackKeyDown}
+              className="px-4 py-2 sm:px-8 sm:py-3 font-black text-[10px] sm:text-xs uppercase tracking-widest text-gray-500 dark:text-slate-500 hover:text-[#06224C] dark:hover:text-slate-200 transition-colors cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-slate-950"
             >
               Back
             </button>
@@ -377,8 +660,10 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
          
           {step < 4 ? (
             <button
+              ref={continueBtnRef}
               type="button"
               onClick={handleNext}
+              onKeyDown={handleContinueKeyDown}
               disabled={!!error || !projectData.name}
               className="ml-auto bg-[#06224C] dark:bg-blue-600 text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-blue-900 dark:hover:bg-blue-700 transition-all disabled:opacity-50 shadow-lg whitespace-nowrap cursor-pointer disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-slate-950"
             >
@@ -386,8 +671,10 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             </button>
           ) : (
             <button
+              ref={buildBtnRef}
               type="button"
               onClick={handleBuild}
+              onKeyDown={handleBuildKeyDown}
               disabled={!projectData.template || projectData.sections.length === 0}
               className="ml-auto bg-green-600 dark:bg-green-500 text-white px-6 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-700 dark:hover:bg-green-600 transition-all shadow-lg disabled:opacity-50 whitespace-nowrap cursor-pointer disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 dark:focus-visible:ring-green-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:focus-visible:ring-offset-slate-950"
             >
@@ -396,7 +683,8 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
  
@@ -411,7 +699,7 @@ export default function CreateProjectFlow() {
   const handleClose = () => {
     setIsOpen(false);
     setTimeout(() => {
-      triggerRef.current?.focus();
+      triggerRef.current?.focus({ preventScroll: true });
     }, 50);
   };
  
