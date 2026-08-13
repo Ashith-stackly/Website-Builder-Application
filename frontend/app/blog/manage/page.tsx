@@ -40,6 +40,7 @@ import {
   type ProjectApiProject,
 } from "@/lib/projectApi";
 import { getAuthToken } from "@/lib/authToken";
+import { DEMO_AUTH_TOKEN } from "@/lib/demoAuth";
 import { notifyBlogChanged } from "@/lib/blogEvents";
 import { useThemeStore } from "@/lib/theme";
 import BlogDeleteDialog from "@/components/blog/BlogDeleteDialog";
@@ -64,6 +65,7 @@ export default function BlogManagePage() {
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [projects, setProjects] = useState<ProjectApiProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [projectsReady, setProjectsReady] = useState(false);
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
  
@@ -107,7 +109,7 @@ export default function BlogManagePage() {
   // Authenticate & Load Projects
   useEffect(() => {
     const token = typeof window !== "undefined" ? getAuthToken() : null;
-    if (!token) {
+    if (!token || token === DEMO_AUTH_TOKEN) {
       router.push(
         `/login?redirect=${encodeURIComponent(
           `/blog/manage${workspaceId ? `?workspaceId=${workspaceId}` : ""}`
@@ -140,6 +142,7 @@ export default function BlogManagePage() {
             }
           }
         }
+        setProjectsReady(true);
       })
       .catch((err) => {
         if (controller.signal.aborted || isAbortError(err)) return;
@@ -151,8 +154,8 @@ export default function BlogManagePage() {
  
   // Fetch blogs for active workspace
   const fetchBlogs = useCallback(async () => {
-    if (!workspaceId) {
-      setBlogs([]);
+    if (!workspaceId || !projectsReady) {
+      if (!workspaceId) setBlogs([]);
       setLoading(false);
       return;
     }
@@ -181,7 +184,7 @@ export default function BlogManagePage() {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, projectsReady]);
  
   useEffect(() => {
     fetchBlogs();

@@ -19,6 +19,8 @@ import {
   isBlogConnectionError,
 } from "@/lib/blogApi";
 import { notifyBlogChanged } from "@/lib/blogEvents";
+import { getAuthToken } from "@/lib/authToken";
+import { DEMO_AUTH_TOKEN } from "@/lib/demoAuth";
 import { useThemeStore } from "@/lib/theme";
 import BlogForm from "@/components/blog/BlogForm";
 import ThemeToggle from "@/components/blog/ThemeToggle";
@@ -46,6 +48,16 @@ export default function EditBlogPage() {
   const abortRef = useRef<AbortController | null>(null);
  
   useEffect(() => {
+    const token = typeof window !== "undefined" ? getAuthToken() : null;
+    if (!token || token === DEMO_AUTH_TOKEN) {
+      router.push(
+        `/login?redirect=${encodeURIComponent(
+          `/blog/manage/edit/${slug}${workspaceId ? `?workspaceId=${workspaceId}` : ""}`
+        )}`
+      );
+      return;
+    }
+
     if (!slug || !workspaceId) {
       return;
     }

@@ -18,6 +18,7 @@ import { createBlog, isBlogConnectionError } from "@/lib/blogApi";
 import { getProjects, createProject } from "@/lib/projectApi";
 import { notifyBlogChanged } from "@/lib/blogEvents";
 import { getAuthToken } from "@/lib/authToken";
+import { DEMO_AUTH_TOKEN } from "@/lib/demoAuth";
 import { useThemeStore } from "@/lib/theme";
 import BlogForm from "@/components/blog/BlogForm";
 import ThemeToggle from "@/components/blog/ThemeToggle";
@@ -41,7 +42,7 @@ export default function CreateBlogPage() {
  
   useEffect(() => {
     const token = typeof window !== "undefined" ? getAuthToken() : null;
-    if (!token) {
+    if (!token || token === DEMO_AUTH_TOKEN) {
       router.push(
         `/login?redirect=${encodeURIComponent(
           `/blog/manage/create${workspaceId ? `?workspaceId=${workspaceId}` : ""}`
@@ -95,7 +96,7 @@ export default function CreateBlogPage() {
  
       try {
         const token = typeof window !== "undefined" ? getAuthToken() : null;
-        if (!token) {
+        if (!token || token === DEMO_AUTH_TOKEN) {
           router.push(
             `/login?redirect=${encodeURIComponent(
               `/blog/manage/create${workspaceId ? `?workspaceId=${workspaceId}` : ""}`
