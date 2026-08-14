@@ -218,23 +218,38 @@ export default function AboutPage() {
           {/* Dark Stats Banner */}
           <motion.section className="max-w-7xl mx-auto px-4 sm:px-6 pb-20" variants={scaleIn} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }}>
             <motion.div className="bg-[#06183A] rounded-2xl md:rounded-[2rem] p-8 md:p-12 shadow-2xl" variants={scaleIn}>
-              <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-white/10" variants={staggerContainer}>
+              <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-6" variants={staggerContainer}>
                 {[
                   { icon: <FaUsers />, stat: "50K+", label: "Happy Users" },
                   { icon: <FaGlobe />, stat: "120+", label: "Countries" },
                   { icon: <FaLayerGroup />, stat: "100+", label: "Templates" },
                   { icon: <FaHeadset />, stat: "24/7", label: "Customer Support" },
-                ].map((item, idx) => (
-                  <motion.div key={idx} className={`flex items-center gap-4 ${idx !== 0 && idx !== 2 ? 'pl-4 sm:pl-8' : ''} ${idx === 2 ? 'pl-0 md:pl-8' : ''}`} variants={fadeUp} whileHover={{ scale: 1.05 }}>
-                    <div className="text-white text-3xl opacity-80">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <h4 className="text-white font-bold text-lg md:text-xl">{item.stat}</h4>
-                      <p className="text-white/60 text-[10px] md:text-xs font-medium">{item.label}</p>
-                    </div>
-                  </motion.div>
-                ))}
+                ].map((item, idx) => {
+                  let borderClasses = "border-l-0 pl-0";
+                  if (idx === 1) {
+                    borderClasses = "border-l-0 pl-0 sm:border-l sm:border-white/10 sm:pl-8 lg:border-l lg:border-white/10 lg:pl-8";
+                  } else if (idx === 2) {
+                    borderClasses = "border-l-0 pl-0 sm:border-l-0 sm:pl-0 lg:border-l lg:border-white/10 lg:pl-8";
+                  } else if (idx === 3) {
+                    borderClasses = "border-l-0 pl-0 sm:border-l sm:border-white/10 sm:pl-8 lg:border-l lg:border-white/10 lg:pl-8";
+                  }
+                  return (
+                    <motion.div
+                      key={idx}
+                      className={`flex items-center gap-4 w-full min-w-0 ${borderClasses}`}
+                      variants={fadeUp}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <div className="text-white text-3xl opacity-80 flex-shrink-0">
+                        {item.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-white font-bold text-lg md:text-xl truncate">{item.stat}</h4>
+                        <p className="text-white/60 text-[10px] md:text-xs font-medium truncate">{item.label}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </motion.div>
             </motion.div>
           </motion.section>
