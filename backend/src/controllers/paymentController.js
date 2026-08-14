@@ -48,6 +48,24 @@ async function getSubscription(req, res, next) {
   }
 }
 
+async function getInvoices(req, res, next) {
+  try {
+    const invoices = await paymentService.getInvoices(req.user._id);
+    res.json({ invoices });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function saveInvoice(req, res, next) {
+  try {
+    const doc = await paymentService.saveInvoice(req.user._id, req.body);
+    res.json({ ok: true, invoice: doc });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   createCheckout,
   stripeWebhook,
@@ -55,4 +73,6 @@ module.exports = {
   createRazorpayOrder,
   verifyRazorpay,
   getSubscription,
+  getInvoices,
+  saveInvoice,
 };

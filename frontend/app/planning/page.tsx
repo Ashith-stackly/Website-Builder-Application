@@ -27,6 +27,7 @@ import Footer from "@/components/Footer";
 import { activateFrontendSubscription } from "@/lib/demoAuth";
 import { notifyProfileUpdated } from "@/lib/profileApi";
 import { downloadPlanningInvoiceForEntry } from "@/lib/planningInvoiceHtml";
+import { saveInvoiceToBackend } from "@/lib/invoiceApi";
 import type { PlanningInvoiceContactDefaults } from "@/lib/planningInvoiceHtml";
 import {
   buildPlanningQuery,
@@ -469,6 +470,8 @@ function PlanningPageContent() {
       };
       const next = [row, ...prev.filter((e) => e.invoiceId !== row.invoiceId)];
       saveBillingHistoryToStorage(next);
+      // Also persist to backend so invoices are visible across all sessions/browsers
+      void saveInvoiceToBackend(row);
       return next;
     });
 

@@ -23,6 +23,7 @@ import {
   FileText,
 } from "lucide-react";
 import { downloadPlanningInvoiceForEntry, type BillingHistoryEntryLike } from "@/lib/planningInvoiceHtml";
+import { fetchInvoices } from "@/lib/invoiceApi";
 import { revealSection, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
@@ -125,18 +126,16 @@ function ProfileHero() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed[0]) {
-          const latest = parsed[0] as BillingHistoryEntryLike;
-          setRecentPurchasePlan(latest.planTier || latest.planName);
-        }
-      }
-    } catch { /* ignore */ }
-
     const controller = new AbortController();
+
+    // Fetch invoices from backend API (works across all sessions/browsers)
+    void fetchInvoices(controller.signal).then((invoices) => {
+      if (invoices.length > 0) {
+        const latest = invoices[0];
+        setRecentPurchasePlan(latest.planTier || latest.planName);
+      }
+    }).catch(() => { });
+
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
       .catch(() => { })
@@ -447,18 +446,16 @@ function BillingPanel({ onUpgrade }: { onUpgrade: () => void }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed[0]) {
-          const latest = parsed[0] as BillingHistoryEntryLike;
-          setRecentPurchasePlan(latest.planTier || latest.planName);
-        }
-      }
-    } catch { /* ignore */ }
-
     const controller = new AbortController();
+
+    // Fetch invoices from backend API (works across all sessions/browsers)
+    void fetchInvoices(controller.signal).then((invoices) => {
+      if (invoices.length > 0) {
+        const latest = invoices[0];
+        setRecentPurchasePlan(latest.planTier || latest.planName);
+      }
+    }).catch(() => { });
+
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
       .catch(() => { })
@@ -509,15 +506,36 @@ function DashboardBillingHistory() {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setHistory(parsed);
-      }
-    } catch { }
-
     const controller = new AbortController();
+
+    // Fetch invoices from backend API (persisted in MongoDB)
+    void fetchInvoices(controller.signal).then((apiInvoices) => {
+      // Also check localStorage for any entries not yet synced to backend
+      let localEntries: BillingHistoryEntryLike[] = [];
+      try {
+        const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) localEntries = parsed;
+        }
+      } catch { }
+
+      // Merge: API entries take priority, add any localStorage-only entries
+      const apiIds = new Set(apiInvoices.map((e) => e.invoiceId));
+      const localOnly = localEntries.filter((e) => !apiIds.has(e.invoiceId));
+      const merged = [...apiInvoices, ...localOnly];
+      setHistory(merged);
+    }).catch(() => {
+      // Fallback to localStorage if API fails
+      try {
+        const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) setHistory(parsed);
+        }
+      } catch { }
+    });
+
     void fetchProfile(controller.signal).then(setUser).catch(() => { });
     return () => controller.abort();
   }, []);

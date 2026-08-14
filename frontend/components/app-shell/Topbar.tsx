@@ -23,6 +23,7 @@ import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { fetchProfile, formatPlanLabel, resolveActivePlan, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
+import { fetchInvoices } from "@/lib/invoiceApi";
 import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
 import { useLanguageStore } from "@/lib/i18n";
@@ -223,18 +224,16 @@ function ProfileMenu() {
   const t = useLanguageStore((s) => s.t);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed[0]) {
-          const latest = parsed[0] as { planTier?: string; planName?: string };
-          setRecentPurchasePlan(latest.planTier || latest.planName);
-        }
-      }
-    } catch { /* ignore */ }
-
     const controller = new AbortController();
+
+    // Fetch invoices from backend API (works across all sessions/browsers)
+    void fetchInvoices(controller.signal).then((invoices) => {
+      if (invoices.length > 0) {
+        const latest = invoices[0];
+        setRecentPurchasePlan(latest.planTier || latest.planName);
+      }
+    }).catch(() => { });
+
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
       .catch(() => { });

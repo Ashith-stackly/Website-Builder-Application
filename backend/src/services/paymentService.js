@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const Subscription = require('../models/Subscription');
+const Invoice = require('../models/Invoice');
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const { sanitizeUser } = require('../helpers');
@@ -273,6 +274,42 @@ async function verifyRazorpay(user, body = {}) {
   const invoiceId = `INV-${cleanPayId.substring(0, 10) || Math.floor(100000 + Math.random() * 899999)}`;
   const sanitized = user ? sanitizeUser(user) : null;
 
+  // Persist invoice to MongoDB so it is available across all sessions/devices
+  if (user) {
+    const amountDisplay = currency === 'INR'
+      ? `₹${Math.round((Number(amount) || 0) / 100)}`
+      : `$${((Number(amount) || 0) / 100).toFixed(2)}`;
+    const dateDisplay = startDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).replace(',', '');
+    try {
+      await Invoice.findOneAndUpdate(
+        { userId: user._id, invoiceId },
+        {
+          userId: user._id,
+          invoiceId,
+          date: dateDisplay,
+          amount: amountDisplay,
+          status: (Number(amount) || 0) === 0 ? 'Free' : 'Paid',
+          planName: planName || '',
+          planTier: plan,
+          websiteLabel: 'Stackly workspace subscription',
+          paymentMethodLabel: instrumentLabel,
+          paymentDetail: razorpay_payment_id
+            ? `Payment ${razorpay_payment_id}${razorpay_order_id ? ` · Order ${razorpay_order_id}` : ''}`
+            : '',
+          buyerName: user.name || 'Customer',
+          buyerEmail: user.email || '',
+          buyerPhone: user.mobile || user.phone || '',
+          buyerAddress: user.address || '',
+          generatedAt: startDate.toISOString(),
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } catch (invoiceErr) {
+      // Non-critical — log but don't fail the payment verification
+      console.error('Failed to persist invoice:', invoiceErr.message);
+    }
+  }
+
   return {
     verified: true,
     user: sanitized,
@@ -320,6 +357,56 @@ async function getSubscription(userId) {
   };
 }
 
+async function getInvoices(userId) {
+  const invoices = await Invoice.find({ userId })
+    .sort({ createdAt: -1 })
+    .lean();
+  return invoices.map((inv) => ({
+    date: inv.date,
+    invoiceId: inv.invoiceId,
+    amount: inv.amount,
+    status: inv.status,
+    planName: inv.planName || '',
+    planTier: inv.planTier || '',
+    websiteLabel: inv.websiteLabel || '',
+    paymentMethodLabel: inv.paymentMethodLabel || '',
+    paymentDetail: inv.paymentDetail || '',
+    buyerName: inv.buyerName || '',
+    buyerEmail: inv.buyerEmail || '',
+    buyerPhone: inv.buyerPhone || '',
+    buyerAddress: inv.buyerAddress || '',
+    generatedAt: inv.generatedAt || '',
+  }));
+}
+
+async function saveInvoice(userId, invoiceData) {
+  if (!invoiceData || !invoiceData.invoiceId) {
+    throw ApiError.badRequest('invoiceId is required');
+  }
+  const doc = await Invoice.findOneAndUpdate(
+    { userId, invoiceId: invoiceData.invoiceId },
+    {
+      userId,
+      invoiceId: invoiceData.invoiceId,
+      date: invoiceData.date || '',
+      amount: invoiceData.amount || '',
+      status: invoiceData.status || 'Paid',
+      planName: invoiceData.planName || '',
+      planTier: invoiceData.planTier || '',
+      websiteLabel: invoiceData.websiteLabel || 'Stackly workspace subscription',
+      paymentMethodLabel: invoiceData.paymentMethodLabel || '',
+      paymentDetail: invoiceData.paymentDetail || '',
+      buyerName: invoiceData.buyerName || '',
+      buyerEmail: invoiceData.buyerEmail || '',
+      buyerPhone: invoiceData.buyerPhone || '',
+      buyerAddress: invoiceData.buyerAddress || '',
+      generatedAt: invoiceData.generatedAt || '',
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+  return doc;
+}
+
 module.exports = {
   createStripeCheckout,
   handleStripeWebhook,
@@ -327,4 +414,6 @@ module.exports = {
   createRazorpayOrder,
   verifyRazorpay,
   getSubscription,
+  getInvoices,
+  saveInvoice,
 };

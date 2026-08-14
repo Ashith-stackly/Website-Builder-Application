@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CreditCard, ExternalLink } from "lucide-react";
+import { fetchInvoices } from "@/lib/invoiceApi";
 
 type BillingEntry = { planTier?: string; planName?: string; status?: string; amount?: string };
 
@@ -10,14 +11,21 @@ export default function SubscriptionPanel() {
   const [plan, setPlan] = useState<BillingEntry>({ planTier: "Free", status: "Free", amount: "$0.00" });
 
   useEffect(() => {
-    const id = window.setTimeout(() => {
-      try {
-        const rows = JSON.parse(window.localStorage.getItem("stacklyPlanningBillingHistory") || "[]") as BillingEntry[];
-        if (Array.isArray(rows) && rows[0]) setPlan(rows[0]);
-      } catch { /* retain the free-plan fallback */ }
-    }, 0);
-    return () => window.clearTimeout(id);
+    const controller = new AbortController();
+    void fetchInvoices(controller.signal).then((invoices) => {
+      if (invoices.length > 0) {
+        const latest = invoices[0];
+        setPlan({
+          planTier: latest.planTier,
+          planName: latest.planName,
+          status: latest.status,
+          amount: latest.amount,
+        });
+      }
+    }).catch(() => { /* retain the free-plan fallback */ });
+    return () => controller.abort();
   }, []);
+
 
   return (
     <section id="subscription-settings" className="rounded-3xl border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-7">
