@@ -196,10 +196,19 @@ export default function SignupPage() {
     let triggered = false;
     const threshold = 88;
 
+    const isAtTop = () => {
+      return (
+        scrollEl.scrollTop <= 0 ||
+        window.scrollY <= 0 ||
+        document.documentElement.scrollTop <= 0 ||
+        document.body.scrollTop <= 0
+      );
+    };
+
     const onTouchStart = (event: TouchEvent) => {
-      if (window.innerWidth >= 1024 || event.touches.length !== 1 || isAuthPageZoomed()) return;
+      if (window.innerWidth >= 1024 || event.touches.length !== 1) return;
       startY = event.touches[0].clientY;
-      canPull = scrollEl.scrollTop <= 0;
+      canPull = isAtTop();
       triggered = false;
     };
 
@@ -208,13 +217,12 @@ export default function SignupPage() {
         !canPull ||
         triggered ||
         window.innerWidth >= 1024 ||
-        isAuthPageZoomed() ||
         event.touches.length !== 1
       ) {
         return;
       }
       const deltaY = event.touches[0].clientY - startY;
-      if (deltaY > threshold && scrollEl.scrollTop <= 0) {
+      if (deltaY > threshold && isAtTop()) {
         triggered = true;
         window.location.reload();
       } else if (deltaY < 0) {

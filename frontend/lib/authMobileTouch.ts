@@ -22,12 +22,16 @@ export function mountAuthAndroidClass(): () => void {
 export function getAuthPullScrollRoot(loginPage: boolean): HTMLElement | null {
   if (typeof window === "undefined" || window.innerWidth >= 1024) return null;
   if (isAndroidMobile()) {
-    return document.scrollingElement as HTMLElement | null;
+    return (document.scrollingElement || document.documentElement) as HTMLElement | null;
   }
   if (loginPage) {
-    return document.querySelector(".login-page .login-card-inner") as HTMLElement | null;
+    const el = document.querySelector(".login-page .login-card-inner") as HTMLElement | null;
+    if (el) return el;
+  } else {
+    const el = document.querySelector(".signup-card-content") as HTMLElement | null;
+    if (el) return el;
   }
-  return document.querySelector(".auth-page") as HTMLElement | null;
+  return (document.scrollingElement || document.documentElement || document.body) as HTMLElement | null;
 }
 
 /** 150%–200%+ pinch-zoom on mobile signup: stack mobile number under country selector. */
