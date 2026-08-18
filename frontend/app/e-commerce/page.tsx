@@ -97,7 +97,7 @@ function toBuyProduct(product: Product): BuyProduct {
 
   return {
     id: product._id,
-    name: product.name,
+    name: product.name === "Audio" ? "Headphones" : product.name,
     image: product.images?.find((image) => Boolean(image?.trim()))?.trim() || "",
     badge: discountPercent > 0 ? `${discountPercent}%` : "",
     price: formatStorePrice(activePrice, currency),
@@ -281,7 +281,7 @@ function BuyProductActionButtons({
 }) {
   const size = "w-[28px] h-[28px] min-[400px]:w-[30px] min-[400px]:h-[30px] sm:w-[32px] sm:h-[32px] md:w-[32px] md:h-[32px] lg:w-[36px] lg:h-[36px]";
   const shadow = compact ? "shadow-sm" : "shadow-md";
-  const base = `flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow} flex-shrink-0 overflow-hidden flex-nowrap items-center justify-center`;
+  const base = `buyscreen-action-btn flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow} flex-shrink-0 overflow-hidden flex-nowrap items-center justify-center`;
   const inactive = `${base} bg-white text-[#ff664f] hover:bg-[#ff664f] hover:text-white`;
   const favoriteActive = `${base} bg-[#ff664f] text-white hover:bg-[#ff664f] hover:text-white`;
   const favoriteBtn = `${isFavorite ? favoriteActive : inactive} buyscreen-favorite-btn`;
@@ -898,11 +898,10 @@ export default function ECommercePage() {
       if (activeBlogPost) setActiveBlogPost(null);
     };
     window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      document.body.style.overflow = "";
     };
   }, [licenseProduct, isCartOpen, isFavoritesOpen, activeBlogPost, closeLicenseModal]);
 
@@ -1156,7 +1155,7 @@ export default function ECommercePage() {
   }
 
   const productGridClass = showAllProducts || isSearching
-    ? "buyscreen-products--grid grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-5"
+    ? "buyscreen-products--grid grid grid-cols-1 min-[420px]:grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-5"
     : "buyscreen-products--carousel";
   const carouselSlots = isCarouselMode ? Math.max(1, carouselCols) : 1;
 
@@ -1408,16 +1407,84 @@ export default function ECommercePage() {
             .buyscreen-page button:not(.buyscreen-blog-article-close-btn):not(.buyscreen-blog-article-dismiss) {
               overflow-wrap: break-word !important;
               word-wrap: break-word !important;
-              hyphens: auto !important;
+              hyphens: none !important;
+              -webkit-hyphens: none !important;
               white-space: normal !important;
             }
 
-            /* 3. Responsive Clamp Fonts */
+            /* 3. Responsive Clamp Fonts and layout fixes for 200% zoom */
             .buyscreen-page h1 { font-size: clamp(1.5rem, 5vw + 0.5rem, 3rem) !important; line-height: 1.2 !important; }
             .buyscreen-page h2:not(.buyscreen-blog-article-title) { font-size: clamp(1.25rem, 4vw + 0.5rem, 2.5rem) !important; line-height: 1.2 !important; }
             .buyscreen-page h3 { font-size: clamp(1rem, 3vw + 0.5rem, 2rem) !important; line-height: 1.3 !important; }
             .buyscreen-page p:not(.buyscreen-blog-article-paragraph):not(.buyscreen-blog-article-excerpt) { font-size: clamp(0.875rem, 2.5vw + 0.25rem, 1.125rem) !important; line-height: 1.5 !important; }
-            .buyscreen-page button:not(.buyscreen-blog-article-close-btn):not(.buyscreen-blog-article-dismiss) { font-size: clamp(0.75rem, 2vw + 0.25rem, 1rem) !important; }
+            .buyscreen-page button:not(.buyscreen-action-btn):not(.buyscreen-cart-remove-btn):not(.buyscreen-qty-btn):not(.buyscreen-blog-article-close-btn):not(.buyscreen-blog-article-dismiss):not([aria-label*="Close"]):not([aria-label*="close"]) { font-size: clamp(0.75rem, 2vw + 0.25rem, 1rem) !important; height: auto !important; min-height: 44px !important; white-space: normal !important; line-height: 1.2 !important; }
+            .buyscreen-page .buyscreen-action-btn {
+              width: 28px !important;
+              height: 28px !important;
+              min-width: 28px !important;
+              min-height: 28px !important;
+              max-width: 28px !important;
+              max-height: 28px !important;
+              padding: 0 !important;
+              border-radius: 9999px !important;
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              flex-shrink: 0 !important;
+            }
+            @media (min-width: 640px) {
+              .buyscreen-page .buyscreen-action-btn {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                min-height: 32px !important;
+                max-width: 32px !important;
+                max-height: 32px !important;
+              }
+            }
+            .buyscreen-page .buyscreen-qty-btn {
+              width: 24px !important;
+              height: 24px !important;
+              min-width: 24px !important;
+              min-height: 24px !important;
+              padding: 0 !important;
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
+            .buyscreen-page button[aria-label*="Close"],
+            .buyscreen-page button[aria-label*="close"] {
+              width: 32px !important;
+              height: 32px !important;
+              min-width: 32px !important;
+              min-height: 32px !important;
+              border-radius: 9999px !important;
+              padding: 0 !important;
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
+            .buyscreen-page input, .buyscreen-page textarea, .buyscreen-page select {
+              height: auto !important;
+              min-height: 44px !important;
+              line-height: 1.4 !important;
+              padding-top: 0.5rem !important;
+              padding-bottom: 0.5rem !important;
+            }
+            .buyscreen-page .buyscreen-product-meta, .buyscreen-page .buyscreen-product-card {
+              min-height: min-content !important;
+              height: auto !important;
+            }
+            @media (min-width: 640px) {
+              .buyscreen-page .buyscreen-license-popup-wrapper [role="dialog"],
+              .buyscreen-page .buyscreen-cart-popup-wrapper [role="dialog"],
+              .buyscreen-page .buyscreen-favorites-popup-wrapper [role="dialog"] {
+                 max-height: none !important;
+                 height: auto !important;
+                 margin-top: 1rem !important;
+                 margin-bottom: 1rem !important;
+              }
+            }
 
             /* 4. Images */
             .buyscreen-page img:not(.stackly-footer-logo), .buyscreen-page svg:not(.buyscreen-header-action-icon):not(.buyscreen-send-icon) {
@@ -1443,7 +1510,6 @@ export default function ECommercePage() {
             .buyscreen-page section:not(.buyscreen-shell) {
               min-width: 0 !important;
               max-width: 100% !important;
-              overflow: clip !important;
             }
             .buyscreen-page section.buyscreen-shell {
               min-width: 0 !important;
@@ -1926,7 +1992,7 @@ export default function ECommercePage() {
             display: grid !important;
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
             place-items: center !important;
-            gap: 12px !important;
+            gap: 4px !important;
             width: 100% !important;
             pointer-events: auto !important;
             opacity: 1 !important;
@@ -2174,142 +2240,154 @@ export default function ECommercePage() {
             role="dialog"
             aria-modal
             aria-labelledby="buyscreen-cart-title"
-            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
+            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-[calc(100vw-24px)] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
           >
-            <div className="shrink-0 border-b border-[#eef2f7] p-6 pb-4 sm:p-8 sm:pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 id="buyscreen-cart-title" className="text-lg font-semibold text-[#06224C]">
-                  Your cart
-                </h2>
-                <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold tabular-nums text-[#06224C]">
-                    {hasStorefrontSession ? formatStoreCents(cartTotalCents, cartCurrency) : "Sign in required"}
-                  </p>
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
-                    aria-label="Close cart"
-                    onClick={() => setIsCartOpen(false)}
-                  >
-                    <span className="text-lg leading-none">×</span>
-                  </button>
+            <div className="shrink-0 border-b border-[#eef2f7] px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <h2 id="buyscreen-cart-title" className="text-sm font-bold text-[#06224C] sm:text-base">
+                    Cart
+                  </h2>
+                  <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#eff6ff] px-2 text-[10px] font-extrabold text-[#2563eb]">
+                    {hasStorefrontSession ? formatStoreCents(cartTotalCents, cartCurrency) : "Guest"}
+                  </span>
                 </div>
-              </div>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4 sm:px-8 sm:pb-8">
-              {cartError ? (
-                <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-                  <span>{cartError}</span>
-                </div>
-              ) : null}
-              {!hasStorefrontSession ? (
-                <div className="rounded-xl border border-dashed border-[#bfdbfe] bg-[#eff6ff] px-4 py-5 text-sm text-[#1d4ed8]">
-                  <p className="font-semibold">Sign in to use your cart.</p>
-                  <p className="mt-1 text-xs leading-relaxed text-[#475569]">Your cart is securely stored with your Stackly account.</p>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/login")}
-                    className="mt-4 rounded-lg bg-[#06224C] px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-900"
-                  >
-                    Sign in
-                  </button>
-                </div>
-              ) : isCartLoading ? (
-                <div className="flex items-center gap-2 rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#64748b]">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading your cart…
-                </div>
-              ) : cartItems.length ? (
-                <div className="space-y-3">
-                  {cartItems.map((item) => (
-                    <div key={item.itemId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e5e7eb] bg-[#fafafa] px-3 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words text-sm font-semibold text-[#111827]">{item.product.name}</p>
-                        <p className="text-xs text-[#6b7280]">
-                          {item.product.price} x {item.qty}
-                        </p>
-                      </div>
-                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
-                        <div className="flex items-center overflow-hidden rounded-md border border-[#cbd5e1] bg-white">
-                          <button
-                            type="button"
-                            aria-label={`Decrease ${item.product.name} quantity`}
-                            disabled={isCartMutating || item.qty <= 1}
-                            onClick={() => void updateCartQuantity(item, item.qty - 1)}
-                            className="h-7 w-7 text-sm font-bold text-[#06224C] transition hover:bg-[#eff6ff] disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            −
-                          </button>
-                          <span className="min-w-7 px-1 text-center text-xs font-bold tabular-nums text-[#111827]">{item.qty}</span>
-                          <button
-                            type="button"
-                            aria-label={`Increase ${item.product.name} quantity`}
-                            disabled={isCartMutating || item.qty >= item.product.inventory}
-                            onClick={() => void updateCartQuantity(item, item.qty + 1)}
-                            className="h-7 w-7 text-sm font-bold text-[#06224C] transition hover:bg-[#eff6ff] disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <span className="text-sm font-bold tabular-nums text-[#111827]">{formatStoreCents(item.product.unitPriceCents * item.qty, item.product.currency)}</span>
-                        <button
-                          type="button"
-                          disabled={isCartMutating}
-                          onClick={() => void removeCartItem(item)}
-                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#6b7280]">
-                  Your cart is empty. Add products from Featured Products.
-                </p>
-              )}
-            </div>
-            {cartItems.length > 0 && (
-              <div className="shrink-0 border-t border-[#eef2f7] bg-gray-50 p-6 sm:p-8">
-                <div className="mb-6 flex items-center justify-between gap-3">
-                  <div>
-                    <span className="block text-sm font-black uppercase tracking-[0.28em] text-gray-500">Subtotal</span>
-                    <button
-                      type="button"
-                      disabled={isCartMutating}
-                      onClick={() => void clearCart()}
-                      className="mt-1 text-xs font-semibold text-[#dc2626] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Clear cart
-                    </button>
-                  </div>
-                  <span className="text-2xl font-black tabular-nums text-[#06224C]">{formatStoreCents(cartTotalCents, cartCurrency)}</span>
-                </div>
-                {paymentError && (
-                  <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 p-3 text-[12px] font-semibold text-red-600 border border-red-100">
-                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-                    <span>{paymentError}</span>
-                  </div>
-                )}
                 <button
                   type="button"
-                  disabled={paymentLoading || isCartMutating}
-                  onClick={handleCheckout}
-                  className="flex w-full items-center justify-center rounded-2xl bg-[#06224C] px-6 py-4 text-sm font-black uppercase tracking-[0.35em] text-white shadow-xl transition hover:bg-blue-900 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#cbd5e1] bg-white text-base font-bold text-[#475569] shadow-sm transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+                  aria-label="Close cart"
+                  onClick={() => setIsCartOpen(false)}
                 >
-                  {paymentLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Checkout Now"
-                  )}
+                  ×
                 </button>
               </div>
-            )}
+            </div>
+            <div className="min-h-0 flex-1 flex flex-col overflow-y-auto overscroll-contain">
+              <div className="flex-1 px-3 pb-3 pt-2.5 sm:px-8 sm:pb-8 sm:pt-4">
+                {cartError ? (
+                  <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-[12px] font-semibold text-red-600">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                    <span>{cartError}</span>
+                  </div>
+                ) : null}
+                {!hasStorefrontSession ? (
+                  <div className="rounded-xl border border-dashed border-[#bfdbfe] bg-[#eff6ff] px-4 py-5 text-sm text-[#1d4ed8]">
+                    <p className="font-semibold">Sign in to use your cart.</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#475569]">Your cart is securely stored with your Stackly account.</p>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/login")}
+                      className="mt-4 rounded-lg bg-[#06224C] px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-900"
+                    >
+                      Sign in
+                    </button>
+                  </div>
+                ) : isCartLoading ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#64748b]">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading your cart…
+                  </div>
+                ) : cartItems.length ? (
+                  <div className="space-y-2">
+                    {cartItems.map((item) => (
+                      <div key={item.itemId} className="rounded-xl border border-[#e2e8f0] bg-[#fafafa] p-3 shadow-sm">
+                        <p className="break-words text-sm font-bold text-[#0f172a]">{item.product.name}</p>
+                        <p className="text-xs text-[#64748b] mt-0.5">
+                          {item.product.price} each
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs text-gray-500">Quantity</span>
+                            <div className="flex items-center overflow-hidden rounded-md border border-[#cbd5e1] bg-white shrink-0">
+                              <button
+                                type="button"
+                                aria-label={`Decrease ${item.product.name} quantity`}
+                                disabled={isCartMutating || item.qty <= 1}
+                                onClick={() => void updateCartQuantity(item, item.qty - 1)}
+                                className="buyscreen-qty-btn flex h-6 w-6 items-center justify-center text-sm font-bold text-[#06224C] transition hover:bg-[#eff6ff] disabled:opacity-40"
+                              >
+                                −
+                              </button>
+                              <span className="w-5 text-center text-xs font-bold tabular-nums text-[#111827]">{item.qty}</span>
+                              <button
+                                type="button"
+                                aria-label={`Increase ${item.product.name} quantity`}
+                                disabled={isCartMutating || item.qty >= item.product.inventory}
+                                onClick={() => void updateCartQuantity(item, item.qty + 1)}
+                                className="buyscreen-qty-btn flex h-6 w-6 items-center justify-center text-sm font-bold text-[#06224C] transition hover:bg-[#eff6ff] disabled:opacity-40"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <span className="text-xs text-gray-500">Total</span>
+                            <span className="text-sm font-bold tabular-nums text-[#0f172a]">
+                              {formatStoreCents(item.product.unitPriceCents * item.qty, item.product.currency)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-2.5 border-t border-dashed border-[#e2e8f0] pt-2 flex justify-end">
+                          <button
+                            type="button"
+                            disabled={isCartMutating}
+                            onClick={() => void removeCartItem(item)}
+                            className="buyscreen-cart-remove-btn rounded-lg border border-[#fecaca] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#dc2626] transition hover:bg-[#fef2f2] shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#6b7280]">
+                    Your cart is empty. Add products from Featured Products.
+                  </p>
+                )}
+              </div>
+              {cartItems.length > 0 && (
+                <div className="shrink-0 border-t border-[#eef2f7] bg-gray-50 p-3 sm:p-5 mt-auto">
+                  <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+                    <div>
+                      <span className="block text-xs font-black uppercase tracking-[0.15em] text-gray-500 sm:text-sm">Subtotal</span>
+                      <button
+                        type="button"
+                        disabled={isCartMutating}
+                        onClick={() => void clearCart()}
+                        className="mt-0.5 text-xs font-semibold text-[#dc2626] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Clear cart
+                      </button>
+                    </div>
+                    <span className="text-lg font-black tabular-nums text-[#06224C] sm:text-2xl shrink-0">
+                      {formatStoreCents(cartTotalCents, cartCurrency)}
+                    </span>
+                  </div>
+                  {paymentError && (
+                    <div className="mb-3 flex items-start gap-2 rounded-xl bg-red-50 p-2.5 text-[12px] font-semibold text-red-600 border border-red-100">
+                      <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                      <span>{paymentError}</span>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    disabled={paymentLoading || isCartMutating}
+                    onClick={handleCheckout}
+                    className="flex w-full items-center justify-center rounded-xl bg-[#06224C] px-3 py-2.5 text-xs font-black uppercase tracking-[0.1em] sm:rounded-2xl sm:px-6 sm:py-4 sm:text-sm sm:tracking-[0.35em] text-white shadow-xl transition hover:bg-blue-900 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                  >
+                    {paymentLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Checkout Now"
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ) : null}
@@ -2320,36 +2398,40 @@ export default function ECommercePage() {
             role="dialog"
             aria-modal
             aria-labelledby="buyscreen-favorites-title"
-            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
+            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-[calc(100vw-24px)] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
           >
-            <div className="shrink-0 border-b border-[#eef2f7] p-6 pb-4 sm:p-8 sm:pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 id="buyscreen-favorites-title" className="text-lg font-semibold text-[#06224C]">
-                  Your favorites
-                </h2>
-                <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] text-[#64748b] transition hover:bg-[#f8fafc] hover:text-[#111827]"
-                    aria-label="Close favorites"
-                    onClick={() => setIsFavoritesOpen(false)}
-                  >
-                    <span className="text-lg leading-none">×</span>
-                  </button>
+            <div className="shrink-0 border-b border-[#eef2f7] px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <h2 id="buyscreen-favorites-title" className="text-sm font-bold text-[#06224C] sm:text-base">
+                    Favorites
+                  </h2>
+                  <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#eff6ff] px-2 text-[10px] font-extrabold text-[#2563eb]">
+                    {favoriteProducts.length}
+                  </span>
                 </div>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#cbd5e1] bg-white text-base font-bold text-[#475569] shadow-sm transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+                  aria-label="Close favorites"
+                  onClick={() => setIsFavoritesOpen(false)}
+                >
+                  ×
+                </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4 sm:px-8 sm:pb-8">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2.5 sm:px-8 sm:pb-8">
               {favoriteProducts.length ? (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {favoriteProducts.map((product) => (
-                    <div key={product.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e5e7eb] bg-[#fafafa] px-3 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words text-sm font-semibold text-[#111827]">{product.name}</p>
-                        <p className="text-xs text-[#6b7280]">{product.price}</p>
+                    <div key={product.id} className="rounded-xl border border-[#e2e8f0] bg-[#fafafa] p-3 shadow-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words text-sm font-bold text-[#0f172a]">{product.name}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-[#64748b]">{product.price}</p>
+                        </div>
                       </div>
-                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
+                      <div className="mt-2.5 flex flex-col gap-2">
                         <button
                           type="button"
                           disabled={isCartMutating}
@@ -2358,14 +2440,14 @@ export default function ECommercePage() {
                               if (added) removeFavoriteProduct(product.id);
                             });
                           }}
-                          className="w-full rounded-md bg-[#06224C] px-3 py-1 text-xs font-semibold text-white hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                          className="w-full rounded-lg bg-[#06224C] py-2 text-center text-xs font-bold text-white transition hover:bg-blue-900 disabled:opacity-50"
                         >
                           Add to Cart
                         </button>
                         <button
                           type="button"
                           onClick={() => removeFavoriteProduct(product.id)}
-                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                          className="w-full rounded-lg border border-[#fecaca] bg-white py-2 text-center text-xs font-bold text-[#dc2626] transition hover:bg-[#fef2f2]"
                         >
                           Remove
                         </button>
@@ -2412,12 +2494,12 @@ export default function ECommercePage() {
                 <div className="flex shrink-0 items-center justify-between lg:justify-start">
                   <span className="inline-flex items-center gap-2 text-base font-black tracking-tight text-[#06224C] sm:text-lg">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_5px_rgba(34,197,94,0.14)]" aria-hidden />
-                    e-shop.
+                    e-shop
                   </span>
                 </div>
 
-                <div className="buyscreen-header-actions flex w-full min-w-0 items-center justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
-                  <label className="buyscreen-search flex h-9 w-[150px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:w-[210px] sm:text-xs">
+                <div className="buyscreen-header-actions flex w-full min-w-0 flex-wrap items-center justify-between sm:justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
+                  <label className="buyscreen-search flex h-9 w-full max-w-[150px] sm:max-w-[210px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:text-xs">
                     <input
                       type="text"
                       value={searchQuery}
@@ -2442,8 +2524,8 @@ export default function ECommercePage() {
                       <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                     </svg>
                   </label>
-                  <div className="buyscreen-header-trailing flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-                    <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsCartOpen(true)}>
+                  <div className="buyscreen-header-trailing flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+                    <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => { setIsCartOpen(true); setIsFavoritesOpen(false); }}>
                       <span className="relative shrink-0">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="buyscreen-header-action-icon" aria-hidden>
                           <path d="M3 4h2l1.6 9.2a1 1 0 0 0 1 .8H18a1 1 0 0 0 1-.8L20.6 7H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -2461,7 +2543,7 @@ export default function ECommercePage() {
                         <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{cartItems.length ? formatStoreCents(cartTotalCents, cartCurrency) : "Empty"}</span>
                       </span>
                     </button>
-                    <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsFavoritesOpen(true)}>
+                    <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => { setIsFavoritesOpen(true); setIsCartOpen(false); }}>
                       <span className="relative shrink-0">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="buyscreen-header-action-icon" aria-hidden>
                           <path d="M19.5 12.572l-7.5 7.428-7.5-7.428a5 5 0 1 1 7.5-6.566 5 5 0 1 1 7.5 6.572" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -2787,7 +2869,7 @@ export default function ECommercePage() {
                                 </div>
                               </div>
                             </div>
-                            <div className="buyscreen-product-actions-mobile grid shrink-0 grid-cols-3 place-items-center gap-1 border-t border-[#f3f4f6] px-1 py-1.5 lg:hidden">
+                            <div className="buyscreen-product-actions-mobile flex shrink-0 items-center justify-center gap-1.5 border-t border-[#f3f4f6] px-1 py-1.5 lg:hidden">
                               <BuyProductActionButtons
                                 compact
                                 isFavorite={favoriteProductIds.includes(product.id)}
@@ -2799,14 +2881,14 @@ export default function ECommercePage() {
                               />
                             </div>
                             <div className="buyscreen-product-meta mt-3 flex min-w-0 flex-1 flex-col px-1 pb-1 sm:mt-4">
-                              <p className="text-center text-[10px] font-semibold uppercase leading-snug tracking-tight text-[#6b7280] [overflow-wrap:anywhere] sm:text-xs sm:leading-normal sm:tracking-[0.06em] md:tracking-[0.08em]">
+                              <p className="text-center text-[10px] font-semibold uppercase leading-snug tracking-tight text-[#6b7280] break-words sm:text-xs sm:leading-normal sm:tracking-[0.06em] md:tracking-[0.08em]">
                                 {product.name}
                               </p>
-                              <p className="mt-1 text-center text-xs font-bold leading-snug tracking-tight text-[#171717] tabular-nums [overflow-wrap:anywhere] sm:text-sm">
+                              <p className="mt-1 text-center text-xs font-bold leading-snug tracking-tight text-[#171717] tabular-nums sm:text-sm">
                                 {product.originalPrice ? (
-                                  <span className="mr-1.5 text-[10px] font-semibold text-[#9ca3af] line-through sm:text-xs">{product.originalPrice}</span>
+                                  <span className="mr-1.5 text-[10px] font-semibold text-[#9ca3af] line-through whitespace-nowrap sm:text-xs">{product.originalPrice}</span>
                                 ) : null}
-                                {product.price}
+                                <span className="whitespace-nowrap">{product.price}</span>
                               </p>
                               <button
                                 type="button"
@@ -2814,7 +2896,7 @@ export default function ECommercePage() {
                                   e.stopPropagation();
                                   handleBuyNow(product);
                                 }}
-                                className="mt-2.5 mx-auto flex items-center justify-center rounded-full border-2 border-[#06224C] bg-white text-[#06224C] hover:bg-[#06224C] hover:text-white transition-colors duration-150 shadow-md w-[28px] h-[28px] min-[400px]:w-[30px] min-[400px]:h-[30px] sm:w-[32px] sm:h-[32px] md:w-[32px] md:h-[32px] lg:w-[36px] lg:h-[36px] shrink-0 active:scale-95"
+                                className="buyscreen-action-btn mt-2.5 mx-auto flex items-center justify-center rounded-full border-2 border-[#06224C] bg-white text-[#06224C] hover:bg-[#06224C] hover:text-white transition-colors duration-150 shadow-md shrink-0 active:scale-95"
                                 aria-label="Buy now"
                                 title="Buy Now"
                               >
@@ -2973,6 +3055,8 @@ export default function ECommercePage() {
                         <input
                           type="email"
                           required
+                          pattern="[a-zA-Z0-9._%+\-]+@gmail\.com"
+                          title="Please enter a valid @gmail.com email address"
                           placeholder="Email address"
                           className="min-h-11 min-w-0 flex-1 rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-4 text-sm font-semibold text-[#111827] outline-none transition focus:border-[#2563eb] focus:bg-white"
                           aria-label="Email address"
@@ -3157,6 +3241,7 @@ export default function ECommercePage() {
                               required
                               placeholder="John Doe"
                               className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-[#dbe3ef] bg-[#f8fafc] px-3 py-2.5 font-semibold text-[#111827] outline-none transition focus:border-[#2563eb] focus:bg-white sm:px-4 sm:text-sm"
+                              onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^A-Za-z\s]/g, ''); }}
                             />
                           </div>
                           <div className="min-w-0 max-w-full">
@@ -3320,8 +3405,20 @@ export default function ECommercePage() {
         </div>
       ) : null}
       {actionToast ? (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-[130] max-w-[260px] rounded-md bg-[#111827] px-3 py-2 text-xs font-medium text-white shadow-lg sm:text-sm">
-          {actionToast}
+        <div className="pointer-events-none fixed inset-0 z-[200] flex items-center justify-center bg-[#06224C]/20 p-4 backdrop-blur-[2px]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="flex w-full max-w-[320px] flex-col items-center justify-center gap-4 rounded-3xl bg-white px-6 py-8 text-center shadow-2xl ring-1 ring-[#e7edf5]"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600 shadow-inner">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <span className="text-lg font-black tracking-tight text-[#06224C]">{actionToast}</span>
+          </motion.div>
         </div>
       ) : null}
       {paymentSuccess && paymentSuccessDetails && (

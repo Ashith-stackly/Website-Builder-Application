@@ -8,7 +8,7 @@ import {
   Newspaper,
   type LucideIcon,
 } from "lucide-react";
-
+ 
 export interface NavItem {
   label: string;
   href: string;
@@ -16,7 +16,7 @@ export interface NavItem {
   /** Marks routes that live outside the dashboard shell (full-screen apps). */
   external?: boolean;
 }
-
+ 
 /** Primary navigation — shared by Sidebar + Command Palette. */
 export const primaryNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -27,9 +27,13 @@ export const primaryNav: NavItem[] = [
   { label: "Builder", href: "/builder", icon: Blocks, external: true },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
-
+ 
 /** True when `pathname` is under `href` (exact for /dashboard, prefix otherwise). */
 export function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/dashboard") return pathname === "/dashboard";
-  return pathname === href || pathname.startsWith(`${href}/`);
+  // Normalize pathname to handle optional trailing slashes
+  const p = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+  if (href === "/dashboard") return p === "/dashboard";
+  return p === href || p.startsWith(`${href}/`);
 }
+ 
+ 

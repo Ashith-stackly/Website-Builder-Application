@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { spring, backdrop, drawerLeft } from "@/lib/motion";
@@ -8,10 +8,10 @@ import { useHotkey, useIsMobile, usePersistentState } from "@/lib/hooks";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import CommandPalette from "./CommandPalette";
-
+ 
 const EXPANDED = 268;
 const COLLAPSED = 76;
-
+ 
 /**
  * Unified authenticated App Shell: animated sidebar + glass topbar + command
  * palette. Dark mode is scoped here via `data-theme` on the shell root.
@@ -21,24 +21,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const resolved = useThemeStore((s) => s.resolved);
   const hydrate = useThemeStore((s) => s.hydrate);
   const isMobile = useIsMobile();
-
+ 
   const [collapsed, setCollapsed] = usePersistentState("stackly-sidebar-collapsed", false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
-
+ 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
-
+ 
   // Close the mobile drawer whenever we grow to desktop.
   useEffect(() => {
     if (!isMobile) setMobileOpen(false);
   }, [isMobile]);
-
+ 
   useHotkey("k", () => setCommandOpen((v) => !v), { meta: true, ctrl: true });
-
+ 
   const sidebarWidth = collapsed ? COLLAPSED : EXPANDED;
-
+ 
   return (
     <div
       data-theme={resolved}
@@ -47,25 +47,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     >
       {/* Ambient gradient wash */}
       <div className="pointer-events-none fixed inset-0" style={{ background: "var(--app-bg-grad)" }} aria-hidden />
-
+ 
       <div className="relative flex min-h-dvh">
         {/* Desktop sidebar */}
-        {!isMobile && (
-          <motion.aside
-            initial={false}
-            animate={{ width: sidebarWidth }}
-            transition={spring.soft}
-            className="sticky top-0 z-30 h-dvh shrink-0 border-r"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <Sidebar
-              collapsed={collapsed}
-              onToggleCollapse={() => setCollapsed((v) => !v)}
-              onOpenCommand={() => setCommandOpen(true)}
-            />
-          </motion.aside>
-        )}
-
+        <motion.aside
+          initial={false}
+          animate={{ width: sidebarWidth }}
+          transition={spring.soft}
+          className="hidden lg:block sticky top-0 z-30 h-dvh shrink-0 border-r"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <Sidebar
+            collapsed={collapsed}
+            onToggleCollapse={() => setCollapsed((v) => !v)}
+            onOpenCommand={() => setCommandOpen(true)}
+          />
+        </motion.aside>
+ 
         {/* Mobile drawer */}
         <AnimatePresence>
           {isMobile && mobileOpen && (
@@ -99,15 +97,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </>
           )}
         </AnimatePresence>
-
+ 
         {/* Main column */}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
           <Topbar onOpenMobileNav={() => setMobileOpen(true)} onOpenCommand={() => setCommandOpen(true)} />
-          <main className="app-scroll min-w-0 flex-1">{children}</main>
+          <main className="app-scroll min-w-0 flex-1 overflow-x-hidden">{children}</main>
         </div>
       </div>
-
+ 
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
     </div>
   );
 }
+ 
+ 

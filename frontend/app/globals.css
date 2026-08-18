@@ -374,7 +374,21 @@ html:has(main.buyscreen-page),
 body:has(main.buyscreen-page) {
   background-color: #ffffff;
 }
-
+ 
+main.buyscreen-page button:not(:disabled),
+main.buyscreen-page a,
+main.buyscreen-page input[type="submit"],
+main.buyscreen-page input[type="button"],
+main.buyscreen-page select,
+main.buyscreen-page label,
+main.buyscreen-page [role="button"] {
+  cursor: pointer;
+}
+ 
+main.buyscreen-page button:disabled {
+  cursor: not-allowed;
+}
+ 
 main.buyscreen-page {
   display: block;
   overflow: visible;
@@ -409,12 +423,12 @@ main.buyscreen-page *::-webkit-scrollbar {
   color: #111827;
   -webkit-text-fill-color: #111827;
   caret-color: #06224c;
-  background-color: #ffffff;
 }
 .buyscreen-search input::placeholder {
   color: #6b7280;
   opacity: 1;
 }
+ 
 .buyscreen-categories {
   gap: 0.75rem;
   scrollbar-width: thin;
@@ -953,7 +967,7 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
     font-weight: 600;
     color: #475569;
   }
-  .buyscreen-hero-content {
+     .buyscreen-hero-content {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -961,14 +975,13 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
     width: 100%;
     min-height: 0;
     max-height: 100%;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     box-sizing: border-box;
     padding-top: 0.2rem;
     padding-bottom: 0.7rem;
   }
+ 
+ 
   .buyscreen-hero-content::-webkit-scrollbar {
     display: none;
   }
@@ -1022,24 +1035,23 @@ main.buyscreen-page button.buyscreen-user-trigger:focus-visible {
   .buyscreen-hero {
     padding: 0.65rem !important;
   }
-  .buyscreen-hero-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-    min-height: 0;
-    max-height: 100%;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    box-sizing: border-box;
-    padding-top: 0.2rem;
-    padding-bottom: 0.7rem;
-    padding-left: 0.15rem !important;
-    padding-right: 0.15rem !important;
-  }
+      .buyscreen-hero-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      min-height: 0;
+      max-height: 100%;
+      scrollbar-width: none;
+      box-sizing: border-box;
+      padding-top: 0.2rem;
+      padding-bottom: 0.7rem;
+      padding-left: 0.15rem !important;
+      padding-right: 0.15rem !important;
+    }
+ 
+ 
   .buyscreen-hero-content::-webkit-scrollbar {
     display: none;
   }

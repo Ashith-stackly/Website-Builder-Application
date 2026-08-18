@@ -9,7 +9,14 @@ const SHOW_AFTER_PX = 500;
 /** Builder / preview surfaces use their own scroll chrome; avoid fixed overlap. */
 function shouldHideScrollToTop(pathname: string | null) {
   if (!pathname) return false;
-  return pathname.startsWith("/blockpages") || pathname.startsWith("/portfolio");
+  return (
+    pathname.startsWith("/blockpages") ||
+    pathname.startsWith("/portfolio") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/builder") ||
+    pathname.startsWith("/templates") ||
+    pathname.startsWith("/settings")
+  );
 }
  
 export default function ScrollToTop() {
@@ -75,5 +82,6 @@ export default function ScrollToTop() {
     </button>
   );
 }
+ 
  
  

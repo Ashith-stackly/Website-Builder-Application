@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,16 +18,16 @@ import {
   Rocket,
   Sparkles,
   Check,
+  Home,
 } from "lucide-react";
 import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { fetchProfile, formatPlanLabel, resolveActivePlan, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
-import { fetchInvoices } from "@/lib/invoiceApi";
 import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
 import { useLanguageStore } from "@/lib/i18n";
-
+ 
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   analytics: "Analytics",
@@ -35,13 +35,13 @@ const SEGMENT_LABELS: Record<string, string> = {
   builder: "Builder",
   templates: "Templates",
 };
-
+ 
 const SAMPLE_NOTIFICATIONS = [
   { id: 1, icon: Rocket, title: "Deployment succeeded", body: "Your site is live.", time: "2m", tone: "#10b981" },
   { id: 2, icon: Sparkles, title: "New templates added", body: "5 fresh layouts in the studio.", time: "1h", tone: "#8b5cf6" },
   { id: 3, icon: Bell, title: "Autosave restored", body: "We recovered a draft from earlier.", time: "3h", tone: "#4f6bed" },
 ];
-
+ 
 export default function Topbar({
   onOpenMobileNav,
   onOpenCommand,
@@ -53,10 +53,10 @@ export default function Topbar({
   const crumbs = pathname.split("/").filter(Boolean);
   const modKey = useModKeyLabel();
   const t = useLanguageStore((s) => s.t);
-
+ 
   return (
     <header
-      className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b px-4 backdrop-blur-xl md:px-6"
+      className="sticky top-0 z-40 flex h-16 items-center gap-1.5 sm:gap-3 border-b px-2 sm:px-4 backdrop-blur-xl md:px-6"
       style={{ background: "var(--glass)", borderColor: "var(--border)" }}
     >
       <button
@@ -67,7 +67,7 @@ export default function Topbar({
       >
         <Menu className="h-5 w-5" />
       </button>
-
+ 
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 sm:flex">
         {crumbs.map((seg, i) => {
@@ -89,11 +89,11 @@ export default function Topbar({
           );
         })}
       </nav>
-
+ 
       {/* Search (command) trigger */}
       <button
         onClick={onOpenCommand}
-        className="ml-auto flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors md:min-w-[240px]"
+        className="ml-auto flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl border px-2.5 sm:px-3 py-2 text-sm transition-colors md:min-w-[240px]"
         style={{ borderColor: "var(--border)", background: "var(--surface-2)", color: "var(--text-faint)" }}
       >
         <Search className="h-4 w-4" />
@@ -102,16 +102,16 @@ export default function Topbar({
           {modKey}K
         </kbd>
       </button>
-
+ 
       <ThemeSwitch />
       <Notifications />
       <ProfileMenu />
     </header>
   );
 }
-
+ 
 /* ─── Theme switch (segmented light / system / dark) ───────────────────── */
-
+ 
 function ThemeSwitch() {
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
@@ -121,7 +121,7 @@ function ThemeSwitch() {
     { key: "system", icon: Monitor, label: t.sidebar.system },
     { key: "dark", icon: Moon, label: t.sidebar.dark },
   ];
-
+ 
   return (
     <div
       className="hidden items-center gap-0.5 rounded-xl border p-0.5 sm:flex"
@@ -156,13 +156,13 @@ function ThemeSwitch() {
     </div>
   );
 }
-
+ 
 /* ─── Notifications dropdown ───────────────────────────────────────────── */
-
+ 
 function Notifications() {
   const [open, setOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
-
+ 
   return (
     <div ref={ref} className="relative">
       <motion.button
@@ -175,7 +175,7 @@ function Notifications() {
         <Bell className="h-4.5 w-4.5" />
         <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500 ring-2" style={{ ["--tw-ring-color" as string]: "var(--surface-2)" }} />
       </motion.button>
-
+ 
       <AnimatePresence>
         {open && (
           <motion.div
@@ -183,7 +183,7 @@ function Notifications() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="absolute right-0 mt-2 w-80 origin-top-right overflow-hidden rounded-2xl border shadow-2xl"
+            className="fixed inset-x-4 top-[72px] w-auto sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 origin-top-right overflow-hidden rounded-2xl border shadow-2xl"
             style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}
           >
             <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
@@ -212,9 +212,9 @@ function Notifications() {
     </div>
   );
 }
-
+ 
 /* ─── Profile menu ─────────────────────────────────────────────────────── */
-
+ 
 function ProfileMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -222,22 +222,24 @@ function ProfileMenu() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [recentPurchasePlan, setRecentPurchasePlan] = useState<string | undefined>();
   const t = useLanguageStore((s) => s.t);
-
+ 
   useEffect(() => {
-    const controller = new AbortController();
-
-    // Fetch invoices from backend API (works across all sessions/browsers)
-    void fetchInvoices(controller.signal).then((invoices) => {
-      if (invoices.length > 0) {
-        const latest = invoices[0];
-        setRecentPurchasePlan(latest.planTier || latest.planName);
+    try {
+      const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed[0]) {
+          const latest = parsed[0] as { planTier?: string; planName?: string };
+          setRecentPurchasePlan(latest.planTier || latest.planName);
+        }
       }
-    }).catch(() => { });
-
+    } catch { /* ignore */ }
+ 
+    const controller = new AbortController();
     void fetchProfile(controller.signal)
       .then((data) => setUser(data))
       .catch(() => { });
-
+ 
     const onUpdated = (e: Event) => {
       const customEvent = e as CustomEvent<UserProfile>;
       if (customEvent.detail) setUser(customEvent.detail);
@@ -248,7 +250,7 @@ function ProfileMenu() {
       window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
     };
   }, []);
-
+ 
   const initials = (user?.name || "Stackly User")
     .split(" ")
     .map((p) => p[0])
@@ -256,7 +258,7 @@ function ProfileMenu() {
     .join("")
     .toUpperCase();
   const planLabel = formatPlanLabel(resolveActivePlan(user?.plan, recentPurchasePlan));
-
+ 
   const signOut = () => {
     try {
       clearAuthToken();
@@ -264,24 +266,24 @@ function ProfileMenu() {
     } catch {
       /* ignore */
     }
-    router.replace("/login");
+    router.push("/login");
   };
-
+ 
   return (
     <div ref={ref} className="relative">
       <motion.button
         whileTap={{ scale: 0.96 }}
         onClick={() => setOpen((v) => !v)}
-        className="flex cursor-pointer items-center gap-2 rounded-xl border p-0.5 pr-1.5"
+        className="flex cursor-pointer items-center gap-1 sm:gap-2 rounded-xl border p-0.5 pr-1 sm:pr-1.5"
         style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
         aria-label="Account menu"
       >
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-[#4f6bed] to-[#8b5cf6] text-xs font-bold text-white overflow-hidden">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-[#4f6bed] to-[#8b5cf6] text-xs font-bold text-white overflow-hidden">
           {user?.avatar ? <img src={user.avatar} alt="Avatar" className="h-full w-full object-cover" /> : initials}
         </span>
-        <ChevronRight className="h-3.5 w-3.5 rotate-90" style={{ color: "var(--text-faint)" }} />
+        <ChevronRight className="h-3.5 w-3.5 rotate-90 shrink-0" style={{ color: "var(--text-faint)" }} />
       </motion.button>
-
+ 
       <AnimatePresence>
         {open && (
           <motion.div
@@ -289,7 +291,7 @@ function ProfileMenu() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="absolute right-0 mt-2 w-64 origin-top-right overflow-hidden rounded-2xl border shadow-2xl"
+            className="fixed inset-x-4 top-[72px] w-auto sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-64 origin-top-right overflow-hidden rounded-2xl border shadow-2xl"
             style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}
           >
             <div className="flex items-center gap-3 border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
@@ -303,6 +305,7 @@ function ProfileMenu() {
             </div>
             <div className="p-1.5">
               <MenuLink icon={UserIcon} label={t.sidebar.profile} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
+              <MenuLink icon={Home} label="Home" onClick={() => { setOpen(false); router.push("/"); }} />
               <MenuLink icon={Settings} label={t.nav.settings} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
               <MenuLink icon={Check} label={`Plan: ${planLabel}`} muted onClick={() => { setOpen(false); router.push("/planning"); }} />
             </div>
@@ -320,7 +323,7 @@ function ProfileMenu() {
     </div>
   );
 }
-
+ 
 function MenuLink({
   icon: Icon,
   label,
@@ -342,4 +345,6 @@ function MenuLink({
     </button>
   );
 }
-
+ 
+ 
+ 

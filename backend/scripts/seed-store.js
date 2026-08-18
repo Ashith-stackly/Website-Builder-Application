@@ -8,8 +8,8 @@ const Product = require('../src/models/Product');
 
 const products = [
   ['Phone', 'phone', '/phone.webp', 89900, '', 'Mobiles'],
-  ['Audio', 'audio', '/audio.webp', 14900, '50%', 'Audio'],
   ['Laptop', 'laptop', '/laptop.webp', 129900, '', 'Laptops'],
+  ['Headphones', 'audio', '/audio.webp', 14900, '50%', 'Audio'],
   ['Camera', 'camera', '/camera.webp', 7900, '', 'Cameras'],
   ['Television', 'television', '/television.webp', 59900, '', 'Televisions'],
   ['Tablet', 'tablet', '/tablet.webp', 39900, '', 'Tablets'],

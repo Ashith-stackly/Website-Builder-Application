@@ -202,7 +202,7 @@ function BuyProductActionButtons({
   const size = compact ? "h-6 w-6 sm:h-6 sm:w-6" : "h-7 w-7 sm:h-8 sm:w-8";
   const shadow = compact ? "shadow-sm" : "shadow-md";
   const base =
-    `flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow}`;
+    `buyscreen-action-btn flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 ${size} ${shadow}`;
   const inactive = `${base} bg-white text-[#ff664f] hover:bg-[#ff664f] hover:text-white`;
   const favoriteActive = `${base} bg-[#ff664f] text-white hover:bg-[#ff664f] hover:text-white`;
   const favoriteBtn = isFavorite ? favoriteActive : inactive;
@@ -531,7 +531,6 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
     },
     [showActionToast]
   );
-
   useEffect(() => {
     if (!licenseProduct && !isCartOpen && !isFavoritesOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -541,11 +540,10 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
       if (isFavoritesOpen) setIsFavoritesOpen(false);
     };
     window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      document.body.style.overflow = "";
     };
   }, [licenseProduct, isCartOpen, isFavoritesOpen, closeLicenseModal]);
 
@@ -750,7 +748,7 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
   }
 
   const productGridClass = showAllProducts || isSearching
-    ? "buyscreen-products--grid grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-5"
+    ? "buyscreen-products--grid grid grid-cols-1 min-[420px]:grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-5"
     : "buyscreen-products--carousel";
   const carouselSlots = isCarouselMode ? Math.max(1, carouselCols) : 1;
 
@@ -797,7 +795,8 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
             .buyscreen-page h1, .buyscreen-page h2, .buyscreen-page h3, .buyscreen-page h4, .buyscreen-page p, .buyscreen-page span, .buyscreen-page a, .buyscreen-page button {
               overflow-wrap: break-word !important;
               word-wrap: break-word !important;
-              hyphens: auto !important;
+              hyphens: none !important;
+              -webkit-hyphens: none !important;
               white-space: normal !important;
             }
 
@@ -805,8 +804,19 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
             .buyscreen-page h1 { font-size: clamp(1.5rem, 5cqi, 3rem) !important; line-height: 1.2 !important; }
             .buyscreen-page h2 { font-size: clamp(1.25rem, 4cqi, 2.5rem) !important; line-height: 1.2 !important; }
             .buyscreen-page h3 { font-size: clamp(1rem, 3cqi, 2rem) !important; line-height: 1.3 !important; }
-            .buyscreen-page p { font-size: clamp(0.875rem, 2.5cqi, 1.125rem) !important; line-height: 1.5 !important; }
             .buyscreen-page button { font-size: clamp(0.75rem, 2cqi, 1rem) !important; }
+            .buyscreen-page button[aria-label*="Close"],
+            .buyscreen-page button[aria-label*="close"] {
+              width: 32px !important;
+              height: 32px !important;
+              min-width: 32px !important;
+              min-height: 32px !important;
+              border-radius: 9999px !important;
+              padding: 0 !important;
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
 
             /* 4. Images */
             .buyscreen-page img, .buyscreen-page svg:not(.buyscreen-header-action-icon) {
@@ -820,7 +830,6 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
             .buyscreen-page section {
               min-width: 0 !important;
               max-width: 100% !important;
-              overflow: hidden !important;
             }
             .buyscreen-page header.buyscreen-header {
               min-width: 0 !important;
@@ -929,29 +938,29 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
             role="dialog"
             aria-modal
             aria-labelledby="buyscreen-license-title"
-            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
+            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-[calc(100vw-24px)] max-w-md flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
           >
-            <div className="shrink-0 border-b border-[#eef2f7] p-6 pb-4 sm:p-8 sm:pb-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
+            <div className="shrink-0 border-b border-[#eef2f7] p-4 pb-3 sm:p-6 sm:pb-4">
+              <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
+                <div className="min-w-0 flex-1">
                   <h2 id="buyscreen-license-title" className="text-base font-semibold sm:text-lg" style={{ color: NAVY }}>
                     Regular license
                   </h2>
-                  <p className="mt-1 text-xs text-[#6b7280]">
+                  <p className="mt-1 text-xs text-[#6b7280] break-words">
                     {licenseProduct.name} · {licenseProduct.price} each
                   </p>
                 </div>
-                <p className="whitespace-nowrap text-lg font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
+                <p className="shrink-0 text-base font-bold tabular-nums sm:text-xl" style={{ color: NAVY }}>
                   {formatUsd(lineTotalCents)}
                 </p>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-5 sm:px-8 sm:pb-8">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3 sm:px-8 sm:pb-8">
               <ul className="space-y-3 text-sm text-[#374151]">
                 {licenseBullets.map((line) => (
-                  <li key={line} className="flex gap-2">
-                    <CheckIcon />
-                    <span className="leading-snug">{line}</span>
+                  <li key={line} className="flex items-start gap-2">
+                    <span className="shrink-0 mt-0.5"><CheckIcon /></span>
+                    <span className="min-w-0 flex-1 leading-snug break-words">{line}</span>
                   </li>
                 ))}
               </ul>
@@ -1000,33 +1009,52 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
             role="dialog"
             aria-modal
             aria-labelledby="buyscreen-cart-title"
-            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
+            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-[calc(100vw-24px)] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
           >
-            <div className="shrink-0 border-b border-[#eef2f7] p-6 pb-4 sm:p-8 sm:pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 id="buyscreen-cart-title" className="text-lg font-semibold text-[#06224C]">
-                  Your cart
-                </h2>
-                <p className="text-sm font-bold tabular-nums text-[#06224C]">{formatUsd(cartTotalCents)}</p>
+            <div className="shrink-0 border-b border-[#eef2f7] px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <h2 id="buyscreen-cart-title" className="text-sm font-bold text-[#06224C] sm:text-base">
+                    Cart
+                  </h2>
+                  <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#eff6ff] px-2 text-[10px] font-extrabold text-[#2563eb]">
+                    {formatUsd(cartTotalCents)}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#cbd5e1] bg-white text-base font-bold text-[#475569] shadow-sm transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+                  aria-label="Close cart"
+                  onClick={() => setIsCartOpen(false)}
+                >
+                  ×
+                </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4 sm:px-8 sm:pb-8">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2.5 sm:px-8 sm:pb-8 sm:pt-4">
               {cartItems.length ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {cartItems.map((item) => (
-                    <div key={item.product.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e5e7eb] bg-[#fafafa] px-3 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words text-sm font-semibold text-[#111827]">{item.product.name}</p>
-                        <p className="text-xs text-[#6b7280]">
-                          {item.product.price} x {item.qty}
-                        </p>
+                    <div key={item.product.id} className="rounded-xl border border-[#e2e8f0] bg-[#fafafa] p-3 shadow-sm">
+                      <p className="break-words text-sm font-bold text-[#0f172a]">{item.product.name}</p>
+                      <p className="text-xs text-[#64748b] mt-0.5">
+                        {item.product.price} each
+                      </p>
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-gray-500">Quantity</span>
+                          <span className="text-xs font-bold text-gray-900">Qty: {item.qty}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-gray-500">Total</span>
+                          <span className="text-sm font-bold text-[#06224C]">{formatUsd(item.product.unitPriceCents * item.qty)}</span>
+                        </div>
                       </div>
-                      <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
-                        <span className="text-sm font-bold tabular-nums text-[#111827]">{formatUsd(item.product.unitPriceCents * item.qty)}</span>
+                      <div className="mt-2.5 border-t border-dashed border-[#e2e8f0] pt-2 flex justify-end">
                         <button
                           type="button"
                           onClick={() => removeCartItem(item.product.id)}
-                          className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
+                          className="rounded-lg border border-[#fecaca] bg-white px-2.5 py-1 text-xs font-semibold text-[#dc2626] transition hover:bg-[#fef2f2] shrink-0"
                         >
                           Remove
                         </button>
@@ -1050,32 +1078,49 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
             role="dialog"
             aria-modal
             aria-labelledby="buyscreen-favorites-title"
-            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
+            className="relative z-10 my-auto flex max-h-[min(90dvh,720px)] w-[calc(100vw-24px)] max-w-lg flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-2xl sm:max-h-[85dvh]"
           >
-            <div className="shrink-0 border-b border-[#eef2f7] p-6 pb-4 sm:p-8 sm:pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 id="buyscreen-favorites-title" className="text-lg font-semibold text-[#06224C]">
-                  Your favorites
-                </h2>
-                <p className="text-sm font-bold tabular-nums text-[#06224C]">{favoriteProducts.length} item{favoriteProducts.length === 1 ? "" : "s"}</p>
+            <div className="shrink-0 border-b border-[#eef2f7] px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <h2 id="buyscreen-favorites-title" className="text-sm font-bold text-[#06224C] sm:text-base">
+                    Favorites
+                  </h2>
+                  <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#eff6ff] px-2 text-[10px] font-extrabold text-[#2563eb]">
+                    {favoriteProducts.length}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#cbd5e1] bg-white text-base font-bold text-[#475569] shadow-sm transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+                  style={{ borderRadius: '9999px' }}
+                  aria-label="Close favorites"
+                  onClick={() => setIsFavoritesOpen(false)}
+                >
+                  ×
+                </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4 sm:px-8 sm:pb-8">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2.5 sm:px-8 sm:pb-8">
               {favoriteProducts.length ? (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {favoriteProducts.map((product) => (
-                    <div key={product.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e5e7eb] bg-[#fafafa] px-3 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words text-sm font-semibold text-[#111827]">{product.name}</p>
-                        <p className="text-xs text-[#6b7280]">{product.price}</p>
+                    <div key={product.id} className="rounded-xl border border-[#e2e8f0] bg-[#fafafa] p-3 shadow-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words text-sm font-bold text-[#0f172a]">{product.name}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-[#64748b]">{product.price}</p>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeFavoriteProduct(product.id)}
-                        className="w-full rounded-md border border-[#fecaca] px-2 py-1 text-xs font-semibold text-[#dc2626] hover:bg-[#fef2f2] sm:w-auto"
-                      >
-                        Remove
-                      </button>
+                      <div className="mt-2.5 flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => removeFavoriteProduct(product.id)}
+                          className="w-full rounded-lg border border-[#fecaca] bg-white py-2 text-center text-xs font-bold text-[#dc2626] transition hover:bg-[#fef2f2]"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1370,10 +1415,10 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
               </span>
             </div>
 
-            <div className="buyscreen-header-actions flex w-full min-w-0 items-center justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
+            <div className="buyscreen-header-actions flex w-full min-w-0 flex-wrap items-center justify-between sm:justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
               <label
                 data-blockpages-interactive="true"
-                className="buyscreen-search flex h-9 w-[150px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:w-[210px] sm:text-xs"
+                className="buyscreen-search flex h-9 w-full max-w-[150px] sm:max-w-[210px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:text-xs"
               >
                 <input
                   type="text"
@@ -1400,8 +1445,8 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                   <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                 </svg>
               </label>
-              <div className="buyscreen-header-trailing flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-                <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsCartOpen(true)}>
+              <div className="buyscreen-header-trailing flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+                <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => { setIsCartOpen(true); setIsFavoritesOpen(false); }}>
                   <span className="relative shrink-0">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="buyscreen-header-action-icon" aria-hidden>
                       <path d="M3 4h2l1.6 9.2a1 1 0 0 0 1 .8H18a1 1 0 0 0 1-.8L20.6 7H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -1419,7 +1464,7 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                     <span className="buyscreen-cart-secondary block text-[11px] tabular-nums sm:text-xs">{cartItems.length ? formatUsd(cartTotalCents) : "Empty"}</span>
                   </span>
                 </button>
-                <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => setIsFavoritesOpen(true)}>
+                <button type="button" className="buyscreen-cart-trigger flex items-center gap-2 rounded-md px-2 py-1" onClick={() => { setIsFavoritesOpen(true); setIsCartOpen(false); }}>
                   <span className="relative shrink-0">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="buyscreen-header-action-icon" aria-hidden>
                       <path d="M19.5 12.572l-7.5 7.428-7.5-7.428a5 5 0 1 1 7.5-6.566 5 5 0 1 1 7.5 6.572" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -1739,7 +1784,7 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                             </div>
                           </div>
                         </div>
-                        <div className="buyscreen-product-actions-mobile grid grid-cols-3 place-items-center gap-1 border-t border-[#f3f4f6] px-1 py-1 lg:hidden">
+                        <div className="buyscreen-product-actions-mobile flex shrink-0 items-center justify-center gap-1.5 border-t border-[#f3f4f6] px-1 py-1 lg:hidden">
                           <BuyProductActionButtons
                             compact
                             isFavorite={favoriteProductIds.includes(product.id)}
@@ -1751,14 +1796,14 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                           />
                         </div>
                         <div className="buyscreen-product-meta flex flex-1 flex-col mt-3 min-w-0 px-1 pb-1 sm:mt-4">
-                          <p className="text-center text-[10px] font-semibold uppercase leading-snug tracking-tight text-[#6b7280] [overflow-wrap:anywhere] sm:text-xs sm:leading-normal sm:tracking-[0.06em] md:tracking-[0.08em]">
+                          <p className="text-center text-[10px] font-semibold uppercase leading-snug tracking-tight text-[#6b7280] break-words sm:text-xs sm:leading-normal sm:tracking-[0.06em] md:tracking-[0.08em]">
                             {product.name}
                           </p>
-                          <p className="mt-1 text-center text-xs font-bold leading-snug tracking-tight text-[#171717] [overflow-wrap:anywhere] tabular-nums sm:text-sm">
+                          <p className="mt-1 text-center text-xs font-bold leading-snug tracking-tight text-[#171717] tabular-nums sm:text-sm">
                             {product.originalPrice ? (
-                              <span className="mr-1.5 text-[10px] font-semibold text-[#9ca3af] line-through sm:text-xs">{product.originalPrice}</span>
+                              <span className="mr-1.5 text-[10px] font-semibold text-[#9ca3af] line-through whitespace-nowrap sm:text-xs">{product.originalPrice}</span>
                             ) : null}
-                            {product.price}
+                            <span className="whitespace-nowrap">{product.price}</span>
                           </p>
                           <div className="mt-auto pt-2 flex justify-center">
                             {product.badge ? (

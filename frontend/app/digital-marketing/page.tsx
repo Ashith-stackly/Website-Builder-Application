@@ -515,8 +515,8 @@ export default function DigitalMarketingPreviewPage() {
     <main
       className={
         isBlockpages
-          ? "@container dm-shell w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible bg-white font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer"
-          : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6"
+          ? "@container dm-shell w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible bg-white font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer [&_.blockpages-card]:cursor-pointer"
+          : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 dm-shell [&_button]:cursor-pointer [&_a]:cursor-pointer [&_.blockpages-card]:cursor-pointer"
       }
     >
 
@@ -595,7 +595,8 @@ export default function DigitalMarketingPreviewPage() {
                 </motion.div>
 
                 <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${innerMobileMenuOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${innerMobileMenuOpen ? "max-h-[800px] opacity-100 visible" : "max-h-0 opacity-0 invisible"}`}
+                  aria-hidden={!innerMobileMenuOpen}
                 >
                   <div id="dm-mobile-nav" className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2 bg-[#06224C] px-3 pb-3 pt-2">
                     {navItems.map((item) => (
@@ -632,18 +633,12 @@ export default function DigitalMarketingPreviewPage() {
                     variants={staggerContainer}
                     className="relative z-10 mx-auto min-w-0 max-w-3xl px-4 py-16 text-center @md:px-8 @md:py-24"
                   >
-                    <motion.h1 variants={fadeInUp} className="mb-10 text-[clamp(1.5rem,7cqw,2.25rem)] font-black leading-tight text-white break-words @md:text-[clamp(2rem,8cqw,3rem)] @lg:text-[clamp(2.5rem,10cqw,3.75rem)]">
+                    <motion.h1 variants={fadeInUp} className="mb-10 text-[clamp(1.25rem,6cqw,2.25rem)] font-black leading-tight text-white break-normal @md:text-[clamp(2rem,8cqw,3rem)] @lg:text-[clamp(2.5rem,10cqw,3.75rem)]">
                       Precision Marketing for <br className="hidden @sm:block" />
                       Ambitious Brands
                     </motion.h1>
                     <motion.div variants={fadeInUp} className="flex flex-wrap items-center justify-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() => scrollToSection("contact")}
-                        className="cursor-pointer rounded-lg bg-white px-8 py-3.5 text-[15px] font-bold text-[#0A1E3D] transition hover:scale-105"
-                      >
-                        Get Started
-                      </button>
+
                       <button
                         type="button"
                         onClick={() => scrollToSection("about")}
@@ -732,10 +727,10 @@ export default function DigitalMarketingPreviewPage() {
                           whileFocus={{ y: -5 }}
                           key={service.title}
                           tabIndex={0}
-                          className="blockpages-card group min-w-0 rounded-xl bg-[#123163] p-6 shadow-sm transition-colors hover:bg-[#163a75] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0A1E3D] @md:p-8"
+                          className="blockpages-card group min-w-0 rounded-xl bg-[#123163] p-4 shadow-sm transition-colors hover:bg-[#163a75] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0A1E3D] @sm:p-6 @md:p-8"
                         >
                           <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
-                            <h3 className="w-full min-w-0 break-words text-base font-semibold text-white @md:text-lg">{service.title}</h3>
+                            <h3 className="w-full min-w-0 break-normal text-sm font-semibold text-white @md:text-base @xl:text-lg">{service.title}</h3>
                             <FaArrowRight className="shrink-0 text-white/70 transition group-hover:translate-x-1 group-hover:text-white group-focus:translate-x-1 group-focus:text-white" />
                           </div>
                           <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-white/80 @md:text-base text-left">{service.desc}</p>
@@ -753,16 +748,16 @@ export default function DigitalMarketingPreviewPage() {
                     className="mx-auto grid max-w-6xl items-center gap-10 @3xl:grid-cols-2"
                   >
                     <motion.div variants={slideInLeft} className="min-w-0 @container pr-0 @3xl:pr-10">
-                      <h2 className="mb-6 w-full max-w-[24rem] text-[clamp(1.25rem,6cqw,1.875rem)] font-bold leading-tight text-[#0A1E3D] break-words @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Business Planning and Development</h2>
+                      <h2 className="mb-6 w-full max-w-[24rem] text-[clamp(1.15rem,5cqw,1.875rem)] font-bold leading-tight text-[#0A1E3D] break-normal @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Business Planning and Development</h2>
                       <p className="mb-10 text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-left">
                         At <span className="text-[#1E56E5]">Elevate Digital</span>, we help businesses turn ideas into actionable strategies for sustainable growth and success.
                       </p>
                       <div className="grid grid-cols-1 gap-5 @md:grid-cols-2">
                         {planningCards.map((card) => (
-                          <div key={card.title} className="blockpages-card min-w-0 rounded-xl bg-white p-6 shadow-sm">
+                          <div key={card.title} className="blockpages-card min-w-0 rounded-xl bg-white p-4 shadow-sm @sm:p-6">
                             <div className="mb-3 flex min-w-0 items-center gap-2">
                               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1E56E5]" />
-                              <h3 className="min-w-0 break-words text-sm font-bold text-[#0A1E3D]">{card.title}</h3>
+                              <h3 className="min-w-0 break-normal text-xs font-bold text-[#0A1E3D] sm:text-sm">{card.title}</h3>
                             </div>
                             <p className="min-w-0 break-words text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-left">{card.desc}</p>
                           </div>
@@ -793,19 +788,19 @@ export default function DigitalMarketingPreviewPage() {
                         <motion.h2 variants={fadeInUp} className="mb-12 text-center text-[clamp(1.25rem,6cqw,1.875rem)] font-bold text-[#1E56E5] @md:text-[clamp(1.5rem,7cqw,2.25rem)]">Why Choose US</motion.h2>
                         <div className="grid items-center gap-10 @2xl:grid-cols-2 @2xl:gap-16">
                           <motion.div variants={slideInLeft} className="min-w-0 w-full flex items-center justify-center">
-                            <div className="relative w-fit max-w-full">
+                            <div className="flex flex-col items-center gap-4 relative w-fit max-w-full @sm:block @sm:pr-12 @sm:pb-12 @md:pr-16 @md:pb-16">
                               <div className="w-full max-w-md border-2 border-[#1E56E5] p-1">
                                 <img
                                   src={dmAsset("/Organic traffic.webp")}
                                   alt="Analytics dashboard"
-                                  className="w-auto h-auto max-w-full max-h-[45vh] object-contain"
+                                  className="w-full h-auto object-contain"
                                   loading="lazy"
                                 />
                               </div>
                               {isBlockpages ? (
                                 <div
                                   id="dm-organic-traffic-card"
-                                  className="blockpages-card absolute right-0 bottom-0 translate-x-2 translate-y-2 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl scale-75 origin-bottom-right @sm:translate-x-[10%] @sm:translate-y-[10%] @md:translate-x-[20%] @md:translate-y-[20%] @sm:scale-90 @md:scale-100"
+                                  className="blockpages-card relative self-end @sm:absolute @sm:right-0 @sm:bottom-0 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl origin-bottom-right @sm:scale-90 @md:scale-100"
                                 >
                                   <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Organic Traffic</p>
                                   <div className="flex items-baseline gap-2">
@@ -818,7 +813,7 @@ export default function DigitalMarketingPreviewPage() {
                                   </div>
                                 </div>
                               ) : (
-                                <motion.div variants={fadeInUp} className="absolute right-0 bottom-0 translate-x-2 translate-y-2 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl scale-75 origin-bottom-right @sm:translate-x-[10%] @sm:translate-y-[10%] @md:translate-x-[20%] @md:translate-y-[20%] @sm:scale-90 @md:scale-100">
+                                <motion.div variants={fadeInUp} className="relative self-end @sm:absolute @sm:right-0 @sm:bottom-0 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-white px-5 py-4 shadow-xl origin-bottom-right @sm:scale-90 @md:scale-100">
                                   <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Organic Traffic</p>
                                   <div className="flex items-baseline gap-2">
                                     <p className="text-2xl font-black leading-none text-[#0A1E3D]"><CountUp targetValue={18.2} decimals={1} suffix="K" /></p>
@@ -829,7 +824,7 @@ export default function DigitalMarketingPreviewPage() {
                             </div>
                           </motion.div>
                           <motion.div variants={slideInRight} className="min-w-0">
-                            <h3 className="min-w-0 break-words mb-8 max-w-[24rem] text-[clamp(1.125rem,5cqw,1.5rem)] font-bold leading-snug text-[#0A1E3D] @md:text-[clamp(1.25rem,6cqw,1.875rem)]">
+                            <h3 className="min-w-0 break-normal mb-8 max-w-[24rem] text-[clamp(1rem,4cqw,1.5rem)] font-bold leading-snug text-[#0A1E3D] @md:text-[clamp(1.25rem,6cqw,1.875rem)]">
                               We Deliver Results That Drive Business Growth
                             </h3>
                             <ul className="space-y-6">
@@ -941,7 +936,7 @@ export default function DigitalMarketingPreviewPage() {
                               </p>
                               <div className="min-w-0 mt-6 text-right">
                                 <p
-                                  className="min-w-0 break-words font-bold transition-colors duration-500 text-[#0A1E3D] group-hover:text-white cursor-text"
+                                  className="min-w-0 break-normal font-bold transition-colors duration-500 text-[#0A1E3D] group-hover:text-white cursor-text"
                                   contentEditable={true}
                                   suppressContentEditableWarning
                                   onBlur={(e) => {
@@ -1014,13 +1009,7 @@ export default function DigitalMarketingPreviewPage() {
                       Stop guessing. Start growing. Our performance audits reveal exactly where you&apos;re leaving money on the table. Join 100+ brands scaling with precision.
                     </motion.p>
                     <motion.div variants={fadeInUp} className="flex flex-wrap items-center justify-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() => scrollToSection("contact")}
-                        className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0A1E3D] transition hover:scale-105"
-                      >
-                        Get Started
-                      </button>
+
                       <button
                         type="button"
                         onClick={() => scrollToSection("contact")}
@@ -1041,7 +1030,7 @@ export default function DigitalMarketingPreviewPage() {
                     className="mx-auto flex max-w-6xl flex-col gap-12 @md:flex-row @md:gap-16"
                   >
                     <motion.div variants={slideInLeft} className="w-full min-w-0 @md:w-1/2 @md:pr-10">
-                      <h2 className="mb-6 w-full max-w-[16rem] text-[clamp(1.25rem,6cqw,1.875rem)] font-bold leading-tight text-[#0A1E3D] break-words @md:text-[clamp(1.5rem,7cqw,2.25rem)]">
+                      <h2 className="mb-6 w-full max-w-[16rem] text-[clamp(1.15rem,5cqw,1.875rem)] font-bold leading-tight text-[#0A1E3D] break-normal @md:text-[clamp(1.5rem,7cqw,2.25rem)]">
                         Get in<br />touch with us
                       </h2>
                       <p className="mb-10 text-sm font-medium leading-relaxed text-[#4A5568] @md:text-base text-left">
@@ -1086,7 +1075,7 @@ export default function DigitalMarketingPreviewPage() {
                             <input
                               type="text"
                               value={contactForm.firstName}
-                              onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })}
+                              onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value.replace(/[^A-Za-z\s]/g, '') })}
                               placeholder="Enter your first name"
                               className="w-full min-w-0 rounded-lg border-none bg-[#CBD5E1] px-3 py-2.5 @sm:px-4 @sm:py-3.5 text-[clamp(11px,2.5cqw,13px)] text-[#0A1E3D] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2196F3]"
                             />
@@ -1097,7 +1086,7 @@ export default function DigitalMarketingPreviewPage() {
                             <input
                               type="text"
                               value={contactForm.lastName}
-                              onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })}
+                              onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value.replace(/[^A-Za-z\s]/g, '') })}
                               placeholder="Enter your last name"
                               className="w-full min-w-0 rounded-lg border-none bg-[#CBD5E1] px-3 py-2.5 @sm:px-4 @sm:py-3.5 text-[clamp(11px,2.5cqw,13px)] text-[#0A1E3D] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2196F3]"
                             />
