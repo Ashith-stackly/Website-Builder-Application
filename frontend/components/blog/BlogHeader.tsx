@@ -71,7 +71,7 @@ export default function BlogHeader() {
     clearAuthToken();
     setProfileOpen(false);
     setMobileOpen(false);
-    router.push("/login");
+    router.replace("/login");
   }, [router]);
 
   useEffect(() => {
@@ -375,7 +375,7 @@ export default function BlogHeader() {
               className="blog-nav-mobile-link blog-nav-mobile-link--account"
               onClick={() => {
                 setMobileOpen(false);
-                router.push("/login");
+                router.replace("/login");
               }}
             >
               <FaUser aria-hidden />

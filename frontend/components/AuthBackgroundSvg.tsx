@@ -2,7 +2,7 @@
  
 export default function AuthBackgroundSvg() {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0 select-none">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0 select-none hidden lg:block">
       <svg
         className="w-full h-full min-w-[1000px] min-h-[600px]"
         viewBox="0 0 1440 900"

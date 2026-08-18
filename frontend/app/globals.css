@@ -1866,7 +1866,7 @@ body.auth-visible {
   word-break: keep-all;
   overflow-wrap: normal;
   line-height: 1.35;
-  font-size: clamp(10px, 3.2vw, 13px);
+  font-size: 0.875rem;
   max-width: 100%;
 }
 
@@ -2589,10 +2589,6 @@ body.auth-visible {
       max-height: none !important;
     }
   }
-
-  .auth-image-col {
-    display: none !important;
-  }
 }
 
 /*
@@ -3034,10 +3030,6 @@ body.auth-visible {
     flex: 1 1 auto;
     border-radius: 0 !important;
     box-shadow: none !important;
-  }
-
-  .reset-flow-page .reset-flow-illustration {
-    display: none !important;
   }
 }
 

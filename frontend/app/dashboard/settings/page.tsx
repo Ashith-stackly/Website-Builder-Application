@@ -102,7 +102,7 @@ function SettingsInner() {
               {tab === "profile" && <ProfilePanel />}
               {tab === "appearance" && <AppearancePanel />}
               {tab === "billing" && <BillingPanel onUpgrade={() => router.push("/planning")} />}
-              {tab === "danger" && <DangerPanel onSignOut={() => { try { clearAuthToken(); clearDemoSession(); } catch { } router.push("/login"); }} />}
+              {tab === "danger" && <DangerPanel onSignOut={() => { try { clearAuthToken(); clearDemoSession(); } catch { } router.replace("/login"); }} />}
 
               {projectId && (
                 <Card icon={FolderCog} title="Project settings" desc="Settings for the currently selected project.">

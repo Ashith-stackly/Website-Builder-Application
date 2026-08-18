@@ -113,10 +113,21 @@ const SIGNUP_NATIONAL_PATTERNS: Partial<Record<string, RegExp>> = {
   ZA: /^[6-8]\d{8}$/,
 };
 
-/** True when the contact field is being used as a mobile number (digits and optional + only). */
+/** True when the contact field is being used as a mobile number. */
 export function looksLikeMobileContactInput(value: string): boolean {
   const trimmed = value.trim();
-  return trimmed.length > 0 && /^\+?\d*$/.test(trimmed);
+  if (!trimmed) return false;
+  if (trimmed.includes("@")) return false;
+  if (trimmed.startsWith("+")) return true;
+
+  const hasLetters = /[a-zA-Z]/.test(trimmed);
+  const hasDigits = /\d/.test(trimmed);
+
+  if (!hasLetters && (hasDigits || /^[\d\+\-\(\)\s#\*]+$/.test(trimmed))) {
+    return true;
+  }
+
+  return false;
 }
 
 export function mobileContactMaxLengthMessage(): string {
@@ -130,13 +141,18 @@ export function validateInternationalMobileContact(value: string): string | null
     return null;
   }
 
+  const isValidFormat = /^\+?\d+$/.test(trimmed);
+  if (!isValidFormat) {
+    return "Please enter a valid mobile number";
+  }
+
   if (trimmed.length > MAX_MOBILE_INPUT_LENGTH) {
     return mobileContactMaxLengthMessage();
   }
 
   const digits = trimmed.replace(/\D/g, "");
   if (!digits) {
-    return "Enter valid email or mobile number";
+    return "Please enter a valid mobile number";
   }
 
   for (const country of COUNTRIES_BY_DIAL_DESC) {

@@ -464,14 +464,14 @@ export default function LoginPage() {
  
   return (
     <>
-      <motion.div className="login-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto overflow-hidden bg-gradient-to-br from-[#f6fcfe] via-[#e2f2f9] to-[#b2dbeb]" initial="hidden" animate="visible" variants={loginContainerVariants}>
+      <motion.div className="login-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto overflow-hidden bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] lg:bg-gradient-to-br lg:from-[#f6fcfe] lg:via-[#e2f2f9] lg:to-[#b2dbeb]" initial="hidden" animate="visible" variants={loginContainerVariants}>
         {/* Background SVG decorative arcs matching reference design */}
         <AuthBackgroundSvg />
  
         <motion.div className="relative z-10 w-full max-lg:max-w-none max-w-6xl mx-auto flex flex-1 flex-col max-lg:h-full lg:flex-none lg:flex-row gap-0 lg:gap-8 auth-layout" variants={loginContainerVariants}>
           {/* Card first on mobile (top), right on desktop */}
           <motion.div className="flex w-full flex-1 flex-col items-stretch max-lg:justify-stretch justify-center max-lg:h-full order-1 lg:order-2 lg:w-1/2 lg:flex-none" variants={loginCardVariants}>
-            <motion.div className="relative flex w-full max-w-[520px] flex-1 flex-col overflow-hidden max-lg:overflow-auto lg:overflow-visible self-center max-lg:self-stretch bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] px-6 sm:px-10 max-lg:max-w-none max-lg:w-full max-lg:h-full max-lg:flex-1 lg:flex-none lg:rounded-[10px] login-card auth-form-card" whileHover={{ y: -3, boxShadow: "0 28px 70px rgba(2,15,38,0.22)", transition: { duration: 0.24 } }}>
+            <motion.div className="relative flex w-full max-w-[520px] flex-1 flex-col overflow-hidden max-lg:overflow-auto lg:overflow-visible self-center max-lg:self-stretch max-lg:max-w-none max-lg:min-h-[100dvh] max-lg:rounded-none bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] px-6 sm:px-10 max-lg:w-full max-lg:h-full max-lg:flex-1 lg:flex-none lg:rounded-[10px] login-card auth-form-card" whileHover={{ y: -3, boxShadow: "0 28px 70px rgba(2,15,38,0.22)", transition: { duration: 0.24 } }}>
               <div className="auth-inner-panel pointer-events-none absolute inset-y-0 left-1/2 w-[78%] -translate-x-1/2 bg-gradient-to-b from-white/10 via-black/10 to-black/35" />
               <div className="pointer-events-none absolute inset-0 rounded-none lg:rounded-[10px] shadow-[inset_20px_0_45px_rgba(0,0,0,0.55),inset_-20px_0_45px_rgba(0,0,0,0.55)]" />
               <div className="pointer-events-none absolute inset-0 rounded-none lg:rounded-[10px] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.25)]" />
@@ -484,12 +484,12 @@ export default function LoginPage() {
                     </h1>
                   </motion.div>
  
-                  <motion.div className="flex justify-center mb-8 sm:mb-4 lg:mb-8 flex-shrink-0" variants={loginFadeUp}>
-                    <motion.div className="bg-white w-[120px] h-[44px] sm:w-[160px] sm:h-[60px] lg:w-[200px] lg:h-[80px] rounded-[50%] flex items-center justify-center shadow-lg overflow-hidden" whileHover={{ scale: 1.04, transition: { duration: 0.2 } }}>
+                  <motion.div className="flex justify-center mb-6 sm:mb-4 lg:mb-6 flex-shrink-0" variants={loginFadeUp}>
+                    <motion.div className="bg-white w-[130px] h-[48px] sm:w-[160px] sm:h-[56px] lg:w-[190px] lg:h-[66px] rounded-[50%] flex items-center justify-center shadow-lg overflow-hidden shrink-0 px-3 py-1.5" whileHover={{ scale: 1.04, transition: { duration: 0.2 } }}>
                       <img
                         src={assetPath("/stackly-logo.webp")}
                         alt="Stackly Logo"
-                        className="h-4 sm:h-5 lg:h-8 object-contain"
+                        className="w-auto h-[62%] sm:h-[65%] lg:h-[68%] max-w-[80%] object-contain"
                       />
                     </motion.div>
                   </motion.div>
@@ -504,13 +504,16 @@ export default function LoginPage() {
                     <motion.div className="space-y-6 sm:space-y-4 lg:space-y-6 flex-shrink-0" variants={loginContainerVariants}>
                     <motion.div className="flex flex-col" variants={loginFadeUp}>
                       <motion.div className="login-contact-row flex items-center border-b border-white/60 pb-2 min-w-0" whileFocus={{ scale: 1.01 }} whileHover={{ borderColor: "rgba(255,255,255,0.95)", transition: { duration: 0.2 } }}>
-                        <FaAddressBook className="login-email-icon mr-2 sm:mr-4 text-sm opacity-80 flex-shrink-0" />
+                        <FaAddressBook className="login-email-icon mr-2 sm:mr-4 text-sm opacity-80 flex-shrink-0" aria-hidden="true" />
                         <input
                           ref={emailInputRef}
+                          id="login-contact"
                           type="text"
                           name="login-contact"
                           autoComplete="off"
                           placeholder="Email or Mobile number"
+                          aria-label="Email address or mobile number"
+                          aria-required="true"
                           value={form.email}
                           onChange={handleChange("email")}
                           onFocus={applyRememberedCredentials}
@@ -543,15 +546,17 @@ export default function LoginPage() {
                         )}
                       </AnimatePresence>
                     </motion.div>
- 
+
                     <motion.div className="flex flex-col" variants={loginFadeUp}>
                       <motion.div className="flex items-center border-b border-white/60 pb-2 relative min-w-0" whileHover={{ borderColor: "rgba(255,255,255,0.95)", transition: { duration: 0.2 } }}>
-                        <FaLock className="mr-2 sm:mr-4 text-sm opacity-80 flex-shrink-0" />
+                        <FaLock className="mr-2 sm:mr-4 text-sm opacity-80 flex-shrink-0" aria-hidden="true" />
                         <input
+                          id="login-password"
                           type={showPassword ? "text" : "password"}
                           name="login-password"
                           autoComplete="off"
                           placeholder="Password"
+                          aria-label="Password"
                           value={form.password}
                           onChange={handleChange("password")}
                           onFocus={applyRememberedCredentials}
@@ -625,20 +630,20 @@ export default function LoginPage() {
                     </motion.div>
                   </motion.div>
  
-                  <motion.div className="login-remember-forgot mt-5 sm:mt-4 text-xs opacity-90 w-full min-w-0" variants={loginFadeUp}>
+                  <motion.div className="login-remember-forgot mt-5 sm:mt-4 text-sm opacity-90 w-full min-w-0" variants={loginFadeUp}>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={form.rememberMe}
                         onChange={handleChange("rememberMe")}
                         onKeyDown={handleRememberMeKeyDown}
-                        className="h-3.5 w-3.5 rounded border border-white/60 bg-transparent accent-[#2d8cf0]"
+                        className="h-4 w-4 rounded border border-white/60 bg-transparent accent-[#2d8cf0]"
                       />
                       <span>Remember me</span>
                     </label>
                     <Link
                       href="/forgot-password"
-                      className="forgot-password-link text-white no-underline hover:text-white hover:underline decoration-1 underline-offset-4 text-[13px]"
+                      className="forgot-password-link text-white no-underline hover:text-white hover:underline decoration-1 underline-offset-4 text-sm"
                     >
                       Forgot Password?
                     </Link>
@@ -672,7 +677,7 @@ export default function LoginPage() {
                 </motion.div>
  
                 <motion.div className="flex-shrink-0 mt-2 max-lg:mt-2 lg:mt-4" variants={loginFadeUp}>
-                  <p className="text-center text-xs mb-2 sm:mb-2.5 lg:mb-3 text-white/80">
+                  <p className="text-center text-sm mb-2 sm:mb-2.5 lg:mb-3 text-white/90">
                     Don&apos;t have an account?{" "}
                     <Link
                       href="/signup"
@@ -694,7 +699,7 @@ export default function LoginPage() {
  
           {/* Illustration below on mobile, left on desktop */}
           <motion.div
-            className="auth-image-col w-full lg:w-1/2 flex justify-center order-2 lg:order-1 mt-6 sm:mt-8 lg:mt-0"
+            className="auth-image-col hidden lg:flex w-full lg:w-1/2 justify-center order-2 lg:order-1 mt-6 sm:mt-8 lg:mt-0"
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: "easeOut" }}

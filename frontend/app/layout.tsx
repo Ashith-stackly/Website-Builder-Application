@@ -3,6 +3,7 @@ import { Geist_Mono, Lora } from "next/font/google";
 import NavBarShell from "@/components/NavBarShell";
 import AuthSessionProvider from "@/components/AuthSessionProvider";
 import RouteLoadingOverlay from "@/components/RouteLoadingOverlay";
+import RouteAnnouncer from "@/components/RouteAnnouncer";
 import ScrollToTop from "@/components/ScrollToTop";
 import "@/lib/reactDomPatch";
 import "./globals.css";
@@ -50,6 +51,7 @@ export default function RootLayout({
       >
         <div className="stackly-site-layout">
           <RouteLoadingOverlay />
+          <RouteAnnouncer />
           <AuthSessionProvider>
             <NavBarShell />
             <ScrollToTop />

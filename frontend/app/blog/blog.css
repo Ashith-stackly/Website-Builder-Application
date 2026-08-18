@@ -242,8 +242,9 @@ html:has(main.blog-page) {
 
 .blog-nav-mobile-categories {
   margin-top: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
 }
 
 .blog-nav-mobile-categories-label {
@@ -259,7 +260,7 @@ html:has(main.blog-page) {
   display: block;
   width: 100%;
   max-width: 100%;
-  padding: 0.45rem 0;
+  padding: 0.55rem 0.75rem;
   border-radius: 0.35rem;
   text-align: left;
   font-size: 0.85rem;

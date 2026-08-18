@@ -8,12 +8,23 @@ export const SIMPLE_MOBILE_MAX_INPUT_LENGTH =
   1 + SIMPLE_MOBILE_MAX_DIGITS;
 
 export const SIMPLE_MOBILE_INVALID_MESSAGE =
-  "Enter valid email or mobile number";
+  "Please enter a valid mobile number";
 
-/** True when the field is digits with an optional leading + only. */
+/** Determines if an input value is intended as a mobile number rather than an email. */
 export function looksLikeMobileContactInput(value: string): boolean {
   const trimmed = value.trim();
-  return trimmed.length > 0 && /^\+?\d*$/.test(trimmed);
+  if (!trimmed) return false;
+  if (trimmed.includes("@")) return false;
+  if (trimmed.startsWith("+")) return true;
+
+  const hasLetters = /[a-zA-Z]/.test(trimmed);
+  const hasDigits = /\d/.test(trimmed);
+
+  if (!hasLetters && (hasDigits || /^[\d\+\-\(\)\s#\*]+$/.test(trimmed))) {
+    return true;
+  }
+
+  return false;
 }
 
 export function countMobileDigits(value: string): number {
@@ -26,8 +37,10 @@ export function validateSimpleMobileContact(value: string): string | null {
     return null;
   }
 
+  const isValidFormat = /^\+?\d+$/.test(trimmed);
   const digits = countMobileDigits(trimmed);
-  if (digits < SIMPLE_MOBILE_MIN_DIGITS || digits > SIMPLE_MOBILE_MAX_DIGITS) {
+
+  if (!isValidFormat || digits < SIMPLE_MOBILE_MIN_DIGITS || digits > SIMPLE_MOBILE_MAX_DIGITS) {
     return SIMPLE_MOBILE_INVALID_MESSAGE;
   }
 
@@ -45,14 +58,11 @@ export function simpleMobileMaxLengthMessage(): string {
   return `Mobile number cannot exceed ${SIMPLE_MOBILE_MAX_DIGITS} digits`;
 }
 
-/** Keeps optional + and caps national digits to {@link SIMPLE_MOBILE_MAX_DIGITS}. */
+/** Keeps raw input up to {@link SIMPLE_MOBILE_MAX_INPUT_LENGTH} characters. */
 export function capSimpleMobileContactInput(value: string): string {
   const trimmed = value.replace(/\s/g, "");
-  if (!looksLikeMobileContactInput(trimmed)) {
-    return trimmed;
+  if (trimmed.length > SIMPLE_MOBILE_MAX_INPUT_LENGTH) {
+    return trimmed.slice(0, SIMPLE_MOBILE_MAX_INPUT_LENGTH);
   }
-
-  const hasPlus = trimmed.startsWith("+");
-  const digits = trimmed.replace(/\D/g, "").slice(0, SIMPLE_MOBILE_MAX_DIGITS);
-  return hasPlus ? `+${digits}` : digits;
+  return trimmed;
 }

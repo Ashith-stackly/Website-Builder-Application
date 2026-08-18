@@ -28,7 +28,9 @@ function scrollToBlogSection(sectionId: string) {
 }
 
 function scrollToBlogCategory(categoryId: string) {
-  const anchorId = categoryId === "All" ? "blog-categories" : categoryId;
+  // Always scroll to the parent section to ensure the section title and the 
+  // filtered category card are fully visible in the viewport.
+  const anchorId = "blog-categories";
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       scrollToBlogSection(anchorId);
@@ -245,7 +247,7 @@ function BlogHeader({
           className="text-[clamp(1.2rem,2.5cqw,1.4rem)] font-extrabold text-[var(--blog-white)] no-underline shrink-0 bg-none border-none cursor-pointer p-0 font-inherit hover:opacity-90 @max-[340px]:text-[1.1rem]"
           onClick={() => scrollToSection("#blog-home")}
         >
-          Blogify.
+          Blogify
         </button>
 
         <nav className="hidden items-center gap-[clamp(1rem,2.5cqw,2rem)] min-w-0 @[760px]:flex @max-[850px]:gap-[clamp(0.5rem,1.5cqw,1.1rem)]" aria-label="Blog main navigation">
@@ -265,7 +267,7 @@ function BlogHeader({
                 <button
                   ref={categoriesTriggerRef}
                   type="button"
-                  className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none @max-[850px]:py-[0.4rem] @max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
+                  className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.3)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] focus-visible:bg-[rgba(255,255,255,0.3)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] focus-visible:outline-none @max-[850px]:py-[0.4rem] @max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
                   onClick={(event) => {
                     if (event.currentTarget.isContentEditable) return;
                     if (link.hasDropdown) {
@@ -322,10 +324,7 @@ function BlogHeader({
                     ))}
                     <button
                       type="button"
-                      className={`block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] border-t border-[#e5e7eb] mt-[0.25rem] pt-[0.65rem] ${selectedCategory === "All"
-                        ? "bg-[var(--blog-blue-bg)] text-[var(--blog-accent)]"
-                        : "bg-none text-[var(--blog-accent)]"
-                        }`}
+                      className="block w-full py-[0.55rem] px-[1rem] text-left text-[0.85rem] font-semibold border-none cursor-pointer font-inherit hover:bg-[var(--blog-blue-bg)] border-t border-[#e5e7eb] mt-[0.25rem] pt-[0.65rem] bg-none text-[var(--blog-navy)]"
                       onClick={(event) => {
                         if (event.currentTarget.isContentEditable) return;
                         onCategoryChange("All");
@@ -341,7 +340,7 @@ function BlogHeader({
               <button
                 key={link.label}
                 type="button"
-                className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.18)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:bg-[rgba(255,255,255,0.18)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.25)] focus-visible:outline-none aria-expanded:bg-[rgba(43,127,255,0.35)] aria-expanded:text-white aria-expanded:shadow-[0_0_0_1px_rgba(43,127,255,0.55)] @max-[850px]:py-[0.4rem] @max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
+                className="bg-none border-none cursor-pointer py-[0.45rem] px-[0.75rem] rounded-[0.4rem] font-inherit transition-[background,color,box-shadow] duration-150 ease hover:bg-[rgba(255,255,255,0.3)] hover:text-white hover:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] focus-visible:bg-[rgba(255,255,255,0.3)] focus-visible:text-white focus-visible:shadow-[0_0_0_1px_rgba(255,255,255,0.4)] focus-visible:outline-none aria-expanded:bg-[rgba(43,127,255,0.35)] aria-expanded:text-white aria-expanded:shadow-[0_0_0_1px_rgba(43,127,255,0.55)] @max-[850px]:py-[0.4rem] @max-[850px]:px-[0.6rem] inline-flex items-center gap-[0.25rem] text-[0.875rem] font-medium text-[var(--blog-white)] no-underline whitespace-nowrap"
                 onClick={() => scrollToSection(link.hash)}
               >
                 {link.label}
@@ -393,7 +392,7 @@ function BlogHeader({
                 <button
                   ref={mobileCategoriesTriggerRef}
                   type="button"
-                  className="flex w-full items-center justify-between rounded-md border border-white/25 px-3 py-2 text-xs text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:bg-white/10"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md border border-white/25 px-3 py-2 text-xs text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:bg-white/10"
                   onClick={(event) => {
                     if (event.currentTarget.isContentEditable) return;
                     setMobileCategoriesOpen((open) => !open);
@@ -432,9 +431,9 @@ function BlogHeader({
                       key={item.id}
                       type="button"
                       role="menuitem"
-                      className={`rounded-md border border-white/25 px-3 py-2 text-xs transition hover:scale-105 hover:bg-white/10 text-center focus-visible:outline-none focus-visible:bg-white/10 ${selectedCategory === item.id
-                        ? "bg-white/20 text-white font-bold"
-                        : "text-white bg-none"
+                      className={`rounded-md px-3 py-2 text-xs transition hover:scale-105 text-center focus-visible:outline-none ${selectedCategory === item.id
+                        ? "bg-white/30 text-white font-bold hover:bg-white/40 focus-visible:bg-white/40"
+                        : "text-white/90 bg-white/10 hover:bg-white/20 focus-visible:bg-white/20"
                         }`}
                       onClick={(event) => {
                         if (event.currentTarget.isContentEditable) return;
@@ -449,10 +448,7 @@ function BlogHeader({
                   <button
                     type="button"
                     role="menuitem"
-                    className={`rounded-md border border-white/25 px-3 py-2 text-xs transition hover:scale-105 hover:bg-white/10 text-center font-bold focus-visible:outline-none focus-visible:bg-white/10 ${selectedCategory === "All"
-                      ? "bg-white/20 text-white"
-                      : "text-[var(--blog-accent)] bg-none"
-                      }`}
+                    className="rounded-md px-3 py-2 text-xs transition hover:scale-105 text-center focus-visible:outline-none text-white font-semibold bg-white/10 hover:bg-white/20 focus-visible:bg-white/20"
                     onClick={(event) => {
                       if (event.currentTarget.isContentEditable) return;
                       onCategoryChange("All");
@@ -671,6 +667,13 @@ function BlogMarketingTemplate() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const categoriesRef = useRef<HTMLElement | null>(null);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (canvasScrollRef.current) {
+      canvasScrollRef.current.scrollTop = 0;
+    }
+  }, []);
+
   const openCategoryPage = useCallback(() => {
     router.push(START_BLOGGING_HREF);
   }, [router]);
@@ -679,7 +682,11 @@ function BlogMarketingTemplate() {
     flushSync(() => {
       setSelectedCategory(categoryId);
     });
-    scrollToBlogCategory(categoryId);
+    // Delay the scroll slightly to allow the mobile menu to fully close and 
+    // unmount, preventing massive layout shifts from breaking the scroll position.
+    setTimeout(() => {
+      scrollToBlogCategory(categoryId);
+    }, 150);
   }, []);
 
 

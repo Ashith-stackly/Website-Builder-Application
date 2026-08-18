@@ -139,25 +139,21 @@ if (!trimmed) {
   };
  
   return (
-    <div className="reset-flow-page forgot-password-page auth-page relative min-h-[100dvh] lg:min-h-screen bg-gradient-to-br from-[#f6fcfe] via-[#e2f2f9] to-[#b2dbeb] flex flex-col justify-start lg:justify-center items-stretch lg:items-center max-lg:overflow-auto overflow-hidden lg:overflow-y-auto px-0 py-0 lg:px-6 lg:py-6">
+    <div className="reset-flow-page forgot-password-page auth-page relative min-h-[100dvh] lg:min-h-screen bg-gradient-to-b from-[#4A76F3] via-[#2C4FAD] to-[#0A193F] lg:bg-gradient-to-br lg:from-[#f6fcfe] lg:via-[#e2f2f9] lg:to-[#b2dbeb] flex flex-col justify-start lg:justify-center items-stretch lg:items-center max-lg:overflow-auto overflow-hidden lg:overflow-y-auto px-0 py-0 lg:px-6 lg:py-6">
       <AuthBackgroundSvg />
       <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row items-stretch lg:items-center justify-start lg:justify-center gap-0 lg:gap-12 auth-layout">
         {/* LEFT: Illustration */}
-        <div className="auth-image-col hidden lg:flex w-full lg:w-1/2 items-center justify-center order-2 lg:order-1">
-          <div
-            className="auth-image-wrapper relative flex items-center justify-center lg:w-[520px] lg:h-[380px] lg:translate-x-[2cm]"
-          >
-            <img
-              src={assetPath("/password1.webp")}
-              alt="Password reset illustration"
-              className="auth-image absolute inset-0 w-full h-full object-contain object-center"
-            />
-          </div>
+        <div className="auth-image-col hidden lg:flex w-full lg:w-1/2 justify-center order-2 lg:order-1 mt-6 sm:mt-8 lg:mt-0">
+          <img
+            src={assetPath("/password1.webp")}
+            alt="Password reset illustration"
+            className="auth-image w-[80%] sm:w-[70%] lg:w-[90%] max-w-[550px] object-contain"
+          />
         </div>
         {/* RIGHT: Forgot password form card */}
         <div className="flex w-full flex-1 flex-col items-stretch justify-center order-1 lg:order-2 lg:w-1/2 lg:flex-none min-h-0">
           <div
-            className="reset-flow-card forgot-password-card relative flex w-full max-w-[420px] lg:w-[420px] lg:h-[380px] flex-1 flex-col justify-center self-center overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:flex-none lg:min-h-0 lg:rounded-xl"
+            className="reset-flow-card forgot-password-card relative flex w-full max-w-none lg:max-w-[420px] lg:w-[420px] lg:h-[380px] flex-1 flex-col justify-center self-stretch lg:self-center overflow-hidden px-6 py-8 sm:px-10 sm:py-10 max-lg:min-h-[100dvh] max-lg:rounded-none lg:flex-none lg:min-h-0 lg:rounded-xl"
             style={{
               background:
                 "linear-gradient(180deg, #4A76F3 0%, #2C4FAD 50%, #0A193F 100%)",
@@ -167,6 +163,8 @@ if (!trimmed) {
             <h1
               className="text-[20px] sm:text-[24px] font-bold text-center mb-3"
               style={{ color: "#FFFFFF" }}
+              role="heading"
+              aria-level={1}
             >
               Forgot Your Password?
             </h1>
@@ -181,9 +179,11 @@ if (!trimmed) {
               <div className="flex flex-col items-center space-y-5">
                 <div className="w-full max-w-[316px]">
                   <input
+                    id="forgot-contact-input"
                     type="text"
                     inputMode="email"
                     placeholder={contactPlaceholder}
+                    aria-label="Email or Mobile number"
                     value={contactInput}
                     maxLength={EMAIL_MAX_LENGTH}
                     onChange={(e) => {
@@ -210,6 +210,8 @@ if (!trimmed) {
                     onBlur={() => {
                       setContactInput((prev) => prev.trim());
                     }}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? "forgot-contact-error" : undefined}
                     className="forgot-input w-full h-12 px-5 rounded-[1000px] border text-[14px] text-center outline-none focus:border-white transition bg-transparent"
                     style={{
                       border: "1.5px solid #FFFFFF",
@@ -218,7 +220,7 @@ if (!trimmed) {
                     }}
                   />
                   {error && (
-                    <p className="auth-error-text mt-1 text-center">{error}</p>
+                    <p id="forgot-contact-error" role="alert" className="auth-error-text mt-1 text-center">{error}</p>
                   )}
                 </div>
                 <button

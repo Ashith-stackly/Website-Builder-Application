@@ -193,7 +193,7 @@ setError(message);
           <div className="flex justify-center mb-4 sm:mb-6">
             <img
               src={assetPath("/mobile.webp")}
-              alt="Mobile verification"
+              alt="Mobile smartphone icon for SMS verification code"
               className="w-[96px] h-[96px] object-contain"
             />
           </div>
@@ -214,6 +214,7 @@ setError(message);
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
+                  aria-label={`Digit ${idx + 1} of 4 of mobile verification code`}
                   value={value}
                   onChange={createOtpChangeHandler(
                     idx,
@@ -338,10 +339,10 @@ setError(message);
               style={{ color: "#FFFFFF" }}
             >
               {cooldownSecondsLeft > 0
-                ? `Resend CODE (${cooldownSecondsLeft}s)`
+                ? `Resend Code (${cooldownSecondsLeft}s)`
                 : isResending
                   ? "Resending..."
-                  : "Resend CODE"}
+                  : "Resend Code"}
             </button>
               )}
               {info && !hasReachedMaxAttempts && (

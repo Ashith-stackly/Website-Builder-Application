@@ -294,19 +294,27 @@ function PlanningPageContent() {
       });
 
   const syncPlanningUrl = useCallback(
-    (params: {
-      view: PlanningView;
-      plan?: Plan | null;
-      billingYearly?: boolean;
-      isFreeCheckout?: boolean;
-    }) => {
+    (
+      params: {
+        view: PlanningView;
+        plan?: Plan | null;
+        billingYearly?: boolean;
+        isFreeCheckout?: boolean;
+      },
+      mode: "push" | "replace" = "push",
+    ) => {
       const query = buildPlanningQuery({
         view: params.view,
         planName: params.plan?.name,
         billingYearly: params.billingYearly,
         isFreeCheckout: params.isFreeCheckout,
       });
-      router.replace(planningPathFromQuery(query), { scroll: false });
+      const targetPath = planningPathFromQuery(query);
+      if (mode === "replace") {
+        router.replace(targetPath, { scroll: false });
+      } else {
+        router.push(targetPath, { scroll: false });
+      }
     },
     [router],
   );
@@ -419,7 +427,11 @@ function PlanningPageContent() {
       : `INV-${Math.floor(100000 + Math.random() * 899999)}`);
 
     const active = getActivePrice(selectedPlan);
-    const finalAmount = opts.isFree ? "₹0" : active.newPrice;
+    let finalAmount = opts.isFree ? "₹0" : active.newPrice;
+    if (!opts.isFree && typeof details?.amount === "number" && details.amount > 0) {
+      const rupees = details.amount >= 1000 ? Math.round(details.amount / 100) : details.amount;
+      finalAmount = `₹${rupees}`;
+    }
 
     const userName = details?.customerName || verifiedUser?.name || userProfile?.name || "User";
     const userEmail = details?.customerEmail || verifiedUser?.email || userProfile?.email || "";
@@ -1048,15 +1060,16 @@ function PlanningPageContent() {
                     whileTap={{ scale: 0.97 }}
                     type="button"
                     onClick={() => {
+                      const isFreePlan = invoiceData.amount === "₹0" || invoiceData.amount === "$0" || invoiceData.planName.toLowerCase().includes("free");
                       const entry: BillingHistoryEntry = {
                         date: invoiceData.date,
                         invoiceId: invoiceData.invoiceId,
                         amount: invoiceData.amount,
-                        status: "Paid",
+                        status: isFreePlan ? "Free" : "Paid",
                         planName: invoiceData.planName,
-                        planTier: selectedPlan?.name || "Advanced",
+                        planTier: selectedPlan?.name || invoiceData.planName,
                         websiteLabel: "Stackly workspace subscription",
-                        paymentMethodLabel: invoiceData.paymentMethodLabel || "Card – Visa / MasterCard",
+                        paymentMethodLabel: invoiceData.paymentMethodLabel || (isFreePlan ? "Complimentary" : "Card – Visa / MasterCard"),
                         paymentDetail: invoiceData.paymentId ? `Payment ${invoiceData.paymentId}${invoiceData.orderId ? ` · Order ${invoiceData.orderId}` : ""}` : "",
                         buyerName: invoiceData.name,
                         buyerEmail: invoiceData.email,

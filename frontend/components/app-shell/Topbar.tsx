@@ -264,7 +264,7 @@ function ProfileMenu() {
     } catch {
       /* ignore */
     }
-    router.push("/login");
+    router.replace("/login");
   };
 
   return (

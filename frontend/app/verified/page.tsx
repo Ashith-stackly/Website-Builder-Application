@@ -77,21 +77,23 @@ function VerifiedContent() {
           <div className="flex justify-center mb-4 sm:mb-6">
             <img
               src={assetPath("/tick.webp")}
-              alt="Verified"
+              alt="Green checkmark badge indicating successful verification"
               className="w-[96px] h-[96px] object-contain"
             />
           </div>
           <h1
             className="text-[20px] sm:text-[24px] font-bold mb-2"
             style={{ color: "#FFFFFF" }}
+            role="heading"
+            aria-level={1}
           >
-            Verified !
+            Verified!
           </h1>
           <p
             className="text-[12px] sm:text-[13px] leading-relaxed mb-6 italic"
             style={{ color: "#FFFFFF" }}
           >
-            You have successfully verified
+            You have been successfully verified.
           </p>
           <form
             className="flex justify-center"

@@ -735,7 +735,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     clearLogoutStorage(window.localStorage);
     clearLogoutStorage(window.sessionStorage);
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
-    router.push("/login");
+    router.replace("/login");
   }, [router]);
 
   const navLockedVisible = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || isSearchPanelOpen || Boolean(activePanel);

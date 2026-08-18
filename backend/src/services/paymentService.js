@@ -247,6 +247,9 @@ async function verifyRazorpay(user, body = {}) {
 
   const plan = normalizePlanName(resolvedPlanName);
 
+  const rawAmount = Number(amount) || 0;
+  const amountRupees = (rawAmount >= 100 && currency === 'INR') ? Math.round(rawAmount / 100) : (rawAmount >= 100 ? rawAmount / 100 : rawAmount);
+
   if (user) {
     await Subscription.findOneAndUpdate(
       { userId: user._id, orderId: razorpay_order_id },
@@ -257,7 +260,7 @@ async function verifyRazorpay(user, body = {}) {
         paymentStatus: 'completed',
         subscriptionId: razorpay_payment_id,
         orderId: razorpay_order_id,
-        amount: Number(amount) || 0,
+        amount: amountRupees,
         currency,
         startDate,
         expiryDate,
@@ -277,8 +280,8 @@ async function verifyRazorpay(user, body = {}) {
   // Persist invoice to MongoDB so it is available across all sessions/devices
   if (user) {
     const amountDisplay = currency === 'INR'
-      ? `₹${Math.round((Number(amount) || 0) / 100)}`
-      : `$${((Number(amount) || 0) / 100).toFixed(2)}`;
+      ? `₹${amountRupees}`
+      : `$${amountRupees.toFixed(2)}`;
     const dateDisplay = startDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).replace(',', '');
     try {
       await Invoice.findOneAndUpdate(
@@ -288,7 +291,7 @@ async function verifyRazorpay(user, body = {}) {
           invoiceId,
           date: dateDisplay,
           amount: amountDisplay,
-          status: (Number(amount) || 0) === 0 ? 'Free' : 'Paid',
+          status: rawAmount === 0 ? 'Free' : 'Paid',
           planName: planName || '',
           planTier: plan,
           websiteLabel: 'Stackly workspace subscription',
@@ -331,7 +334,8 @@ async function verifyRazorpay(user, body = {}) {
       cardNetwork: cardNet,
       upiApp: upi,
       walletName: wallet,
-      amount: Number(amount) || 0,
+      amount: amountRupees,
+      amountPaise: rawAmount,
       currency,
       customerName: user?.name || 'Customer',
       customerEmail: user?.email || '',

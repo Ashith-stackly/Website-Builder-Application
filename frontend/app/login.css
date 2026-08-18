@@ -516,11 +516,6 @@ input[type="password"]::-ms-reveal {
     justify-content: flex-start !important;
     overflow: visible;
   }
- 
-  /* Mobile: remove bottom illustration entirely */
-  .auth-image-col {
-    display: none !important;
-  }
 }
  
 /*

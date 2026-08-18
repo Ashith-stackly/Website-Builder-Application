@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { FaUser, FaEnvelope, FaPhone, FaLock } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhoneAlt, FaLock } from "react-icons/fa";
 import AuthGoogleButton from "@/components/AuthGoogleButton";
 import AuthBackgroundSvg from "@/components/AuthBackgroundSvg";
 import { useRouter } from "next/navigation";
@@ -658,13 +658,13 @@ export default function SignupPage() {
 
   return (
     <>
-      <div className="signup-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto overflow-hidden bg-gradient-to-br from-[#f6fcfe] via-[#e2f2f9] to-[#b2dbeb]">
+      <div className="signup-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto overflow-hidden bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] lg:bg-gradient-to-br lg:from-[#f6fcfe] lg:via-[#e2f2f9] lg:to-[#b2dbeb]">
         <AuthBackgroundSvg />
         <div className="relative z-10 w-full max-lg:max-w-none max-w-6xl mx-auto flex flex-1 flex-col max-lg:h-full lg:flex-none lg:flex-row gap-0 lg:gap-8 auth-layout">
           {/* Card first on mobile (top), right on desktop */}
           <div className="flex w-full flex-1 flex-col items-stretch max-lg:justify-stretch justify-center max-lg:h-full order-1 lg:order-2 lg:w-1/2 lg:flex-none">
             <div
-              className="relative flex w-full max-w-[520px] flex-1 flex-col overflow-hidden max-lg:overflow-auto lg:overflow-visible self-center max-lg:self-stretch bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] px-6 sm:px-10 max-lg:max-w-none max-lg:w-full max-lg:h-full max-lg:flex-1 lg:flex-none lg:rounded-[10px] signup-card auth-form-card"
+              className="relative flex w-full max-w-[520px] flex-1 flex-col overflow-hidden max-lg:overflow-auto lg:overflow-visible self-center max-lg:self-stretch max-lg:max-w-none max-lg:min-h-[100dvh] max-lg:rounded-none bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] px-6 sm:px-10 max-lg:w-full max-lg:h-full max-lg:flex-1 lg:flex-none lg:rounded-[10px] signup-card auth-form-card"
             >
               <div className="auth-inner-panel pointer-events-none absolute inset-y-0 left-1/2 w-[78%] -translate-x-1/2 bg-gradient-to-b from-white/10 via-black/10 to-black/35" />
               <div className="pointer-events-none absolute inset-0 rounded-none lg:rounded-[10px] shadow-[inset_20px_0_45px_rgba(0,0,0,0.55),inset_-20px_0_45px_rgba(0,0,0,0.55)]" />
@@ -676,8 +676,12 @@ export default function SignupPage() {
                   <h1 className="signup-welcome-title font-welcome-heading text-xl sm:text-2xl font-semibold text-center mb-3 sm:mb-2.5 lg:mb-4 w-[120px] sm:w-[140px] lg:w-[180px]">
                     WELCOME
                   </h1>
-                  <div className="bg-white w-[120px] sm:w-[140px] lg:w-[180px] h-[44px] sm:h-[52px] lg:h-[64px] rounded-[50%] flex items-center justify-center shadow-lg overflow-hidden shrink-0">
-                    <img src={assetPath("/stackly-logo.webp")} alt="Stackly Logo" className="h-3.5 sm:h-4 lg:h-7 object-contain" />
+                  <div className="bg-white w-[130px] h-[48px] sm:w-[160px] sm:h-[56px] lg:w-[190px] lg:h-[66px] rounded-[50%] flex items-center justify-center shadow-lg overflow-hidden shrink-0 px-3 py-1.5">
+                    <img
+                      src={assetPath("/stackly-logo.webp")}
+                      alt="Stackly Logo"
+                      className="w-auto h-[62%] sm:h-[65%] lg:h-[68%] max-w-[80%] object-contain"
+                    />
                   </div>
                 </div>
 
@@ -685,10 +689,12 @@ export default function SignupPage() {
                   <div className="space-y-3 sm:space-y-2.5 lg:space-y-2.5 flex-shrink-0">
                     <div className="flex flex-col">
                       <div className="flex items-center border-b border-white/80 pb-2">
-                        <FaUser className="mr-3 text-sm text-white/90" />
+                        <FaUser className="mr-3 text-sm text-white/90" aria-hidden="true" />
                         <input
+                          id="signup-name"
                           type="text"
                           placeholder="Name"
+                          aria-label="Name"
                           value={form.name}
                           onChange={handleChange("name")}
                           onBlur={handleNameBlur}
@@ -708,13 +714,15 @@ export default function SignupPage() {
 
                     <div className="flex flex-col">
                       <div className="flex items-center border-b border-white/80 pb-2">
-                        <FaEnvelope className="mr-3 text-sm text-white/90" />
+                        <FaEnvelope className="mr-3 text-sm text-white/90" aria-hidden="true" />
                         <input
+                          id="signup-email"
                           type="text"
                           inputMode="email"
                           autoComplete="email"
                           spellCheck={false}
                           placeholder="Email"
+                          aria-label="Email"
                           value={form.email}
                           onChange={handleChange("email")}
                           onBlur={handleEmailBlur}
@@ -734,7 +742,7 @@ export default function SignupPage() {
 
                     <div className="flex flex-col">
                       <div className="signup-phone-row flex items-center border-b border-white/80 pb-2 min-w-0">
-                        <FaPhone className="signup-phone-icon mr-3 shrink-0 text-sm text-white/90" />
+                        <FaPhoneAlt className="signup-phone-icon mr-3 shrink-0 text-sm text-white/90" aria-hidden="true" />
                         <div className="signup-phone-fields flex min-w-0 flex-1 items-center gap-2">
                           <div
                             className="signup-country-select relative z-20 w-fit max-lg:max-w-[7.25rem] max-w-[200px] shrink-0 min-w-0"
@@ -851,6 +859,7 @@ export default function SignupPage() {
                           </div>
                           <input
                             ref={mobileInputRef}
+                            id="signup-mobile"
                             type="tel"
                             inputMode="numeric"
                             maxLength={
@@ -858,6 +867,7 @@ export default function SignupPage() {
                                 .maxDigits
                             }
                             placeholder="Mobile number"
+                            aria-label="Mobile number"
                             value={form.mobileNumber}
                             onChange={handleChange("mobileNumber")}
                             onBlur={handleMobileBlur}
@@ -876,10 +886,12 @@ export default function SignupPage() {
 
                     <div className="flex flex-col">
                       <div className="flex items-center border-b border-white/80 pb-2 relative">
-                        <FaLock className="mr-3 text-sm text-white/90 flex-shrink-0" />
+                        <FaLock className="mr-3 text-sm text-white/90 flex-shrink-0" aria-hidden="true" />
                         <input
+                          id="signup-password"
                           type={showPassword ? "text" : "password"}
                           placeholder="Password"
+                          aria-label="Password"
                           value={form.password}
                           onChange={handleChange("password")}
                           onBlur={handlePasswordBlur}
@@ -911,10 +923,12 @@ export default function SignupPage() {
 
                     <div className="flex flex-col">
                       <div className="flex items-center border-b border-white/80 pb-2 relative">
-                        <FaLock className="signup-confirm-icon mr-3 text-sm text-white/90 flex-shrink-0" />
+                        <FaLock className="signup-confirm-icon mr-3 text-sm text-white/90 flex-shrink-0" aria-hidden="true" />
                         <input
+                          id="signup-confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm Password"
+                          aria-label="Confirm Password"
                           value={form.confirmPassword}
                           onChange={handleChange("confirmPassword")}
                           onBlur={handleConfirmPasswordBlur}
@@ -965,7 +979,7 @@ export default function SignupPage() {
                 </form>
 
                 <div className="flex-shrink-0 mt-1 lg:mt-0.5">
-                  <p className="text-center text-xs mt-1 lg:mt-0.5 mb-1.5 lg:mb-2 text-white/80">
+                  <p className="text-center text-sm mt-1 lg:mt-0.5 mb-1.5 lg:mb-2 text-white/90">
                     Already have an account?{" "}
                     <Link href="/login" className="text-amber-300 hover:text-amber-200 font-medium">
                       Login
@@ -983,10 +997,10 @@ export default function SignupPage() {
           </div>
 
           {/* Illustration below on mobile, left on desktop */}
-          <div className="auth-image-col w-full lg:w-1/2 flex justify-center order-2 lg:order-1 mt-6 sm:mt-8 lg:mt-0">
+          <div className="auth-image-col hidden lg:flex w-full lg:w-1/2 justify-center order-2 lg:order-1 mt-6 sm:mt-8 lg:mt-0">
             <img
               src={assetPath("/illustration2.webp")}
-              alt="Illustration"
+              alt="Website creation illustration showing a user designing website layouts"
               className="auth-image w-[80%] sm:w-[80%] lg:w-[88%] max-w-[520px] object-contain"
             />
           </div>

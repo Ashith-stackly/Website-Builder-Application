@@ -22,6 +22,31 @@ function AuthSessionProviderInner({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      const token = getAuthToken();
+      const path = window.location.pathname.replace(/\/+$/, "") || "/";
+      if (!token && isProtectedAuthPath(path)) {
+        window.location.replace("/login");
+      }
+    };
+
+    const handlePopState = () => {
+      const token = getAuthToken();
+      const path = window.location.pathname.replace(/\/+$/, "") || "/";
+      if (!token && isProtectedAuthPath(path)) {
+        window.location.replace("/login");
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!bootstrapped) return;
 
     const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;

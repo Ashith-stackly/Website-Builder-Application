@@ -115,7 +115,7 @@ export function billingHistoryEntryToInvoicePayload(
 ): PlanningInvoicePayload {
   const amountNum = parseUsdAmount(entry.amount);
   const website = entry.websiteLabel ?? "Stackly workspace subscription";
-  const planCol = entry.planTier ?? entry.planName ?? (entry.status === "Free" ? "Free" : "Pro");
+  const planCol = entry.planName ?? entry.planTier ?? (entry.status === "Free" ? "Free" : "Pro");
   const currencyLine = entry.amount && (entry.amount.includes("₹") || entry.amount.includes("$"))
     ? entry.amount
     : formatUsd(amountNum);

@@ -10,10 +10,6 @@ import {
 } from "@/lib/resetFlowValidation";
 import ResetFlowBackButton from "@/components/ResetFlowBackButton";
 import AuthBackgroundSvg from "@/components/AuthBackgroundSvg";
-import {
-  handleResetFlowInputFocus,
-  handleResetFlowInputMouseDown,
-} from "@/lib/resetFlowInputHandlers";
  
 const resetFlowCardStyle = {
   background:
@@ -41,11 +37,36 @@ function CreateNewPasswordContent() {
   useEffect(() => {
     document.documentElement.classList.add("auth-visible");
     document.body.classList.add("auth-visible");
+ 
+    const token = window.sessionStorage.getItem("stackly-reset-token");
+    if (!token) {
+      router.replace("/login");
+    }
+ 
+    const handlePopState = () => {
+      const t = window.sessionStorage.getItem("stackly-reset-token");
+      if (!t) {
+        window.location.replace("/login");
+      }
+    };
+ 
+    const handlePageShow = () => {
+      const t = window.sessionStorage.getItem("stackly-reset-token");
+      if (!t) {
+        window.location.replace("/login");
+      }
+    };
+ 
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("pageshow", handlePageShow);
+ 
     return () => {
       document.documentElement.classList.remove("auth-visible");
       document.body.classList.remove("auth-visible");
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("pageshow", handlePageShow);
     };
-  }, []);
+  }, [router]);
  
   const requirementText =
     "Password must be 8-60 characters and include uppercase, lowercase, number, and symbol.";
@@ -103,6 +124,7 @@ function CreateNewPasswordContent() {
     const token = window.sessionStorage.getItem("stackly-reset-token");
     if (!token) {
       setError("Verification session expired. Please verify OTP again.");
+      router.replace("/login");
       return;
     }
  
@@ -118,8 +140,8 @@ function CreateNewPasswordContent() {
         result.message || "Password reset successfully."
       );
       setTimeout(() => {
-        router.push("/login");
-      }, 2500);
+        router.replace("/login");
+      }, 2000);
     } catch (err) {
       if (isApiConnectionError(err)) {
         router.push("/backend-error");
@@ -136,11 +158,11 @@ function CreateNewPasswordContent() {
       <AuthBackgroundSvg />
       <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-1 flex-col lg:flex-none lg:flex-row items-stretch lg:items-center justify-start lg:justify-center gap-0 lg:gap-12 auth-layout">
         <ResetFlowBackButton onClick={() => router.push("/verified")} />
-        <div className="reset-flow-illustration hidden lg:flex w-full lg:w-1/2 items-center justify-center order-2 lg:order-1">
+        <div className="auth-image-col hidden lg:flex w-full lg:w-1/2 justify-center order-2 lg:order-1 mt-6 sm:mt-8 lg:mt-0">
           <img
             src={assetPath("/new1.webp")}
-            alt="Create new password"
-            className="w-[85%] sm:w-[100%] lg:w-[100%] max-w-[680px] object-contain"
+            alt="Illustration of a user setting up a new secure password"
+            className="auth-image w-[80%] sm:w-[70%] lg:w-[90%] max-w-[550px] object-contain"
           />
         </div>
         {/* Right: Create New Password form card */}
@@ -152,6 +174,8 @@ function CreateNewPasswordContent() {
             <h1
               className="text-[20px] sm:text-[24px] font-bold text-center mb-6"
               style={{ color: "#FFFFFF" }}
+              role="heading"
+              aria-level={1}
             >
               Create New Password
             </h1>
@@ -172,8 +196,6 @@ function CreateNewPasswordContent() {
                     minLength={PASSWORD_MIN_LENGTH}
                     maxLength={PASSWORD_MAX_LENGTH}
                     onChange={(e) => applyPasswordInput(e.target.value, setNewPassword)}
-                    onFocus={handleResetFlowInputFocus}
-                    onMouseDown={handleResetFlowInputMouseDown}
                     aria-invalid={!!error}
                     aria-describedby={error ? "create-password-error" : undefined}
                     className="reset-flow-input w-full h-12 pl-4 pr-12 rounded border text-[14px] outline-none focus:border-white/80 transition bg-transparent"
@@ -220,8 +242,6 @@ function CreateNewPasswordContent() {
                     onChange={(e) =>
                       applyPasswordInput(e.target.value, setConfirmPassword)
                     }
-                    onFocus={handleResetFlowInputFocus}
-                    onMouseDown={handleResetFlowInputMouseDown}
                     aria-invalid={!!error}
                     aria-describedby={error ? "create-password-error" : undefined}
                     className="reset-flow-input w-full h-12 pl-4 pr-12 rounded border text-[14px] outline-none focus:border-white/80 transition bg-transparent"
@@ -262,12 +282,15 @@ function CreateNewPasswordContent() {
                   className="text-[12px] mt-2"
                   style={{ color: "#ff6b6b" }}
                   role="alert"
+                  aria-live="assertive"
                 >
                   {error}
                 </p>
               )}
               {message && (
                 <p
+                  role="status"
+                  aria-live="polite"
                   className="text-[13px] text-left font-medium mt-2"
                   style={{ color: "#22c55e" }}
                 >
