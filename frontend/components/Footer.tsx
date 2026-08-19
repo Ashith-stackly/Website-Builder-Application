@@ -269,7 +269,7 @@ export default function Footer() {
           >
             {/* Column 1: Brand */}
             <motion.div className="flex flex-col items-start" variants={footerItem}>
-              <Link href="../landing" className="mb-4 inline-flex items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105">
+              <Link href="/landing" className="mb-4 inline-flex items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105 cursor-pointer">
                 <img src={assetPath("/stackly-logo.webp")} alt="Stackly Logo" className="stackly-footer-logo h-5 w-auto object-contain" />
               </Link>
               <p className="mb-4 max-w-[215px] text-[11px] font-bold uppercase leading-relaxed tracking-tight text-white/70">

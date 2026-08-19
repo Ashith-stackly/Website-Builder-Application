@@ -50,72 +50,16 @@ import { LOGOUT_PRESERVED_STORAGE_KEYS } from "@/lib/rememberLogin";
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
  
 const navCategories = [
-  {
-    title: "LANDING PAGE",
-    label: "TYPES",
-    icon: FaBookOpen,
-    items: ["Lead Generating Page", "Click-through Page", "Sales Page", "Product Page", "App Page", "Pre-launch Page", "Event Page", "Splash Page", "Others..."],
-  },
-  {
-    title: "DASHBOARD",
-    label: "STYLES",
-    icon: FaChartLine,
-    items: ["Admin Analytics", "Overview", "User Profile", "Sales", "Marketing", "Finance"],
-  },
-  {
-    title: "PORTFOLIO",
-    label: "CREATIVES",
-    icon: FaBriefcase,
-    items: ["Designer", "Developer", "Agency", "Minimal", "Personal", "Freelancer", "Others"],
-  },
-  {
-    title: "RESTAURANT",
-    label: "RESTAURANTS",
-    icon: FaUtensils,
-    items: ["Burger House", "Pizza Corner", "Fresh & Natural", "Restaurant Stories", "Others"],
-  },
-  {
-    title: "TRAVEL",
-    label: "DESTINATIONS",
-    icon: FaPlane,
-    items: ["Adventure", "Luxury", "Leisure", "Solo Trip", "Family", "Group", "Others"],
-  },
-  {
-    title: "REAL ESTATE",
-    label: "PROPERTIES",
-    icon: FaHouseChimney,
-    items: ["Luxury & Premium", "General", "Commercial", "Residential", "Vacation/Rental", "Modern & Startup", "Portal", "Others"],
-  },
-  {
-    title: "HOTEL",
-    label: "STAY",
-    icon: FaHotel,
-    items: ["Resort & Vacation", "Luxury & Premium Style", "Nature & Eco", "Modern & Business", "Boutique & Unique", "Budget & Simple", "Others"],
-  },
-  {
-    title: "BLOG",
-    label: "TOPICS",
-    icon: FaPenNib,
-    items: ["Corporate", "Travel & Life", "Restaurant & Health", "Modern News", "Finance", "Education", "Portfolio", "Minimal", "Others"],
-  },
-  {
-    title: "EDUCATION",
-    label: "LEARNING",
-    icon: FaGraduationCap,
-    items: ["EduSpark", "LearnSphere", "Bright Future", "Skillbridge", "NextGen", "Others"],
-  },
-  {
-    title: "NEWSPAPER",
-    label: "NEWS DESK",
-    icon: FaNewspaper,
-    items: ["Daily Pulse", "Global Times", "NextWave", "The Update Hub", "Prime Report", "Headline Express", "Insight News", "Others"],
-  },
-  {
-    title: "PHOTOGRAPHY",
-    label: "GALLERY",
-    icon: FaCamera,
-    items: ["Wedding", "Baby & Kids", "Fashion", "Studio Personal", "General/Portfolio", "Travel", "Event", "Restaurant", "Studio/Personal", "Others"],
-  },
+  { title: "LANDING PAGE", path: "/landing", icon: FaBookOpen },
+  { title: "DASHBOARD", path: "/dashboard", icon: FaChartLine },
+  { title: "PORTFOLIO", path: "/portfolio", icon: FaBriefcase },
+  { title: "RESTAURANT", path: "/restaurant", icon: FaUtensils },
+  { title: "TRAVEL", icon: FaPlane },
+  { title: "REAL ESTATE", path: "/construction", icon: FaHouseChimney },
+  { title: "HOTEL", icon: FaHotel },
+  { title: "BLOG", path: "/blog", icon: FaPenNib },
+  { title: "EDUCATION", icon: FaGraduationCap },
+  { title: "PHOTOGRAPHY", icon: FaCamera },
 ];
  
 const HEADER_SPRING = { type: "spring" as const, stiffness: 320, damping: 30, mass: 0.9 };
@@ -602,7 +546,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     window.localStorage.setItem("cartItems", JSON.stringify(next));
     window.localStorage.setItem("cartCount", String(nextCount));
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
-    showCartToast("Removed from cart successfully");
+    showCartToast(`${title} removed from cart`);
   };
  
   const updateCartQuantity = (title: string, change: -1 | 1) => {
@@ -735,7 +679,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     clearLogoutStorage(window.localStorage);
     clearLogoutStorage(window.sessionStorage);
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
-    router.replace("/login");
+    router.push("/login");
   }, [router]);
 
   const navLockedVisible = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || isSearchPanelOpen || Boolean(activePanel);
@@ -820,27 +764,30 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                 <MotionNavItem>CATEGORIES</MotionNavItem> <FaChevronDown className={`text-[10px] transition-transform ${activeMenu === "categories" ? "rotate-180" : ""}`} />
               </button>
               <AnimatePresence>{activeMenu === "categories" && (<motion.div key="categories-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-[200px] rounded-xl border border-gray-100 bg-white py-2 shadow-2xl">
-                {navCategories.map(({ title, label, icon: Icon, items }) => (
-                  <div key={title} className="group/category relative">
-                    <Link href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="flex items-center justify-between border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition group-hover/category:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                      <span className="flex items-center gap-2">
-                        <Icon className="w-4 opacity-50" />
-                        {title}
-                      </span>
-                      <FaChevronRight className="text-[8px] opacity-30 transition group-hover/category:opacity-100" />
-                    </Link>
-                    <div className={`invisible absolute left-full z-[110] w-[220px] rounded-r-xl border border-gray-100 bg-gray-50 opacity-0 shadow-[10px_0_30px_rgba(0,0,0,0.10)] transition group-hover/category:visible group-hover/category:opacity-100 group-focus-within/category:visible group-focus-within/category:opacity-100 max-h-[300px] overflow-y-auto ${
-                      ["BLOG", "EDUCATION", "NEWSPAPER", "PHOTOGRAPHY"].includes(title) ? "bottom-0" : "top-0"
-                    }`}>
-                      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-5 py-3 text-[11px] font-black text-blue-600">{label}</div>
-                      {items.map((categoryItem) => (
-                        <Link key={`${title}-${categoryItem}`} href="/landing#categories" onClick={(event) => { closeMenus(); scrollLandingSection(event, "categories"); }} className="block border-b border-black/[0.03] px-5 py-2.5 text-[10px] font-extrabold uppercase text-slate-700 transition hover:bg-blue-50 hover:pl-6 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                          {categoryItem}
+                {navCategories.map(({ title, path, icon: Icon }) => {
+                  const content = (
+                    <>
+                      <Icon className="w-4 opacity-50" />
+                      {title}
+                    </>
+                  );
+                  if (path) {
+                    return (
+                      <div key={title} className="group/category relative">
+                        <Link href={path} onClick={closeMenus} className="flex items-center gap-2 border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                          {content}
                         </Link>
-                      ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={title} className="group/category relative">
+                      <div className="flex items-center gap-2 border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-400 select-none">
+                        {content}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </motion.div>)}</AnimatePresence>
             </div>
  
@@ -993,16 +940,16 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                   <div className="mb-1 border-b border-gray-50 px-4 py-2">
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">User Menu</p>
                   </div>
-                  <Link href="/dashboard/settings#profile-settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                  <Link href="/dashboard" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
                     <FaCircleUser className="w-4 opacity-50" />
                     ACCOUNT
                   </Link>
-                  <Link href="/dashboard/settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600">
+                  <Link href="/dashboard/settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
                     <FaGear className="w-4 opacity-50" />
                     SETTINGS
                   </Link>
                   <div className="mt-1 border-t border-gray-50">
-                    <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[11px] font-black text-red-500 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:bg-red-50">
+                    <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[11px] font-black text-red-500 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:bg-red-50 cursor-pointer">
                       <FaRightFromBracket className="w-4" />
                       LOGOUT
                     </button>
@@ -1011,7 +958,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                     <Link
                       href="/planning"
                       onClick={closeMenus}
-                      className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100"
+                      className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
                     >
                       <FaLayerGroup className="w-4 opacity-80" />
                       SUBSCRIPTIONS
@@ -1125,28 +1072,35 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                 <FaPlus className={`text-[8px] transition-transform ${mobileSection === "categories" ? "rotate-45" : ""}`} />
               </button>
               {mobileSection === "categories" && (
-                <div className="border-b border-white/5 bg-[#06224C]">
-                  {navCategories.map(({ title, icon: Icon, items }) => (
-                    <div key={`mobile-${title}`}>
-                      <button
-                        type="button"
-                        onClick={() => setMobileCategory((category) => (category === title ? null : title))}
-                        className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15"
+                <div className="border-b border-white/5 bg-[#06224C] py-1">
+                  {navCategories.map(({ title, path, icon: Icon }) => {
+                    const content = (
+                      <>
+                        <Icon className="opacity-70 w-4" />
+                        {title}
+                      </>
+                    );
+                    if (path) {
+                      return (
+                        <Link
+                          key={`mobile-${title}`}
+                          href={path}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex w-full items-center gap-3 px-8 py-3.5 text-left text-[11px] font-black text-gray-300 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:bg-white/10"
+                        >
+                          {content}
+                        </Link>
+                      );
+                    }
+                    return (
+                      <div
+                        key={`mobile-${title}`}
+                        className="flex w-full items-center gap-3 px-8 py-3.5 text-left text-[11px] font-black text-gray-500 select-none"
                       >
-                        <span className="flex items-center gap-3"><Icon className="opacity-70" /> {title}</span>
-                        <FaPlus className={`text-[8px] transition-transform ${mobileCategory === title ? "rotate-45" : ""}`} />
-                      </button>
-                      {mobileCategory === title && (
-                        <div className="border-b border-white/5 bg-[#051a3d] py-2">
-                          {items.map((item) => (
-                            <Link key={`mobile-${title}-${item}`} href="/landing#categories" onClick={(event) => scrollLandingSection(event, "categories", true)} className="block px-14 py-3 text-[10px] text-gray-300 focus-visible:outline-none focus-visible:bg-white/10 focus-visible:text-white">
-                          {item}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        {content}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </motion.div>
@@ -1332,7 +1286,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                 type="button"
                 disabled={paymentLoading || cartItems.length === 0}
                 onClick={handleCheckoutClick}
-                className="flex w-full items-center justify-center rounded-xl bg-[#06224C] px-4 py-2.5 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-white shadow-md transition hover:bg-blue-900 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex w-full items-center justify-center rounded-xl bg-[#06224C] px-4 py-2.5 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-white shadow-md transition hover:bg-blue-900 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {paymentLoading ? "Processing..." : "Checkout Now"}
               </button>

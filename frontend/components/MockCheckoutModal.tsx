@@ -51,7 +51,7 @@ export default function MockCheckoutModal({
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition p-1"
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition p-1 cursor-pointer"
               aria-label="Close Checkout"
             >
               <FaXmark className="text-xl" />
@@ -109,7 +109,7 @@ export default function MockCheckoutModal({
             <button
               type="button"
               onClick={onSuccess}
-              className="w-full mt-6 py-4 bg-[#06224C] hover:bg-blue-900 text-white font-extrabold text-base rounded-2xl shadow-lg shadow-blue-500/10 transition active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+              className="w-full mt-6 py-4 bg-[#06224C] hover:bg-blue-900 text-white font-extrabold text-base rounded-2xl shadow-lg shadow-blue-500/10 transition active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 cursor-pointer"
             >
               Pay Now
             </button>

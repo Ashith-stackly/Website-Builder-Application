@@ -132,7 +132,7 @@ export default function AboutPage() {
                 </p>
                 <div className="flex flex-wrap items-center gap-4 pt-4">
                   {/* ADDED FOCUS RING */}
-                  <Link href="/products" className="bg-[#0A2357] text-white px-8 py-3.5 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-900 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EAF1FA]">
+                  <Link href="/landing#templates" className="bg-[#0A2357] text-white px-8 py-3.5 rounded-lg text-sm font-bold shadow-lg hover:bg-blue-900 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#EAF1FA] cursor-pointer">
                     Explore Our Products
                   </Link>
                   {/* ADDED FOCUS RING */}
@@ -190,7 +190,7 @@ export default function AboutPage() {
                 </p>
                 {/* ADDED FOCUS RING */}
                 <button aria-label="Read more about our story" className="text-blue-600 hover:text-blue-800 transition rounded-md p-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-700 focus-visible:ring-offset-2">
-                  <FaArrowRight />
+                  
                 </button>
               </motion.div>
 

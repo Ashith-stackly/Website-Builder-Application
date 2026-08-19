@@ -30,7 +30,7 @@ const INITIAL_FORM: ContactPayload = {
 };
 
 /** Standard email regex for client-side validation */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
 
 // ── Component ──────────────────────────────────────────────────────────
 
@@ -74,15 +74,29 @@ const ContactSection = () => {
     if (name === 'firstName' || name === 'lastName') {
       const onlyLetters = value.replace(/[^A-Za-z]/g, '');
       setFormData({ ...formData, [name]: onlyLetters });
+      if (name === 'firstName') {
+        if (onlyLetters.trim() && onlyLetters.trim().length < 2) {
+          setErrors((prev) => ({ ...prev, firstName: 'First Name must be at least 2 characters.' }));
+        } else {
+          setErrors((prev) => ({ ...prev, firstName: '' }));
+        }
+      }
       return;
     }
 
-    setFormData({ ...formData, [name]: value });
+    let nextValue = value;
+    if (name === 'email') {
+      nextValue = value.replace(/^\s+/, "");
+    }
+
+    setFormData({ ...formData, [name]: nextValue });
 
     // Live Email Validation
     if (name === 'email') {
-      if (value && !EMAIL_REGEX.test(value)) {
-        setErrors({ ...errors, email: 'Please type in valid format (e.g: ranade@gmail.com)' });
+      if (nextValue.endsWith(" ")) {
+        setErrors({ ...errors, email: 'Email address cannot contain trailing spaces.' });
+      } else if (nextValue && !EMAIL_REGEX.test(nextValue)) {
+        setErrors({ ...errors, email: 'Please enter a valid email address (e.g., ranade@gmail.com)' });
       } else {
         setErrors({ ...errors, email: '' });
       }
@@ -101,14 +115,26 @@ const ContactSection = () => {
       return false;
     }
 
+    if (firstName.trim().length < 2) {
+      setErrors((prev) => ({ ...prev, firstName: 'First Name must be at least 2 characters.' }));
+      setSubmitError('First Name must be at least 2 characters.');
+      return false;
+    }
+
+    if (email.endsWith(" ")) {
+      setErrors((prev) => ({ ...prev, email: 'Email address cannot contain trailing spaces.' }));
+      setSubmitError('Email address cannot contain trailing spaces.');
+      return false;
+    }
+
     // Step 5: Email format check
     if (!EMAIL_REGEX.test(email)) {
-      setSubmitError('Please enter a valid email address.');
+      setSubmitError('Please enter a valid email address (e.g., ranade@gmail.com)');
       return false;
     }
 
     // Also bail out if there is still an inline email error visible
-    if (errors.email) {
+    if (errors.email || errors.firstName) {
       return false;
     }
 
@@ -186,10 +212,10 @@ const ContactSection = () => {
                 <span className="uppercase tracking-[0.2em] text-xs">Contact</span>
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#06224C] leading-[1.1] tracking-tight">
-                Let&apos;s Get In Touch.
+                Let&apos;s Get In Touch
               </h2>
               <p className="text-gray-600 text-base sm:text-lg font-medium">
-                Or simply reach out directly to
+                Or simply reach out to us directly
               </p>
             </motion.div>
 
@@ -232,7 +258,7 @@ const ContactSection = () => {
 
             {/* Social Links */}
             <motion.div className="pt-4" variants={fadeUp}>
-              <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-4">Social Media hereby :</p>
+              <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-4">Follow Us on Social Media :</p>
               <div className="flex flex-wrap gap-3">
                 {socialLinks.map((social) => {
                   const Icon = social.icon;
@@ -289,7 +315,8 @@ const ContactSection = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">First Name <span className="text-red-500 font-bold">*</span></label>
-                  <input name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:bg-white outline-none transition-all" />
+                  <input name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className={`w-full bg-gray-50 border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} rounded-xl px-4 py-3 text-sm focus:border-blue-500 focus:bg-white outline-none transition-all`} />
+                  {errors.firstName && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.firstName}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Last Name <span className="text-red-500 font-bold">*</span></label>
@@ -299,30 +326,36 @@ const ContactSection = () => {
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Email Address <span className="text-red-500 font-bold">*</span></label>
-                <input name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="test@gmail.com" required className={`w-full bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl px-4 py-3 text-sm focus:border-blue-400 focus:bg-white outline-none transition-all`} />
+                <input
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === " ") {
+                      if (e.currentTarget.selectionStart === 0 || e.currentTarget.value === "") {
+                        e.preventDefault();
+                      }
+                    }
+                  }}
+                  placeholder="test@gmail.com"
+                  required
+                  className={`w-full bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl px-4 py-3 text-sm focus:border-blue-400 focus:bg-white outline-none transition-all`}
+                />
                 {errors.email && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.email}</p>}
               </div>
 
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-black text-[#06224C] uppercase tracking-widest">Message <span className="text-red-500 font-bold">*</span></label>
-                <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 text-sm focus:border-blue-400 focus:bg-white outline-none resize-none transition-all"></textarea>
+                <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell us about your project..." required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 text-sm focus:border-blue-400 focus:bg-white outline-none resize-none transition-all"></textarea>
               </div>
 
               {/* Submit button — shows loading state & is disabled while request is in-flight */}
-              <motion.button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full bg-[#06224C] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-lg ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-900'}`}
-                whileHover={isLoading ? {} : { scale: 1.02 }}
-                whileTap={isLoading ? {} : { scale: 0.98 }}
-              >
-                {isLoading ? (
-                  <>Sending...</>
-                ) : (
-                  <>Send Message <FaPaperPlane className="text-[10px]" aria-hidden="true" /></>
-                )}
-              </motion.button>
+              <button type="submit" className="cursor-pointer flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98]">
+                            <span>Send Message</span>
+                            <FaPaperPlane className="text-[10px] shrink-0" aria-hidden="true" />
+                          </button>
             </form>
           </motion.div>
         </div>

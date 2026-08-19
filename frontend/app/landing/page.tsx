@@ -200,18 +200,21 @@ const features = [
     title: "Sections",
     description: "Design your website content using ready-made layout options with more than 100 professionally crafted designs.",
     image: "/landing-optimized/sections.webp",
+    alt: "A website interface preview showing a layout of modern columns, blocks of text, and customizable content blocks.",
     quote: "Present your work in a visually impressive and engaging way.",
   },
   {
     title: "Shapers",
     description: "Enhance your website with abstract-style layouts and unique shape-based designs.",
     image: "/shapers.webp",
+    alt: "A website interface preview showing geometric backgrounds, soft curved shapes, and creative header borders.",
     quote: "Shape-based layouts make your site feel creative, polished, and professional.",
   },
   {
     title: "Widgets",
     description: "Deliver a more interactive browsing experience using fixed and scroll-based visual features.",
     image: "/landing-optimized/dynamic.webp",
+    alt: "A website interface preview displaying dynamic components such as floating music player widgets and interactive elements.",
     quote: "Interactive backgrounds create a stylish and captivating browsing experience.",
   },
 ];
@@ -281,6 +284,7 @@ function LandingContactSection() {
     message: "",
   });
   const [emailError, setEmailError] = useState("");
+  const [firstNameError, setFirstNameError] = useState("");
 
   const socialLinks = [
     { icon: FaFacebookF, color: "text-[#1877F2]", label: "Facebook", url: "https://www.facebook.com/thestackly/" },
@@ -293,26 +297,50 @@ function LandingContactSection() {
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
-    const nextValue = name === "firstName" || name === "lastName" ? value.replace(/[^A-Za-z]/g, "") : value;
+    let nextValue = name === "firstName" || name === "lastName" ? value.replace(/[^A-Za-z]/g, "") : value;
+
+    if (name === "email") {
+      nextValue = value.replace(/^\s+/, "");
+    }
 
     setFormData((current) => ({ ...current, [name]: nextValue }));
 
+    if (name === "firstName") {
+      setFirstNameError(nextValue.trim() && nextValue.trim().length < 2 ? "First Name must be at least 2 characters." : "");
+    }
+
     if (name === "email") {
       const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
-      setEmailError(value && !emailRegex.test(value.trim()) ? "Please enter a valid email address (e.g., ranade@gmail.com)" : "");
+      if (nextValue.endsWith(" ")) {
+        setEmailError("Email address cannot contain trailing spaces.");
+      } else if (nextValue && !emailRegex.test(nextValue)) {
+        setEmailError("Please enter a valid email address (e.g., ranade@gmail.com)");
+      } else {
+        setEmailError("");
+      }
     }
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (!formData.firstName || formData.firstName.trim().length < 2) {
+      setFirstNameError("First Name must be at least 2 characters.");
+      return;
+    }
+
+    if (formData.email.endsWith(" ")) {
+      setEmailError("Email address cannot contain trailing spaces.");
+      return;
+    }
+
     const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
-    if (!formData.email || !emailRegex.test(formData.email.trim())) {
+    if (!formData.email || !emailRegex.test(formData.email)) {
       setEmailError("Please enter a valid email address (e.g., ranade@gmail.com)");
       return;
     }
 
-    if (!emailError && formData.email) {
+    if (!emailError && !firstNameError && formData.email && formData.firstName) {
       alert("Message Sent Successfully!");
       setFormData({
         firstName: "",
@@ -321,6 +349,7 @@ function LandingContactSection() {
         message: "",
       });
       setEmailError("");
+      setFirstNameError("");
     }
   };
 
@@ -338,7 +367,7 @@ function LandingContactSection() {
               Let&apos;s Get In Touch
             </h2>
             <p className="text-base font-medium text-gray-600 sm:text-lg">
-              Or simply reach out directly to
+              or Simply reach out to us directly
             </p>
           </div>
 
@@ -365,7 +394,7 @@ function LandingContactSection() {
           </div>
 
           <div className="pt-4">
-            <p className="mb-4 text-[10px] font-black uppercase tracking-widest text-blue-600">Social Media hereby :</p>
+            <p className="mb-4 text-[10px] font-black uppercase tracking-widest text-blue-600">Follow Us on Social Media :</p>
             <div className="flex flex-wrap gap-3">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
@@ -390,7 +419,8 @@ function LandingContactSection() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <label className="space-y-2">
                 <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">First Name <span className="text-red-500">*</span></span>
-                <input name="firstName" type="text" maxLength={50} value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white" />
+                <input name="firstName" type="text" maxLength={50} value={formData.firstName} onChange={handleInputChange} placeholder="First Name" required className={`w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white ${firstNameError ? "border-red-500" : "border-gray-200"}`} />
+                {firstNameError && <span className="block text-[10px] font-bold text-red-500">{firstNameError}</span>}
               </label>
               <label className="space-y-2">
                 <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Last Name <span className="text-red-500">*</span></span>
@@ -400,7 +430,23 @@ function LandingContactSection() {
 
             <label className="block space-y-2">
               <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Email Address <span className="text-red-500">*</span></span>
-              <input name="email" type="email" maxLength={254} value={formData.email} onChange={handleInputChange} placeholder="test@gmail.com" required className={`w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white ${emailError ? "border-red-500" : "border-gray-200"}`} />
+              <input
+                name="email"
+                type="email"
+                maxLength={254}
+                value={formData.email}
+                onChange={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === " ") {
+                    if (e.currentTarget.selectionStart === 0 || e.currentTarget.value === "") {
+                      e.preventDefault();
+                    }
+                  }
+                }}
+                placeholder="test@gmail.com"
+                required
+                className={`w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:bg-white ${emailError ? "border-red-500" : "border-gray-200"}`}
+              />
               {emailError && <span className="block text-[10px] font-bold text-red-500">{emailError}</span>}
             </label>
 
@@ -408,10 +454,10 @@ function LandingContactSection() {
 
             <label className="block space-y-2">
               <span className="block text-[10px] font-black uppercase tracking-widest text-[#06224C]">Message <span className="text-red-500">*</span></span>
-              <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell me about your project..." required className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white" />
+              <textarea name="message" rows={4} value={formData.message} onChange={handleInputChange} placeholder="Tell us about your project..." required className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white" />
             </label>
 
-            <button type="submit" className="cursor-pointer flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98]">
+            <button type="submit" className="cursor-pointer flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2">
               <span>Send Message</span>
               <FaPaperPlane className="text-[10px] shrink-0" aria-hidden="true" />
             </button>
@@ -440,7 +486,7 @@ export default function Home() {
       sessionStorage.setItem("landing-active-filter", activeFilter);
     }
   }, [activeFilter, isFilterMounted]);
-  const [activeFeature, setActiveFeature] = useState(0);
+  const [activeFeature, setActiveFeature] = useState<number | null>(0);
   const [openFaq, setOpenFaq] = useState(-1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -706,7 +752,7 @@ export default function Home() {
     ].some((value) => value.toLowerCase().includes(normalizedSearch))),
     [normalizedSearch],
   );
-  const selectedFeature = features[activeFeature];
+  const selectedFeature = features[activeFeature !== null ? activeFeature : 0];
 
   useEffect(() => {
     if (!hasLoadedWishlist) {
@@ -1127,7 +1173,7 @@ export default function Home() {
 
           <motion.button
             onClick={() => router.push("/aboutus")}
-            className="cursor-pointer inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95"
+            className="cursor-pointer inline-flex items-center justify-center gap-3 rounded-xl bg-[#0A2357] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:bg-blue-900 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
             variants={fadeUp}
             whileHover={{ scale: 1.04, filter: "brightness(1.08)" }}
             whileTap={{ scale: 0.98 }}
@@ -1204,7 +1250,7 @@ export default function Home() {
       <section id="top-selling" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
         <SectionHeading>Top Selling This Week</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
-        <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+        <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {visibleTopProducts.map((product) => {
             const currentRating = productRatings[product.title] !== undefined
               ? productRatings[product.title]
@@ -1222,7 +1268,7 @@ export default function Home() {
             const isWishlisted = wishlistItems.some((item) => item.title === product.title);
 
             return (
-              <motion.article key={product.title} className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={scaleIn} whileHover={softHover}>
+              <motion.article key={product.title} className="group flex flex-col h-full rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-2xl" variants={scaleIn} whileHover={softHover}>
                 <div className="mb-5 h-52 overflow-hidden rounded-[1.5rem] bg-gray-50">
                   <img src={assetPath(product.image)} alt={product.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                 </div>
@@ -1270,7 +1316,9 @@ export default function Home() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setActiveFilter(filter.value)}
-                  className={`cursor-pointer inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${active
+                  className={`cursor-pointer inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${
+                    filter.value === "all" ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2" : ""
+                  } ${active
                     ? "border-[#06224C] bg-[#06224C] text-white"
                     : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
                     }`}
@@ -1419,7 +1467,7 @@ export default function Home() {
                             checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
                           }
                         }}
-                        className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center"
+                        className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
                       >
                         {template.price && !isPurchased ? "Buy" : "Edit"}
                       </Link>
@@ -1485,7 +1533,7 @@ export default function Home() {
             <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
               Create your site in 3 simple steps
             </p>
-            <Link href="/builder" className="mt-2 rounded-full bg-[#2B2B2B] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:scale-[1.04] hover:bg-gray-800 hover:brightness-110">
+            <Link href="/builder" className="mt-2 rounded-full bg-[#2B2B2B] px-8 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-lg transition hover:scale-[1.04] hover:bg-gray-800 hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2">
               Get Started
             </Link>
           </motion.div>
@@ -1516,7 +1564,7 @@ export default function Home() {
             }}
           >
             <motion.div className="group relative flex min-h-[300px] overflow-hidden rounded-2xl bg-white shadow-lg sm:min-h-[380px] lg:min-h-[450px]" whileHover={softHover}>
-              <img src={assetPath(selectedFeature.image)} alt={`${selectedFeature.title} feature preview`} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" />
+              <img src={assetPath(selectedFeature.image)} alt={selectedFeature.alt} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#06224C]/90 via-[#06224C]/40 to-transparent" />
               <p className="absolute inset-x-0 bottom-0 p-5 text-base font-black leading-tight text-white sm:p-8 md:text-xl">
                 &quot;{selectedFeature.quote}&quot;
@@ -1529,7 +1577,7 @@ export default function Home() {
               const isActive = activeFeature === index;
               return (
                 <motion.div key={item.title} className="rounded-xl border border-transparent transition hover:bg-white/40 hover:border-blue-300/40 hover:shadow-lg" variants={scaleIn} whileHover={{ y: -3, transition: { duration: 0.2 } }}>
-                  <button type="button" onClick={() => setActiveFeature(index)} className="flex w-full items-center justify-between gap-3 rounded-xl p-2 text-left">
+                  <button type="button" onClick={() => setActiveFeature(isActive ? null : index)} className="flex w-full items-center justify-between gap-3 rounded-xl p-2 text-left">
                     <h3 className="text-lg font-black text-[#06224C] md:text-2xl min-w-0 flex-1 pr-6">
                       <span className="text-blue-600 mr-2">{index + 1}.</span>
                       {item.title}
@@ -1587,7 +1635,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-2 text-sm text-white">
-            <Link href="/">TheStackly.com</Link>
+            <Link href="/" className="cursor-pointer text-sky-300 underline decoration-sky-300/40 underline-offset-4 hover:text-sky-200 hover:decoration-sky-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#082A5A] rounded-sm">thestackly.com</Link>
             <span>/</span>
             <span>Drag and Drop Website Builder</span>
           </div>

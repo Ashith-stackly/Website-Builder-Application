@@ -14,9 +14,9 @@ const categories = [
 ];
 
 const templateStyles = [
-  { title: "Modern", description: "Balanced sections with soft panels" },
-  { title: "Minimal", description: "Clean layout with more white space" },
-  { title: "Bold", description: "Stronger hero area and clearer action" },
+  { title: "Modern", description: "Balanced sections with soft panels", image: "/landing-optimized/modern.webp" },
+  { title: "Minimal", description: "Clean layout with more white space", image: "/landing-optimized/minimal.webp" },
+  { title: "Bold", description: "Stronger hero area and clearer action", image: "/landing-optimized/bold.webp" },
 ];
 
 /** All possible sections a category template can use. */
@@ -485,7 +485,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <h3 id="create-project-title" className="text-base sm:text-xl font-black text-[#06224C] dark:text-slate-100 uppercase tracking-wider sm:tracking-widest break-words">
               Create Project
             </h3>
-            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase">Step {step} of 4</p>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Step {step} of 4</p>
           </div>
           <button
             type="button"
@@ -516,7 +516,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     error
                       ? "border-red-500 bg-red-50 dark:bg-red-950/60 focus:border-red-600 focus-visible:border-red-600"
                       : "border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-blue-600 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus-visible:border-blue-600 dark:focus-visible:border-blue-400"
-                  } autofill:shadow-[0_0_0_1000px_white_inset] dark:autofill:shadow-[0_0_0_1000px_#0f172a_inset]`}
+                  } autofill:!text-[#06224C] dark:autofill:!text-slate-100 autofill:!shadow-[0_0_0_1000px_white_inset] dark:autofill:!shadow-[0_0_0_1000px_#0f172a_inset]`}
                   value={projectData.name}
                   onChange={handleNameChange}
                   onKeyDown={(e) => {
@@ -560,7 +560,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     }`}
                   >
                     <p className="font-black text-sm sm:text-base text-[#06224C] dark:text-slate-100">{cat.title}</p>
-                    <p className="text-[9px] text-gray-400 dark:text-slate-500 font-bold uppercase">{cat.description}</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-300 font-bold uppercase">{cat.description}</p>
                   </button>
                 ))}
               </div>
@@ -590,11 +590,15 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                         : "border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-blue-200 dark:hover:border-blue-500/50 focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/30"
                     }`}
                   >
-                    <div className="aspect-video bg-gray-100 dark:bg-slate-800 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center text-gray-300 dark:text-slate-600">
-                      <FaImage className="text-2xl sm:text-3xl text-blue-600 dark:text-blue-400" />
+                    <div className="aspect-video bg-gray-100 dark:bg-slate-800 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center text-gray-300 dark:text-slate-600 relative w-full">
+                      <img
+                        src={style.image}
+                        alt={`${style.title} style preview`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
                     </div>
                     <p className="text-[11px] sm:text-xs font-black text-[#06224C] dark:text-slate-100">{style.title}</p>
-                    <p className="text-[9px] font-bold uppercase text-gray-400 dark:text-slate-500">{style.description}</p>
+                    <p className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-300">{style.description}</p>
                   </button>
                 ))}
               </div>
@@ -607,7 +611,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <div className="space-y-4 sm:space-y-6">
               <div>
                 <h4 className="text-xl sm:text-2xl font-black text-[#06224C] dark:text-slate-100 break-words">Choose website sections.</h4>
-                <p className="mt-1 text-xs font-bold uppercase text-gray-400 dark:text-slate-500">These will be added to your builder canvas.</p>
+                <p className="mt-1 text-xs font-bold uppercase text-slate-500 dark:text-slate-400">These will be added to your builder canvas.</p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 p-0.5">
                 {currentSections.map((section, index) => {
@@ -633,7 +637,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                       </span>
                       <span>
                         <span className="block text-sm font-black text-[#06224C] dark:text-slate-100">{section.label}</span>
-                        <span className="block text-[9px] font-bold uppercase text-gray-400 dark:text-slate-500">{section.description}</span>
+                        <span className="block text-[10px] font-bold uppercase text-slate-600 dark:text-slate-300">{section.description}</span>
                       </span>
                     </button>
                   );
