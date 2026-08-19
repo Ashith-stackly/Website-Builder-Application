@@ -171,16 +171,16 @@ function RestaurantHeader({ deviceMode }: RestaurantHeaderProps) {
         aria-hidden={!mobileOpen}
         className={r(`absolute top-full left-0 w-full bg-[#0A1E3D] border-t border-white/10 shadow-2xl flex flex-col pt-6 pb-6 px-6 gap-4 z-50 ${mobileOpen ? "" : "hidden"}`)}
       >
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              type="button"
-              className="py-3 px-4 text-white text-base font-bold text-left w-full transition-all duration-300 hover:bg-white/20 hover:pl-6 rounded-md border border-transparent hover:border-white/20 cursor-pointer"
-              onClick={() => { scrollToSection(link.hash.replace("#", "")); setMobileOpen(false); }}
-            >
-              {link.label}
-            </button>
-          ))}
+        {navLinks.map((link) => (
+          <button
+            key={link.label}
+            type="button"
+            className="py-3 px-4 text-white text-base font-bold text-left w-full transition-all duration-300 hover:bg-white/20 hover:pl-6 rounded-md border border-transparent hover:border-white/20 cursor-pointer"
+            onClick={() => { scrollToSection(link.hash.replace("#", "")); setMobileOpen(false); }}
+          >
+            {link.label}
+          </button>
+        ))}
       </nav>
     </header>
   );
@@ -340,18 +340,18 @@ export default function RestaurantTemplatesPage() {
                     <p>Relax, unwind, and enjoy a dining experience designed to delight.</p>
                     <p>Creating unforgettable memories, one plate at a time.</p>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-start w-full sm:w-auto">
+                  <div className={r("flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-start w-full sm:w-auto")}>
                     <button
                       type="button"
                       onClick={() => scrollToSection("restaurant-menu")}
-                      className="inline-flex items-center justify-center min-h-[3.5rem] px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 w-full sm:w-auto text-center cursor-pointer"
+                      className={r("explore-food-btn inline-flex items-center justify-center min-h-[3.5rem] px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] w-full sm:w-auto text-center cursor-pointer")}
                     >
                       Explore Food
                     </button>
                     <button
                       type="button"
                       onClick={() => scrollToSection("restaurant-contact")}
-                      className="inline-flex items-center justify-center min-h-[3.5rem] px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 w-full sm:w-auto text-center cursor-pointer"
+                      className={r("reserve-table-btn inline-flex items-center justify-center min-h-[3.5rem] px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] w-full sm:w-auto text-center cursor-pointer")}
                     >
                       Reserve Table
                     </button>
@@ -607,7 +607,7 @@ export default function RestaurantTemplatesPage() {
                     {/* Center Testimonial Content */}
                     <div className="flex-[2] text-center flex flex-col items-center justify-center w-full max-w-full px-4 min-w-0">
                       <span className="text-[white] text-5xl sm:text-6xl font-serif leading-none select-none mb-2">❝</span>
-                      
+
                       <div className="min-h-[140px] flex flex-col justify-center w-full max-w-full min-w-0">
                         <AnimatePresence mode="wait">
                           <motion.div
@@ -816,13 +816,13 @@ export default function RestaurantTemplatesPage() {
 
               <AnimatePresence>
                 {isPrivacyModalOpen && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
                   >
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
@@ -831,12 +831,12 @@ export default function RestaurantTemplatesPage() {
                       <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
                         <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Privacy Policy</h2>
                       </div>
-                      
+
                       <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
                         <p className="mb-8 text-sm leading-relaxed @md:text-base">
                           Your privacy is important to us. This policy explains how Stackly collects, uses, and protects your information.
                         </p>
-                        
+
                         <div className="space-y-6 text-sm @md:text-base">
                           <div>
                             <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Information We Collect</h3>
@@ -856,7 +856,7 @@ export default function RestaurantTemplatesPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
                         <button
                           onClick={() => setIsPrivacyModalOpen(false)}
@@ -870,13 +870,13 @@ export default function RestaurantTemplatesPage() {
                 )}
 
                 {isTermsModalOpen && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
                   >
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
@@ -885,12 +885,12 @@ export default function RestaurantTemplatesPage() {
                       <div className="flex-none border-b border-gray-300 p-6 @md:p-8">
                         <h2 className="text-[clamp(1rem,4.5cqw,1.25rem)] font-bold tracking-widest text-[#0A1E3D] uppercase">Terms of Use</h2>
                       </div>
-                      
+
                       <div className="flex-1 overflow-y-auto p-6 @md:p-8 text-[#4A5568]">
                         <p className="mb-8 text-sm leading-relaxed @md:text-base">
                           Welcome to Stackly. By accessing or using our platform, you agree to these Terms of Use.
                         </p>
-                        
+
                         <div className="space-y-6 text-sm @md:text-base">
                           <div>
                             <h3 className="mb-2 text-sm font-bold tracking-widest text-[#0A1E3D] uppercase">1. Account Responsibilities</h3>
@@ -910,7 +910,7 @@ export default function RestaurantTemplatesPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex-none border-t border-gray-300 p-6 flex justify-center">
                         <button
                           onClick={() => setIsTermsModalOpen(false)}
