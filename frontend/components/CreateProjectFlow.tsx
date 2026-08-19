@@ -516,7 +516,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     error
                       ? "border-red-500 bg-red-50 dark:bg-red-950/60 focus:border-red-600 focus-visible:border-red-600"
                       : "border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 focus:border-blue-600 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-900 focus-visible:border-blue-600 dark:focus-visible:border-blue-400"
-                  } autofill:!text-[#06224C] dark:autofill:!text-slate-100 autofill:!shadow-[0_0_0_1000px_white_inset] dark:autofill:!shadow-[0_0_0_1000px_#0f172a_inset]`}
+                  } autofill:!text-[#06224C] autofill:!shadow-[0_0_0_1000px_white_inset]`}
                   value={projectData.name}
                   onChange={handleNameChange}
                   onKeyDown={(e) => {

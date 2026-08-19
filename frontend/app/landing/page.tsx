@@ -1248,7 +1248,7 @@ export default function Home() {
       </section>
 
       <section id="top-selling" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
-        <SectionHeading>Top Selling This Week</SectionHeading>
+        <SectionHeading>Coming Soon</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
         <motion.div key={`top-products-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {visibleTopProducts.map((product) => {
