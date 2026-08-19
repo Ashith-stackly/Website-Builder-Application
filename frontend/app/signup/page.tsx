@@ -666,7 +666,7 @@ export default function SignupPage() {
 
   return (
     <>
-      <div className="signup-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto overflow-hidden bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] lg:bg-gradient-to-br lg:from-[#f6fcfe] lg:via-[#e2f2f9] lg:to-[#b2dbeb]">
+      <div className="signup-page auth-page relative min-h-[100dvh] lg:min-h-screen flex flex-col max-lg:overflow-auto px-0 py-0 lg:px-6 lg:py-4 lg:overflow-y-auto overflow-hidden bg-[#021a46] bg-gradient-to-b from-[#5f82e8] via-[#3f66c9] to-[#021a46] lg:bg-gradient-to-br lg:from-[#f6fcfe] lg:via-[#e2f2f9] lg:to-[#b2dbeb]">
         <AuthBackgroundSvg />
         <div className="relative z-10 w-full max-lg:max-w-none max-w-6xl mx-auto flex flex-1 flex-col max-lg:h-full lg:flex-none lg:flex-row gap-0 lg:gap-8 auth-layout">
           {/* Card first on mobile (top), right on desktop */}

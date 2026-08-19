@@ -1774,7 +1774,8 @@ body.auth-visible {
     max-height: none;
     width: 100%;
     max-width: 100%;
-    background: #ffffff !important;
+    background-color: #021a46 !important;
+    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
   }
 
   .login-page.auth-page .auth-form-card,

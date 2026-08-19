@@ -559,7 +559,8 @@ input[type="password"]::-ms-reveal {
   body:has(.signup-page),
   html:has(.reset-flow-page),
   body:has(.reset-flow-page) {
-    background: radial-gradient(ellipse at 30% 25%, #f6fcfe 0%, #e2f2f9 40%, #cae7f4 75%, #b2dbeb 100%) !important;
+    background-color: #021a46 !important;
+    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
   }
   .auth-page {
     position: fixed;
@@ -575,12 +576,14 @@ input[type="password"]::-ms-reveal {
     overflow-x: hidden;
     overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
+    background-color: #021a46 !important;
     background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
   }
   .login-page,
   .signup-page,
   .reset-flow-page {
-    background: radial-gradient(ellipse at 30% 25%, #f6fcfe 0%, #e2f2f9 40%, #cae7f4 75%, #b2dbeb 100%) !important;
+    background-color: #021a46 !important;
+    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
   }
   .auth-page .auth-layout {
     width: 100% !important;
