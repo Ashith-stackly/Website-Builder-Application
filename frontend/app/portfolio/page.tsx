@@ -339,7 +339,7 @@ function Footer() {
     try {
       // Simulate network request processing
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       setEmail("");
       showToast("Subscribed Successfully");
     } finally {
@@ -401,16 +401,15 @@ function Footer() {
                       disabled={isSubmitting}
                     />
                   </label>
-                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95 disabled:opacity-50" disabled={isSubmitting}>
+                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed" disabled={isSubmitting}>
                     <FaPaperPlane6 className="text-sm" />
                   </button>
                 </div>
                 {toast && (
-                  <span className={`text-xs font-bold px-3 py-1.5 rounded-full whitespace-normal break-words animate-fade-in ${
-                    toast.toLowerCase().includes("success")
+                  <span className={`text-xs font-bold px-3 py-1.5 rounded-full whitespace-normal break-words animate-fade-in ${toast.toLowerCase().includes("success")
                       ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                       : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                  }`}>
+                    }`}>
                     {toast}
                   </span>
                 )}
@@ -438,7 +437,7 @@ function Footer() {
                 <ul className="space-y-3 text-sm font-medium text-white/70">
                   {links.map(([label, key]) => (
                     <li key={key}>
-                      <button type="button" onClick={() => openFooterItem(key)} className="stackly-footer-link text-left focus:text-blue-300 focus:outline-none">
+                      <button type="button" onClick={() => openFooterItem(key)} className="stackly-footer-link text-left focus:text-blue-300 focus:outline-none cursor-pointer">
                         {label}
                       </button>
                     </li>
@@ -448,7 +447,7 @@ function Footer() {
             ))}
 
             <motion.div className="col-span-2 mt-2 flex flex-col items-start md:col-span-1 md:mt-0" variants={footerItem}>
-              <Link href="../landing" className="mb-4 inline-flex aspect-[2/1] min-w-[90px] items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105">
+              <Link href="/landing" scroll={true} onClick={() => { if (typeof window !== "undefined") { sessionStorage.removeItem("landing-scroll-y"); window.scrollTo(0, 0); } }} className="mb-4 inline-flex aspect-[2/1] min-w-[90px] items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105 cursor-pointer">
                 <img src={assetPath("/stackly-logo.webp")} alt="Stackly Logo" className="stackly-footer-logo h-5 w-auto object-contain" />
               </Link>
               <p className="mb-2 max-w-[215px] text-[11px] font-bold uppercase leading-relaxed tracking-tight text-white/70">
@@ -475,8 +474,8 @@ function Footer() {
               </motion.div>
 
               <div className="flex w-full flex-col items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50 lg:w-auto lg:flex-row lg:flex-wrap lg:gap-6 lg:justify-center">
-                <button type="button" onClick={() => setActiveModal("terms")} className="stackly-footer-link whitespace-nowrap">Terms of Use</button>
-                <button type="button" onClick={() => setActiveModal("privacy")} className="stackly-footer-link whitespace-nowrap">Privacy Policy</button>
+                <button type="button" onClick={() => setActiveModal("terms")} className="stackly-footer-link whitespace-nowrap cursor-pointer">Terms of Use</button>
+                <button type="button" onClick={() => setActiveModal("privacy")} className="stackly-footer-link whitespace-nowrap cursor-pointer">Privacy Policy</button>
                 <span className="text-center px-4 text-[9px] md:text-[10px] lg:px-0 whitespace-normal break-words max-w-full">
                   Copyright 2018-2026 TheStackly.com INC
                 </span>
@@ -497,7 +496,7 @@ function Footer() {
               {modal.body}
             </div>
             <div className="flex-shrink-0 border-t bg-gray-50 p-4 text-center">
-              <button type="button" onClick={() => setActiveModal(null)} className="rounded-full bg-[#06224C] px-8 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-blue-900">
+              <button type="button" onClick={() => setActiveModal(null)} className="rounded-full bg-[#06224C] px-8 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-blue-900 cursor-pointer">
                 Close
               </button>
             </div>
@@ -618,70 +617,65 @@ export default function Portfolioedit() {
         <div className={isBlockpages ? "w-full min-w-0 max-w-full bg-white p-0" : "flex-1 bg-white p-4 @md:p-7 flex justify-center min-w-0 overflow-x-hidden max-w-full w-full"}>
           <div className={isBlockpages ? "w-full min-w-0 max-w-full relative flex flex-col" : "w-full max-w-[1200px] relative flex flex-col min-w-0 overflow-x-hidden"}>
             {!isBlockpages && (
-            <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block pointer-events-none">
-              <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
-                 <button
+              <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block pointer-events-none">
+                <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
+                  <button
                     onClick={() => router.push("/landing#categories")}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#06224C] focus-visible:ring-offset-2 ${
-                      previewMode === "preview"
+                    className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#06224C] focus-visible:ring-offset-2 ${previewMode === "preview"
                         ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
                         : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                    }`}
+                      }`}
                     title="Preview"
                     aria-label="Open Portfolio Preview"
-                 >
+                  >
                     <FaEye size={14} />
-                 </button>
-                 <button
-                   onClick={() => setPreviewMode("desktop")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "desktop"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Desktop View"
-                 >
+                  </button>
+                  <button
+                    onClick={() => setPreviewMode("desktop")}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition cursor-pointer ${previewMode === "desktop"
+                        ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
+                        : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
+                      }`}
+                    title="Desktop View"
+                  >
                     <FaLaptop size={14} />
-                 </button>
-                 <button
-                   onClick={() => setPreviewMode("tablet")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "tablet"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Tablet View"
-                 >
+                  </button>
+                  <button
+                    onClick={() => setPreviewMode("tablet")}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition cursor-pointer ${previewMode === "tablet"
+                        ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
+                        : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
+                      }`}
+                    title="Tablet View"
+                  >
                     <FaTabletAlt size={14} />
-                 </button>
-                 <button
-                   onClick={() => setPreviewMode("mobile")}
-                   className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition ${
-                     previewMode === "mobile"
-                       ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
-                       : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
-                   }`}
-                   title="Mobile View"
-                 >
+                  </button>
+                  <button
+                    onClick={() => setPreviewMode("mobile")}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border shadow-sm transition cursor-pointer ${previewMode === "mobile"
+                        ? "border-[#06224C] ring-2 ring-[#06224C] bg-gray-50 text-[#06224C] font-bold"
+                        : "border-gray-100 text-[#06224C]/70 hover:bg-gray-50"
+                      }`}
+                    title="Mobile View"
+                  >
                     <FaMobileAlt size={14} />
-                 </button>
+                  </button>
+                </div>
               </div>
-            </div>
             )}
 
             {/* Canvas Box */}
             <div ref={canvasScrollRef} className={isBlockpages ? "flex-1 min-w-0 w-full max-w-full relative z-0" : `flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300 ${(previewMode === "tablet" || previewMode === "mobile") ? "bg-gray-200/50 p-2 @sm:p-4 rounded-xl" : ""}`}>
-              <div className={`@container mx-auto min-h-[530px] bg-[#F2F2F2] flex flex-col relative portfolio-shell overflow-hidden box-border transition-all duration-500 ease-in-out ${
-                isBlockpages
+              <div className={`@container mx-auto min-h-[530px] bg-[#F2F2F2] flex flex-col relative portfolio-shell overflow-hidden box-border transition-all duration-500 ease-in-out ${isBlockpages
                   ? "w-full max-w-full rounded-none border-0 shadow-none"
                   : previewMode === "mobile"
-                  ? "w-[375px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
-                  : previewMode === "tablet"
-                    ? "w-[768px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
-                    : previewMode === "desktop"
-                      ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
-                      : "w-full max-w-full"
-              }`}>
+                    ? "w-[375px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
+                    : previewMode === "tablet"
+                      ? "w-[768px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
+                      : previewMode === "desktop"
+                        ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
+                        : "w-full max-w-full"
+                }`}>
 
 
                 {/* <div className="flex w-full flex-wrap items-center justify-between gap-2 @sm:gap-4 px-3 @sm:px-4 py-2 @sm:py-3 @md:px-8 @xl:flex-nowrap border-b border-gray-300 bg-[#06224C] rounded-t-xl"> */}
@@ -714,7 +708,7 @@ export default function Portfolioedit() {
                           unoptimized
                         />
                       </Link>
-                      
+
                       {/* Title */}
                       <span className="text-[clamp(0.75rem,2.5vw,0.875rem)] @sm:text-sm font-semibold text-white break-words">
                         Portfolio
@@ -725,7 +719,7 @@ export default function Portfolioedit() {
                     <div className="flex items-center justify-end shrink-0">
                       <button
                         onClick={() => setInnerMobileMenuOpen((v) => !v)}
-                        className="h-7 w-7 @sm:h-8 @sm:w-8 border border-white/25 text-white rounded-md hover:bg-white/10 transition flex items-center justify-center shrink-0"
+                        className="h-7 w-7 @sm:h-8 @sm:w-8 border border-white/25 text-white rounded-md hover:bg-white/10 transition flex items-center justify-center shrink-0 cursor-pointer"
                       >
                         <FaBars size={12} />
                       </button>
@@ -762,7 +756,7 @@ export default function Portfolioedit() {
                           <button
                             key={i}
                             onClick={() => scrollToSection(item.id)}
-                            className="relative text-white text-sm group"
+                            className="relative text-white text-sm group cursor-pointer"
                           >
                             {item.name}
                             <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
@@ -790,7 +784,7 @@ export default function Portfolioedit() {
                           scrollToSection(item.id);
                           setInnerMobileMenuOpen(false);
                         }}
-                        className="border border-white/25 px-3 py-2.5 text-xs text-white rounded-md hover:bg-white/10 transition min-h-[2.75rem]"
+                        className="border border-white/25 px-3 py-2.5 text-xs text-white rounded-md hover:bg-white/10 transition min-h-[2.75rem] cursor-pointer"
                       >
                         {item.name}
                       </button>
@@ -808,9 +802,9 @@ export default function Portfolioedit() {
                     <div className="flex flex-col @lg:flex-row items-center @lg:items-stretch justify-between w-full gap-8">
 
                       <div className="w-full @xl:w-[55%] shrink-0 flex flex-col relative z-30 text-center @lg:w-[50%] @lg:text-left">
-                        <div className="mx-auto mb-4 inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-[#63e5ff]/60 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#06224C] shadow-sm @lg:mx-0">
-                          <span className="h-2 w-2 rounded-full bg-[#63e5ff] animate-pulse"></span>
-                          Available for freelance work
+                        <div className="mx-auto mb-4 inline-flex max-w-full flex-nowrap items-center gap-2 rounded-full border border-[#63e5ff]/60 bg-white/80 px-3 py-1 text-[clamp(0.625rem,2.2cqi,0.6875rem)] font-bold uppercase tracking-[0.12em] @sm:tracking-[0.18em] text-[#06224C] shadow-sm @lg:mx-0">
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-[#63e5ff] animate-pulse" aria-hidden="true"></span>
+                          <span className="whitespace-nowrap leading-none select-none">Available for freelance work</span>
                         </div>
                         <h1 className="text-[clamp(1.75rem,5cqi,3rem)] @md:text-4xl @lg:text-5xl font-bold mt-4 @md:mt-6 text-gray-800 leading-snug @md:leading-normal break-words whitespace-normal min-w-0 max-w-full">
                           <div className="mb-2 min-w-0 break-words">Hello, I&apos;m</div>
@@ -866,14 +860,14 @@ export default function Portfolioedit() {
                           <button
                             type="button"
                             onClick={() => scrollToSection("projects")}
-                            className="w-auto min-w-[140px] flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] break-words"
+                            className="w-auto min-w-[140px] flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] break-words cursor-pointer"
                           >
                             View My Works
                           </button>
 
                           <Link
                             href="/page-not-found"
-                            className="w-auto min-w-[140px] flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] break-words"
+                            className="w-auto min-w-[140px] flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] break-words cursor-pointer"
                           >
                             Download CV
                           </Link>
@@ -1169,12 +1163,15 @@ export default function Portfolioedit() {
                     word-break: normal;
                     overflow-wrap: break-word;
                     hyphens: none;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
                   }
 
                   .process-card-title {
-                    white-space: nowrap;
+                    white-space: normal;
                     word-break: normal;
-                    overflow-wrap: normal;
+                    overflow-wrap: break-word;
                   }
 
                   .process-card-desc {
@@ -1206,6 +1203,17 @@ export default function Portfolioedit() {
                       overflow-x: hidden !important;
                       box-sizing: border-box !important;
                     }
+                  }
+
+                  .portfolio-shell button:not(:disabled),
+                  .portfolio-shell a,
+                  .portfolio-shell .portfolio-project-card,
+                  .portfolio-shell .stackly-footer-link {
+                    cursor: pointer;
+                  }
+
+                  .portfolio-shell button:disabled {
+                    cursor: not-allowed;
                   }
                 `}</style>
 
@@ -1426,18 +1434,18 @@ export default function Portfolioedit() {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 @min-[1025px]:grid-cols-3 gap-4 min-w-0 max-w-full w-full process-grid">
+                      <div className="grid grid-cols-1 @min-[600px]:grid-cols-2 @min-[1100px]:grid-cols-3 gap-4 min-w-0 max-w-full w-full process-grid">
                         {processSteps.map((item, i) => (
                           <div
                             key={item.step}
-                            className={`portfolio-reveal rounded-xl border border-white/15 bg-white/10 p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/15 min-w-0 max-w-full process-card ${processInView ? "is-visible" : ""}`}
+                            className={`portfolio-reveal rounded-xl border border-white/15 bg-white/10 p-4 @sm:p-5 backdrop-blur transition hover:-translate-y-1 hover:bg-white/15 min-w-0 max-w-full process-card ${processInView ? "is-visible" : ""}`}
                             style={{ transitionDelay: `${i * 120}ms` }}
                           >
-                            <div className="mb-5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#63e5ff] text-sm font-extrabold text-[#06224C]">
+                            <div className="mb-4 @sm:mb-5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#63e5ff] text-sm font-extrabold text-[#06224C]">
                               {item.step}
                             </div>
-                            <h3 className="mb-2 text-lg font-extrabold min-w-0 process-card-title">{item.title}</h3>
-                            <p className="text-sm text-blue-100 min-w-0 process-card-desc">{item.desc}</p>
+                            <h3 className="mb-2 text-base @sm:text-lg font-extrabold min-w-0 max-w-full break-words process-card-title">{item.title}</h3>
+                            <p className="text-sm text-blue-100 min-w-0 max-w-full break-words process-card-desc">{item.desc}</p>
                           </div>
                         ))}
                       </div>
@@ -1583,101 +1591,101 @@ export default function Portfolioedit() {
                             className={`portfolio-reveal relative z-0 flex h-full min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm min-w-0 max-w-full break-words overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
                             style={{ transitionDelay: `${i * 140}ms` }}
                           >
-                          <div className="mb-5 text-5xl font-black leading-none text-[#63e5ff] shrink-0">“</div>
-                          <p className="mb-6 text-[clamp(0.875rem,2.5cqi,1rem)] leading-relaxed text-gray-600 min-w-0 break-words">{item.quote}</p>
-                          <div className="flex flex-wrap items-center gap-3 min-w-0">
-                            <div className="h-11 w-11 shrink-0 rounded-full bg-[#06224C] text-white flex items-center justify-center text-sm font-black">
-                              {item.name.charAt(0)}
-                            </div>
-                            <div className="min-w-0 break-words flex-1">
-                              <p className="font-extrabold text-gray-900 min-w-0 break-words">{item.name}</p>
-                              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 min-w-0 break-words">{item.role}</p>
+                            <div className="mb-5 text-5xl font-black leading-none text-[#63e5ff] shrink-0">“</div>
+                            <p className="mb-6 text-[clamp(0.875rem,2.5cqi,1rem)] leading-relaxed text-gray-600 min-w-0 break-words">{item.quote}</p>
+                            <div className="flex flex-wrap items-center gap-3 min-w-0">
+                              <div className="h-11 w-11 shrink-0 rounded-full bg-[#06224C] text-white flex items-center justify-center text-sm font-black">
+                                {item.name.charAt(0)}
+                              </div>
+                              <div className="min-w-0 break-words flex-1">
+                                <p className="font-extrabold text-gray-900 min-w-0 break-words">{item.name}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 min-w-0 break-words">{item.role}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* CONTACT SECTION */}
-                <div id="contact" className="w-full max-w-full overflow-x-hidden bg-[#F2F2F2] px-4 @sm:px-6 @md:px-12 @lg:px-20 py-12 @sm:py-16 @lg:py-24 relative border-t border-gray-100">
-                  <div className="max-w-7xl mx-auto grid grid-cols-1 @lg:grid-cols-2 gap-8 @md:gap-12 @lg:gap-20 items-start @lg:items-center">
+                  {/* CONTACT SECTION */}
+                  <div id="contact" className="w-full max-w-full overflow-x-hidden bg-[#F2F2F2] px-4 @sm:px-6 @md:px-12 @lg:px-20 py-12 @sm:py-16 @lg:py-24 relative border-t border-gray-100">
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 @lg:grid-cols-2 gap-8 @md:gap-12 @lg:gap-20 items-start @lg:items-center">
 
-                    <div>
-                      {/* <h2 className="text-base font-bold flex items-center gap-1 mb-4 text-gray-800 tracking-wide w-max">
+                      <div>
+                        {/* <h2 className="text-base font-bold flex items-center gap-1 mb-4 text-gray-800 tracking-wide w-max">
                         Get In <span className="bg-[#c4ff0b] text-gray-900 px-2 py-0.5 rounded-full text-sm font-extrabold ml-1 leading-none shadow-sm flex items-center h-6">Touch</span>
                       </h2> */}
-                      <div className="flex flex-wrap items-center gap-2 mb-4">
-                        <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight break-words leading-tight">Get In</h2>
-                        <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none break-words">Touch</span>
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                          <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight break-words leading-tight">Get In</h2>
+                          <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none break-words">Touch</span>
+                        </div>
+                        <h3 className="text-3xl @sm:text-4xl @md:text-5xl font-extrabold text-gray-900 max-w-2xl leading-tight mb-6 break-words">
+                          Let’s build something <br className="hidden @md:block" />  great together.
+                        </h3>
+                        <p className="text-gray-600 mb-8 max-w-md">
+                          Fill out the form or reach out via email to discuss how we can work together to bring your ideas to life.
+                        </p>
+
+                        <div className="space-y-6">
+                          <div className="flex items-center gap-4 min-w-0 max-w-full">
+                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-[#1a3636] shrink-0">
+                              <FaEnvelope size={18} className="shrink-0" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Email</p>
+                              <p className="text-gray-900 font-bold break-all [overflow-wrap:anywhere] max-w-full">hello@example.com</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 min-w-0 max-w-full">
+                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-[#1a3636] shrink-0">
+                              <FaMobileAlt size={18} className="shrink-0" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Phone</p>
+                              <p className="text-gray-900 font-bold break-all [overflow-wrap:anywhere] max-w-full">+1 (555) 000-0000</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="text-3xl @sm:text-4xl @md:text-5xl font-extrabold text-gray-900 max-w-2xl leading-tight mb-6 break-words">
-                        Let’s build something <br className="hidden @md:block" />  great together.
-                      </h3>
-                      <p className="text-gray-600 mb-8 max-w-md">
-                        Fill out the form or reach out via email to discuss how we can work together to bring your ideas to life.
-                      </p>
 
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-4 min-w-0 max-w-full">
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-[#1a3636] shrink-0">
-                            <FaEnvelope size={18} className="shrink-0" />
+                      <div className="bg-white rounded-2xl p-6 @md:p-8 shadow-xl shadow-gray-200/50 border border-gray-100 min-w-0 max-w-full overflow-hidden">
+                        <form className="space-y-4 @sm:space-y-5 min-w-0 w-full" onSubmit={(e) => e.preventDefault()}>
+                          <div className="grid grid-cols-1 @md:grid-cols-2 gap-4 @sm:gap-5 min-w-0 w-full">
+                            <div className="min-w-0 w-full">
+                              <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Your Name</label>
+                              <input type="text" placeholder="John Doe" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
+                            </div>
+                            <div className="min-w-0 w-full">
+                              <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Your Email</label>
+                              <input type="email" placeholder="john@example.com" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Email</p>
-                            <p className="text-gray-900 font-bold break-all [overflow-wrap:anywhere] max-w-full">hello@example.com</p>
+                          <div className="min-w-0 w-full">
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Subject</label>
+                            <input type="text" placeholder="Web Design Inquiry" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
                           </div>
-                        </div>
-                        <div className="flex items-center gap-4 min-w-0 max-w-full">
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-[#1a3636] shrink-0">
-                            <FaMobileAlt size={18} className="shrink-0" />
+                          <div className="min-w-0 w-full">
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Message</label>
+                            <textarea rows={4} placeholder="Tell us about your project..." className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all resize-none min-w-0"></textarea>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Phone</p>
-                            <p className="text-gray-900 font-bold break-all [overflow-wrap:anywhere] max-w-full">+1 (555) 000-0000</p>
-                          </div>
-                        </div>
+                          <button className="w-full max-w-full break-words flex-wrap bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20 overflow-hidden cursor-pointer">
+                            Send Message
+                            <FaPaperPlane className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform shrink-0" />
+                          </button>
+                        </form>
                       </div>
-                    </div>
 
-                    <div className="bg-white rounded-2xl p-6 @md:p-8 shadow-xl shadow-gray-200/50 border border-gray-100 min-w-0 max-w-full overflow-hidden">
-                      <form className="space-y-4 @sm:space-y-5 min-w-0 w-full" onSubmit={(e) => e.preventDefault()}>
-                        <div className="grid grid-cols-1 @md:grid-cols-2 gap-4 @sm:gap-5 min-w-0 w-full">
-                          <div className="min-w-0 w-full">
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Your Name</label>
-                            <input type="text" placeholder="John Doe" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
-                          </div>
-                          <div className="min-w-0 w-full">
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Your Email</label>
-                            <input type="email" placeholder="john@example.com" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
-                          </div>
-                        </div>
-                        <div className="min-w-0 w-full">
-                          <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Subject</label>
-                          <input type="text" placeholder="Web Design Inquiry" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
-                        </div>
-                        <div className="min-w-0 w-full">
-                          <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Message</label>
-                          <textarea rows={4} placeholder="Tell us about your project..." className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all resize-none min-w-0"></textarea>
-                        </div>
-                        <button className="w-full max-w-full break-words flex-wrap bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20 overflow-hidden">
-                          Send Message
-                          <FaPaperPlane className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform shrink-0" />
-                        </button>
-                      </form>
                     </div>
-
                   </div>
-                </div>
-                <BlockpagesSectionEnd sectionId="contact" />
-                {isBlockpages ? <Footer /> : null}
+                  <BlockpagesSectionEnd sectionId="contact" />
+                  {isBlockpages ? <Footer /> : null}
 
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
       {!isBlockpages && (previewMode === "desktop" || previewMode === "preview" || previewMode === "tablet" || previewMode === "mobile") && <Footer />}
     </main>
