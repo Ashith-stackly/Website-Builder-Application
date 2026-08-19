@@ -547,11 +547,13 @@ input[type="password"]::-ms-reveal {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    height: 100% !important;
     min-height: 100% !important;
-    overflow: hidden !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     overscroll-behavior-y: auto;
-    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
+    background-color: #021a46 !important;
+    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 40%, #021a46 75%, #021a46 100%) !important;
   }
   html:has(.login-page),
   body:has(.login-page),
@@ -560,15 +562,15 @@ input[type="password"]::-ms-reveal {
   html:has(.reset-flow-page),
   body:has(.reset-flow-page) {
     background-color: #021a46 !important;
-    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
+    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 40%, #021a46 75%, #021a46 100%) !important;
   }
   .auth-page {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100dvh;
+    position: relative;
+    width: 100%;
     min-height: 100dvh;
-    max-height: 100dvh;
+    min-height: -webkit-fill-available;
+    height: auto;
+    max-height: none;
     padding: 0 !important;
     justify-content: flex-start;
     align-items: stretch;
@@ -577,34 +579,33 @@ input[type="password"]::-ms-reveal {
     overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
     background-color: #021a46 !important;
-    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
+    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 40%, #021a46 75%, #021a46 100%) !important;
   }
   .login-page,
   .signup-page,
   .reset-flow-page {
     background-color: #021a46 !important;
-    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 52%, #021a46 100%) !important;
+    background: linear-gradient(to bottom, #5f82e8 0%, #3f66c9 40%, #021a46 75%, #021a46 100%) !important;
   }
   .auth-page .auth-layout {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
     gap: 0 !important;
-    height: 100%;
-    min-height: 100%;
+    min-height: 100dvh;
+    flex: 1;
   }
   .auth-page .auth-layout > div:first-child {
     width: 100%;
-    height: 100%;
-    min-height: 100%;
+    min-height: 100dvh;
+    flex: 1;
   }
   .auth-form-card {
     width: 100%;
     max-width: 100% !important;
-    height: 100%;
-    min-height: 100%;
     min-height: 100dvh;
-    height: 100dvh;
+    height: auto;
+    flex: 1;
     margin: 0;
     border-radius: 0;
   }
