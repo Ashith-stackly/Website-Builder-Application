@@ -253,6 +253,9 @@ const buyPreviewFrames: Record<
 
 /** Fits ~1–5 cards in one row from track width (zoom / resize safe). */
 function getCarouselColumnCount(widthPx: number): number {
+  if (typeof window !== "undefined" && window.innerWidth < 768) {
+    return 1;
+  }
   if (!widthPx || widthPx <= 0) return 1;
   const gapPx = 16;
   const minCardPx = 148;
@@ -509,6 +512,16 @@ export default function ECommercePage() {
   const [activeProductStart, setActiveProductStart] = useState(0);
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const [activeCategoryLabel, setActiveCategoryLabel] = useState("All Categories");
   const [activeSubCategoryKey, setActiveSubCategoryKey] = useState<string | null>(null);
   const [isAllCategoriesDropdownOpen, setIsAllCategoriesDropdownOpen] = useState(false);
@@ -705,7 +718,7 @@ export default function ECommercePage() {
     : categoryFilteredProducts;
   const totalProducts = searchFilteredProducts.length;
   const isSearching = normalizedSearchQuery.length > 0;
-  const isCarouselMode = !showAllProducts && !isSearching;
+  const isCarouselMode = isMobile || (!showAllProducts && !isSearching);
   const visibleProductCount = isCarouselMode ? carouselCols : Number.POSITIVE_INFINITY;
   const visibleBuyProducts = totalProducts
     ? Array.from({ length: Math.min(visibleProductCount, totalProducts) }, (_, offset) => {
@@ -713,7 +726,7 @@ export default function ECommercePage() {
       return searchFilteredProducts[index];
     })
     : [];
-  const displayedProducts = isSearching || showAllProducts ? searchFilteredProducts : visibleBuyProducts;
+  const displayedProducts = isSearching || (showAllProducts && !isMobile) ? searchFilteredProducts : visibleBuyProducts;
   const favoriteProducts = favoriteProductIds
     .map((id) => buyProductById.get(id))
     .filter((product): product is BuyProduct => Boolean(product));
@@ -2143,6 +2156,58 @@ export default function ECommercePage() {
               object-fit: contain !important;
             }
           }
+
+          /* Mobile Arrow Carousel Overrides */
+          .buyscreen-mobile-carousel-controls {
+            display: none;
+          }
+          @media (max-width: 767px) {
+            .buyscreen-mobile-carousel-controls {
+              display: flex !important;
+              justify-content: center;
+              align-items: center;
+              gap: 16px;
+              margin-top: 14px;
+              margin-bottom: 4px;
+              width: 100%;
+            }
+            .buyscreen-mobile-nav-btn {
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              width: 44px !important;
+              height: 44px !important;
+              border-radius: 50% !important;
+              color: #06224C !important;
+              background-color: #ffffff !important;
+              border: 1.5px solid #e2e8f0 !important;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+              cursor: pointer !important;
+              transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease !important;
+            }
+            .buyscreen-mobile-nav-btn svg {
+              transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+            }
+            .buyscreen-mobile-nav-btn:active {
+              transform: scale(0.88) !important;
+              color: #ffffff !important;
+              background-color: #06224C !important;
+              border-color: #06224C !important;
+              box-shadow: 0 0 0 6px rgba(6, 34, 76, 0.15), 0 2px 6px rgba(0,0,0,0.06) !important;
+            }
+            .buyscreen-mobile-nav-btn-left:active svg {
+              transform: translateX(-5px) !important;
+            }
+            .buyscreen-mobile-nav-btn-right:active svg {
+              transform: translateX(5px) !important;
+            }
+            .buyscreen-view-all-btn {
+              display: none !important;
+            }
+            .buyscreen-products-row > .buyscreen-products-arrow {
+              display: none !important;
+            }
+          }
         `
       }} />
       {licenseProduct ? (
@@ -2794,7 +2859,7 @@ export default function ECommercePage() {
                     <button
                       type="button"
                       disabled={isProductsLoading || !products.length}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#fecaca] bg-[#fff7ed] px-4 py-2 text-sm font-black text-[#ff664f] transition duration-300 hover:-translate-y-0.5 hover:bg-[#ff664f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      className="buyscreen-view-all-btn inline-flex items-center gap-2 rounded-full border border-[#fecaca] bg-[#fff7ed] px-4 py-2 text-sm font-black text-[#ff664f] transition duration-300 hover:-translate-y-0.5 hover:bg-[#ff664f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={() => setShowAllProducts((prev) => !prev)}
                     >
                       {showAllProducts ? "Carousel View" : "View All"}
@@ -2910,6 +2975,38 @@ export default function ECommercePage() {
                                   <span className="inline-block rounded bg-[#ff664f] px-2 py-0.5 text-[10px] font-bold leading-none text-white shadow-sm">{product.badge}</span>
                                 ) : null}
                               </div>
+
+                              {/* Mobile Navigation Arrows (Mobile only) */}
+                              <div className="buyscreen-mobile-carousel-controls flex justify-center items-center gap-4 mt-3 md:hidden">
+                                <button
+                                  type="button"
+                                  className="buyscreen-mobile-nav-btn buyscreen-mobile-nav-btn-left"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    moveProducts(-1);
+                                  }}
+                                  aria-label="Previous product"
+                                >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="buyscreen-mobile-nav-btn buyscreen-mobile-nav-btn-right"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    moveProducts(1);
+                                  }}
+                                  aria-label="Next product"
+                                >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                  </svg>
+                                </button>
+                              </div>
                             </div>
                           </article>
                         ))}
@@ -2929,9 +3026,7 @@ export default function ECommercePage() {
                       </button>
                     ) : null}
                   </div>
-                  {isCarouselMode && totalProducts > 1 ? (
-                    <p className="mt-3 text-center text-[11px] font-medium text-[#6b7280] lg:hidden">Swipe for more products</p>
-                  ) : null}
+
                   {isProductsLoading ? (
                     <p className="mt-4 flex items-center gap-2 rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 text-sm text-[#64748b]">
                       <Loader2 className="h-4 w-4 animate-spin" />

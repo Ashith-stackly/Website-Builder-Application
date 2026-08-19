@@ -189,11 +189,11 @@ setError(message);
           className="reset-flow-card relative flex w-full flex-1 flex-col justify-center overflow-hidden px-6 py-8 sm:px-10 sm:py-10 text-center lg:flex-none lg:min-h-0 lg:rounded-xl"
           style={resetFlowCardStyle}
         >
-          <div className="flex justify-center mb-4 sm:mb-6">
+          <div className="flex justify-center items-center h-[96px] mb-4 sm:mb-6">
             <img
               src={assetPath("/email.webp")}
               alt="Email envelope icon for verification code"
-              className="w-[96px] h-[96px] object-contain"
+              className="w-[125px] h-[125px] max-w-none object-contain flex-shrink-0"
             />
           </div>
           <h1 className="text-[20px] sm:text-[24px] font-bold mb-2" style={{ color: "#FFFFFF" }}>

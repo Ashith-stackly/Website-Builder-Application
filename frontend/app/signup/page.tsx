@@ -17,6 +17,7 @@ import {
   getAuthPullScrollRoot,
   isAuthPageZoomed,
   mountAuthAndroidClass,
+  mountAuthIosHandler,
   mountSignupPhoneStackedClass,
 } from "@/lib/authMobileTouch";
 import {
@@ -178,11 +179,13 @@ export default function SignupPage() {
     document.documentElement.classList.add("auth-visible");
     document.body.classList.add("auth-visible");
     const unmountAndroid = mountAuthAndroidClass();
+    const unmountIos = mountAuthIosHandler();
     const unmountPhoneStack = mountSignupPhoneStackedClass();
     return () => {
       document.documentElement.classList.remove("auth-visible");
       document.body.classList.remove("auth-visible");
       unmountAndroid();
+      unmountIos();
       unmountPhoneStack();
     };
   }, []);

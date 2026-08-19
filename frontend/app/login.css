@@ -524,14 +524,72 @@ input[type="password"]::-ms-reveal {
  */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 1023px) {
-    .auth-page {
-      height: -webkit-fill-available;
-      min-height: -webkit-fill-available;
-      max-height: -webkit-fill-available;
+    html,
+    body,
+    html:has(.auth-page),
+    body:has(.auth-page),
+    html:has(.login-page),
+    body:has(.login-page),
+    html:has(.signup-page),
+    body:has(.signup-page) {
+      background-color: #021a46 !important;
+      background-image: linear-gradient(to bottom, #5f82e8 0px, #3f66c9 180px, #021a46 380px, #021a46 100%) !important;
+      background-attachment: fixed !important;
+      min-height: 100dvh !important;
+      min-height: 100svh !important;
+      min-height: -webkit-fill-available !important;
+      height: auto !important;
+      max-height: none !important;
+      overscroll-behavior-y: none !important;
     }
-    .auth-form-card {
-      height: 100%;
-      min-height: 100%;
+
+    .auth-page,
+    .login-page,
+    .signup-page {
+      position: relative !important;
+      width: 100% !important;
+      min-height: 100dvh !important;
+      min-height: 100svh !important;
+      min-height: -webkit-fill-available !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      background-color: #021a46 !important;
+      background-image: linear-gradient(to bottom, #5f82e8 0px, #3f66c9 180px, #021a46 380px, #021a46 100%) !important;
+      background-attachment: fixed !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    .auth-form-card,
+    .signup-card,
+    .login-card {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 100dvh !important;
+      min-height: 100svh !important;
+      min-height: -webkit-fill-available !important;
+      height: auto !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      background-color: #021a46 !important;
+      background-image: linear-gradient(to bottom, #5f82e8 0px, #3f66c9 180px, #021a46 380px, #021a46 100%) !important;
+      background-attachment: fixed !important;
+    }
+
+    .auth-form-card .signup-card-content,
+    .auth-form-card .login-card-inner,
+    .auth-form-card .auth-card-content {
+      min-height: 100dvh !important;
+      min-height: 100svh !important;
+      min-height: -webkit-fill-available !important;
+      height: auto !important;
+      max-height: none !important;
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      padding-bottom: max(2.5rem, env(safe-area-inset-bottom, 2.5rem)) !important;
     }
   }
 }

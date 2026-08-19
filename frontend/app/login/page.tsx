@@ -9,6 +9,7 @@ import {
   getAuthPullScrollRoot,
   isAuthPageZoomed,
   mountAuthAndroidClass,
+  mountAuthIosHandler,
 } from "@/lib/authMobileTouch";
 import {
   fitInputPlaceholderToWidth,
@@ -155,10 +156,12 @@ export default function LoginPage() {
     document.documentElement.classList.add("auth-visible");
     document.body.classList.add("auth-visible");
     const unmountAndroid = mountAuthAndroidClass();
+    const unmountIos = mountAuthIosHandler();
     return () => {
       document.documentElement.classList.remove("auth-visible");
       document.body.classList.remove("auth-visible");
       unmountAndroid();
+      unmountIos();
     };
   }, []);
  

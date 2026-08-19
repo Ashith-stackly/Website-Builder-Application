@@ -18,6 +18,56 @@ export function mountAuthAndroidClass(): () => void {
   return () => document.documentElement.classList.remove("auth-android");
 }
 
+/** iOS Safari / WebKit mobile detection. */
+export function isIosMobile(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIosUa = /iPhone|iPad|iPod/i.test(ua);
+  const isMacTouch =
+    /Macintosh/i.test(ua) &&
+    typeof navigator.maxTouchPoints === "number" &&
+    navigator.maxTouchPoints > 1;
+  return isIosUa || isMacTouch;
+}
+
+/** Fix iOS Safari viewport background during input focus / keyboard resize. */
+export function mountAuthIosHandler(): () => void {
+  if (typeof document === "undefined" || typeof window === "undefined") return () => undefined;
+  if (!isIosMobile()) return () => undefined;
+
+  document.documentElement.classList.add("auth-ios");
+
+  const setSolidNavy = () => {
+    document.documentElement.style.backgroundColor = "#021a46";
+    document.body.style.backgroundColor = "#021a46";
+  };
+
+  setSolidNavy();
+
+  const onFocusIn = (e: FocusEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")
+    ) {
+      setSolidNavy();
+    }
+  };
+
+  const onFocusOut = () => {
+    setSolidNavy();
+  };
+
+  window.addEventListener("focusin", onFocusIn);
+  window.addEventListener("focusout", onFocusOut);
+
+  return () => {
+    document.documentElement.classList.remove("auth-ios");
+    window.removeEventListener("focusin", onFocusIn);
+    window.removeEventListener("focusout", onFocusOut);
+  };
+}
+
 /** Scroll root for pull-to-refresh: document on Android, inner panel on iOS. */
 export function getAuthPullScrollRoot(loginPage: boolean): HTMLElement | null {
   if (typeof window === "undefined" || window.innerWidth >= 1024) return null;
