@@ -305,7 +305,7 @@ function ProfileMenu() {
             </div>
             <div className="p-1.5">
               <MenuLink icon={UserIcon} label={t.sidebar.profile} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
-              <MenuLink icon={Home} label="Home" onClick={() => { setOpen(false); router.push("/"); }} />
+              <MenuLink icon={Home} label="Home" onClick={() => { setOpen(false); router.push("/landing"); }} />
               <MenuLink icon={Settings} label={t.nav.settings} onClick={() => { setOpen(false); router.push("/dashboard/settings"); }} />
               <MenuLink icon={Check} label={`Plan: ${planLabel}`} muted onClick={() => { setOpen(false); router.push("/planning"); }} />
             </div>
