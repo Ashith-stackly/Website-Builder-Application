@@ -2,9 +2,9 @@
  
 import { memo, useCallback, useEffect, useRef, useState, useMemo, useLayoutEffect, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, RefreshCw, Rocket, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, CloudOff, Download, Eye, FileUp, FolderOpen, Images, Layers, LayoutDashboard, Loader2, Monitor, MoreHorizontal, Palette, Pencil, Redo2, RefreshCw, Rocket, Save, Smartphone, Sparkles, Tablet, Trash2, Undo2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
@@ -97,7 +97,19 @@ function Canvas({
   const gridSize = useBuilderUiStore((s) => s.gridSize);
   const canvasBackground = useBuilderUiStore((s) => s.canvasBackground);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const projectId = searchParams.get("projectId");
+
+  const handleGoToDashboard = async () => {
+    if (isDirty) {
+      try {
+        await saveDraft();
+      } catch {
+        /* ignore */
+      }
+    }
+    router.push("/dashboard");
+  };
  
   /* ── Quick-insert helpers ── */
   const handleQuickInsertBefore = useCallback(
@@ -276,8 +288,20 @@ function Canvas({
         className="relative z-40 flex h-[60px] flex-shrink-0 items-center justify-between gap-3 overflow-visible border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-4"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Left: undo/redo + project name */}
+        {/* Left: Dashboard link + undo/redo + project name */}
         <div className="flex min-w-0 items-center gap-1.5">
+          <button
+            type="button"
+            title="Return to Dashboard"
+            onClick={handleGoToDashboard}
+            className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-bold text-[#566583] transition hover:bg-gray-100 hover:text-[#0B1D40] cursor-pointer"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </button>
+
+          <div className="mx-1 h-5 w-px bg-[#dbe3ef]" />
+
           <button
             type="button"
             title="Undo (Ctrl+Z)"
@@ -296,9 +320,9 @@ function Canvas({
           >
             <Redo2 className="h-4 w-4" />
           </button>
- 
+
           <div className="mx-1 h-5 w-px bg-[#dbe3ef]" />
- 
+
           {/* Editable project name */}
           {editingName ? (
             <input
@@ -640,6 +664,7 @@ function Canvas({
               className="fixed z-[200] w-[220px] overflow-hidden rounded-xl border border-[#dbe3ef] bg-white p-1.5 shadow-[0_18px_50px_rgba(15,35,75,0.18)]"
               style={{ top: toolsPos.top, left: toolsPos.left }}
             >
+              <ToolMenuButton label="Dashboard" Icon={LayoutDashboard} tone="text-blue-700 bg-blue-50 border-blue-100" onClick={() => runTool(handleGoToDashboard)} />
               <ToolMenuButton label="Design" Icon={Palette} tone="text-violet-700 bg-violet-50 border-violet-100" onClick={() => runTool(toggleGlobalStyles)} />
               <ToolMenuButton label="Assets" Icon={Images} tone="text-slate-700 bg-slate-50 border-slate-100" onClick={() => runTool(() => setIsAssetsOpen(true))} />
               <ToolMenuButton label="Starter" Icon={Sparkles} tone="text-blue-700 bg-blue-50 border-blue-100" onClick={() => runTool(onLoadStarter)} />

@@ -66,6 +66,14 @@ async function saveInvoice(req, res, next) {
   }
 }
 
+async function activateFreePlan(req, res, next) {
+  try {
+    res.json(await paymentService.activateFreePlan(req.user, req.body));
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   createCheckout,
   stripeWebhook,
@@ -75,4 +83,5 @@ module.exports = {
   getSubscription,
   getInvoices,
   saveInvoice,
+  activateFreePlan,
 };

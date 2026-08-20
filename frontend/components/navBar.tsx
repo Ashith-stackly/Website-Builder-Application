@@ -46,7 +46,8 @@ import {
 } from "@/lib/razorpayClient";
 import MockCheckoutModal from "@/components/MockCheckoutModal";
 import { LOGOUT_PRESERVED_STORAGE_KEYS } from "@/lib/rememberLogin";
- 
+import { getAuthToken } from "@/lib/authToken";
+
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
  
 const navCategories = [
@@ -306,6 +307,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   const [isScrolled, setIsScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [displayUser, setDisplayUser] = useState(defaultUserSettings);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const prefersReducedMotion = useReducedMotion();
   const navRef = useRef<HTMLElement>(null);
@@ -321,16 +323,25 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
   });
 
   useEffect(() => {
+    const checkAuth = () => {
+      setIsLoggedIn(Boolean(getAuthToken()));
+    };
+    checkAuth();
+
     const controller = new AbortController();
     void fetchProfile(controller.signal).then((data) => {
+      setIsLoggedIn(true);
       setDisplayUser({
         name: data.name || defaultUserSettings.name,
         email: data.email || defaultUserSettings.email,
         avatar: data.avatar || defaultUserSettings.avatar,
       });
-    }).catch(() => {});
+    }).catch(() => {
+      checkAuth();
+    });
 
     const onUpdated = (e: Event) => {
+      checkAuth();
       const customEvent = e as CustomEvent<UserProfile>;
       if (customEvent.detail) {
         setDisplayUser({
@@ -341,9 +352,11 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       }
     };
     window.addEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+    window.addEventListener("storage", checkAuth);
     return () => {
       controller.abort();
       window.removeEventListener(PROFILE_UPDATED_EVENT, onUpdated);
+      window.removeEventListener("storage", checkAuth);
     };
   }, []);
  
@@ -670,6 +683,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     setActivePanel(null);
     setWishlistItems([]);
     setCartItems([]);
+    setIsLoggedIn(false);
+    setDisplayUser(defaultUserSettings);
 
     useBuilderStore.getState().resetBuilder();
     useProjectStore.getState().resetProjects();
@@ -715,10 +730,13 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             <img src={assetPath("/stackly-logo.webp")} alt="Stackly" className="h-3 w-auto object-contain md:h-5" />
           </Link>
  
-          <div className="hidden items-center justify-center gap-12 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
+          <div className="hidden items-center justify-center gap-10 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
             <Link href="/landing" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>HOME</MotionNavItem></Link>
+            <Link href="/templates" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
+            {isLoggedIn && (
+              <Link href="/dashboard" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>DASHBOARD</MotionNavItem></Link>
+            )}
             <Link href="/aboutus" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>ABOUT US</MotionNavItem></Link>
-            <Link href="/landing#categories" onClick={(event) => scrollLandingSection(event, "categories")} className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
  
             <div
               className="relative"
@@ -938,32 +956,59 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                   className="absolute right-0 top-full z-[100] mt-3 w-48 rounded-xl border border-gray-100 bg-white py-2 text-left shadow-2xl"
                 >
                   <div className="mb-1 border-b border-gray-50 px-4 py-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">User Menu</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      {isLoggedIn ? (displayUser.name || "User Menu") : "Account"}
+                    </p>
                   </div>
-                  <Link href="/dashboard" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                    <FaCircleUser className="w-4 opacity-50" />
-                    ACCOUNT
-                  </Link>
-                  <Link href="/dashboard/settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                    <FaGear className="w-4 opacity-50" />
-                    SETTINGS
-                  </Link>
-                  <div className="mt-1 border-t border-gray-50">
-                    <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[11px] font-black text-red-500 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:bg-red-50 cursor-pointer">
-                      <FaRightFromBracket className="w-4" />
-                      LOGOUT
-                    </button>
-                  </div>
-                  <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
-                    <Link
-                      href="/planning"
-                      onClick={closeMenus}
-                      className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
-                    >
-                      <FaLayerGroup className="w-4 opacity-80" />
-                      SUBSCRIPTIONS
-                    </Link>
-                  </div>
+                  {isLoggedIn ? (
+                    <>
+                      <Link href="/dashboard" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                        <FaCircleUser className="w-4 opacity-50" />
+                        DASHBOARD
+                      </Link>
+                      <Link href="/dashboard/settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                        <FaGear className="w-4 opacity-50" />
+                        SETTINGS
+                      </Link>
+                      <div className="mt-1 border-t border-gray-50">
+                        <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[11px] font-black text-red-500 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:bg-red-50 cursor-pointer">
+                          <FaRightFromBracket className="w-4" />
+                          LOGOUT
+                        </button>
+                      </div>
+                      <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
+                        <Link
+                          href="/planning"
+                          onClick={closeMenus}
+                          className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
+                        >
+                          <FaLayerGroup className="w-4 opacity-80" />
+                          SUBSCRIPTIONS
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                        <FaCircleUser className="w-4 opacity-50" />
+                        LOGIN
+                      </Link>
+                      <Link href="/signup" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                        <FaGear className="w-4 opacity-50" />
+                        CREATE ACCOUNT
+                      </Link>
+                      <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
+                        <Link
+                          href="/planning"
+                          onClick={closeMenus}
+                          className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
+                        >
+                          <FaLayerGroup className="w-4 opacity-80" />
+                          VIEW PLANS
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1039,8 +1084,11 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
         >
           <div className="flex flex-col">
             <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Home</Link></motion.div>
-            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/aboutus" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">About Us</Link></motion.div>
             <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/templates" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Templates</Link></motion.div>
+            {isLoggedIn && (
+              <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Dashboard</Link></motion.div>
+            )}
+            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/aboutus" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">About Us</Link></motion.div>
  
             <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}>
               <button

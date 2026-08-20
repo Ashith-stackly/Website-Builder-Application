@@ -411,6 +411,88 @@ async function saveInvoice(userId, invoiceData) {
   return doc;
 }
 
+async function activateFreePlan(user, body = {}) {
+  const plan = normalizePlanName(body.plan || 'basic');
+  if (plan !== 'basic' && plan !== 'free') {
+    throw ApiError.badRequest('Free activation is only available for the Basic/Free plan');
+  }
+
+  const amount = Number(body.amount);
+  if (amount !== 0) {
+    throw ApiError.badRequest('Amount must be 0 for free plan activation');
+  }
+
+  const startDate = new Date();
+  const expiryDate = buildExpiryDate('Monthly');
+
+  await Subscription.findOneAndUpdate(
+    { userId: user._id, plan: 'basic', paymentProvider: 'none' },
+    {
+      userId: user._id,
+      plan: 'basic',
+      paymentProvider: 'none',
+      paymentStatus: 'completed',
+      subscriptionId: '',
+      orderId: '',
+      amount: 0,
+      currency: 'INR',
+      startDate,
+      expiryDate,
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  user.plan = 'basic';
+  user.subscriptionStatus = 'active';
+  await user.save();
+
+  const sanitized = sanitizeUser(user);
+
+  const invoiceId = `INV-FREE-${Date.now().toString(36).toUpperCase()}`;
+  const dateDisplay = startDate
+    .toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+    .replace(',', '');
+  try {
+    await Invoice.findOneAndUpdate(
+      { userId: user._id, invoiceId },
+      {
+        userId: user._id,
+        invoiceId,
+        date: dateDisplay,
+        amount: '₹0',
+        status: 'Free',
+        planName: 'Basic (Free)',
+        planTier: 'basic',
+        websiteLabel: 'Stackly workspace subscription',
+        paymentMethodLabel: 'Complimentary',
+        paymentDetail: 'No charge — complimentary activation.',
+        buyerName: user.name || 'Customer',
+        buyerEmail: user.email || '',
+        buyerPhone: user.mobile || user.phone || '',
+        buyerAddress: user.address || '',
+        generatedAt: startDate.toISOString(),
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  } catch (invoiceErr) {
+    console.error('Failed to persist free plan invoice:', invoiceErr.message);
+  }
+
+  return {
+    success: true,
+    message: 'Free plan activated successfully',
+    user: sanitized,
+    subscription: {
+      plan: 'basic',
+      paymentProvider: 'none',
+      paymentStatus: 'completed',
+      planName: 'Basic (Free)',
+      startDate,
+      expiryDate,
+    },
+  };
+}
+
 module.exports = {
   createStripeCheckout,
   handleStripeWebhook,
@@ -420,4 +502,5 @@ module.exports = {
   getSubscription,
   getInvoices,
   saveInvoice,
+  activateFreePlan,
 };

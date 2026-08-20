@@ -13,15 +13,9 @@ import {
   Zap,
   ArrowRight,
   Lock,
-  Star,
   FileText,
-  Calendar,
   User,
-  Mail,
-  Phone,
-  MapPin,
   CheckCircle2,
-  RefreshCcw,
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { activateFrontendSubscription } from "@/lib/demoAuth";
@@ -39,6 +33,7 @@ import {
   type PlanningView,
 } from "@/lib/planningNavigation";
 import {
+  activateFreePlan,
   createRazorpayOrder,
   formatInrFromDisplayPrice,
   isRazorpayDemoMode,
@@ -51,6 +46,13 @@ import {
 
 import { getAuthToken } from "@/lib/authToken";
 import { getUserProfile, type UserProfile } from "@/lib/api";
+import {
+  fetchMySubscription,
+  normalizePlanForComparison,
+  deriveBillingCycle,
+  formatSubscriptionDate,
+  type MySubscriptionResponse,
+} from "@/lib/subscriptionApi";
 
 async function fetchUserProfile(): Promise<UserProfile | null> {
   const token = getAuthToken();
@@ -259,6 +261,13 @@ function PlanningPageContent() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [billingHistory, setBillingHistory] = useState<BillingHistoryEntry[]>(INITIAL_BILLING_HISTORY);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [activeSubscription, setActiveSubscription] = useState<MySubscriptionResponse | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+
+  const isCurrentPlan = (planName: string): boolean => {
+    if (!activeSubscription || activeSubscription.subscriptionStatus !== "active") return false;
+    return normalizePlanForComparison(planName) === normalizePlanForComparison(activeSubscription.plan);
+  };
 
   const invoiceContact = getUserInvoiceContact(userProfile);
 
@@ -364,6 +373,10 @@ function PlanningPageContent() {
     }
     void fetchUserProfile().then((profile) => {
       if (profile) setUserProfile(profile);
+    });
+    void fetchMySubscription().then((sub) => {
+      setActiveSubscription(sub);
+      setSubscriptionLoading(false);
     });
   }, [router]);
 
@@ -491,6 +504,11 @@ function PlanningPageContent() {
     setIsFreeCheckout(false);
     activateFrontendSubscription();
 
+    // Re-fetch subscription from backend so Current Plan UI updates immediately
+    void fetchMySubscription().then((sub) => {
+      setActiveSubscription(sub);
+    });
+
     if (verifiedUser?.plan) {
       notifyProfileUpdated({
         name: verifiedUser.name || userName,
@@ -505,17 +523,7 @@ function PlanningPageContent() {
     syncPlanningUrl({ view: "invoice" });
   }
 
-  async function activateSelectedPlanOnServer(amountPaise: number, billingPeriod: string) {
-    if (!selectedPlan) return null;
-    return verifyRazorpayPayment({
-      razorpay_payment_id: `pay_demo_${Math.random().toString(36).substring(2, 11)}`,
-      razorpay_order_id: `order_demo_${Date.now()}`,
-      razorpay_signature: "demo_signature",
-      amount: amountPaise,
-      planName: selectedPlan.name,
-      billingPeriod,
-    });
-  }
+
 
   async function handlePayWithRazorpay() {
     if (!selectedPlan) return;
@@ -531,16 +539,20 @@ function PlanningPageContent() {
       setPaymentError(null);
       setPaymentLoading(true);
       try {
-        const verifyResult = await activateSelectedPlanOnServer(0, billingPeriod);
-        if (!verifyResult?.verified) throw new Error("Could not activate complimentary plan.");
+        const result = await activateFreePlan({ plan: selectedPlan.name, amount: 0 });
+        if (!result?.success) throw new Error(result?.message || "Could not activate free plan.");
         finalizeCheckout({
           isFree: true,
           paymentMethodLabel: "Complimentary",
           paymentDetail: "No charge — complimentary activation.",
-          verifyResponse: verifyResult,
+          verifyResponse: {
+            verified: true,
+            user: result.user,
+            subscription: result.subscription,
+          },
         });
       } catch (e) {
-        setPaymentError(e instanceof Error ? e.message : "Could not activate plan.");
+        setPaymentError(e instanceof Error ? e.message : "Failed to activate Free Plan.");
         setPaymentLoading(false);
       }
       return;
@@ -553,7 +565,14 @@ function PlanningPageContent() {
       setPaymentLoading(true);
       try {
         await new Promise((r) => window.setTimeout(r, 900));
-        const verifyResult = await activateSelectedPlanOnServer(amountPaise, billingPeriod);
+        const verifyResult = await verifyRazorpayPayment({
+          razorpay_payment_id: `pay_demo_${Math.random().toString(36).substring(2, 11)}`,
+          razorpay_order_id: `order_demo_${Date.now()}`,
+          razorpay_signature: "demo_signature",
+          amount: amountPaise,
+          planName: selectedPlan.name,
+          billingPeriod,
+        });
         if (!verifyResult?.verified) throw new Error("Demo payment verification failed.");
         finalizeCheckout({
           isFree: false,
@@ -765,6 +784,32 @@ function PlanningPageContent() {
                 </button>
               </motion.div>
 
+              {/* YOUR CURRENT SUBSCRIPTION */}
+              {!subscriptionLoading && activeSubscription?.subscriptionStatus === "active" && activeSubscription.subscription && (
+                <motion.div variants={fadeUpVariants} className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 backdrop-blur-md">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <ShieldCheck className="h-4 w-4" />
+                    </span>
+                    <h3 className="text-sm font-bold text-emerald-300 uppercase tracking-wider">Your Current Subscription</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Plan</p>
+                      <p className="text-sm font-bold text-white capitalize">{activeSubscription.plan === "basic" ? "Basic (Free)" : activeSubscription.plan}</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Billing Cycle</p>
+                      <p className="text-sm font-bold text-white">{deriveBillingCycle(activeSubscription.subscription.startDate, activeSubscription.subscription.expiryDate)}</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Expires On</p>
+                      <p className="text-sm font-bold text-white">{formatSubscriptionDate(activeSubscription.subscription.expiryDate)}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* FEATURES INCLUDED BAR */}
               <motion.div variants={fadeUpVariants} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
                 <div className="flex flex-wrap items-center justify-around gap-4 text-xs font-semibold text-slate-300 sm:text-sm">
@@ -827,19 +872,27 @@ function PlanningPageContent() {
                       </div>
 
                       <div className="pt-8">
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          type="button"
-                          onClick={() => handlePurchasePlan(plan)}
-                          className={`w-full rounded-2xl py-3.5 text-sm font-bold shadow-lg transition-all cursor-pointer ${
-                            plan.isRecommended
-                              ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-600/40 hover:from-blue-600 hover:to-indigo-700"
-                              : "bg-white text-slate-900 hover:bg-slate-100"
-                          }`}
-                        >
-                          Select {plan.name}
-                        </motion.button>
+                        {isCurrentPlan(plan.name) ? (
+                          <div
+                            className="w-full rounded-2xl py-3.5 text-sm font-bold text-center bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 cursor-default select-none"
+                          >
+                            ✓ Current Plan
+                          </div>
+                        ) : (
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            type="button"
+                            onClick={() => handlePurchasePlan(plan)}
+                            className={`w-full rounded-2xl py-3.5 text-sm font-bold shadow-lg transition-all cursor-pointer ${
+                              plan.isRecommended
+                                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-600/40 hover:from-blue-600 hover:to-indigo-700"
+                                : "bg-white text-slate-900 hover:bg-slate-100"
+                            }`}
+                          >
+                            Select {plan.name}
+                          </motion.button>
+                        )}
                       </div>
                     </motion.div>
                   );

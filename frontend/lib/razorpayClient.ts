@@ -202,6 +202,20 @@ export async function verifyRazorpayPayment(
 ): Promise<RazorpayVerifyResponse> {
   return postRazorpayApi<RazorpayVerifyResponse>("/razorpay/verify", payload);
 }
+
+export type ActivateFreePlanResponse = {
+  success: boolean;
+  message?: string;
+  user?: RazorpayVerifyResponse["user"];
+  subscription?: RazorpayVerifyResponse["subscription"];
+};
+
+export async function activateFreePlan(payload: {
+  plan: string;
+  amount: number;
+}): Promise<ActivateFreePlanResponse> {
+  return postRazorpayApi<ActivateFreePlanResponse>("/payment/activate-free", payload);
+}
  
 export function openRazorpayCheckout(options: {
   order: RazorpayOrderResponse;

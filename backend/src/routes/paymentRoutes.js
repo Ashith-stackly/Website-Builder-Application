@@ -7,5 +7,6 @@ const router = express.Router();
 router.post('/create-checkout', authenticate, paymentController.createCheckout);
 router.post('/cancel', authenticate, paymentController.cancelSubscription);
 router.get('/subscription', authenticate, paymentController.getSubscription);
+router.post('/activate-free', authenticate, paymentController.activateFreePlan);
 
 module.exports = router;

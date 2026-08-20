@@ -14,7 +14,7 @@ const subscriptionSchema = new mongoose.Schema({
   },
   paymentProvider: {
     type: String,
-    enum: ['stripe', 'razorpay'],
+    enum: ['stripe', 'razorpay', 'none'],
   },
   paymentStatus: {
     type: String,
