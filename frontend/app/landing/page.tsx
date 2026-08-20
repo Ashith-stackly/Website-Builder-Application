@@ -91,10 +91,17 @@ const popularSearches = [
   "Construction",
 ];
 
-const categories = [
-  { title: "Portfolio", image: "/landing-optimized/port.webp", alt: "Portfolio website preview", previewHref: "/portfolio", editHref: "/blockpages?template=portfolio" },
-  { title: "E-Commerce Templates", image: "/landing-optimized/ecommerce.webp", alt: "E-commerce website preview", previewHref: "/e-commerce", editHref: "/blockpages?template=ecommerce" },
-  { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview", previewHref: "/digital-marketing", editHref: "/blockpages?template=digital-marketing" },
+const categories: Array<{
+  title: string;
+  image: string;
+  alt: string;
+  previewHref?: string;
+  editHref?: string;
+  badge?: "Free" | "Premium";
+}> = [
+  { title: "Portfolio", image: "/landing-optimized/port.webp", alt: "Portfolio website preview", previewHref: "/portfolio", editHref: "/blockpages?template=portfolio", badge: "Premium" },
+  { title: "E-Commerce Templates", image: "/landing-optimized/ecommerce.webp", alt: "E-commerce website preview", previewHref: "/e-commerce", editHref: "/blockpages?template=ecommerce", badge: "Premium" },
+  { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview", previewHref: "/digital-marketing", editHref: "/blockpages?template=digital-marketing", badge: "Premium" },
 
   {
     title: "Blogging",
@@ -102,20 +109,23 @@ const categories = [
     alt: "Blogging website preview",
     previewHref: "/blog",
     editHref: "/blockpages?template=blog",
+    badge: "Premium",
   },
   {
     title: "Construction Themes",
     image: "/landing-optimized/construction02.webp",
     alt: "Construction website preview",
     previewHref: "/construction",
-    editHref: "/blockpages?template=construction"
+    editHref: "/blockpages?template=construction",
+    badge: "Premium",
   },
   {
     title: "Restaurant",
     image: "/landing-optimized/foodd03.webp",
     alt: "Restaurant website preview",
     previewHref: "/restaurant",
-    editHref: "/blockpages?template=restaurant"
+    editHref: "/blockpages?template=restaurant",
+    badge: "Premium",
   },
 ];
 
@@ -473,6 +483,27 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState<(typeof templateFilters)[number]["value"]>("all");
   const [isFilterMounted, setIsFilterMounted] = useState(false);
 
+  // Auto-scroll to elements when hash is present on url (e.g. navigation from other pages)
+  useEffect(() => {
+    const handleScrollToHash = () => {
+      if (typeof window !== "undefined" && window.location.hash) {
+        const targetId = window.location.hash.replace("#", "");
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    };
+
+    const timer = setTimeout(handleScrollToHash, 400);
+
+    window.addEventListener("hashchange", handleScrollToHash);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("hashchange", handleScrollToHash);
+    };
+  }, []);
+
   useEffect(() => {
     const savedFilter = sessionStorage.getItem("landing-active-filter");
     if (savedFilter) {
@@ -741,6 +772,7 @@ export default function Home() {
     () => categories.filter((category) => !normalizedSearch || [
       category.title,
       category.alt,
+      category.badge || "",
     ].some((value) => value.toLowerCase().includes(normalizedSearch))),
     [normalizedSearch],
   );
@@ -1225,8 +1257,13 @@ export default function Home() {
         <motion.div key={`categories-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {visibleCategories.map((category) => (
             <motion.article key={category.title} className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl" variants={scaleIn} whileHover={softHover}>
-              <div className="h-44 overflow-hidden md:h-52">
+              <div className="relative h-44 overflow-hidden md:h-52">
                 <img src={assetPath(category.image)} alt={category.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                {category.badge && (
+                  <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase ${category.badge === "Free" ? "bg-green-500 text-white" : "bg-yellow-400 text-[#06224C]"}`}>
+                    {category.badge}
+                  </span>
+                )}
               </div>
               <div className="p-6 text-center">
                 <h3 className="text-base font-bold uppercase tracking-tight text-gray-800 md:text-lg">{category.title}</h3>
