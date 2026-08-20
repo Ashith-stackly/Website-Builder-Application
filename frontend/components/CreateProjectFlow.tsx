@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { FaXmark, FaArrowRight, FaWandMagicSparkles, FaImage, FaPlay, FaCheck } from "react-icons/fa6";
+import { assetPath } from "@/lib/paths";
 
 const categories = [
   { title: "E-commerce", description: "Online store, products, and sales pages" },
@@ -592,7 +593,7 @@ const CreateProjectModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                   >
                     <div className="aspect-video bg-gray-100 dark:bg-slate-800 rounded-lg sm:rounded-xl overflow-hidden flex items-center justify-center text-gray-300 dark:text-slate-600 relative w-full">
                       <img
-                        src={style.image}
+                        src={assetPath(style.image)}
                         alt={`${style.title} style preview`}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
