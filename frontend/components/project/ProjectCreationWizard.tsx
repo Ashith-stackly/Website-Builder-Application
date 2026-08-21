@@ -552,7 +552,7 @@ export default function ProjectCreationWizard({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-6 overflow-hidden"
+      className="fixed inset-0 z-99999 flex items-center justify-center p-2 sm:p-6 overflow-hidden"
       role="dialog"
       aria-modal="true"
       aria-labelledby="create-project-title"
@@ -567,7 +567,7 @@ export default function ProjectCreationWizard({
         className="relative w-full max-w-[95vw] sm:max-w-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] text-slate-900 dark:text-slate-100"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-8 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 sm:p-8 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm sm:text-base">
               <FaWandMagicSparkles />
@@ -599,7 +599,7 @@ export default function ProjectCreationWizard({
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 flex-shrink-0" role="progressbar" aria-valuenow={(step / 4) * 100} aria-valuemin={0} aria-valuemax={100}>
+        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 shrink-0" role="progressbar" aria-valuenow={(step / 4) * 100} aria-valuemin={0} aria-valuemax={100}>
           <div
             className="bg-[#0A2357] dark:bg-blue-500 h-1 transition-all duration-300"
             style={{ width: `${(step / 4) * 100}%` }}
@@ -763,7 +763,7 @@ export default function ProjectCreationWizard({
                       }`}
                     >
                       <div
-                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
                           isChecked
                             ? "border-[#0A2357] dark:border-blue-500 bg-[#0A2357] dark:bg-blue-500 text-white"
                             : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
@@ -795,7 +795,7 @@ export default function ProjectCreationWizard({
         </div>
 
         {/* Footer Controls */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
           {step > 1 ? (
             <button
               ref={backBtnRef}

@@ -161,7 +161,7 @@ export default function CommandPalette({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-[12vh]"
+          className="fixed inset-0 z-100 flex items-start justify-center p-4 pt-[12vh]"
           variants={backdrop}
           initial="hidden"
           animate="visible"

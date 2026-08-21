@@ -301,7 +301,7 @@ export default function BuilderLayout() {
 
   return (
     <DndContext sensors={sensors} collisionDetection={collisionDetectionStrategy} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-      <div className="flex h-dvh min-h-[640px] flex-col overflow-x-hidden bg-[radial-gradient(1100px_560px_at_100%_-10%,rgba(79,107,237,0.10),transparent_55%),radial-gradient(820px_460px_at_-8%_2%,rgba(139,92,246,0.08),transparent_48%),#eaeef6] font-sans">
+      <div className="flex h-dvh min-h-160 flex-col overflow-x-hidden bg-[radial-gradient(1100px_560px_at_100%_-10%,rgba(79,107,237,0.10),transparent_55%),radial-gradient(820px_460px_at_-8%_2%,rgba(139,92,246,0.08),transparent_48%),#eaeef6] font-sans">
         <div className="relative flex min-h-0 w-full flex-1 gap-4 overflow-hidden p-4">
           <button
             aria-label="Open left sidebar"
@@ -324,7 +324,7 @@ export default function BuilderLayout() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-[60] lg:hidden"
+                className="fixed inset-0 z-60 lg:hidden"
               >
                 <button aria-label="Close left sidebar" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsLeftOpen(false)} type="button" />
                 <motion.div
@@ -332,9 +332,9 @@ export default function BuilderLayout() {
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
                   transition={{ type: "spring", stiffness: 380, damping: 38 }}
-                  className="absolute bottom-0 left-0 flex h-[65vh] max-h-[800px] w-full flex-col overflow-hidden rounded-t-3xl bg-[#0A193A] shadow-2xl"
+                  className="absolute bottom-0 left-0 flex h-[65vh] max-h-200 w-full flex-col overflow-hidden rounded-t-3xl bg-[#0A193A] shadow-2xl"
                 >
-                  <div className="mx-auto mt-3 h-1 w-10 flex-shrink-0 rounded-full bg-white/20" />
+                  <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-white/20" />
                   <ComponentPalette className="w-full flex-1 rounded-none border-0" onAdd={(type) => { addComponent(type); setIsLeftOpen(false); }} onLoadStarter={() => { loadStarterWebsite(); setIsLeftOpen(false); }} onApplySmartLayout={(config) => { loadWebsiteFromRequirements({ projectName: "My Website", category: config.category, style: config.style, sections: config.sections }); setIsLeftOpen(false); }} />
                 </motion.div>
               </motion.div>
@@ -389,7 +389,7 @@ export default function BuilderLayout() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-[70] xl:hidden"
+                className="fixed inset-0 z-70 xl:hidden"
               >
                 <button aria-label="Close properties" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsRightOpen(false)} type="button" />
                 <motion.div
@@ -397,9 +397,9 @@ export default function BuilderLayout() {
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
                   transition={{ type: "spring", stiffness: 380, damping: 38 }}
-                  className="absolute bottom-0 left-0 flex h-[72vh] max-h-[740px] w-full flex-col overflow-hidden rounded-t-3xl border-t border-[#f4d8cc] bg-[#fff7f4] shadow-2xl"
+                  className="absolute bottom-0 left-0 flex h-[72vh] max-h-185 w-full flex-col overflow-hidden rounded-t-3xl border-t border-[#f4d8cc] bg-[#fff7f4] shadow-2xl"
                 >
-                  <div className="mx-auto mt-3 h-1 w-10 flex-shrink-0 rounded-full bg-gray-300" />
+                  <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-gray-300" />
                   <PropertyEditor
                     className="relative flex h-full w-full flex-col overflow-hidden bg-[#fff7f4]"
                     component={selectedComponent}
@@ -445,7 +445,7 @@ export default function BuilderLayout() {
             initial={{ scale: 0.9, opacity: 0.6 }}
             animate={{ scale: 1.02, opacity: 1 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className={`flex min-w-[140px] rotate-[1.5deg] items-center gap-2.5 rounded-xl border bg-white/95 px-4 py-2.5 text-sm font-semibold capitalize shadow-[0_18px_44px_rgba(15,35,75,0.28)] ring-1 backdrop-blur ${
+            className={`flex min-w-35 rotate-[1.5deg] items-center gap-2.5 rounded-xl border bg-white/95 px-4 py-2.5 text-sm font-semibold capitalize shadow-[0_18px_44px_rgba(15,35,75,0.28)] ring-1 backdrop-blur ${
               activeCanvasType
                 ? "border-blue-300 text-blue-700 ring-blue-200/50"
                 : "border-[#dbe3ef] text-[#0B1D40] ring-black/5"

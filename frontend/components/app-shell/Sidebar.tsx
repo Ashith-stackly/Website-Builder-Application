@@ -56,7 +56,7 @@ export default function Sidebar({
           onClick={onNavigate}
           className="flex min-w-0 items-center gap-2.5"
         >
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#4f6bed] to-[#8b5cf6] text-base font-black text-white shadow-lg shadow-indigo-500/25">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-linear-to-br from-[#4f6bed] to-[#8b5cf6] text-base font-black text-white shadow-lg shadow-indigo-500/25">
             S
           </span>
           <AnimatePresence initial={false}>
@@ -77,7 +77,7 @@ export default function Sidebar({
         <motion.button
           onClick={onToggleCollapse}
           whileTap={{ scale: 0.9 }}
-          className={`hidden h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)] lg:grid ${collapsed ? "absolute -right-3 z-10 border shadow-sm" : "ml-auto"
+          className={`hidden h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-(--surface-2) lg:grid ${collapsed ? "absolute -right-3 z-10 border shadow-sm" : "ml-auto"
             }`}
           style={{
             color: "var(--text-faint)",
@@ -143,7 +143,7 @@ export default function Sidebar({
                       setWs(w);
                       setWsOpen(false);
                     }}
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 text-left text-[13px] transition-colors hover:bg-(--surface-2) disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ color: "var(--text)" }}
                   >
                     <span
@@ -232,7 +232,7 @@ export default function Sidebar({
                           router.push(getProjectEditorRoute(p));
                           onNavigate?.();
                         }}
-                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-2)]"
+                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-(--surface-2)"
                         style={{ color: "var(--text-muted)" }}
                       >
                         <span
@@ -260,7 +260,7 @@ export default function Sidebar({
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
           transition={spring.snappy}
-          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-3 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/25"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-linear-to-r from-[#4f6bed] to-[#7c3aed] px-3 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/25"
         >
           <Plus className="h-4 w-4 shrink-0" />
           <AnimatePresence initial={false}>
@@ -311,7 +311,7 @@ function NavRow({
           />
         )}
         <span className="relative z-10 grid place-items-center">
-          <Icon className="h-[18px] w-[18px]" />
+          <Icon className="h-4.5 w-4.5" />
         </span>
         <AnimatePresence initial={false}>
           {!collapsed && (
