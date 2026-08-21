@@ -63,6 +63,15 @@ async function saveHtml(req, res, next) {
   }
 }
 
+async function duplicate(req, res, next) {
+  try {
+    const project = await projectService.duplicateProject(req.user._id, req.params.id);
+    res.status(201).json({ success: true, project });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   list,
   create,
@@ -71,4 +80,5 @@ module.exports = {
   remove,
   autosave,
   saveHtml,
+  duplicate,
 };

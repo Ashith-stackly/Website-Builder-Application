@@ -41,6 +41,7 @@ async function assertProjectCapacity(userId, knownUser) {
 function toProject(doc) {
   if (!doc) return null;
   const isEcommerce = doc.editorType === 'ecommerce' || doc.category === 'E-commerce';
+  const isBlockpages = doc.editorType === 'blockpages';
   const builderData =
     doc.builderData && Object.keys(doc.builderData).length > 0
       ? doc.builderData
@@ -83,7 +84,8 @@ async function createProject(userId, body) {
   await assertProjectCapacity(userId);
 
   const isEcommerce = body.editorType === 'ecommerce' || body.category === 'E-commerce';
-  const editorType = isEcommerce ? 'ecommerce' : (body.editorType || 'builder');
+  const isBlockpages = body.editorType === 'blockpages';
+  const editorType = isBlockpages ? 'blockpages' : (isEcommerce ? 'ecommerce' : (body.editorType || 'builder'));
 
   const doc = await Workspace.create({
     userId,
@@ -108,18 +110,23 @@ async function getProject(userId, id) {
   return toProject(doc);
 }
 
-async function autosave(userId, id, { builderData, ecommerceData, editorType, htmlContent }) {
+async function autosave(userId, id, { builderData, ecommerceData, editorType, htmlContent, category }) {
   const $set = {};
 
   if (editorType) {
     $set.editorType = editorType;
   }
 
+  // Allow callers to update the category (e.g. blockpages persisting template slug)
+  if (typeof category === 'string') {
+    $set.category = category;
+  }
+
   if (editorType === 'ecommerce' || ecommerceData) {
     $set.ecommerceData = ecommerceData || {};
   }
 
-  if (editorType === 'builder' || builderData) {
+  if (editorType === 'builder' || editorType === 'blockpages' || builderData) {
     $set.builderData = builderData || {};
     // Mirror the components/designTokens onto the top level so list/legacy
     // consumers and older tooling stay consistent.
@@ -171,9 +178,45 @@ async function updateProject(userId, id, body) {
 async function deleteProject(userId, id) {
   const doc = await Workspace.findOneAndUpdate(
     ACTIVE_FILTER(userId, id),
-    { $set: { status: 'deleted' } }
+    { $set: { status: 'deleted' } },
+    { new: true }
   );
-  if (!doc) throw ApiError.notFound('Project not found');
+  if (!doc) {
+    // Check if the project exists for this user but was already deleted
+    const alreadyDeleted = await Workspace.findOne({ _id: id, userId, status: 'deleted' });
+    if (!alreadyDeleted) {
+      throw ApiError.notFound('Project not found');
+    }
+  }
+}
+
+async function duplicateProject(userId, id) {
+  await assertProjectCapacity(userId);
+
+  const source = await Workspace.findOne(ACTIVE_FILTER(userId, id)).lean();
+  if (!source) throw ApiError.notFound('Project not found');
+
+  const { _id, createdAt, updatedAt, __v, ...rest } = source;
+
+  const copy = await Workspace.create({
+    ...rest,
+    userId,
+    projectName: `${source.projectName || 'Untitled Project'} (Copy)`,
+    status: 'active',
+    editorType: source.editorType || (source.category === 'E-commerce' ? 'ecommerce' : 'builder'),
+    category: source.category,
+    style: source.style || '',
+    sections: Array.isArray(source.sections) ? source.sections : [],
+    description: source.description || '',
+    thumbnail: source.thumbnail || '',
+    components: source.components || [],
+    designTokens: source.designTokens || {},
+    builderData: source.builderData || {},
+    ecommerceData: source.ecommerceData || {},
+    htmlContent: source.htmlContent || '',
+  });
+
+  return toProject(copy.toObject());
 }
 
 module.exports = {
@@ -186,4 +229,5 @@ module.exports = {
   saveHtml,
   updateProject,
   deleteProject,
+  duplicateProject,
 };

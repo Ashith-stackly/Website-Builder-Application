@@ -75,6 +75,15 @@ logger.info('Stackly backend initializing', {
   cors: [...allowedOrigins],
 });
 
+app.get('/', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'stackly-backend-api',
+    frontend: 'http://localhost:3000',
+    message: 'Stackly Backend API is running. Open http://localhost:3000 in your browser to access the application.',
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'stackly-backend' });
 });

@@ -61,10 +61,10 @@ const workspaceSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
-    // Editor type: 'builder' | 'ecommerce'
+    // Editor type: 'builder' | 'ecommerce' | 'blockpages'
     editorType: {
       type: String,
-      enum: ['builder', 'ecommerce'],
+      enum: ['builder', 'ecommerce', 'blockpages'],
       default: 'builder',
     },
     // Full builder blob { components, sections, designTokens, seo, canvasMode, projectName }

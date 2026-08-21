@@ -19,7 +19,7 @@ export interface Project {
   designTokens?: DesignTokens;
   builderData?: ProjectBuilderData | Record<string, unknown>;
   ecommerceData?: Record<string, unknown>;
-  editorType?: "builder" | "ecommerce";
+  editorType?: "builder" | "ecommerce" | "blockpages";
   status?: string;
   createdAt: string;
   updatedAt: string;

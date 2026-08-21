@@ -19,6 +19,7 @@ router.post('/', createProjectValidation, validate, projectController.create);
 router.get('/:id', mongoIdParam, validate, projectController.getOne);
 router.put('/:id', updateProjectValidation, validate, projectController.update);
 router.delete('/:id', mongoIdParam, validate, projectController.remove);
+router.post('/:id/duplicate', mongoIdParam, validate, projectController.duplicate);
 router.put('/:id/autosave', autosaveValidation, validate, projectController.autosave);
 router.put('/:id/save-html', saveHtmlValidation, validate, projectController.saveHtml);
 

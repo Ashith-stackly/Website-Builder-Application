@@ -60,4 +60,5 @@ export interface TextBlockState {
   isTextEditable: boolean;
   activeSectionId?: string;
   sectionStyles?: Record<string, SectionStyleConfig>;
+  customTexts?: Record<string, string>;
 }

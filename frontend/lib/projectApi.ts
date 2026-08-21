@@ -24,7 +24,7 @@ export interface ProjectApiProject {
   description?: string;
   builderData?: ProjectBuilderData | null;
   ecommerceData?: Record<string, unknown> | null;
-  editorType?: "builder" | "ecommerce";
+  editorType?: "builder" | "ecommerce" | "blockpages";
   htmlContent?: string;
   status?: string;
   createdAt?: string;
@@ -135,7 +135,7 @@ export interface CreateProjectInput {
   style?: string;
   sections?: string[];
   description?: string;
-  editorType?: "builder" | "ecommerce";
+  editorType?: "builder" | "ecommerce" | "blockpages";
 }
 
 export async function createProject(
@@ -172,13 +172,22 @@ export async function deleteProject(id: string, signal?: AbortSignal): Promise<{
   });
 }
 
+export async function duplicateProject(id: string, signal?: AbortSignal): Promise<ProjectApiProject> {
+  const data = await projectRequest<ProjectResponse>(`/projects/${encodeURIComponent(id)}/duplicate`, {
+    method: "POST",
+    signal,
+  });
+  return data.project;
+}
+
 export async function autosaveProject(
   id: string,
   data: {
     builderData?: ProjectBuilderData | Record<string, unknown>;
     ecommerceData?: Record<string, unknown>;
-    editorType?: "builder" | "ecommerce";
+    editorType?: "builder" | "ecommerce" | "blockpages";
     htmlContent?: string;
+    category?: string;
   },
   signal?: AbortSignal,
 ): Promise<{ success: boolean; savedAt?: string }> {

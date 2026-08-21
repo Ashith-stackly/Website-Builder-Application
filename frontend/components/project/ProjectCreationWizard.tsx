@@ -21,6 +21,8 @@ export const PROJECT_CATEGORIES = [
   { title: "Blog", description: "Articles, categories, and reader growth" },
   { title: "Business", description: "Services, company profile, and leads" },
   { title: "Restaurant", description: "Menus, reservations, location, and guest contact" },
+  { title: "Construction", description: "Architecture, contractor, and engineering projects" },
+  { title: "Digital Marketing", description: "Agencies, campaigns, analytics, and strategy" },
 ];
 
 export const TEMPLATE_STYLES = [
@@ -48,11 +50,13 @@ export const ALL_SECTIONS: Record<string, { label: string; description: string }
  * Maps each project category to the section IDs used by its template generator.
  */
 export const CATEGORY_SECTIONS: Record<string, string[]> = {
-  "E-commerce":  ["navigation", "hero", "features", "gallery", "pricing-table", "testimonial", "contact", "footer"],
-  Portfolio:     ["navigation", "hero", "gallery", "features", "testimonial", "form", "footer"],
-  Blog:          ["navigation", "hero", "features", "gallery", "tabs", "contact", "footer"],
-  Business:      ["navigation", "hero", "features", "pricing-table", "testimonial", "form", "footer"],
-  Restaurant:    ["navigation", "hero", "gallery", "features", "testimonial", "map", "contact", "footer"],
+  "E-commerce":       ["navigation", "hero", "features", "gallery", "pricing-table", "testimonial", "contact", "footer"],
+  Portfolio:          ["navigation", "hero", "gallery", "features", "testimonial", "form", "footer"],
+  Blog:               ["navigation", "hero", "features", "gallery", "tabs", "contact", "footer"],
+  Business:           ["navigation", "hero", "features", "pricing-table", "testimonial", "form", "footer"],
+  Restaurant:         ["navigation", "hero", "gallery", "features", "testimonial", "map", "contact", "footer"],
+  Construction:       ["navigation", "hero", "features", "gallery", "testimonial", "contact", "footer"],
+  "Digital Marketing": ["navigation", "hero", "features", "pricing-table", "testimonial", "contact", "footer"],
 };
 
 export const DEFAULT_SECTION_IDS = ["navigation", "hero", "features", "contact"];
@@ -471,6 +475,22 @@ export default function ProjectCreationWizard({
     resetState();
   };
 
+  /** Map wizard category display name to blockpages template slug. */
+  const CATEGORY_TO_BLOCKPAGES_SLUG: Record<string, string> = {
+    "Portfolio": "portfolio",
+    "Blog": "blog",
+    "Business": "business",
+    "Restaurant": "restaurant",
+    "Construction": "construction",
+    "Digital Marketing": "digital-marketing",
+    "digital-marketing": "digital-marketing",
+    "construction": "construction",
+    "portfolio": "portfolio",
+    "blog": "blog",
+    "business": "business",
+    "restaurant": "restaurant",
+  };
+
   const handleBuild = async () => {
     if (isBuilding) return;
     setError("");
@@ -478,7 +498,9 @@ export default function ProjectCreationWizard({
 
     const token = typeof window !== "undefined" ? getAuthToken() : null;
     const isEcommerce = projectData.category === "E-commerce";
-    const editorType = isEcommerce ? "ecommerce" : "builder";
+    const editorType: "builder" | "ecommerce" | "blockpages" = isEcommerce
+      ? "ecommerce"
+      : "builder";
 
     try {
       if (token) {

@@ -217,6 +217,13 @@ export default function BuilderLayout() {
       return;
     }
 
+    const projectId = searchParams.get("projectId");
+    if (projectId) {
+      hasLoadedRequirements.current = true;
+      void useBuilderStore.getState().loadProject(projectId);
+      return;
+    }
+
     const projectName = searchParams.get("projectName");
     const category = searchParams.get("category");
     const style = searchParams.get("style");

@@ -80,9 +80,10 @@ const TEMPLATE_CARDS: {
 
 type MyWebsiteDropdownProps = {
   currentTemplate?: BlockpagesTemplateId;
+  onSelectTemplate?: (templateId: BlockpagesTemplateId) => void;
 };
 
-export default function MyWebsiteDropdown({ currentTemplate }: MyWebsiteDropdownProps) {
+export default function MyWebsiteDropdown({ currentTemplate, onSelectTemplate }: MyWebsiteDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchParams = useSearchParams();
@@ -110,6 +111,12 @@ export default function MyWebsiteDropdown({ currentTemplate }: MyWebsiteDropdown
     }
     setIsOpen(false);
     setSearchQuery("");
+
+    if (onSelectTemplate) {
+      onSelectTemplate(templateId);
+      return;
+    }
+
     const params = new URLSearchParams();
     params.set("template", templateId);
     if (projectId) {

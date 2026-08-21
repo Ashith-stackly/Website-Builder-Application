@@ -84,7 +84,8 @@ export async function createBlockPagesDraft(
   return createProject(
     {
       projectName: `Block Pages — ${templateLabel}`,
-      category: "blockpages",
+      category: template,
+      editorType: "blockpages",
       description: `Block Pages draft (${template} template)`,
     },
     signal,
@@ -108,12 +109,16 @@ export async function saveBlockPagesDraft(
 
   const autosavePayload: {
     builderData: Record<string, unknown>;
+    editorType: "blockpages";
+    category: string;
     htmlContent?: string;
   } = {
     builderData: {
       schemaVersion: 1,
       blockPagesData: sanitisedPayload,
     } as Record<string, unknown>,
+    editorType: "blockpages",
+    category: payload.template,
   };
 
   if (typeof htmlContent === "string") {

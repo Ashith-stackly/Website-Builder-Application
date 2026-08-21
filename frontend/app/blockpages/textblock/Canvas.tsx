@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown, Eye, Redo2, Save, Send, Undo2, Check, AlertTriangle, Loader2 } from "lucide-react";
 import { routePath } from "@/lib/paths";
-import { getBlockpagesTemplateLabel } from "@/lib/blockpagesTemplates";
+import { getBlockpagesTemplateLabel, type BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 import { BlockpagesEditorProvider } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesInteractiveControl } from "@/lib/blockpagesEditorInteraction";
 import { buildBlockpagesSectionStylesCss } from "@/lib/blockpagesTemplateSections";
@@ -95,6 +95,7 @@ type TextCanvasProps = {
   saveStatus?: DraftSaveStatus;
   pendingDividerScrollId?: string | null;
   onPendingDividerScrollComplete?: () => void;
+  onSelectTemplate?: (templateId: BlockpagesTemplateId) => void;
 };
  
 const rgbToHex = (rgb: string) => {
@@ -139,6 +140,19 @@ function textStylesEqual(a: TextStyles, b: TextStyles) {
   );
 }
  
+const DEFAULT_CANVAS_SECTION = {
+  alignment: "left" as const,
+  backgroundColor: "#f8fafc",
+  headerBg: "#06224C",
+  headerText: "#ffffff",
+  headerFontSize: "",
+  headerFontFamily: "",
+  headerFontWeight: "",
+  footerBg: "#06224C",
+  footerText: "#ffffff",
+  shadow: false,
+};
+
 export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onUndo, onRedo, template = "ecommerce", isImageEditingMode = false, customImages = {}, onEditImage, editingImageId, isButtonEditingMode = false, customButtons = {},
   onEditButton,
   editingButtonId,
@@ -163,6 +177,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   saveStatus = "idle",
   pendingDividerScrollId = null,
   onPendingDividerScrollComplete,
+  onSelectTemplate,
 }: TextCanvasProps) {
   const isPreviewMode = false;
   const previewDevice: PreviewDevice = "desktop";
@@ -177,7 +192,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   const [hiddenElementsRevision, setHiddenElementsRevision] = useState(0);
   const [hiddenElementIds, setHiddenElementIds] = useState<string[]>([]);
   const [hiddenElementsCss, setHiddenElementsCss] = useState("");
-  const { section, isTextEditable } = state;
+  const section = Object.assign({}, DEFAULT_CANVAS_SECTION, state?.section);
+  const isTextEditable = Boolean(state?.isTextEditable);
 
   stateRef.current = state;
   onStateChangeRef.current = onStateChange;
@@ -191,6 +207,25 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   const selectTarget = (target: TextEditorTarget) => {
     onStateChange({ ...state, selectedTarget: target });
   };
+
+  // Re-apply saved custom text overrides whenever customTexts updates (e.g. from loaded draft)
+  useEffect(() => {
+    const customTexts = state?.customTexts;
+    if (!customTexts || !Object.keys(customTexts).length) return;
+    if (!canvasRef.current) return;
+
+    const contentRoot = getCanvasContentRoot(canvasRef.current);
+    if (!contentRoot) return;
+
+    contentRoot.querySelectorAll<HTMLElement>("[data-blockpages-text-id]").forEach((el) => {
+      const textId = el.getAttribute("data-blockpages-text-id");
+      if (textId && typeof customTexts[textId] === "string") {
+        if (activeEditableRef.current !== el && el.innerHTML !== customTexts[textId]) {
+          el.innerHTML = customTexts[textId];
+        }
+      }
+    });
+  }, [state?.customTexts, template]);
 
   useLayoutEffect(() => {
     if (!templateUsesHtmlCanvasPersistence(template)) return;
@@ -578,6 +613,20 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       activeEditableRef.current = editableNode;
       ensureEditablePlaceholder(editableNode);
 
+      const textId = editableNode.getAttribute("data-blockpages-text-id");
+      if (textId) {
+        const prevTexts = stateRef.current.customTexts || {};
+        if (prevTexts[textId] !== editableNode.innerHTML) {
+          onStateChangeRef.current({
+            ...stateRef.current,
+            customTexts: {
+              ...prevTexts,
+              [textId]: editableNode.innerHTML,
+            },
+          });
+        }
+      }
+
       if (document.activeElement !== editableNode) {
         editableNode.focus({ preventScroll: true });
         placeCaretAtEnd(editableNode);
@@ -595,6 +644,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       activateEditableNode(resolvedNode);
     };
 
+    let textNodeCounter = 0;
     const makeEditable = (node: Element) => {
       if (node.closest("[data-builder-chrome='true']")) return;
       if (node.closest('[data-blockpages-interactive="true"], .buyscreen-search, input, textarea, select')) return;
@@ -624,6 +674,12 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         const htmlNode = node as HTMLElement;
         if (shouldBeEditable && (selectedTarget === "header" || selectedTarget === "text")) {
           node.setAttribute("contenteditable", "true");
+          const textId = node.getAttribute("data-blockpages-text-id") || `txt-${template}-nav-${textNodeCounter++}`;
+          node.setAttribute("data-blockpages-text-id", textId);
+          const savedOverride = stateRef.current.customTexts?.[textId];
+          if (typeof savedOverride === "string" && activeEditableRef.current !== htmlNode && htmlNode.innerHTML !== savedOverride) {
+            htmlNode.innerHTML = savedOverride;
+          }
           htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
         } else {
           if (activeEditableRef.current === htmlNode) {
@@ -645,6 +701,12 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
 
         if (shouldBeEditable && !blockInteractive) {
           node.setAttribute("contenteditable", "true");
+          const textId = node.getAttribute("data-blockpages-text-id") || `txt-${template}-${node.tagName.toLowerCase()}-${textNodeCounter++}`;
+          node.setAttribute("data-blockpages-text-id", textId);
+          const savedOverride = stateRef.current.customTexts?.[textId];
+          if (typeof savedOverride === "string" && activeEditableRef.current !== htmlNode && htmlNode.innerHTML !== savedOverride) {
+            htmlNode.innerHTML = savedOverride;
+          }
           if (node.tagName === "BUTTON") {
             htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
           }
@@ -763,7 +825,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         data-builder-chrome="true"
         className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
       >
-        <MyWebsiteDropdown currentTemplate={template} />
+        <MyWebsiteDropdown currentTemplate={template} onSelectTemplate={onSelectTemplate} />
  
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex flex-shrink-0 overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm">
@@ -844,7 +906,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
             ref={canvasRef}
             data-blockpages-canvas-host="true"
             className="relative flex min-h-0 flex-1 flex-col"
-            style={{ backgroundColor: section.backgroundColor, textAlign: section.alignment }}
+            style={{ backgroundColor: section?.backgroundColor || "#f8fafc", textAlign: section?.alignment || "left" }}
           >
             {isTextEditable && !isPreviewMode ? (
               <style>{`

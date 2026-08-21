@@ -19,6 +19,7 @@ import { useProjectStore } from "@/store/projectStore";
 import { useThemeStore } from "@/lib/theme";
 import { primaryNav } from "./navConfig";
 import { useLanguageStore } from "@/lib/i18n";
+import { getProjectEditorRoute } from "@/lib/projectRouting";
 
 interface Command {
   id: string;
@@ -96,8 +97,7 @@ export default function CommandPalette({
       keywords: `${p.category} project open edit`,
       group: "Recent projects",
       run: () => {
-        const editorPath = p.editorType === "ecommerce" || p.category === "E-commerce" ? "/e-commerce" : "/builder";
-        router.push(`${editorPath}?projectId=${p.id}`);
+        router.push(getProjectEditorRoute(p));
       },
     }));
 

@@ -120,7 +120,7 @@ type ButtonProps = BlockData["props"];
  
 const initialTextBlockState: TextBlockState = {
   selectedTarget: "main",
-  isTextEditable: false,
+  isTextEditable: true,
   textStyles: {
     color: "",
     fontSize: "",
@@ -160,6 +160,10 @@ export default function BlockPagesClient() {
   const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // If a projectId is present, the MongoDB draft loading effect manages state hydration.
+    // Do NOT overwrite from localStorage.
+    if (searchParams.get("projectId")) return;
+
     const parsed = parseBlockpagesTemplate(searchParams.get("template"));
     setTextTemplate(parsed);
     if (isTextEditorTemplate(parsed)) {
@@ -170,21 +174,21 @@ export default function BlockPagesClient() {
     if (persisted) {
       setTextBlockState({
         ...persisted,
+        isTextEditable: true,
         activeSectionId: persisted.activeSectionId ?? getBlockpagesDefaultSectionId(parsed),
       });
     } else {
       setTextBlockState((current) => ({
         ...current,
+        isTextEditable: true,
         activeSectionId: getBlockpagesDefaultSectionId(parsed),
       }));
     }
 
-    if (!searchParams.get("projectId")) {
-      const loadedDividers = loadAppliedDividersForTemplate(parsed);
-      setAppliedDividers(loadedDividers);
-      persistAppliedDividersForTemplate(parsed, loadedDividers);
-      setAppliedIcons(loadAppliedIconsForTemplate(parsed));
-    }
+    const loadedDividers = loadAppliedDividersForTemplate(parsed);
+    setAppliedDividers(loadedDividers);
+    persistAppliedDividersForTemplate(parsed, loadedDividers);
+    setAppliedIcons(loadAppliedIconsForTemplate(parsed));
   }, [searchParams]);
 
   const [buttonBlocks, setButtonBlocks] = useState<BlockData[]>([initialButtonBlock]);
@@ -281,50 +285,75 @@ export default function BlockPagesClient() {
       return;
     }
 
+    setDraftProjectId(projectId);
+
     let cancelled = false;
     const controller = new AbortController();
 
     (async () => {
       try {
-        const { draft } = await loadBlockPagesDraft(projectId, controller.signal);
-        if (cancelled || !draft) {
+        const { project, draft } = await loadBlockPagesDraft(projectId, controller.signal);
+        if (cancelled) return;
+
+        setDraftProjectId(projectId);
+
+        if (!draft) {
+          // Freshly created project from dashboard (no prior builderData.blockPagesData)
+          const requestedTemplateParam = searchParams.get("template");
+          const resolvedTemplate = parseBlockpagesTemplate(
+            requestedTemplateParam || project?.category || null
+          );
+          setTextTemplate(resolvedTemplate);
+          if (isTextEditorTemplate(resolvedTemplate)) {
+            setActiveBlockPage("text");
+          }
+
+          const persisted = loadPersistedTextBlockState(resolvedTemplate);
+          setTextBlockState(
+            persisted
+              ? {
+                  ...persisted,
+                  isTextEditable: true,
+                  activeSectionId: persisted.activeSectionId ?? getBlockpagesDefaultSectionId(resolvedTemplate),
+                }
+              : {
+                  ...initialTextBlockState,
+                  isTextEditable: true,
+                  activeSectionId: getBlockpagesDefaultSectionId(resolvedTemplate),
+                }
+          );
           setIsDraftLoading(false);
           return;
         }
 
-        // Hydrate editor state from the saved draft
-        const requestedTemplateParam = searchParams.get("template");
-        const explicitRequestedTemplate = requestedTemplateParam ? parseBlockpagesTemplate(requestedTemplateParam) : null;
-        const isExplicitTemplateSwitch = Boolean(
-          explicitRequestedTemplate && draft.template && explicitRequestedTemplate !== draft.template
-        );
-
-        if (isExplicitTemplateSwitch && explicitRequestedTemplate) {
-          // User explicitly selected a different template from the dropdown while editing a project
-          setTextTemplate(explicitRequestedTemplate);
-          const persisted = loadPersistedTextBlockState(explicitRequestedTemplate);
-          if (persisted) {
-            setTextBlockState({
-              ...persisted,
-              activeSectionId: persisted.activeSectionId ?? getBlockpagesDefaultSectionId(explicitRequestedTemplate),
-            });
-          } else {
-            setTextBlockState((current) => ({
-              ...current,
-              activeSectionId: getBlockpagesDefaultSectionId(explicitRequestedTemplate),
-            }));
+        // Standard project draft hydration from MongoDB
+        const activeTpl = draft.template || parseBlockpagesTemplate(project?.category || null);
+        if (activeTpl) {
+          setTextTemplate(activeTpl);
+          if (isTextEditorTemplate(activeTpl)) {
+            setActiveBlockPage("text");
           }
-          const loadedDividers = loadAppliedDividersForTemplate(explicitRequestedTemplate);
-          setAppliedDividers(loadedDividers);
-          persistAppliedDividersForTemplate(explicitRequestedTemplate, loadedDividers);
-          setAppliedIcons(loadAppliedIconsForTemplate(explicitRequestedTemplate));
-        } else {
-          // Standard project draft hydration
-          if (draft.template) setTextTemplate(draft.template);
-          if (draft.textBlockState) setTextBlockState(draft.textBlockState);
-          if (draft.appliedDividers) setAppliedDividers(draft.appliedDividers);
-          if (draft.appliedIcons) setAppliedIcons(draft.appliedIcons);
         }
+        if (draft.textBlockState) {
+          setTextBlockState({
+            ...initialTextBlockState,
+            ...draft.textBlockState,
+            section: {
+              ...initialTextBlockState.section,
+              ...(draft.textBlockState.section ?? {}),
+            },
+            textStyles: {
+              ...initialTextBlockState.textStyles,
+              ...(draft.textBlockState.textStyles ?? {}),
+            },
+            customTexts: {
+              ...(draft.textBlockState.customTexts ?? {}),
+            },
+            isTextEditable: true,
+          });
+        }
+        if (draft.appliedDividers) setAppliedDividers(draft.appliedDividers);
+        if (draft.appliedIcons) setAppliedIcons(draft.appliedIcons);
 
         if (draft.buttonBlocks?.length) {
           setButtonBlocks(draft.buttonBlocks);
@@ -345,8 +374,6 @@ export default function BlockPagesClient() {
         if (draft.customImages) setCustomImages(draft.customImages);
         if (draft.customButtons) setCustomButtons(draft.customButtons as Record<string, ButtonProps>);
         if (draft.customIcons) setCustomIcons(draft.customIcons);
-
-        setDraftProjectId(projectId);
 
         // Clear undo/redo history when loading a saved draft
         setPastButtonStates([]);
@@ -404,7 +431,10 @@ export default function BlockPagesClient() {
 
     const payload: BlockPagesDraftPayload = {
       template: textTemplate,
-      textBlockState,
+      textBlockState: {
+        ...textBlockState,
+        isTextEditable: true,
+      },
       buttonBlocks,
       videoBlocks,
       dividerBlocks,
@@ -425,9 +455,10 @@ export default function BlockPagesClient() {
         currentProjectId = created._id;
         setDraftProjectId(currentProjectId);
 
-        // Update URL with projectId without full page reload
+        // Update URL with projectId and template without full page reload
         const url = new URL(window.location.href);
         url.searchParams.set("projectId", currentProjectId);
+        url.searchParams.set("template", textTemplate);
         window.history.replaceState({}, "", url.toString());
       }
 
@@ -449,6 +480,74 @@ export default function BlockPagesClient() {
     draftProjectId, textTemplate, textBlockState, buttonBlocks, videoBlocks,
     dividerBlocks, iconBlocks, customImages, customButtons, customIcons,
     appliedDividers, appliedIcons, buildPreviewHtml,
+  ]);
+
+  const handleSwitchTemplate = useCallback(async (newTemplate: TextTemplateType) => {
+    setTextTemplate(newTemplate);
+    setActiveBlockPage("text");
+
+    const persisted = loadPersistedTextBlockState(newTemplate);
+    const nextTextBlockState: TextBlockState = persisted
+      ? {
+          ...persisted,
+          isTextEditable: true,
+          activeSectionId: persisted.activeSectionId ?? getBlockpagesDefaultSectionId(newTemplate),
+        }
+      : {
+          selectedTarget: "main",
+          isTextEditable: true,
+          textStyles: { color: "", fontSize: "", fontFamily: "" },
+          section: {
+            alignment: "left",
+            backgroundColor: "#f8fafc",
+            headerBg: "#06224C",
+            headerText: "#ffffff",
+            headerFontSize: "",
+            headerFontFamily: "",
+            headerFontWeight: "",
+            footerBg: "#06224C",
+            footerText: "#ffffff",
+            shadow: false,
+          },
+          activeSectionId: getBlockpagesDefaultSectionId(newTemplate),
+        };
+
+    setTextBlockState(nextTextBlockState);
+    const loadedDividers = loadAppliedDividersForTemplate(newTemplate);
+    setAppliedDividers(loadedDividers);
+    const loadedIcons = loadAppliedIconsForTemplate(newTemplate);
+    setAppliedIcons(loadedIcons);
+
+    // Update URL query parameters
+    const url = new URL(window.location.href);
+    url.searchParams.set("template", newTemplate);
+    if (draftProjectId) {
+      url.searchParams.set("projectId", draftProjectId);
+    }
+    window.history.replaceState({}, "", url.toString());
+
+    // Auto-persist new template choice and editability to backend project
+    if (draftProjectId) {
+      const payload: BlockPagesDraftPayload = {
+        template: newTemplate,
+        textBlockState: nextTextBlockState,
+        buttonBlocks,
+        videoBlocks,
+        dividerBlocks,
+        iconBlocks,
+        customImages,
+        customButtons,
+        customIcons,
+        appliedDividers: loadedDividers,
+        appliedIcons: loadedIcons,
+      };
+      void saveBlockPagesDraft(draftProjectId, payload, undefined, undefined).catch((err) => {
+        console.warn("Auto-saving switched template draft failed:", err);
+      });
+    }
+  }, [
+    draftProjectId, buttonBlocks, videoBlocks, dividerBlocks, iconBlocks,
+    customImages, customButtons, customIcons,
   ]);
 
   const handlePreview = useCallback(() => {
@@ -1204,6 +1303,7 @@ export default function BlockPagesClient() {
               }}
               pendingDividerScrollId={pendingDividerScrollId}
               onPendingDividerScrollComplete={clearPendingDividerScroll}
+              onSelectTemplate={handleSwitchTemplate}
             />
             <div className="hidden w-[210px] shrink-0 xl:block">
               <TextRightSidebar state={textBlockState} onStateChange={pushTextState} template={textTemplate} />

@@ -8,6 +8,7 @@ import {
   createProject as apiCreateProject,
   updateProject as apiUpdateProject,
   deleteProject as apiDeleteProject,
+  duplicateProject as apiDuplicateProject,
   autosaveProject,
   isProjectConnectionError,
   type ProjectApiProject,
@@ -39,6 +40,7 @@ function mapApiProject(project: ProjectApiProject): Project {
   const now = new Date().toISOString();
   const builderData = project.builderData ?? {};
   const isEcommerce = project.editorType === "ecommerce" || project.category === "E-commerce";
+  const isBlockpages = project.editorType === "blockpages";
 
   return {
     id: project._id,
@@ -186,18 +188,22 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   deleteProject: (id) => {
-    // Optimistic removal; restore the snapshot if the backend rejects it.
+    // Optimistically remove from state.
     const snapshot = get().projects;
     set({ projects: snapshot.filter((p) => p.id !== id), error: null });
 
     void apiDeleteProject(id).catch((error) => {
+      // If the project is already deleted or not found, treat as success (idempotent)
+      const message = error instanceof Error ? error.message : "";
+      if (message.toLowerCase().includes("could not be found") || message.toLowerCase().includes("not found")) {
+        return;
+      }
+
       set({
         projects: snapshot,
         error: isProjectConnectionError(error)
           ? "Unable to reach the project service. The project was not deleted."
-          : error instanceof Error
-            ? error.message
-            : "Unable to delete this project.",
+          : message || "Unable to delete this project.",
       });
     });
   },
@@ -207,33 +213,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
     void (async () => {
       try {
-        // Pull the full source (list view omits the large builderData blob).
-        const source = await apiGetProject(id);
-        const editorType = source.editorType || (source.category === "E-commerce" ? "ecommerce" : "builder");
-        const created = await apiCreateProject({
-          projectName: `${source.projectName || "Untitled Project"} (Copy)`,
-          category: source.category,
-          style: source.style,
-          sections: source.sections,
-          description: source.description,
-          editorType,
-        });
-
-        // Copy the actual editor content + rendered HTML into the new project.
-        if (editorType === "ecommerce" && source.ecommerceData) {
-          await autosaveProject(created._id, {
-            editorType: "ecommerce",
-            ecommerceData: source.ecommerceData ?? {},
-            htmlContent: source.htmlContent ?? "",
-          });
-        } else if (source.builderData || source.htmlContent) {
-          await autosaveProject(created._id, {
-            editorType: "builder",
-            builderData: source.builderData ?? {},
-            htmlContent: source.htmlContent ?? "",
-          });
-        }
-
+        const created = await apiDuplicateProject(id);
+        const mapped = mapApiProject(created);
+        set((state) => ({
+          projects: [mapped, ...state.projects.filter((p) => p.id !== mapped.id)],
+          error: null,
+        }));
         await get().loadProjects();
       } catch (error) {
         set({

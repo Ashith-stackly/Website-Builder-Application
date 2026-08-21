@@ -24,6 +24,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import RenameProjectModal from "@/components/dashboard/RenameProjectModal";
+import DeleteProjectModal from "@/components/dashboard/DeleteProjectModal";
 import { useModKeyLabel } from "@/lib/hooks";
 import {
   gridContainer,
@@ -42,6 +43,7 @@ import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
 import type { Project } from "@/types/project";
 import { useLanguageStore } from "@/lib/i18n";
+import { getProjectEditorRoute } from "@/lib/projectRouting";
  
 /* ─── helpers ──────────────────────────────────────────────────────────── */
  
@@ -283,8 +285,7 @@ export default function DashboardPage() {
                     project={p}
                     tone={TILE_TONES[i % TILE_TONES.length]}
                     onOpen={() => {
-                      const editorPath = p.editorType === "ecommerce" || p.category === "E-commerce" ? "/e-commerce" : "/builder";
-                      router.push(`${editorPath}?projectId=${p.id}`);
+                      router.push(getProjectEditorRoute(p));
                     }}
                     onRename={renameProject}
                     onDelete={deleteProject}
@@ -399,6 +400,7 @@ function ProjectTile({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const menuRef = useClickOutside<HTMLDivElement>(() => setMenuOpen(false), menuOpen);
  
   const doRename = () => {
@@ -407,7 +409,7 @@ function ProjectTile({
   };
   const doDelete = () => {
     setMenuOpen(false);
-    if (window.confirm(`Delete “${project.name}”? This cannot be undone.`)) onDelete(project.id);
+    setDeleteModalOpen(true);
   };
  
   return (
@@ -477,6 +479,13 @@ function ProjectTile({
         onClose={() => setRenameModalOpen(false)}
         initialName={project.name}
         onSave={(newName) => onRename(project.id, newName)}
+      />
+
+      <DeleteProjectModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        projectName={project.name}
+        onConfirm={() => onDelete(project.id)}
       />
     </>
   );

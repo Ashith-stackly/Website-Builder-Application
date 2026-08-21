@@ -21,6 +21,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import RenameProjectModal from "@/components/dashboard/RenameProjectModal";
+import DeleteProjectModal from "@/components/dashboard/DeleteProjectModal";
 import { staggerContainer, staggerChild, gridContainer, cardItem, spring } from "@/lib/motion";
 import { useProjectStore } from "@/store/projectStore";
 import { useShallow } from "zustand/react/shallow";
@@ -29,6 +30,7 @@ import CreateProjectModal from "@/components/dashboard/CreateProjectModal";
 import EmptyProjects from "@/components/dashboard/EmptyProjects";
 import type { Project } from "@/types/project";
 import type { ProjectSortKey } from "@/types/project";
+import { getProjectEditorRoute } from "@/lib/projectRouting";
  
 type ViewMode = "grid" | "list";
 type Segment = "all" | "favorites" | "archived";
@@ -102,7 +104,7 @@ export default function ProjectsPage() {
     if (segment === "favorites") list = list.filter((p) => favorites.includes(p.id));
     else if (segment === "archived") list = list.filter((p) => p.status === "archived");
     return list;
-  }, [getFilteredProjects, segment, favorites]);
+  }, [getFilteredProjects, projects, segment, favorites]);
  
   const segments: { key: Segment; label: string; count: number }[] = [
     { key: "all", label: "All", count: projects.length },
@@ -236,21 +238,7 @@ export default function ProjectsPage() {
                   fav={favorites.includes(p.id)}
                   onToggleFav={() => toggleFav(p.id)}
                   onOpen={() => {
-                    if (p.editorType === "ecommerce" || p.category === "E-commerce") {
-                      router.push(`/e-commerce?projectId=${p.id}`);
-                      return;
-                    }
-
-                    const isBlockpages =
-                      p.category === "blockpages" ||
-                      Boolean(p.builderData?.blockPagesData) ||
-                      ["portfolio", "blog", "restaurant", "construction", "digital-marketing"].includes((p.category || "").toLowerCase());
-                    if (isBlockpages) {
-                      const tpl = p.category && p.category !== "blockpages" ? p.category : "construction";
-                      router.push(`/blockpages?projectId=${p.id}&template=${encodeURIComponent(tpl)}`);
-                    } else {
-                      router.push(`/builder?projectId=${p.id}`);
-                    }
+                    router.push(getProjectEditorRoute(p));
                   }}
                   onRename={renameProject}
                   onDelete={deleteProject}
@@ -277,6 +265,7 @@ function ProjectCard({
 }) {
   const [menu, setMenu] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setMenu(false), menu);
  
   const doRename = () => {
@@ -285,7 +274,7 @@ function ProjectCard({
   };
   const doDelete = () => {
     setMenu(false);
-    if (window.confirm(`Delete “${project.name}”?`)) onDelete(project.id);
+    setDeleteModalOpen(true);
   };
  
   const Menu = (
@@ -360,6 +349,13 @@ function ProjectCard({
         onClose={() => setRenameModalOpen(false)}
         initialName={project.name}
         onSave={(newName) => onRename(project.id, newName)}
+      />
+
+      <DeleteProjectModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        projectName={project.name}
+        onConfirm={() => onDelete(project.id)}
       />
     </>
   );

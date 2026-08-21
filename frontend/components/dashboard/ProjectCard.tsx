@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { scaleIn } from "@/lib/motion";
 import type { Project } from "@/types/project";
+import { getProjectEditorRoute } from "@/lib/projectRouting";
+import DeleteProjectModal from "@/components/dashboard/DeleteProjectModal";
 
 interface ProjectCardProps {
   project: Project;
@@ -72,6 +74,7 @@ const categoryStyles: Record<
 export default function ProjectCard({ project, onRename, onDelete, onDuplicate }: ProjectCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState(project.name);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +112,7 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
   const timeAgo = getTimeAgo(updatedAt);
 
   const isEcommerce = project.editorType === "ecommerce" || project.category === "E-commerce";
-  const editorHref = isEcommerce ? `/e-commerce?projectId=${project.id}` : `/builder?projectId=${project.id}`;
+  const editorHref = getProjectEditorRoute(project);
 
   return (
     <motion.div
@@ -247,8 +250,8 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
                   <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                   <button
                     onClick={() => {
-                      onDelete(project.id);
                       setMenuOpen(false);
+                      setDeleteModalOpen(true);
                     }}
                     className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/60 cursor-pointer"
                   >
@@ -281,6 +284,13 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
           </Link>
         </div>
       </div>
+
+      <DeleteProjectModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        projectName={project.name}
+        onConfirm={() => onDelete(project.id)}
+      />
     </motion.div>
   );
 }
