@@ -194,7 +194,7 @@ export default function DashboardPage() {
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#4f6bed] to-[#8b5cf6]"
+                    className="h-full rounded-full bg-linear-to-r from-[#4f6bed] to-[#8b5cf6]"
                   />
                 </div>
               </div>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
               <motion.button
                 {...hoverLift}
                 onClick={() => setCreateOpen(true)}
-                className="inline-flex w-full sm:w-auto cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25"
+                className="inline-flex w-full sm:w-auto cursor-pointer items-center justify-center gap-2 rounded-xl bg-linear-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25"
               >
                 <Plus className="h-4 w-4" /> {t.dashboard.newProject}
               </motion.button>
@@ -374,15 +374,15 @@ function StatTile({
           <Icon className="h-4.5 w-4.5" />
         </span>
       </div>
-      <div className="mt-3 text-2xl font-black tabular-nums break-words" style={{ color: "var(--text)" }}>
+      <div className="mt-3 text-2xl font-black tabular-nums wrap-break-words" style={{ color: "var(--text)" }}>
         {loading ? <span className="inline-block h-7 w-12 animate-pulse rounded-md" style={{ background: "var(--surface-3)" }} /> : display.toLocaleString()}
       </div>
-      <div className="mt-0.5 text-[13px] font-semibold break-words" style={{ color: "var(--text-muted)" }}>{label}</div>
-      <div className="text-[11px] break-words" style={{ color: "var(--text-faint)" }}>{sub}</div>
+      <div className="mt-0.5 text-[13px] font-semibold wrap-break-words" style={{ color: "var(--text-muted)" }}>{label}</div>
+      <div className="text-[11px] wrap-break-words" style={{ color: "var(--text-faint)" }}>{sub}</div>
     </motion.div>
   );
 }
- 
+
 function ProjectTile({
   project,
   tone,
@@ -402,7 +402,7 @@ function ProjectTile({
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const menuRef = useClickOutside<HTMLDivElement>(() => setMenuOpen(false), menuOpen);
- 
+
   const doRename = () => {
     setMenuOpen(false);
     setRenameModalOpen(true);
@@ -411,7 +411,7 @@ function ProjectTile({
     setMenuOpen(false);
     setDeleteModalOpen(true);
   };
- 
+
   return (
     <>
       <motion.div
@@ -433,13 +433,13 @@ function ProjectTile({
             {project.status || "draft"}
           </span>
         </button>
- 
+
         {/* Meta */}
         <div className="flex items-center gap-2 p-3">
           <div className="min-w-0 flex-1">
-            <div className="line-clamp-2 break-words text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</div>
+            <div className="line-clamp-2 wrap-break-words text-sm font-bold" style={{ color: "var(--text)" }}>{project.name}</div>
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px]" style={{ color: "var(--text-faint)" }}>
-              <span className="truncate max-w-[100px] sm:max-w-none">{project.category || "Website"}</span>
+              <span className="truncate max-w-25 sm:max-w-none">{project.category || "Website"}</span>
               <span>·</span>
               <span className="flex items-center gap-0.5 whitespace-nowrap"><Clock className="h-3 w-3" />{relTime(project.updatedAt)}</span>
             </div>
@@ -447,7 +447,7 @@ function ProjectTile({
           <div ref={menuRef} className="relative shrink-0">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="grid h-8 w-8 place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]"
+              className="grid h-8 w-8 place-items-center rounded-lg transition-colors hover:bg-(--surface-2)"
               style={{ color: "var(--text-faint)" }}
               aria-label="Project actions"
             >
@@ -480,7 +480,7 @@ function ProjectTile({
         initialName={project.name}
         onSave={(newName) => onRename(project.id, newName)}
       />
-
+ 
       <DeleteProjectModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
@@ -505,14 +505,14 @@ function MenuItem({
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-(--surface-2)"
       style={{ color: danger ? "#f43f5e" : "var(--text)" }}
     >
       <Icon className="h-4 w-4" /> {label}
     </button>
   );
 }
- 
+
 function ActivityTimeline({ projects }: { projects: Project[] }) {
   const items = useMemo(() => {
     const base = projects.slice(0, 4).map((p) => ({
@@ -525,7 +525,7 @@ function ActivityTimeline({ projects }: { projects: Project[] }) {
       ? base
       : [{ icon: CheckCircle2, tone: "#10b981", title: "Welcome to Stackly", time: "now" }];
   }, [projects]);
- 
+
   return (
     <motion.div
       variants={revealSection}
@@ -540,14 +540,14 @@ function ActivityTimeline({ projects }: { projects: Project[] }) {
         <h3 className="text-sm font-black" style={{ color: "var(--text)" }}>Recent activity</h3>
       </div>
       <motion.ul variants={staggerContainer} initial="hidden" animate="visible" className="relative space-y-4">
-        <span className="absolute bottom-2 left-[15px] top-2 w-px" style={{ background: "var(--border)" }} />
+        <span className="absolute bottom-2 left-3.75 top-2 w-px" style={{ background: "var(--border)" }} />
         {items.map((it, i) => (
           <motion.li key={i} variants={staggerChild} className="relative flex items-start gap-3">
             <span className="relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full ring-4" style={{ background: `${it.tone}1a`, color: it.tone, ["--tw-ring-color" as string]: "var(--surface)" }}>
               <it.icon className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1 pt-1">
-              <p className="line-clamp-2 break-words text-[13px] font-semibold" style={{ color: "var(--text)" }}>{it.title}</p>
+              <p className="line-clamp-2 wrap-break-words text-[13px] font-semibold" style={{ color: "var(--text)" }}>{it.title}</p>
               <p className="text-[11px]" style={{ color: "var(--text-faint)" }}>{it.time}</p>
             </div>
           </motion.li>
@@ -556,7 +556,7 @@ function ActivityTimeline({ projects }: { projects: Project[] }) {
     </motion.div>
   );
 }
- 
+
 function TipCard() {
   const modKey = useModKeyLabel();
   return (
@@ -569,12 +569,12 @@ function TipCard() {
       style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, var(--accent-soft), var(--surface))" }}
     >
       <div className="flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
+        <span className="grid h-8 w-8 place-items-center rounded-xl bg-linear-to-br from-amber-400 to-orange-500 text-white">
           <Lightbulb className="h-4 w-4" />
         </span>
         <h3 className="text-sm font-black" style={{ color: "var(--text)" }}>Pro tip</h3>
       </div>
-      <p className="mt-3 text-[13px] leading-6 break-words" style={{ color: "var(--text-muted)" }}>
+      <p className="mt-3 text-[13px] leading-6 wrap-break-words" style={{ color: "var(--text-muted)" }}>
         Press <Kbd>{modKey}</Kbd> <Kbd>K</Kbd> anywhere to open the command palette — jump to any page, project, or action instantly.
       </p>
     </motion.div>

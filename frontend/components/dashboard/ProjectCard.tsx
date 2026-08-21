@@ -124,7 +124,7 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
       }`}
     >
       <Link href={editorHref} className="block rounded-t-2xl overflow-hidden">
-        <div className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${style.gradient}`}>
+        <div className={`relative aspect-[16/10] w-full overflow-hidden bg-linear-to-br ${style.gradient}`}>
           <motion.div
             aria-hidden="true"
             className="absolute inset-4 rounded-2xl border border-white/70 bg-white/60 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm"

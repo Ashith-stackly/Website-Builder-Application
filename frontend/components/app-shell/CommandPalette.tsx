@@ -195,7 +195,7 @@ export default function CommandPalette({
                   setActive(0);
                 }}
                 placeholder={t.nav.searchPlaceholder}
-                className="w-full bg-transparent py-4 text-sm outline-none placeholder:text-[color:var(--text-faint)]"
+                className="w-full bg-transparent py-4 text-sm outline-none placeholder:text-(--text-faint)"
                 style={{ color: "var(--text)" }}
               />
               <kbd

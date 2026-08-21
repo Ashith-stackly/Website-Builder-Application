@@ -872,7 +872,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
             title="Publish"
           >
             <span className="hidden xl:inline group-hover:inline">Publish</span>
-            <Send className="h-[14px] w-[14px] xl:hidden group-hover:hidden" />
+            <Send className="h-3.5 w-3.5 xl:hidden group-hover:hidden" />
           </button>
         </div>
       </div>
@@ -955,7 +955,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                   data-blockpages-scroll-root
                   data-blockpages-device={previewDevice}
                   data-blockpages-text-editing={isTextEditable ? "true" : undefined}
-                  className="@container min-h-[560px] h-[calc(100vh-220px)] w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar [overflow-wrap:break-word] [word-wrap:break-word]"
+                  className="@container min-h-140 h-[calc(100vh-220px)] w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar wrap-break-words"
                 >
                   <style>{`
                     [data-textblock-canvas] .portfolio-shell,

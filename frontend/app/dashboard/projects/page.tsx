@@ -124,7 +124,7 @@ export default function ProjectsPage() {
             </p>
           </div>
           <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} transition={spring.snappy} onClick={() => setCreateOpen(true)}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-linear-to-r from-[#4f6bed] to-[#7c3aed] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-500/25">
             <Plus className="h-4 w-4" /> New Project
           </motion.button>
         </motion.div>
@@ -174,7 +174,7 @@ export default function ProjectsPage() {
                     className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border p-1 shadow-xl" style={{ background: "var(--surface)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}>
                     {SORTS.map((s) => (
                       <button key={s.key} onClick={() => { setSort(s.key); setSortOpen(false); }}
-                        className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+                        className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-(--surface-2)"
                         style={{ color: "var(--text)" }}>
                         {s.label}
                         {sort.key === s.key && <span className="text-xs" style={{ color: "var(--accent)" }}>{sort.order === "desc" ? "↓" : "↑"}</span>}
@@ -276,10 +276,10 @@ function ProjectCard({
     setMenu(false);
     setDeleteModalOpen(true);
   };
- 
+
   const Menu = (
     <div ref={ref} className="relative">
-      <button onClick={() => setMenu((v) => !v)} className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]" style={{ color: "var(--text-faint)" }} aria-label="Actions">
+      <button onClick={() => setMenu((v) => !v)} className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-(--surface-2)" style={{ color: "var(--text-faint)" }} aria-label="Actions">
         <MoreHorizontal className="h-4 w-4" />
       </button>
       <AnimatePresence>
@@ -295,13 +295,13 @@ function ProjectCard({
       </AnimatePresence>
     </div>
   );
- 
+
   const Fav = (
-    <button onClick={onToggleFav} className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-[color:var(--surface-2)]" aria-label="Favorite">
+    <button onClick={onToggleFav} className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg transition-colors hover:bg-(--surface-2)" aria-label="Favorite">
       <Star className="h-4 w-4" style={{ color: fav ? "#f59e0b" : "var(--text-faint)", fill: fav ? "#f59e0b" : "transparent" }} />
     </button>
   );
- 
+
   return (
     <>
       {view === "list" ? (
@@ -343,7 +343,7 @@ function ProjectCard({
           </div>
         </motion.div>
       )}
- 
+
       <RenameProjectModal
         isOpen={renameModalOpen}
         onClose={() => setRenameModalOpen(false)}
@@ -360,10 +360,10 @@ function ProjectCard({
     </>
   );
 }
- 
+
 function MItem({ icon: Icon, label, onClick, danger }: { icon: React.ElementType; label: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button onClick={onClick} className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]" style={{ color: danger ? "#f43f5e" : "var(--text)" }}>
+    <button onClick={onClick} className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors hover:bg-(--surface-2)" style={{ color: danger ? "#f43f5e" : "var(--text)" }}>
       <Icon className="h-4 w-4" /> {label}
     </button>
   );
