@@ -823,17 +823,17 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#dbe3ef] bg-[#f7f9fc] shadow-sm">
       <div
         data-builder-chrome="true"
-        className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
+        className="flex h-16 shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
       >
         <MyWebsiteDropdown currentTemplate={template} onSelectTemplate={onSelectTemplate} />
  
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="flex flex-shrink-0 overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm">
+          <div className="flex shrink-0 overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm">
             <button className={`border-r border-gray-300 px-3 py-2 ${canUndo || isTextEditable ? "text-gray-600 hover:bg-gray-50" : "cursor-not-allowed text-gray-300"}`} onClick={handleUndo} disabled={!canUndo && !isTextEditable} title="Undo">
-              <Undo2 className="h-[18px] w-[18px]" strokeWidth={1.5} />
+              <Undo2 className="h-4.5 w-4.5" strokeWidth={1.5} />
             </button>
             <button className={`px-3 py-2 ${canRedo || isTextEditable ? "text-gray-600 hover:bg-gray-50" : "cursor-not-allowed text-gray-300"}`} onClick={handleRedo} disabled={!canRedo && !isTextEditable} title="Redo">
-              <Redo2 className="h-[18px] w-[18px]" strokeWidth={1.5} />
+              <Redo2 className="h-4.5 w-4.5" strokeWidth={1.5} />
             </button>
           </div>
           <button

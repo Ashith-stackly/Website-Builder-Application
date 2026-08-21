@@ -136,7 +136,7 @@ export default function MyWebsiteDropdown({ currentTemplate, onSelectTemplate }:
         aria-label="Select Template"
       >
         <LayoutGrid className="h-4 w-4 text-[#517AA5]" />
-        <span className="truncate max-w-[120px] sm:max-w-[160px]">{activeLabel}</span>
+        <span className="truncate max-w-30 sm:max-w-40">{activeLabel}</span>
         <ChevronDown className="h-4 w-4 text-slate-500 shrink-0" />
       </button>
 

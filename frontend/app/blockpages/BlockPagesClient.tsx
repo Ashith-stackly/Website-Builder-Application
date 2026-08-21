@@ -1185,16 +1185,16 @@ export default function BlockPagesClient() {
             {/* Mobile/Tablet Backdrop */}
             {showMobileSidebar && (
               <div
-                className="fixed inset-0 bg-black/50 z-[90] xl:hidden"
+                className="fixed inset-0 bg-black/50 z-90 xl:hidden"
                 onClick={() => setShowMobileSidebar(false)}
               />
             )}
  
             {/* Sidebar Container: Bottom sheet on mobile, relative flow on desktop */}
             <div className={`
-              fixed bottom-0 left-0 w-full h-[60vh] z-[100] transition-transform duration-300
+              fixed bottom-0 left-0 w-full h-[60vh] z-100 transition-transform duration-300
               ${showMobileSidebar ? "translate-y-0" : "translate-y-full"}
-              xl:translate-y-0 xl:static xl:h-auto xl:w-[210px] xl:shrink-0 xl:block
+              xl:translate-y-0 xl:static xl:h-auto xl:w-52.5 xl:shrink-0 xl:block
               bg-white xl:bg-transparent rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] xl:shadow-none xl:rounded-none overflow-hidden
             `}>
               <ButtonRightSidebar
@@ -1305,7 +1305,7 @@ export default function BlockPagesClient() {
               onPendingDividerScrollComplete={clearPendingDividerScroll}
               onSelectTemplate={handleSwitchTemplate}
             />
-            <div className="hidden w-[210px] shrink-0 xl:block">
+            <div className="hidden w-52.5 shrink-0 xl:block">
               <TextRightSidebar state={textBlockState} onStateChange={pushTextState} template={textTemplate} />
             </div>
           </div>
@@ -1329,7 +1329,7 @@ export default function BlockPagesClient() {
               onPreview={handlePreview}
               saveStatus={saveStatus}
             />
-            <div className="hidden w-[210px] shrink-0 xl:block">
+            <div className="hidden w-52.5 shrink-0 xl:block">
               <ImageRightSidebar />
             </div>
           </div>
@@ -1382,14 +1382,14 @@ export default function BlockPagesClient() {
             </div>
             {showMobileSidebar && (
               <div
-                className="fixed inset-0 bg-black/50 z-[90] xl:hidden"
+                className="fixed inset-0 bg-black/50 z-90 xl:hidden"
                 onClick={() => setShowMobileSidebar(false)}
               />
             )}
             <div className={`
-              fixed bottom-0 left-0 w-full h-[60vh] z-[100] transition-transform duration-300
+              fixed bottom-0 left-0 w-full h-[60vh] z-100 transition-transform duration-300
               ${showMobileSidebar ? "translate-y-0" : "translate-y-full"}
-              xl:translate-y-0 xl:static xl:h-auto xl:w-[210px] xl:shrink-0 xl:block
+              xl:translate-y-0 xl:static xl:h-auto xl:w-52.5 xl:shrink-0 xl:block
               bg-white xl:bg-transparent rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] xl:shadow-none xl:rounded-none overflow-hidden
             `}>
               <VideoRightSidebar
@@ -1460,14 +1460,14 @@ export default function BlockPagesClient() {
             </div>
             {showMobileSidebar && (
               <div
-                className="fixed inset-0 bg-black/50 z-[90] xl:hidden"
+                className="fixed inset-0 bg-black/50 z-90 xl:hidden"
                 onClick={() => setShowMobileSidebar(false)}
               />
             )}
             <div className={`
-              fixed bottom-0 left-0 w-full h-[60vh] z-[100] transition-transform duration-300
+              fixed bottom-0 left-0 w-full h-[60vh] z-100 transition-transform duration-300
               ${showMobileSidebar ? "translate-y-0" : "translate-y-full"}
-              xl:translate-y-0 xl:static xl:h-auto xl:w-[210px] xl:shrink-0 xl:block
+              xl:translate-y-0 xl:static xl:h-auto xl:w-52.5 xl:shrink-0 xl:block
               bg-white xl:bg-transparent rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] xl:shadow-none xl:rounded-none overflow-hidden
             `}>
               <DividerRightSidebar
@@ -1540,14 +1540,14 @@ export default function BlockPagesClient() {
             </div>
             {showMobileSidebar && (
               <div
-                className="fixed inset-0 bg-black/50 z-[90] xl:hidden"
+                className="fixed inset-0 bg-black/50 z-90 xl:hidden"
                 onClick={() => setShowMobileSidebar(false)}
               />
             )}
             <div className={`
-              fixed bottom-0 left-0 w-full h-[60vh] z-[100] transition-transform duration-300
+              fixed bottom-0 left-0 w-full h-[60vh] z-100 transition-transform duration-300
               ${showMobileSidebar ? "translate-y-0" : "translate-y-full"}
-              xl:translate-y-0 xl:static xl:h-auto xl:w-[210px] xl:shrink-0 xl:block
+              xl:translate-y-0 xl:static xl:h-auto xl:w-52.5 xl:shrink-0 xl:block
               bg-white xl:bg-transparent rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] xl:shadow-none xl:rounded-none overflow-hidden
             `}>
               <IconsRightSidebar
