@@ -61,9 +61,21 @@ const workspaceSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    // Editor type: 'builder' | 'ecommerce'
+    editorType: {
+      type: String,
+      enum: ['builder', 'ecommerce'],
+      default: 'builder',
+    },
     // Full builder blob { components, sections, designTokens, seo, canvasMode, projectName }
     // as sent by the frontend builder store on autosave.
     builderData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    // E-Commerce editor state blob { style, ... }
+    // as sent by the frontend e-commerce editor on autosave.
+    ecommerceData: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },

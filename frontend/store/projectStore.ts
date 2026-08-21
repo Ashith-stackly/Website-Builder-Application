@@ -38,16 +38,20 @@ function sortProjects(projects: Project[], sort: ProjectSort): Project[] {
 function mapApiProject(project: ProjectApiProject): Project {
   const now = new Date().toISOString();
   const builderData = project.builderData ?? {};
+  const isEcommerce = project.editorType === "ecommerce" || project.category === "E-commerce";
 
   return {
     id: project._id,
-    name: project.projectName || builderData.projectName || "Untitled Project",
+    name: project.projectName || builderData.projectName || (isEcommerce ? "My E-Commerce Store" : "Untitled Project"),
     description: project.description,
-    category: project.category || "Business",
+    category: project.category || (isEcommerce ? "E-commerce" : "Business"),
     style: project.style || "Modern",
     sections: project.sections ?? [],
     components: builderData.components ?? builderData.sections ?? [],
     designTokens: builderData.designTokens,
+    builderData: project.builderData ?? undefined,
+    ecommerceData: project.ecommerceData ?? undefined,
+    editorType: project.editorType || (isEcommerce ? "ecommerce" : "builder"),
     status: project.status || "draft",
     createdAt: project.createdAt || project.updatedAt || now,
     updatedAt: project.updatedAt || project.createdAt || now,
@@ -205,17 +209,26 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       try {
         // Pull the full source (list view omits the large builderData blob).
         const source = await apiGetProject(id);
+        const editorType = source.editorType || (source.category === "E-commerce" ? "ecommerce" : "builder");
         const created = await apiCreateProject({
           projectName: `${source.projectName || "Untitled Project"} (Copy)`,
           category: source.category,
           style: source.style,
           sections: source.sections,
           description: source.description,
+          editorType,
         });
 
-        // Copy the actual builder content + rendered HTML into the new project.
-        if (source.builderData || source.htmlContent) {
+        // Copy the actual editor content + rendered HTML into the new project.
+        if (editorType === "ecommerce" && source.ecommerceData) {
           await autosaveProject(created._id, {
+            editorType: "ecommerce",
+            ecommerceData: source.ecommerceData ?? {},
+            htmlContent: source.htmlContent ?? "",
+          });
+        } else if (source.builderData || source.htmlContent) {
+          await autosaveProject(created._id, {
+            editorType: "builder",
             builderData: source.builderData ?? {},
             htmlContent: source.htmlContent ?? "",
           });

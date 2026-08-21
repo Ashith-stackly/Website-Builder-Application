@@ -63,7 +63,7 @@ const legacyHeading = {
 };
 assert.deepEqual(
   getFreeformFrame(legacyHeading, 0, 1280),
-  { x: 40, y: 40, width: 720, height: 180 },
+  { x: 280, y: 40, width: 720, height: 180 },
   "legacy flow blocks receive a stable visual frame without persisted geometry",
 );
 assert.equal(

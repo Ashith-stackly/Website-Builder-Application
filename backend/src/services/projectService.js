@@ -3,9 +3,9 @@ const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const { getProjectLimit } = require('../constants/plans');
 
-// Fields to exclude from list views — builderData/htmlContent are large blobs the
+// Fields to exclude from list views — builderData/ecommerceData/htmlContent are large blobs the
 // dashboard list does not need.
-const LIST_PROJECTION = '-components -designTokens -builderData -htmlContent -__v';
+const LIST_PROJECTION = '-components -designTokens -builderData -ecommerceData -htmlContent -__v';
 
 const ACTIVE_FILTER = (userId, id) => ({ _id: id, userId, status: { $ne: 'deleted' } });
 
@@ -40,6 +40,7 @@ async function assertProjectCapacity(userId, knownUser) {
  */
 function toProject(doc) {
   if (!doc) return null;
+  const isEcommerce = doc.editorType === 'ecommerce' || doc.category === 'E-commerce';
   const builderData =
     doc.builderData && Object.keys(doc.builderData).length > 0
       ? doc.builderData
@@ -55,13 +56,15 @@ function toProject(doc) {
     _id: doc._id,
     projectName: doc.projectName,
     description: doc.description || '',
-    category: doc.category || '',
+    category: doc.category || (isEcommerce ? 'E-commerce' : ''),
     style: doc.style || '',
     sections: doc.sections || [],
     status: doc.status || 'active',
+    editorType: doc.editorType || (isEcommerce ? 'ecommerce' : 'builder'),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     builderData,
+    ecommerceData: doc.ecommerceData || {},
     htmlContent: doc.htmlContent || '',
   };
 }
@@ -79,16 +82,21 @@ async function createProject(userId, body) {
   // ── Plan-based project limit enforcement ────────────────────────────
   await assertProjectCapacity(userId);
 
+  const isEcommerce = body.editorType === 'ecommerce' || body.category === 'E-commerce';
+  const editorType = isEcommerce ? 'ecommerce' : (body.editorType || 'builder');
+
   const doc = await Workspace.create({
     userId,
     projectName: body.projectName,
-    category: body.category || '',
+    category: body.category || (isEcommerce ? 'E-commerce' : ''),
     style: body.style || '',
     sections: Array.isArray(body.sections) ? body.sections : [],
     description: body.description || '',
+    editorType,
     components: [],
     designTokens: {},
     builderData: {},
+    ecommerceData: body.ecommerceData || {},
     htmlContent: '',
   });
   return toProject(doc.toObject());
@@ -100,14 +108,27 @@ async function getProject(userId, id) {
   return toProject(doc);
 }
 
-async function autosave(userId, id, { builderData, htmlContent }) {
-  const $set = { builderData: builderData || {} };
-  // Mirror the components/designTokens onto the top level so list/legacy
-  // consumers and older tooling stay consistent.
-  if (builderData && typeof builderData === 'object') {
-    if (Array.isArray(builderData.components)) $set.components = builderData.components;
-    if (builderData.designTokens) $set.designTokens = builderData.designTokens;
+async function autosave(userId, id, { builderData, ecommerceData, editorType, htmlContent }) {
+  const $set = {};
+
+  if (editorType) {
+    $set.editorType = editorType;
   }
+
+  if (editorType === 'ecommerce' || ecommerceData) {
+    $set.ecommerceData = ecommerceData || {};
+  }
+
+  if (editorType === 'builder' || builderData) {
+    $set.builderData = builderData || {};
+    // Mirror the components/designTokens onto the top level so list/legacy
+    // consumers and older tooling stay consistent.
+    if (builderData && typeof builderData === 'object') {
+      if (Array.isArray(builderData.components)) $set.components = builderData.components;
+      if (builderData.designTokens) $set.designTokens = builderData.designTokens;
+    }
+  }
+
   if (typeof htmlContent === 'string') $set.htmlContent = htmlContent;
 
   const doc = await Workspace.findOneAndUpdate(
@@ -130,7 +151,7 @@ async function saveHtml(userId, id, htmlContent) {
 }
 
 async function updateProject(userId, id, body) {
-  const fields = ['projectName', 'description', 'category', 'style', 'sections', 'status', 'thumbnail'];
+  const fields = ['projectName', 'description', 'category', 'style', 'sections', 'status', 'thumbnail', 'editorType'];
   const $set = {};
   for (const field of fields) {
     if (Object.prototype.hasOwnProperty.call(body, field) && typeof body[field] !== 'undefined') {

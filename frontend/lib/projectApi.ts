@@ -23,6 +23,8 @@ export interface ProjectApiProject {
   projectName: string;
   description?: string;
   builderData?: ProjectBuilderData | null;
+  ecommerceData?: Record<string, unknown> | null;
+  editorType?: "builder" | "ecommerce";
   htmlContent?: string;
   status?: string;
   createdAt?: string;
@@ -133,6 +135,7 @@ export interface CreateProjectInput {
   style?: string;
   sections?: string[];
   description?: string;
+  editorType?: "builder" | "ecommerce";
 }
 
 export async function createProject(
@@ -150,7 +153,7 @@ export async function createProject(
 
 export async function updateProject(
   id: string,
-  updates: Partial<Pick<ProjectApiProject, "projectName" | "description" | "category" | "style" | "sections" | "status">>,
+  updates: Partial<Pick<ProjectApiProject, "projectName" | "description" | "category" | "style" | "sections" | "status" | "editorType">>,
   signal?: AbortSignal,
 ): Promise<ProjectApiProject> {
   const data = await projectRequest<ProjectResponse>(`/projects/${encodeURIComponent(id)}`, {
@@ -171,7 +174,12 @@ export async function deleteProject(id: string, signal?: AbortSignal): Promise<{
 
 export async function autosaveProject(
   id: string,
-  data: { builderData: ProjectBuilderData | Record<string, unknown>; htmlContent?: string },
+  data: {
+    builderData?: ProjectBuilderData | Record<string, unknown>;
+    ecommerceData?: Record<string, unknown>;
+    editorType?: "builder" | "ecommerce";
+    htmlContent?: string;
+  },
   signal?: AbortSignal,
 ): Promise<{ success: boolean; savedAt?: string }> {
   return projectRequest(`/projects/${encodeURIComponent(id)}/autosave`, {

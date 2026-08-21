@@ -236,10 +236,15 @@ export default function ProjectsPage() {
                   fav={favorites.includes(p.id)}
                   onToggleFav={() => toggleFav(p.id)}
                   onOpen={() => {
+                    if (p.editorType === "ecommerce" || p.category === "E-commerce") {
+                      router.push(`/e-commerce?projectId=${p.id}`);
+                      return;
+                    }
+
                     const isBlockpages =
                       p.category === "blockpages" ||
                       Boolean(p.builderData?.blockPagesData) ||
-                      ["portfolio", "blog", "ecommerce", "restaurant", "construction", "digital-marketing"].includes((p.category || "").toLowerCase());
+                      ["portfolio", "blog", "restaurant", "construction", "digital-marketing"].includes((p.category || "").toLowerCase());
                     if (isBlockpages) {
                       const tpl = p.category && p.category !== "blockpages" ? p.category : "construction";
                       router.push(`/blockpages?projectId=${p.id}&template=${encodeURIComponent(tpl)}`);

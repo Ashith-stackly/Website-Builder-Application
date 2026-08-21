@@ -108,6 +108,9 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
   const updatedAt = new Date(project.updatedAt);
   const timeAgo = getTimeAgo(updatedAt);
 
+  const isEcommerce = project.editorType === "ecommerce" || project.category === "E-commerce";
+  const editorHref = isEcommerce ? `/e-commerce?projectId=${project.id}` : `/builder?projectId=${project.id}`;
+
   return (
     <motion.div
       layout
@@ -117,7 +120,7 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
         menuOpen ? "z-40" : "z-0 hover:z-20"
       }`}
     >
-      <Link href={`/builder?projectId=${project.id}`} className="block rounded-t-2xl overflow-hidden">
+      <Link href={editorHref} className="block rounded-t-2xl overflow-hidden">
         <div className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${style.gradient}`}>
           <motion.div
             aria-hidden="true"
@@ -271,7 +274,7 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
             <span>{project.status || "draft"}</span>
           </p>
           <Link
-            href={`/builder?projectId=${project.id}`}
+            href={editorHref}
             className="rounded-lg bg-[#06224C] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-900"
           >
             Edit

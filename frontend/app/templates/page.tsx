@@ -198,9 +198,12 @@ export default function TemplatesPage() {
         throw new Error("The template service did not return a project to open.");
       }
       setCloneSuccess(`"${templateName}" cloned successfully!`);
-      // Navigate to the builder with the new project
+      const tpl = templates.find((t) => t._id === templateId);
+      const isEcommerce = tpl?.category === "store";
+      const targetPath = isEcommerce ? "/e-commerce" : "/builder";
+      // Navigate to the editor with the new project
       setTimeout(() => {
-        router.push(`/builder?projectId=${result.projectId}`);
+        router.push(`${targetPath}?projectId=${result.projectId}`);
       }, 1200);
     } catch (err: unknown) {
       if (isTemplateConnectionError(err)) {

@@ -95,7 +95,10 @@ export default function CommandPalette({
       icon: FileText,
       keywords: `${p.category} project open edit`,
       group: "Recent projects",
-      run: () => router.push(`/builder?projectId=${p.id}`),
+      run: () => {
+        const editorPath = p.editorType === "ecommerce" || p.category === "E-commerce" ? "/e-commerce" : "/builder";
+        router.push(`${editorPath}?projectId=${p.id}`);
+      },
     }));
 
     return [...actions, ...nav, ...recent];
@@ -119,14 +122,14 @@ export default function CommandPalette({
 
   useEffect(() => {
     if (open) {
-      setQuery("");
-      setActive(0);
-      const t = window.setTimeout(() => inputRef.current?.focus(), 40);
+      const t = window.setTimeout(() => {
+        setQuery("");
+        setActive(0);
+        inputRef.current?.focus();
+      }, 40);
       return () => window.clearTimeout(t);
     }
   }, [open]);
-
-  useEffect(() => setActive(0), [query]);
 
   const runAt = (i: number) => {
     const cmd = filtered[i];
@@ -187,7 +190,10 @@ export default function CommandPalette({
               <input
                 ref={inputRef}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setActive(0);
+                }}
                 placeholder={t.nav.searchPlaceholder}
                 className="w-full bg-transparent py-4 text-sm outline-none placeholder:text-[color:var(--text-faint)]"
                 style={{ color: "var(--text)" }}

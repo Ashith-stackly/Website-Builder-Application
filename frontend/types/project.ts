@@ -1,5 +1,6 @@
 import type { DesignTokens } from "@/store/designStore";
 import type { BuilderComponent } from "@/types/builder";
+import type { ProjectBuilderData } from "@/lib/projectApi";
 
 /**
  * Project type definitions for Stackly Dashboard.
@@ -16,7 +17,9 @@ export interface Project {
   thumbnail?: string;
   components?: BuilderComponent[];
   designTokens?: DesignTokens;
-  builderData?: Record<string, unknown>;
+  builderData?: ProjectBuilderData | Record<string, unknown>;
+  ecommerceData?: Record<string, unknown>;
+  editorType?: "builder" | "ecommerce";
   status?: string;
   createdAt: string;
   updatedAt: string;

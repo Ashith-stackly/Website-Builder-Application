@@ -282,7 +282,10 @@ export default function DashboardPage() {
                     key={p.id}
                     project={p}
                     tone={TILE_TONES[i % TILE_TONES.length]}
-                    onOpen={() => router.push(`/builder?projectId=${p.id}`)}
+                    onOpen={() => {
+                      const editorPath = p.editorType === "ecommerce" || p.category === "E-commerce" ? "/e-commerce" : "/builder";
+                      router.push(`${editorPath}?projectId=${p.id}`);
+                    }}
                     onRename={renameProject}
                     onDelete={deleteProject}
                     onDuplicate={duplicateProject}

@@ -287,9 +287,11 @@ export default function TemplatePreviewClient() {
       if (!result.projectId) {
         throw new Error("The template service did not return a project to open.");
       }
-      // Blog templates navigate to Blog Management; all others go to Builder
+      // Blog templates navigate to Blog Management; E-commerce to /e-commerce; others to Builder
       if (isBlog) {
         router.push(`/blog/manage?workspaceId=${encodeURIComponent(result.projectId)}`);
+      } else if (template.category === "store") {
+        router.push(`/e-commerce?projectId=${result.projectId}`);
       } else {
         router.push(`/builder?projectId=${result.projectId}`);
       }
@@ -455,6 +457,15 @@ export default function TemplatePreviewClient() {
             )}
             {/* Name & Premium Badge */}
             <div>
+              {template.thumbnail && (
+                <div className="mb-3 overflow-hidden rounded-lg border border-gray-200">
+                  <img
+                    src={assetPath(template.thumbnail)}
+                    alt={template.name}
+                    className="h-32 w-full object-cover"
+                  />
+                </div>
+              )}
               <div className="mb-1 flex items-center gap-2">
                 <h2 className="text-xl font-black text-[#06224C]">{template.name}</h2>
                 {template.isPremium && (

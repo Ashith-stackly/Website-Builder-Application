@@ -477,6 +477,8 @@ export default function ProjectCreationWizard({
     setIsBuilding(true);
 
     const token = typeof window !== "undefined" ? getAuthToken() : null;
+    const isEcommerce = projectData.category === "E-commerce";
+    const editorType = isEcommerce ? "ecommerce" : "builder";
 
     try {
       if (token) {
@@ -486,6 +488,7 @@ export default function ProjectCreationWizard({
           category: projectData.category,
           style: projectData.template,
           sections: projectData.sections,
+          editorType,
         });
 
         // Trigger store refresh for dashboard list
@@ -501,18 +504,21 @@ export default function ProjectCreationWizard({
         }
 
         handleClose();
-        router.push(`/builder?projectId=${project._id}`);
+        const editorPath = editorType === "ecommerce" ? "/e-commerce" : "/builder";
+        router.push(`${editorPath}?projectId=${project._id}`);
       } else {
-        // Unauthenticated: pass requirements directly to builder
+        // Unauthenticated: pass requirements directly to editor
         const params = new URLSearchParams({
           projectName: projectData.name.trim(),
           category: projectData.category,
           style: projectData.template,
           sections: projectData.sections.join(","),
+          editorType,
         });
 
         handleClose();
-        router.push(`/builder?${params.toString()}`);
+        const editorPath = editorType === "ecommerce" ? "/e-commerce" : "/builder";
+        router.push(`${editorPath}?${params.toString()}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create the project. Please try again.");

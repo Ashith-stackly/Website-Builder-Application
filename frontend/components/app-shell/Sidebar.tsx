@@ -228,7 +228,8 @@ export default function Sidebar({
                     <motion.li key={p.id} variants={staggerChild}>
                       <button
                         onClick={() => {
-                          router.push(`/builder?projectId=${p.id}`);
+                          const editorPath = p.editorType === "ecommerce" || p.category === "E-commerce" ? "/e-commerce" : "/builder";
+                          router.push(`${editorPath}?projectId=${p.id}`);
                           onNavigate?.();
                         }}
                         className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-2)]"
