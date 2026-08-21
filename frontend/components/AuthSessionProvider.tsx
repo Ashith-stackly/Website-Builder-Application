@@ -3,7 +3,8 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { getAuthToken } from "@/lib/authToken";
-import { isProtectedAuthPath, restoreAuthSession } from "@/lib/authSession";
+import { getAdminAuthToken } from "@/lib/adminAuthToken";
+import { isAdminPath, isProtectedAuthPath, restoreAuthSession } from "@/lib/authSession";
 
 function AuthSessionProviderInner({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -22,18 +23,24 @@ function AuthSessionProviderInner({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const handlePageShow = (event: PageTransitionEvent) => {
-      const token = getAuthToken();
+    const handlePageShow = () => {
       const path = window.location.pathname.replace(/\/+$/, "") || "/";
-      if (!token && isProtectedAuthPath(path)) {
+      if (isAdminPath(path) && !getAdminAuthToken()) {
+        window.location.replace("/admin/login");
+        return;
+      }
+      if (!getAuthToken() && isProtectedAuthPath(path)) {
         window.location.replace("/login");
       }
     };
 
     const handlePopState = () => {
-      const token = getAuthToken();
       const path = window.location.pathname.replace(/\/+$/, "") || "/";
-      if (!token && isProtectedAuthPath(path)) {
+      if (isAdminPath(path) && !getAdminAuthToken()) {
+        window.location.replace("/admin/login");
+        return;
+      }
+      if (!getAuthToken() && isProtectedAuthPath(path)) {
         window.location.replace("/login");
       }
     };
@@ -50,10 +57,16 @@ function AuthSessionProviderInner({ children }: { children: ReactNode }) {
     if (!bootstrapped) return;
 
     const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
-    const token = getAuthToken();
     const query = searchParams.toString();
     const fullPath = query ? `${path}?${query}` : path;
 
+    // Admin paths use their own token namespace
+    if (isAdminPath(path) && !getAdminAuthToken()) {
+      router.replace("/admin/login");
+      return;
+    }
+
+    const token = getAuthToken();
     if (!token && isProtectedAuthPath(path)) {
       router.replace(`/login?redirect=${encodeURIComponent(fullPath)}`);
       return;

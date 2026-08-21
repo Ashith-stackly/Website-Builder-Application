@@ -11,10 +11,17 @@ export type AuthBootstrapResult = "restored" | "missing" | "invalid" | "offline"
 
 export function isProtectedAuthPath(pathname: string): boolean {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
-  const protectedPrefixes = ["/dashboard", "/blog/manage", "/admin", "/builder"];
+  const protectedPrefixes = ["/dashboard", "/blog/manage", "/builder"];
   return protectedPrefixes.some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );
+}
+
+/** Check if the path belongs to the admin portal (excluding /admin/login). */
+export function isAdminPath(pathname: string): boolean {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  if (path === "/admin/login") return false; // login page is public
+  return path === "/admin" || path.startsWith("/admin/");
 }
 
 function persistUserFromProfile(user: UserProfile): void {

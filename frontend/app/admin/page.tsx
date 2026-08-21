@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -12,6 +13,7 @@ import {
   CircleDollarSign,
   Globe2,
   LoaderCircle,
+  LogOut,
   RefreshCw,
   Rocket,
   ShieldCheck,
@@ -24,6 +26,7 @@ import {
   getAdminDashboardSummary,
   type AdminDashboardSummary,
 } from "@/lib/adminApi";
+import { clearAdminAuthToken, getAdminAuthToken } from "@/lib/adminAuthToken";
 import { useThemeStore } from "@/lib/theme";
 import ThemeToggle from "@/components/blog/ThemeToggle";
 
@@ -52,6 +55,7 @@ export default function AdminDashboardPage() {
   const [summary, setSummary] = useState<AdminDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AdminApiError | Error | null>(null);
+  const router = useRouter();
 
   // Theme integration from lib/theme.ts
   const resolved = useThemeStore((s) => s.resolved);
@@ -116,10 +120,10 @@ export default function AdminDashboardPage() {
                   : error.message}
             </p>
             <Link
-              href={unauthenticated ? "/login" : "/dashboard"}
+              href={unauthenticated ? "/admin/login" : "/dashboard"}
               className="mt-6 inline-flex rounded-xl bg-blue-600 dark:bg-blue-500 px-5 py-2.5 text-xs font-bold text-white no-underline transition hover:bg-blue-700 dark:hover:bg-blue-600 shadow-md shadow-blue-500/20"
             >
-              {unauthenticated ? "Go to sign in" : "Return to your dashboard"}
+              {unauthenticated ? "Go to admin sign in" : "Return to your dashboard"}
             </Link>
           </motion.section>
         </main>
@@ -173,6 +177,17 @@ export default function AdminDashboardPage() {
             >
               <RefreshCw className={`h-3.5 w-3.5 text-blue-600 dark:text-blue-400 ${loading ? "animate-spin" : ""}`} />
               <span>Refresh</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clearAdminAuthToken();
+                router.replace("/admin/login");
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 transition hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer shadow-2xs"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Logout</span>
             </button>
           </div>
         </div>
