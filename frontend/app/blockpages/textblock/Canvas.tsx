@@ -55,6 +55,7 @@ import {
   writeBlockpagesStorageItem,
   BLOCKPAGES_CANVAS_RESTORED_EVENT,
 } from "@/lib/blockpagesEditorPersistence";
+import { syncCanvasTexts, cleanCorruptedHtmlEntities } from "@/lib/blockpagesTextSync";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
  
@@ -209,7 +210,12 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   };
 
   // Re-apply saved custom text overrides whenever customTexts updates (e.g. from loaded draft)
-  useEffect(() => {
+  // GUARD: Skip when user is actively editing to avoid resetting the caret/destroying contentEditable state.
+  useLayoutEffect(() => {
+    // If a text element is currently being edited, the browser owns the DOM.
+    // Do NOT rewrite innerHTML — it would reset the caret and reverse character order.
+    if (activeEditableRef.current) return;
+
     const customTexts = state?.customTexts;
     if (!customTexts || !Object.keys(customTexts).length) return;
     if (!canvasRef.current) return;
@@ -217,14 +223,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
     const contentRoot = getCanvasContentRoot(canvasRef.current);
     if (!contentRoot) return;
 
-    contentRoot.querySelectorAll<HTMLElement>("[data-blockpages-text-id]").forEach((el) => {
-      const textId = el.getAttribute("data-blockpages-text-id");
-      if (textId && typeof customTexts[textId] === "string") {
-        if (activeEditableRef.current !== el && el.innerHTML !== customTexts[textId]) {
-          el.innerHTML = customTexts[textId];
-        }
-      }
-    });
+    syncCanvasTexts(contentRoot, template, customTexts, null);
   }, [state?.customTexts, template]);
 
   useLayoutEffect(() => {
@@ -626,11 +625,6 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
           });
         }
       }
-
-      if (document.activeElement !== editableNode) {
-        editableNode.focus({ preventScroll: true });
-        placeCaretAtEnd(editableNode);
-      }
     };
 
     const handleTextFocusIn = (event: Event) => {
@@ -663,6 +657,8 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         else if (selectedTarget === "text") shouldBeEditable = true;
       }
 
+      const activeElement = typeof document !== "undefined" ? document.activeElement : null;
+
       if (
         node instanceof HTMLElement &&
         node.tagName === "BUTTON" &&
@@ -672,14 +668,23 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
           node.classList.contains("buyscreen-all-categories-item"))
       ) {
         const htmlNode = node as HTMLElement;
+        const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-nav-${textNodeCounter++}`;
+        htmlNode.setAttribute("data-blockpages-text-id", textId);
+
+        const isEditing =
+          Boolean(activeEditableRef.current && (activeEditableRef.current === htmlNode || activeEditableRef.current.contains(htmlNode) || htmlNode.contains(activeEditableRef.current))) ||
+          Boolean(activeElement && (activeElement === htmlNode || htmlNode.contains(activeElement)));
+
+        const savedOverride = stateRef.current.customTexts?.[textId];
+        if (!isEditing && typeof savedOverride === "string") {
+          const cleaned = cleanCorruptedHtmlEntities(savedOverride);
+          if (htmlNode.innerHTML !== cleaned) {
+            htmlNode.innerHTML = cleaned;
+          }
+        }
+
         if (shouldBeEditable && (selectedTarget === "header" || selectedTarget === "text")) {
           node.setAttribute("contenteditable", "true");
-          const textId = node.getAttribute("data-blockpages-text-id") || `txt-${template}-nav-${textNodeCounter++}`;
-          node.setAttribute("data-blockpages-text-id", textId);
-          const savedOverride = stateRef.current.customTexts?.[textId];
-          if (typeof savedOverride === "string" && activeEditableRef.current !== htmlNode && htmlNode.innerHTML !== savedOverride) {
-            htmlNode.innerHTML = savedOverride;
-          }
           htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
         } else {
           if (activeEditableRef.current === htmlNode) {
@@ -693,20 +698,27 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         return;
       }
 
-      const isInteractiveOnly = false;
-
       if (textTags.includes(node.tagName)) {
         const htmlNode = node as HTMLElement;
         const blockInteractive = isBlockpagesInteractiveControl(node, textEditingOptions) && !shouldBeEditable;
 
+        const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-${node.tagName.toLowerCase()}-${textNodeCounter++}`;
+        htmlNode.setAttribute("data-blockpages-text-id", textId);
+
+        const isEditing =
+          Boolean(activeEditableRef.current && (activeEditableRef.current === htmlNode || activeEditableRef.current.contains(htmlNode) || htmlNode.contains(activeEditableRef.current))) ||
+          Boolean(activeElement && (activeElement === htmlNode || htmlNode.contains(activeElement)));
+
+        const savedOverride = stateRef.current.customTexts?.[textId];
+        if (!isEditing && typeof savedOverride === "string") {
+          const cleaned = cleanCorruptedHtmlEntities(savedOverride);
+          if (htmlNode.innerHTML !== cleaned) {
+            htmlNode.innerHTML = cleaned;
+          }
+        }
+
         if (shouldBeEditable && !blockInteractive) {
           node.setAttribute("contenteditable", "true");
-          const textId = node.getAttribute("data-blockpages-text-id") || `txt-${template}-${node.tagName.toLowerCase()}-${textNodeCounter++}`;
-          node.setAttribute("data-blockpages-text-id", textId);
-          const savedOverride = stateRef.current.customTexts?.[textId];
-          if (typeof savedOverride === "string" && activeEditableRef.current !== htmlNode && htmlNode.innerHTML !== savedOverride) {
-            htmlNode.innerHTML = savedOverride;
-          }
           if (node.tagName === "BUTTON") {
             htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
           }
@@ -1108,7 +1120,17 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                     }
                   `}</style>
                   <div ref={contentRef} className="min-w-0 max-w-full">
-                    <BlockpagesEditorProvider template={template} deviceMode={previewDevice} onPreview={previewHandler}>
+                    <BlockpagesEditorProvider
+                      template={template}
+                      deviceMode={previewDevice}
+                      customImages={customImages}
+                      customButtons={customButtons}
+                      customIcons={customIcons}
+                      customTexts={state?.customTexts}
+                      textStyles={state?.textStyles}
+                      sectionStyles={state?.sectionStyles}
+                      onPreview={previewHandler}
+                    >
                       <BlockpagesCanvasEnhancer
                         template={template}
                         isImageEditingMode={isImageEditingMode}
@@ -1127,6 +1149,9 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                         onEditIcon={onEditIcon}
                         editingIconId={editingIconId}
                         customIcons={customIcons}
+                        customTexts={state?.customTexts}
+                        textStyles={state?.textStyles}
+                        sectionStyles={state?.sectionStyles}
                         appliedDividers={appliedDividers}
                         onRemoveDivider={onRemoveDivider}
                         onUpdateDividerPosition={onUpdateDividerPosition}

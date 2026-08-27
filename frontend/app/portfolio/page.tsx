@@ -373,18 +373,18 @@ function Footer() {
         viewport={{ once: true, amount: 0.12 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-sky-300/70 to-transparent" />
         <div className="pointer-events-none absolute -right-24 top-8 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-8 h-56 w-56 rounded-full bg-emerald-300/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-8 flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.20)] backdrop-blur md:flex-row md:items-center md:justify-between md:p-7">
+          <div className="mb-8 flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/4 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.20)] backdrop-blur md:flex-row md:items-center md:justify-between md:p-7">
             <div className="w-full md:w-1/2">
               <h3 className="mb-2 text-sm font-black uppercase tracking-wider text-white">Subscribe to our Updates</h3>
               <p className="mb-4 max-w-md text-sm leading-relaxed text-white/60">Get template drops, builder updates, and product notes in your inbox.</p>
               <form onSubmit={handleSubscribe} className="flex flex-wrap items-center gap-3 w-full max-w-md" aria-label="Subscribe to updates form" noValidate>
                 <div className="flex flex-1 items-center overflow-hidden rounded-full bg-white p-1 shadow-[0_18px_40px_rgba(0,0,0,0.18)] ring-1 ring-white/30 transition focus-within:ring-2 focus-within:ring-sky-300 w-full min-w-0 isolate">
-                  <label className="relative flex flex-grow items-center min-w-0">
+                  <label className="relative flex grow items-center min-w-0">
                     <span className="sr-only">Email address</span>
                     <FaEnvelope6 className="absolute left-3.5 text-gray-400" />
                     <input
@@ -401,12 +401,12 @@ function Footer() {
                       disabled={isSubmitting}
                     />
                   </label>
-                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed" disabled={isSubmitting}>
+                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed" disabled={isSubmitting}>
                     <FaPaperPlane6 className="text-sm" />
                   </button>
                 </div>
                 {toast && (
-                  <span className={`text-xs font-bold px-3 py-1.5 rounded-full whitespace-normal break-words animate-fade-in ${toast.toLowerCase().includes("success")
+                  <span className={`text-xs font-bold px-3 py-1.5 rounded-full whitespace-normal wrap-break-word animate-fade-in ${toast.toLowerCase().includes("success")
                       ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                       : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                     }`}>
@@ -447,10 +447,10 @@ function Footer() {
             ))}
 
             <motion.div className="col-span-2 mt-2 flex flex-col items-start md:col-span-1 md:mt-0" variants={footerItem}>
-              <Link href="/landing" scroll={true} onClick={() => { if (typeof window !== "undefined") { sessionStorage.removeItem("landing-scroll-y"); window.scrollTo(0, 0); } }} className="mb-4 inline-flex aspect-[2/1] min-w-[90px] items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105 cursor-pointer">
+              <Link href="/landing" scroll={true} onClick={() => { if (typeof window !== "undefined") { sessionStorage.removeItem("landing-scroll-y"); window.scrollTo(0, 0); } }} className="mb-4 inline-flex aspect-2/1 min-w-22.5 items-center justify-center rounded-[60%] bg-white px-4 py-3 shadow-[0_14px_32px_rgba(255,255,255,0.16)] transition duration-300 hover:-translate-y-0.5 hover:scale-105 cursor-pointer">
                 <img src={assetPath("/stackly-logo.webp")} alt="Stackly Logo" className="stackly-footer-logo h-5 w-auto object-contain" />
               </Link>
-              <p className="mb-2 max-w-[215px] text-[11px] font-bold uppercase leading-relaxed tracking-tight text-white/70">
+              <p className="mb-2 max-w-53.75 text-[11px] font-bold uppercase leading-relaxed tracking-tight text-white/70">
                 The <span className="text-blue-400">NO-CODE</span> website builder for everyone. Powered by AWS.
               </p>
               <p className="text-[10px] font-medium uppercase text-white/40">Infrastructure built by the Stackly team.</p>
@@ -467,7 +467,7 @@ function Footer() {
                 viewport={{ once: true }}
               >
                 {socials.map(([label, Icon, href, hoverClass]) => (
-                  <motion.a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} variants={socialItem} whileHover={{ y: -4, scale: 1.15, transition: { duration: 0.18 } }} className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#0A1E3D] shadow-sm transition-colors duration-300 hover:text-white hover:shadow-xl md:h-8 md:w-8 ${hoverClass}`}>
+                  <motion.a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} variants={socialItem} whileHover={{ y: -4, scale: 1.15, transition: { duration: 0.18 } }} className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[#0A1E3D] shadow-sm transition-colors duration-300 hover:text-white hover:shadow-xl md:h-8 md:w-8 ${hoverClass}`}>
                     <Icon className="text-xs md:text-sm" />
                   </motion.a>
                 ))}
@@ -476,7 +476,7 @@ function Footer() {
               <div className="flex w-full flex-col items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-white/50 lg:w-auto lg:flex-row lg:flex-wrap lg:gap-6 lg:justify-center">
                 <button type="button" onClick={() => setActiveModal("terms")} className="stackly-footer-link whitespace-nowrap cursor-pointer">Terms of Use</button>
                 <button type="button" onClick={() => setActiveModal("privacy")} className="stackly-footer-link whitespace-nowrap cursor-pointer">Privacy Policy</button>
-                <span className="text-center px-4 text-[9px] md:text-[10px] lg:px-0 whitespace-normal break-words max-w-full">
+                <span className="text-center px-4 text-[9px] md:text-[10px] lg:px-0 whitespace-normal wrap-break-word max-w-full">
                   Copyright 2018-2026 TheStackly.com INC
                 </span>
               </div>
@@ -486,16 +486,16 @@ function Footer() {
       </motion.footer>
 
       {modal && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+        <div className="fixed inset-0 z-10000 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
           <button type="button" aria-label="Close legal popup" onClick={() => setActiveModal(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="stackly-modal-pop relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
-            <div className="flex flex-shrink-0 items-center justify-between border-b p-5 md:p-7">
+          <div className="stackly-modal-pop relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-4xl bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b p-5 md:p-7">
               <h3 id="legal-modal-title" className="text-lg font-black uppercase tracking-widest text-[#06224C]">{modal.title}</h3>
             </div>
-            <div className="legal-modal-body flex-grow space-y-5 overflow-y-auto p-5 text-sm leading-relaxed text-gray-700 md:p-8">
+            <div className="legal-modal-body grow space-y-5 overflow-y-auto p-5 text-sm leading-relaxed text-gray-700 md:p-8">
               {modal.body}
             </div>
-            <div className="flex-shrink-0 border-t bg-gray-50 p-4 text-center">
+            <div className="shrink-0 border-t bg-gray-50 p-4 text-center">
               <button type="button" onClick={() => setActiveModal(null)} className="rounded-full bg-[#06224C] px-8 py-2.5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-blue-900 cursor-pointer">
                 Close
               </button>
@@ -615,9 +615,9 @@ export default function Portfolioedit() {
       <div className={isBlockpages ? "w-full min-w-0 max-w-full" : "flex flex-1 overflow-x-hidden max-w-full w-full"}>
         {/* MAIN CONTENT */}
         <div className={isBlockpages ? "w-full min-w-0 max-w-full bg-white p-0" : "flex-1 bg-white p-4 @md:p-7 flex justify-center min-w-0 overflow-x-hidden max-w-full w-full"}>
-          <div className={isBlockpages ? "w-full min-w-0 max-w-full relative flex flex-col" : "w-full max-w-[1200px] relative flex flex-col min-w-0 overflow-x-hidden"}>
+          <div className={isBlockpages ? "w-full min-w-0 max-w-full relative flex flex-col" : "w-full max-w-300 relative flex flex-col min-w-0 overflow-x-hidden"}>
             {!isBlockpages && (
-              <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block pointer-events-none">
+              <div className="fixed z-100 bottom-6 left-1/2 -translate-x-1/2 @lg:top-[50%] @lg:bottom-auto @lg:-translate-y-1/2 shrink-0 hidden md:block pointer-events-none">
                 <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-3 py-1.5">
                   <button
                     onClick={() => router.push("/landing#categories")}
@@ -666,14 +666,14 @@ export default function Portfolioedit() {
 
             {/* Canvas Box */}
             <div ref={canvasScrollRef} className={isBlockpages ? "flex-1 min-w-0 w-full max-w-full relative z-0" : `flex-1 overflow-visible min-w-0 relative z-0 transition-colors duration-300 ${(previewMode === "tablet" || previewMode === "mobile") ? "bg-gray-200/50 p-2 @sm:p-4 rounded-xl" : ""}`}>
-              <div className={`@container mx-auto min-h-[530px] bg-[#F2F2F2] flex flex-col relative portfolio-shell overflow-hidden box-border transition-all duration-500 ease-in-out ${isBlockpages
+              <div className={`@container mx-auto min-h-132.5 bg-[#F2F2F2] flex flex-col relative portfolio-shell overflow-hidden box-border transition-all duration-500 ease-in-out ${isBlockpages
                   ? "w-full max-w-full rounded-none border-0 shadow-none"
                   : previewMode === "mobile"
-                    ? "w-[375px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
+                    ? "w-93.75 max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
                     : previewMode === "tablet"
-                      ? "w-[768px] max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
+                      ? "w-3xl max-w-full shadow-2xl rounded-xl border-2 border-gray-300"
                       : previewMode === "desktop"
-                        ? "w-full max-w-[1200px] rounded-xl border-2 border-gray-300"
+                        ? "w-full max-w-300 rounded-xl border-2 border-gray-300"
                         : "w-full max-w-full"
                 }`}>
 
@@ -697,20 +697,20 @@ export default function Portfolioedit() {
                       {/* Logo */}
                       <Link
                         href="/landing"
-                        className="flex h-7 w-[60px] @sm:h-8 @sm:w-[72px] items-center justify-center overflow-hidden rounded-[50%] bg-white px-1 shrink-0"
+                        className="flex h-7 w-15 @sm:h-8 @sm:w-18 items-center justify-center overflow-hidden rounded-[50%] bg-white px-1 shrink-0"
                       >
                         <Image
                           src={assetPath("/stackly-logo.webp")}
                           alt="Stackly logo"
                           width={80}
                           height={24}
-                          className="h-[10px] @sm:h-[12px] object-contain"
+                          className="h-2.5 @sm:h-3 object-contain"
                           unoptimized
                         />
                       </Link>
 
                       {/* Title */}
-                      <span className="text-[clamp(0.75rem,2.5vw,0.875rem)] @sm:text-sm font-semibold text-white break-words">
+                      <span className="text-[clamp(0.75rem,2.5vw,0.875rem)] @sm:text-sm font-semibold text-white wrap-break-word">
                         Portfolio
                       </span>
                     </div>
@@ -732,8 +732,8 @@ export default function Portfolioedit() {
 
                     {/* LEFT: Logo */}
                     <div className="flex shrink-0 items-center justify-start z-10">
-                      <Link href="/landing" className="flex h-10 min-w-[92px] items-center justify-center rounded-[50%] bg-white px-3">
-                        <Image src={assetPath("/stackly-logo.webp")} alt="Stackly logo" width={92} height={28} className="h-[18px] w-auto" unoptimized />
+                      <Link href="/landing" className="flex h-10 min-w-23 items-center justify-center rounded-[50%] bg-white px-3">
+                        <Image src={assetPath("/stackly-logo.webp")} alt="Stackly logo" width={92} height={28} className="h-4.5 w-auto" unoptimized />
                       </Link>
                     </div>
 
@@ -759,7 +759,7 @@ export default function Portfolioedit() {
                             className="relative text-white text-sm group cursor-pointer"
                           >
                             {item.name}
-                            <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
+                            <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
                           </button>
                         ))}
                       </div>
@@ -784,7 +784,7 @@ export default function Portfolioedit() {
                           scrollToSection(item.id);
                           setInnerMobileMenuOpen(false);
                         }}
-                        className="border border-white/25 px-3 py-2.5 text-xs text-white rounded-md hover:bg-white/10 transition min-h-[2.75rem] cursor-pointer"
+                        className="border border-white/25 px-3 py-2.5 text-xs text-white rounded-md hover:bg-white/10 transition min-h-11 cursor-pointer"
                       >
                         {item.name}
                       </button>
@@ -806,19 +806,25 @@ export default function Portfolioedit() {
                           <span className="h-2 w-2 shrink-0 rounded-full bg-[#63e5ff] animate-pulse" aria-hidden="true"></span>
                           <span className="whitespace-nowrap leading-none select-none">Available for freelance work</span>
                         </div>
-                        <h1 className="text-[clamp(1.75rem,5cqi,3rem)] @md:text-4xl @lg:text-5xl font-bold mt-4 @md:mt-6 text-gray-800 leading-snug @md:leading-normal break-words whitespace-normal min-w-0 max-w-full">
-                          <div className="mb-2 min-w-0 break-words">Hello, I&apos;m</div>
-                          <div className="text-[#63e5ff] mb-2 leading-snug break-words min-w-0 max-w-full">Srinivas Pentakota</div>
-                          <div className="leading-snug break-words min-w-0 max-w-full">UI/UX Designer</div>
+                        <h1
+                          data-blockpages-text-id="txt-portfolio-h1-0"
+                          className="text-[clamp(1.75rem,5cqi,3rem)] @md:text-4xl @lg:text-5xl font-bold mt-4 @md:mt-6 text-gray-800 leading-snug @md:leading-normal wrap-break-word whitespace-normal min-w-0 max-w-full"
+                        >
+                          <div className="mb-2 min-w-0 wrap-break-word">Hello, I&apos;m</div>
+                          <div className="text-[#63e5ff] mb-2 leading-snug wrap-break-word min-w-0 max-w-full">Srinivas Pentakota</div>
+                          <div className="leading-snug wrap-break-word min-w-0 max-w-full">UI/UX Designer</div>
                         </h1>
 
-                        <p className="text-[clamp(0.875rem,2.5cqi,1.125rem)] @md:text-lg text-gray-600 mt-4 @md:mt-6 max-w-xl mx-auto break-words relative z-20 @lg:mx-0 min-w-0 max-w-full">
+                        <p
+                          data-blockpages-text-id="txt-portfolio-p-1"
+                          className="text-[clamp(0.875rem,2.5cqi,1.125rem)] @md:text-lg text-gray-600 mt-4 @md:mt-6 max-w-xl mx-auto wrap-break-word relative z-20 @lg:mx-0 min-w-0"
+                        >
                           I design sleek digital products, landing pages, and brand experiences that feel clear, fast, and memorable.
                         </p>
 
                         {/* MOBILE PORTRAIT */}
                         <div className="mt-8 mb-4 flex justify-center px-2 @sm:px-4 w-full @lg:hidden">
-                          <div className="portfolio-mobile-portrait w-full max-w-[17.5rem]">
+                          <div className="portfolio-mobile-portrait w-full max-w-70">
                             <div className="portfolio-mobile-portrait-stage portfolio-portrait-wrap">
                               <div className="portfolio-mobile-portrait-blobs pointer-events-none" aria-hidden>
                                 <div className="portfolio-mobile-portrait-blob portfolio-mobile-portrait-blob--main" />
@@ -837,7 +843,8 @@ export default function Portfolioedit() {
                                 }}
                               >
                                 <Image
-                                  src={assetPath("/portfoliologo.webp")}
+                                  src={blockpagesEditor?.getImageSrc?.(assetPath("/portfoliologo.webp"), "img_0") ?? assetPath("/portfoliologo.webp")}
+                                  data-blockpages-image-id="img_0"
                                   alt="Srinivas Pentakota - UI/UX Designer Portfolio"
                                   fill
                                   sizes="(max-width: 480px) 72vw, 165px"
@@ -859,26 +866,30 @@ export default function Portfolioedit() {
 
                           <button
                             type="button"
+                            data-blockpages-button-id="btn_0"
                             onClick={() => scrollToSection("projects")}
-                            className="w-auto min-w-[140px] flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] break-words cursor-pointer"
+                            className={blockpagesEditor?.getButtonStyle?.("btn_0", "w-auto min-w-35 flex justify-center items-center px-3 py-2 bg-linear-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] wrap-break-word cursor-pointer").className}
+                            style={blockpagesEditor?.getButtonStyle?.("btn_0", "").style}
                           >
-                            View My Works
+                            {blockpagesEditor?.getTextContent?.("View My Works", "btn_0_text") ?? "View My Works"}
                           </button>
 
                           <Link
                             href="/page-not-found"
-                            className="w-auto min-w-[140px] flex justify-center items-center px-3 py-2 bg-gradient-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] break-words cursor-pointer"
+                            data-blockpages-button-id="btn_1"
+                            className={blockpagesEditor?.getButtonStyle?.("btn_1", "w-auto min-w-35 flex justify-center items-center px-3 py-2 bg-linear-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] wrap-break-word cursor-pointer").className}
+                            style={blockpagesEditor?.getButtonStyle?.("btn_1", "").style}
                           >
-                            Download CV
+                            {blockpagesEditor?.getTextContent?.("Download CV", "btn_1_text") ?? "Download CV"}
                           </Link>
 
                         </div>
 
-                        <div className="mt-8 grid grid-cols-1 @sm:grid-cols-3 gap-3 max-w-xl mx-auto @lg:mx-0 min-w-0 max-w-full">
+                        <div className="mt-8 grid grid-cols-1 @sm:grid-cols-3 gap-3 max-w-xl mx-auto @lg:mx-0 min-w-0">
                           {["Research-led", "Pixel perfect", "Mobile first"].map((item, i) => (
                             <div
                               key={item}
-                              className="portfolio-mini-card rounded-lg border border-white/80 bg-white/75 px-4 py-3 text-[clamp(0.75rem,2cqi,0.875rem)] font-bold text-gray-800 shadow-sm backdrop-blur break-words min-w-0 max-w-full overflow-hidden"
+                              className="portfolio-mini-card rounded-lg border border-white/80 bg-white/75 px-4 py-3 text-[clamp(0.75rem,2cqi,0.875rem)] font-bold text-gray-800 shadow-sm backdrop-blur wrap-break-word min-w-0 max-w-full overflow-hidden"
                               style={{ animationDelay: `${i * 90}ms` }}
                             >
                               {item}
@@ -889,12 +900,12 @@ export default function Portfolioedit() {
 
 
                       {/* DESKTOP BLOBS */}
-                      <div className="w-[45%] @xl:w-[40%] items-center justify-center relative min-h-[400px] hidden @lg:flex">
-                        <div className="relative w-full max-w-[400px] h-full flex items-center justify-center portfolio-portrait-wrap">
-                          <div className="absolute w-[300px] h-[300px] bg-gradient-to-r from-purple-500 via-blue-400 to-cyan-300 opacity-20 blur-2xl rounded-full animate-[float_6s_ease-in-out_infinite]"></div>
-                          <div className="absolute w-[200px] h-[150px] right-10 top-10 bg-cyan-300 opacity-20 blur-2xl rounded-full animate-[float_7s_ease-in-out_infinite]"></div>
-                          <div className="absolute w-[100px] h-[100px] left-17 bottom-22 bg-pink-400 opacity-20 rounded-full animate-[float_5s_ease-in-out_infinite]"></div>
-                          <div className="absolute w-[140px] h-[230px] bg-white/70 rounded-[80px] rotate-[-30deg] shadow-md animate-[float_6s_ease-in-out_infinite]"></div>
+                      <div className="w-[45%] @xl:w-[40%] items-center justify-center relative min-h-100 hidden @lg:flex">
+                        <div className="relative w-full max-w-100 h-full flex items-center justify-center portfolio-portrait-wrap">
+                          <div className="absolute w-75 h-75 bg-linear-to-r from-purple-500 via-blue-400 to-cyan-300 opacity-20 blur-2xl rounded-full animate-[float_6s_ease-in-out_infinite]"></div>
+                          <div className="absolute w-50 h-37.5 right-10 top-10 bg-cyan-300 opacity-20 blur-2xl rounded-full animate-[float_7s_ease-in-out_infinite]"></div>
+                          <div className="absolute w-25 h-25 left-17 bottom-22 bg-pink-400 opacity-20 rounded-full animate-[float_5s_ease-in-out_infinite]"></div>
+                          <div className="absolute w-35 h-57.5 bg-white/70 rounded-[80px] rotate-[-30deg] shadow-md animate-[float_6s_ease-in-out_infinite]"></div>
                           <div className="absolute right-4 bottom-14 z-30 rounded-xl border border-white/80 bg-white/90 px-4 py-3 text-left shadow-xl portfolio-floating-badge">
                             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Focus</p>
                             <p className="text-sm font-extrabold text-gray-900">Human centered UI</p>
@@ -922,10 +933,10 @@ export default function Portfolioedit() {
                       {stats.map((item, i) => (
                         <div
                           key={i}
-                          className="portfolio-stat-card flex-1 min-w-[140px] @sm:min-w-[160px] max-w-[280px] mx-auto @sm:mx-0 bg-white py-4 min-h-[6rem] px-4 rounded-lg shadow-md flex flex-col items-center justify-center text-gray-700 transition transform hover:-translate-y-2 hover:shadow-xl text-center min-w-0 break-words overflow-hidden"
+                          className="portfolio-stat-card flex-1 min-w-35 @sm:min-w-40 max-w-70 mx-auto @sm:mx-0 bg-white py-4 min-h-24 px-4 rounded-lg shadow-md flex flex-col items-center justify-center text-gray-700 transition transform hover:-translate-y-2 hover:shadow-xl text-center wrap-break-word overflow-hidden"
                           style={{ animationDelay: `${i * 110}ms` }}
                         >
-                          <h5 className="text-[clamp(1.25rem,3.5cqi,1.5rem)] font-bold min-w-0 break-words">
+                          <h5 className="text-[clamp(1.25rem,3.5cqi,1.5rem)] font-bold min-w-0 wrap-break-word">
                             {statsInView ? (
                               <AnimatedCount
                                 key={statsInView ? "start" : "reset"} // 👈 important fix
@@ -939,7 +950,7 @@ export default function Portfolioedit() {
                             )}
                           </h5>
 
-                          <span className="text-[clamp(0.75rem,2cqi,0.875rem)] mt-1 break-words min-w-0 max-w-full">{item.label}</span>
+                          <span className="text-[clamp(0.75rem,2cqi,0.875rem)] mt-1 wrap-break-word min-w-0 max-w-full">{item.label}</span>
                         </div>
                       ))}
                     </div>
@@ -1222,11 +1233,11 @@ export default function Portfolioedit() {
                 {/* <div className="w-full bg-[#F2F2F2] px-6 @md:px-12 @lg:px-20 py-16 @md:py-24"> */}
                 <div id="about" className="w-full max-w-full overflow-x-hidden bg-[#F2F2F2] px-4 @sm:px-6 @md:px-12 @lg:px-20 py-10 @md:py-16">
                   <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight break-words leading-tight">About</h2>
-                    <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none break-words">Me</span>
+                    <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight wrap-break-word leading-tight">About</h2>
+                    <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none wrap-break-word">Me</span>
                   </div>
 
-                  <h3 className="text-sm @sm:text-base @md:text-xl @lg:text-2xl font-extrabold text-gray-800 mb-8 @md:mb-16 max-w-full @md:max-w-3xl leading-relaxed break-words text-center @md:text-left">
+                  <h3 className="text-sm @sm:text-base @md:text-xl @lg:text-2xl font-extrabold text-gray-800 mb-8 @md:mb-16 max-w-full @md:max-w-3xl leading-relaxed wrap-break-word text-center @md:text-left">
                     Described Briefly My Professional Background Skills and Accomplishments
                   </h3>
 
@@ -1236,11 +1247,11 @@ export default function Portfolioedit() {
                     {/* LEFT → TEXT */}
                     <div className="flex flex-col justify-center min-w-0 max-w-full">
 
-                      <p className="font-extrabold text-gray-800 text-[clamp(1.125rem,3cqi,1.5rem)] @md:text-2xl mb-4 @md:mb-6 leading-snug min-w-0 break-words">
+                      <p className="font-extrabold text-gray-800 text-[clamp(1.125rem,3cqi,1.5rem)] @md:text-2xl mb-4 @md:mb-6 leading-snug min-w-0 wrap-break-word">
                         Hello! I&apos;m a UI/UX Designer providing awesome and modern design solutions for clients. My vision is to satisfy my clients.
                       </p>
 
-                      <p className="text-gray-500 mb-6 @md:mb-0 leading-relaxed text-[clamp(0.875rem,2.5cqi,1.125rem)] @md:text-lg min-w-0 break-words">
+                      <p className="text-gray-500 mb-6 @md:mb-0 leading-relaxed text-[clamp(0.875rem,2.5cqi,1.125rem)] @md:text-lg min-w-0 wrap-break-word">
                         I turn rough ideas into visual systems, interactive prototypes, and responsive layouts that help users move confidently from first impression to final action.
                       </p>
 
@@ -1259,7 +1270,7 @@ export default function Portfolioedit() {
                             </span>
                           </div>
 
-                          <div className="w-full bg-gray-300 h-[4px] @md:h-[6px] overflow-hidden">
+                          <div className="w-full bg-gray-300 h-1.5 overflow-hidden">
                             <div
                               className="h-full transition-all duration-1000 ease-out"
                               style={{
@@ -1283,7 +1294,7 @@ export default function Portfolioedit() {
 
                     {/* EDUCATION */}
                     <div className="min-w-0 max-w-full">
-                      <h3 className="text-[clamp(1.125rem,3cqi,1.25rem)] @md:text-xl font-bold text-gray-800 mb-4 @md:mb-6 border-b border-gray-200 pb-3 min-w-0 break-words">
+                      <h3 className="text-[clamp(1.125rem,3cqi,1.25rem)] @md:text-xl font-bold text-gray-800 mb-4 @md:mb-6 border-b border-gray-200 pb-3 min-w-0 wrap-break-word">
                         Education
                       </h3>
 
@@ -1296,7 +1307,7 @@ export default function Portfolioedit() {
                         ].map((item) => (
                           <div
                             key={item.id}
-                            className="portfolio-reveal is-visible flex items-start @sm:items-center gap-4 @sm:gap-6 border-b border-gray-200 pb-4 @sm:pb-6 min-w-0 max-w-full overflow-hidden break-words"
+                            className="portfolio-reveal is-visible flex items-start @sm:items-center gap-4 @sm:gap-6 border-b border-gray-200 pb-4 @sm:pb-6 min-w-0 max-w-full overflow-hidden wrap-break-word"
                           >
                             {/* NUMBER */}
                             <div className="w-10 h-10 @sm:w-12 @sm:h-12 shrink-0 bg-[#1a3636] text-white rounded-full flex justify-center items-center font-bold text-xs @sm:text-sm">
@@ -1305,10 +1316,10 @@ export default function Portfolioedit() {
 
                             {/* TEXT */}
                             <div className="flex-1 min-w-0 max-w-full">
-                              <p className="text-gray-500 text-[clamp(0.75rem,2cqi,0.875rem)] @sm:text-sm mb-1 font-medium break-words min-w-0 w-full">
+                              <p className="text-gray-500 text-[clamp(0.75rem,2cqi,0.875rem)] @sm:text-sm mb-1 font-medium wrap-break-word min-w-0 w-full">
                                 {item.date}
                               </p>
-                              <h4 className="text-[clamp(1rem,3cqi,1.125rem)] @sm:text-lg font-bold text-gray-800 break-words min-w-0 w-full">
+                              <h4 className="text-[clamp(1rem,3cqi,1.125rem)] @sm:text-lg font-bold text-gray-800 wrap-break-word min-w-0 w-full">
                                 {item.title}
                               </h4>
                             </div>
@@ -1320,7 +1331,7 @@ export default function Portfolioedit() {
 
                     {/* EXPERIENCE */}
                     <div className="min-w-0 max-w-full">
-                      <h3 className="text-[clamp(1.125rem,3cqi,1.25rem)] @md:text-xl font-bold text-gray-800 mb-4 @md:mb-6 border-b border-gray-200 pb-3 min-w-0 break-words">
+                      <h3 className="text-[clamp(1.125rem,3cqi,1.25rem)] @md:text-xl font-bold text-gray-800 mb-4 @md:mb-6 border-b border-gray-200 pb-3 min-w-0 wrap-break-word">
                         Experience
                       </h3>
 
@@ -1332,7 +1343,7 @@ export default function Portfolioedit() {
                         ].map((item) => (
                           <div
                             key={item.id}
-                            className="portfolio-reveal is-visible flex items-start @sm:items-center gap-4 @sm:gap-6 border-b border-gray-200 pb-4 @sm:pb-6 min-w-0 max-w-full overflow-hidden break-words"
+                            className="portfolio-reveal is-visible flex items-start @sm:items-center gap-4 @sm:gap-6 border-b border-gray-200 pb-4 @sm:pb-6 min-w-0 max-w-full overflow-hidden wrap-break-word"
                           >
                             {/* NUMBER */}
                             <div className="w-10 h-10 @sm:w-12 @sm:h-12 shrink-0 bg-[#1a3636] text-white rounded-full flex justify-center items-center font-bold text-xs @sm:text-sm">
@@ -1341,10 +1352,10 @@ export default function Portfolioedit() {
 
                             {/* TEXT */}
                             <div className="flex-1 min-w-0 max-w-full">
-                              <p className="text-gray-500 text-[clamp(0.75rem,2cqi,0.875rem)] @sm:text-sm mb-1 font-medium break-words min-w-0 w-full">
+                              <p className="text-gray-500 text-[clamp(0.75rem,2cqi,0.875rem)] @sm:text-sm mb-1 font-medium wrap-break-word min-w-0 w-full">
                                 {item.date}
                               </p>
-                              <h4 className="text-[clamp(1rem,3cqi,1.125rem)] @sm:text-lg font-bold text-gray-800 break-words min-w-0 w-full">
+                              <h4 className="text-[clamp(1rem,3cqi,1.125rem)] @sm:text-lg font-bold text-gray-800 wrap-break-word min-w-0 w-full">
                                 {item.title}
                               </h4>
                             </div>
@@ -1364,17 +1375,17 @@ export default function Portfolioedit() {
                   <div className="text-center mb-16">
                     {/* <h3 className="text-base font-bold flex items-center justify-center gap-1 mb-4 text-gray-800 tracking-wide"> */}
                     <div className="flex flex-wrap items-center gap-2 mb-4">
-                      <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight break-words leading-tight">My</h2>
-                      <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none break-words">Services</span>
+                      <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight wrap-break-word leading-tight">My</h2>
+                      <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none wrap-break-word">Services</span>
                     </div>
                     {/* <h3 className="text-3xl @md:text-4xl @lg:text-5xl font-extrabold text-gray-900 max-w-2xl mx-auto leading-tight"> */}
 
-                    <h3 className="text-sm @sm:text-base @md:text-xl @lg:text-2xl font-extrabold text-gray-800 mb-8 @md:mb-16 max-w-full @md:max-w-3xl leading-relaxed break-words text-center @md:text-left">
+                    <h3 className="text-sm @sm:text-base @md:text-xl @lg:text-2xl font-extrabold text-gray-800 mb-8 @md:mb-16 max-w-full @md:max-w-3xl leading-relaxed wrap-break-word text-center @md:text-left">
                       Provide Wide Range of  Digital Services
                     </h3>
                   </div>
 
-                  <div className="grid portfolio-services-grid gap-4 @sm:gap-6 max-w-7xl mx-auto min-w-0 max-w-full">
+                  <div className="grid portfolio-services-grid gap-4 @sm:gap-6 max-w-7xl mx-auto min-w-0">
                     {[
                       { id: "01", title: "Web Development", desc: "Responsive, clean websites with purposeful layouts and polished front-end details." },
                       { id: "02", title: "UI / UX DESIGN", desc: "User journeys, wireframes, visual systems, and prototypes that make products easier to use." },
@@ -1387,7 +1398,7 @@ export default function Portfolioedit() {
                     ].map((service) => (
                       <div
                         key={service.id}
-                        className="portfolio-service-card border border-gray-200 rounded-[20px] p-5 @sm:p-6 @lg:p-8 flex flex-col items-start transition-all duration-300 bg-white h-full min-w-0 max-w-full break-words overflow-hidden"
+                        className="portfolio-service-card border border-gray-200 rounded-[20px] p-5 @sm:p-6 @lg:p-8 flex flex-col items-start transition-all duration-300 bg-white h-full min-w-0 max-w-full wrap-break-word overflow-hidden"
                         style={{ animationDelay: `${Number(service.id) * 45}ms` }}
                       >
                         <div className="w-12 h-12 mb-4 @sm:mb-6 flex items-center justify-center text-gray-800 shrink-0">
@@ -1400,17 +1411,17 @@ export default function Portfolioedit() {
                           {service.id === "07" && <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>}
                           {service.id === "08" && <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h1.76a1 1 0 0 1 .84.45l2.4 3.6a1 1 0 0 1-.84 1.55H11z"></path><path d="M18 10h-2V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4z"></path></svg>}
                         </div>
-                        <h4 className="text-[clamp(1rem,3cqi,1.0625rem)] font-bold text-gray-900 mb-2 @sm:mb-3 min-w-0 break-words">{service.title}</h4>
-                        <p className="text-gray-500 text-[13px] leading-relaxed mb-6 @sm:mb-8 flex-1 min-w-0 break-words w-full">
+                        <h4 className="text-[clamp(1rem,3cqi,1.0625rem)] font-bold text-gray-900 mb-2 @sm:mb-3 min-w-0 wrap-break-word">{service.title}</h4>
+                        <p className="text-gray-500 text-[13px] leading-relaxed mb-6 @sm:mb-8 flex-1 min-w-0 wrap-break-word w-full">
                           {service.desc}
                         </p>
                         <div className="mt-auto flex flex-wrap items-center gap-1.5 w-full shrink-0 min-w-0">
-                          <div className="w-[30px] h-[30px] rounded-full bg-[#1a3636] text-white flex items-center justify-center text-[11px] font-semibold shrink-0">
+                          <div className="w-7.5 h-7.5 rounded-full bg-[#1a3636] text-white flex items-center justify-center text-[11px] font-semibold shrink-0">
                             {service.id}
                           </div>
                           <div className="flex items-center text-gray-300 min-w-0">
-                            <span className="w-8 h-[1px] bg-current"></span>
-                            <FaArrowRight size={10} className="-ml-[2px]" />
+                            <span className="w-8 h-px bg-current"></span>
+                            <FaArrowRight size={10} className="-ml-0.5" />
                           </div>
                         </div>
                       </div>
@@ -1421,15 +1432,15 @@ export default function Portfolioedit() {
                 {/* DESIGN PROCESS SECTION */}
                 <div ref={processRef} className="w-full max-w-full overflow-x-hidden bg-[#F2F2F2] px-4 @sm:px-6 @md:px-12 @lg:px-20 pb-16 @lg:pb-24">
                   <div className="overflow-hidden rounded-2xl bg-[#06224C] px-5 py-8 @sm:px-8 @md:px-10 @md:py-12 text-white shadow-xl relative">
-                    <div className="absolute right-[-5rem] top-[-5rem] h-56 w-56 rounded-full bg-[#63e5ff]/20 blur-3xl"></div>
-                    <div className="absolute left-[-4rem] bottom-[-5rem] h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
+                    <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#63e5ff]/20 blur-3xl"></div>
+                    <div className="absolute -left-16 -bottom-20 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
                     <div className="relative grid grid-cols-1 @min-[1025px]:grid-cols-[0.9fr_1.4fr] gap-8 @min-[1025px]:gap-12 items-start min-w-0 max-w-full">
-                      <div className={`portfolio-reveal min-w-0 max-w-full break-words ${processInView ? "is-visible" : ""}`}>
+                      <div className={`portfolio-reveal min-w-0 max-w-full wrap-break-word ${processInView ? "is-visible" : ""}`}>
                         <div className="flex flex-wrap items-center gap-2 mb-4 min-w-0 max-w-full">
-                          <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold tracking-tight min-w-0 break-words leading-tight">Design</h2>
-                          <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none min-w-0 break-words">Process</span>
+                          <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold tracking-tight min-w-0 wrap-break-word leading-tight">Design</h2>
+                          <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none min-w-0 wrap-break-word">Process</span>
                         </div>
-                        <p className="text-sm @md:text-base text-blue-100 leading-relaxed max-w-md min-w-0 break-words">
+                        <p className="text-sm @md:text-base text-blue-100 leading-relaxed max-w-md min-w-0 wrap-break-word">
                           A simple workflow keeps every project moving from rough idea to polished launch without losing the user&apos;s needs along the way.
                         </p>
                       </div>
@@ -1444,8 +1455,8 @@ export default function Portfolioedit() {
                             <div className="mb-4 @sm:mb-5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#63e5ff] text-sm font-extrabold text-[#06224C]">
                               {item.step}
                             </div>
-                            <h3 className="mb-2 text-base @sm:text-lg font-extrabold min-w-0 max-w-full break-words process-card-title">{item.title}</h3>
-                            <p className="text-sm text-blue-100 min-w-0 max-w-full break-words process-card-desc">{item.desc}</p>
+                            <h3 className="mb-2 text-base @sm:text-lg font-extrabold min-w-0 max-w-full wrap-break-word process-card-title">{item.title}</h3>
+                            <p className="text-sm text-blue-100 min-w-0 max-w-full wrap-break-word process-card-desc">{item.desc}</p>
                           </div>
                         ))}
                       </div>
@@ -1459,11 +1470,11 @@ export default function Portfolioedit() {
 
                   <div className="text-center mb-16">
                     <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-                      <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight break-words leading-tight">My</h2>
-                      <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none break-words">Projects</span>
+                      <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight wrap-break-word leading-tight">My</h2>
+                      <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none wrap-break-word">Projects</span>
                     </div>
 
-                    <h3 className="text-sm @sm:text-base @md:text-xl @lg:text-2xl font-extrabold text-gray-800 mb-8 @md:mb-16 max-w-full @md:max-w-3xl leading-relaxed break-words text-center mx-auto">
+                    <h3 className="text-sm @sm:text-base @md:text-xl @lg:text-2xl font-extrabold text-gray-800 mb-8 @md:mb-16 max-w-full @md:max-w-3xl leading-relaxed wrap-break-word text-center mx-auto">
                       Showcase Your Talent with Our <br className="hidden @md:block" /> Latest Works
                     </h3>
                   </div>
@@ -1517,11 +1528,11 @@ export default function Portfolioedit() {
                           />
                         </div>
                         <div className="flex items-start mb-3">
-                          <span className="bg-[#63e5ff] border border-gray-900 text-gray-900 px-3.5 py-1.5 rounded-full text-[11px] font-semibold leading-none break-words [overflow-wrap:anywhere] max-w-full">
+                          <span className="bg-[#63e5ff] border border-gray-900 text-gray-900 px-3.5 py-1.5 rounded-full text-[11px] font-semibold leading-none wrap-anywhere max-w-full">
                             {proj.tag}
                           </span>
                         </div>
-                        <h4 className="font-bold text-[15px] text-gray-900 leading-snug group-hover:text-[#1a3636] transition-colors mt-1 break-words [overflow-wrap:anywhere] max-w-full w-full">{proj.title}</h4>
+                        <h4 className="font-bold text-[15px] text-gray-900 leading-snug group-hover:text-[#1a3636] transition-colors mt-1 wrap-anywhere max-w-full w-full">{proj.title}</h4>
                       </div>
                     ))}
                   </div>
@@ -1541,7 +1552,7 @@ export default function Portfolioedit() {
                         type="button"
                         data-blockpages-interactive="true"
                         data-blockpages-watch-video="video_block"
-                        className="group flex cursor-pointer items-center justify-center gap-3 @sm:gap-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-5 @sm:px-8 py-3 @sm:py-4 rounded-[30px] @sm:rounded-full font-bold uppercase text-xs @sm:text-sm tracking-wider transition-all shadow-lg shadow-blue-500/30 max-w-full w-fit"
+                        className="group flex cursor-pointer items-center justify-center gap-3 @sm:gap-4 bg-linear-to-r from-blue-600 to-blue-500 text-white px-5 @sm:px-8 py-3 @sm:py-4 rounded-[30px] @sm:rounded-full font-bold uppercase text-xs @sm:text-sm tracking-wider transition-all shadow-lg shadow-blue-500/30 max-w-full w-fit"
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -1573,13 +1584,13 @@ export default function Portfolioedit() {
                   <div className="mx-auto w-full max-w-7xl min-w-0">
                     <div className="grid grid-cols-1 @min-[56rem]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-6 @min-[56rem]:gap-8 @xl:gap-10 items-start min-w-0 max-w-full">
                       <div
-                        className={`portfolio-reveal relative z-0 rounded-2xl bg-white p-6 @md:p-8 shadow-lg border border-gray-100 min-w-0 max-w-full break-words overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
+                        className={`portfolio-reveal relative z-0 rounded-2xl bg-white p-6 @md:p-8 shadow-lg border border-gray-100 min-w-0 max-w-full wrap-break-word overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
                       >
-                        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#1a3636] mb-4 min-w-0 break-words">Client Words</p>
-                        <h2 className="text-[clamp(1.5rem,4cqi,2.25rem)] @md:text-4xl font-extrabold text-gray-900 leading-tight mb-4 min-w-0 break-words">
+                        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#1a3636] mb-4 min-w-0 wrap-break-word">Client Words</p>
+                        <h2 className="text-[clamp(1.5rem,4cqi,2.25rem)] @md:text-4xl font-extrabold text-gray-900 leading-tight mb-4 min-w-0 wrap-break-word">
                           Designs that feel clear before they feel clever.
                         </h2>
-                        <p className="text-gray-600 text-sm @md:text-base leading-relaxed min-w-0 break-words">
+                        <p className="text-gray-600 text-sm @md:text-base leading-relaxed min-w-0 wrap-break-word">
                           Strong visuals are only useful when they help people understand, trust, and take action.
                         </p>
                       </div>
@@ -1588,18 +1599,18 @@ export default function Portfolioedit() {
                         {testimonials.map((item, i) => (
                           <div
                             key={item.name}
-                            className={`portfolio-reveal relative z-0 flex h-full min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm min-w-0 max-w-full break-words overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
+                            className={`portfolio-reveal relative z-0 flex h-full min-h-0 flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm min-w-0 max-w-full wrap-break-word overflow-hidden ${testimonialsInView ? "is-visible" : ""}`}
                             style={{ transitionDelay: `${i * 140}ms` }}
                           >
                             <div className="mb-5 text-5xl font-black leading-none text-[#63e5ff] shrink-0">“</div>
-                            <p className="mb-6 text-[clamp(0.875rem,2.5cqi,1rem)] leading-relaxed text-gray-600 min-w-0 break-words">{item.quote}</p>
+                            <p className="mb-6 text-[clamp(0.875rem,2.5cqi,1rem)] leading-relaxed text-gray-600 min-w-0 wrap-break-word">{item.quote}</p>
                             <div className="flex flex-wrap items-center gap-3 min-w-0">
                               <div className="h-11 w-11 shrink-0 rounded-full bg-[#06224C] text-white flex items-center justify-center text-sm font-black">
                                 {item.name.charAt(0)}
                               </div>
-                              <div className="min-w-0 break-words flex-1">
-                                <p className="font-extrabold text-gray-900 min-w-0 break-words">{item.name}</p>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 min-w-0 break-words">{item.role}</p>
+                              <div className="min-w-0 wrap-break-word flex-1">
+                                <p className="font-extrabold text-gray-900 min-w-0 wrap-break-word">{item.name}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 min-w-0 wrap-break-word">{item.role}</p>
                               </div>
                             </div>
                           </div>
@@ -1617,10 +1628,10 @@ export default function Portfolioedit() {
                         Get In <span className="bg-[#c4ff0b] text-gray-900 px-2 py-0.5 rounded-full text-sm font-extrabold ml-1 leading-none shadow-sm flex items-center h-6">Touch</span>
                       </h2> */}
                         <div className="flex flex-wrap items-center gap-2 mb-4">
-                          <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight break-words leading-tight">Get In</h2>
-                          <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none break-words">Touch</span>
+                          <h2 className="text-3xl @sm:text-4xl @md:text-5xl @lg:text-6xl font-extrabold text-gray-900 tracking-tight wrap-break-word leading-tight">Get In</h2>
+                          <span className="bg-[#63e5ff] text-gray-900 font-extrabold px-3 py-1 rounded-full text-2xl @sm:text-3xl @md:text-4xl @lg:text-5xl tracking-tight leading-none wrap-break-word">Touch</span>
                         </div>
-                        <h3 className="text-3xl @sm:text-4xl @md:text-5xl font-extrabold text-gray-900 max-w-2xl leading-tight mb-6 break-words">
+                        <h3 className="text-3xl @sm:text-4xl @md:text-5xl font-extrabold text-gray-900 max-w-2xl leading-tight mb-6 wrap-break-word">
                           Let’s build something <br className="hidden @md:block" />  great together.
                         </h3>
                         <p className="text-gray-600 mb-8 max-w-md">
@@ -1634,7 +1645,7 @@ export default function Portfolioedit() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Email</p>
-                              <p className="text-gray-900 font-bold break-all [overflow-wrap:anywhere] max-w-full">hello@example.com</p>
+                              <p className="text-gray-900 font-bold break-all wrap-anywhere max-w-full">hello@example.com</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 min-w-0 max-w-full">
@@ -1643,7 +1654,7 @@ export default function Portfolioedit() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Phone</p>
-                              <p className="text-gray-900 font-bold break-all [overflow-wrap:anywhere] max-w-full">+1 (555) 000-0000</p>
+                              <p className="text-gray-900 font-bold break-all wrap-anywhere max-w-full">+1 (555) 000-0000</p>
                             </div>
                           </div>
                         </div>
@@ -1653,23 +1664,23 @@ export default function Portfolioedit() {
                         <form className="space-y-4 @sm:space-y-5 min-w-0 w-full" onSubmit={(e) => e.preventDefault()}>
                           <div className="grid grid-cols-1 @md:grid-cols-2 gap-4 @sm:gap-5 min-w-0 w-full">
                             <div className="min-w-0 w-full">
-                              <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Your Name</label>
+                              <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 wrap-break-word">Your Name</label>
                               <input type="text" placeholder="John Doe" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
                             </div>
                             <div className="min-w-0 w-full">
-                              <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Your Email</label>
+                              <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 wrap-break-word">Your Email</label>
                               <input type="email" placeholder="john@example.com" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
                             </div>
                           </div>
                           <div className="min-w-0 w-full">
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Subject</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 wrap-break-word">Subject</label>
                             <input type="text" placeholder="Web Design Inquiry" className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all min-w-0" />
                           </div>
                           <div className="min-w-0 w-full">
-                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 break-words">Message</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 wrap-break-word">Message</label>
                             <textarea rows={4} placeholder="Tell us about your project..." className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all resize-none min-w-0"></textarea>
                           </div>
-                          <button className="w-full max-w-full break-words flex-wrap bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20 overflow-hidden cursor-pointer">
+                          <button className="w-full max-w-full wrap-break-word flex-wrap bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20 overflow-hidden cursor-pointer">
                             Send Message
                             <FaPaperPlane className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform shrink-0" />
                           </button>

@@ -37,6 +37,7 @@ import { assetPath } from "@/lib/paths";
 import { resolveVideoBlockPropsForSlot, getDefaultPortfolioVideoProps } from "@/lib/blockpagesVideoStorage";
 import { playPortfolioBlockpagesVideo } from "@/lib/blockpagesPortfolioVideo";
 import type { BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
+import { syncCanvasTexts } from "@/lib/blockpagesTextSync";
 
 type OverlayKind = "image" | "button" | "video" | "icon";
 
@@ -88,6 +89,9 @@ type BlockpagesCanvasEnhancerProps = {
   onEditIcon?: (iconId: string) => void;
   editingIconId?: string | null;
   customIcons?: Record<string, IconBlockProps>;
+  customTexts?: Record<string, string>;
+  textStyles?: Record<string, any>;
+  sectionStyles?: Record<string, any>;
   videoBlocks?: VideoBlockData[];
   template?: BlockpagesTemplateId;
   appliedDividers?: {
@@ -359,6 +363,9 @@ function BlockpagesCanvasEnhancer({
   onEditIcon,
   editingIconId,
   customIcons = {},
+  customTexts = {},
+  textStyles = {},
+  sectionStyles = {},
   videoBlocks = [],
   template,
   appliedDividers = [],
@@ -399,33 +406,18 @@ function BlockpagesCanvasEnhancer({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
-
-    appliedDividers.forEach((divider) => {
-      const overlay = container.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${divider.id}"]`);
-      if (!overlay || typeof divider.position?.top !== "number") return;
-
-      overlay.style.top = `${divider.position.top}px`;
-      overlay.style.left = `${divider.position.left ?? 16}px`;
-    });
-  }, [appliedDividers]);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
     const liveCanvas = container?.closest<HTMLElement>("[data-textblock-canvas]");
-    const templateRoot = container?.querySelector<HTMLElement>("[data-blockpages-template-root]");
-    if (!container || !liveCanvas || !onUpdateDividerPosition) return;
+    if (!container || !liveCanvas) return;
 
     const resolveDividerSections = () => {
-      if (isBlockpagesTextEditingActive()) return;
-
       appliedDividers.forEach((divider) => {
-        const overlay = container.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${divider.id}"]`);
+        const overlay = container.querySelector<HTMLElement>(
+          `[data-blockpages-overlay-id="${divider.id}"]`
+        );
+        const anchorY = divider.position?.top ?? 0;
+        const insertMode = divider.position?.insertMode;
 
-        if (pendingDividerScrollId === divider.id && !divider.position?.sectionId) {
-          const anchorY = overlay
-            ? getDividerAnchorY(overlay, container)
-            : getVisibleCanvasAnchorY(liveCanvas);
+        if (divider.position?.sectionId && !insertMode) {
           const placement = resolveDividerSectionPlacementAtY(liveCanvas, anchorY);
           if (placement?.sectionId) {
             if (overlay) {
@@ -433,21 +425,13 @@ function BlockpagesCanvasEnhancer({
               overlay.dataset.blockpagesDividerInsertMode = placement.insertMode ?? "after";
               overlay.dataset.blockpagesDividerSectionId = placement.sectionId;
             }
-            onUpdateDividerPosition(divider.id, {
+            onUpdateDividerPosition?.(divider.id, {
               top: divider.position?.top ?? placement.top ?? anchorY,
               left: divider.position?.left ?? placement.left ?? 16,
               anchorPath: placement.anchorPath,
               insertMode: placement.insertMode,
               sectionId: placement.sectionId,
             });
-            requestAnimationFrame(() => {
-              scrollCanvasToDividerPosition(
-                liveCanvas,
-                divider.position?.top ?? placement.top ?? anchorY
-              );
-              onPendingDividerScrollComplete?.();
-            });
-            return;
           }
         }
 
@@ -467,7 +451,7 @@ function BlockpagesCanvasEnhancer({
         overlay.dataset.blockpagesDividerInsertMode = resolved.mode;
         overlay.dataset.blockpagesDividerSectionId = resolved.sectionId;
 
-        onUpdateDividerPosition(divider.id, {
+        onUpdateDividerPosition?.(divider.id, {
           top: divider.position?.top ?? resolved.top ?? 0,
           left: divider.position?.left ?? resolved.left ?? 16,
           anchorPath: resolved.path,
@@ -491,6 +475,7 @@ function BlockpagesCanvasEnhancer({
 
     const delayed = window.setTimeout(resolveDividerSections, 400);
     const delayed2 = window.setTimeout(resolveDividerSections, 1200);
+    const templateRoot = container.firstElementChild as HTMLElement | null;
     const observer = templateRoot
       ? new MutationObserver((mutations) => {
           if (mutationsAreFromTextEditing(mutations)) return;
@@ -514,50 +499,35 @@ function BlockpagesCanvasEnhancer({
     onPendingDividerScrollComplete,
   ]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    appliedDividers.forEach((divider) => {
-      const overlay = container.querySelector<HTMLElement>(`[data-blockpages-overlay-id="${divider.id}"]`);
-      if (!overlay || !divider.position) return;
-
-      if (divider.position.anchorPath?.length) {
-        overlay.dataset.blockpagesDividerAnchorPath = JSON.stringify(divider.position.anchorPath);
-      }
-      if (divider.position.insertMode) {
-        overlay.dataset.blockpagesDividerInsertMode = divider.position.insertMode;
-      }
-      if (divider.position.sectionId) {
-        overlay.dataset.blockpagesDividerSectionId = divider.position.sectionId;
-      }
-    });
-  }, [appliedDividers]);
-
   const syncOverlayTargets = useCallback(() => {
     const container = containerRef.current;
     if (!container) {
-      setOverlayTargets([]);
+      setOverlayTargets((prev) => (prev.length === 0 ? prev : []));
+      return;
+    }
+
+    if (!isImageEditingMode && !isButtonEditingMode && !isVideoEditingMode && !isIconEditingMode) {
+      setOverlayTargets((prev) => (prev.length === 0 ? prev : []));
       return;
     }
 
     const targets: EditOverlayTarget[] = [];
 
-    const images = Array.from(container.querySelectorAll("img")).filter((img) => !isInsideBuilderChrome(img));
-    images.forEach((img, index) => {
-      const htmlImg = img as HTMLImageElement;
-      if (isInsideTemplateHeader(htmlImg)) return;
+    if (isImageEditingMode && onEditImage) {
+      const images = Array.from(container.querySelectorAll("img")).filter((img) => !isInsideBuilderChrome(img));
+      images.forEach((img, index) => {
+        const htmlImg = img as HTMLImageElement;
+        const imageId =
+          htmlImg.getAttribute("data-image-id") ||
+          htmlImg.getAttribute("data-blockpages-image-id") ||
+          `img_${index}`;
+        htmlImg.setAttribute("data-blockpages-image-id", imageId);
 
-      const rect = htmlImg.getBoundingClientRect();
-      if (rect.width > 0 && rect.width < 36 && rect.height < 36) return;
+        if (isInsideTemplateHeader(htmlImg)) return;
 
-      const imageId =
-        htmlImg.getAttribute("data-image-id") ||
-        htmlImg.getAttribute("data-blockpages-image-id") ||
-        `img_${index}`;
-      htmlImg.setAttribute("data-blockpages-image-id", imageId);
+        const rect = htmlImg.getBoundingClientRect();
+        if (rect.width > 0 && rect.width < 36 && rect.height < 36) return;
 
-      if (isImageEditingMode && onEditImage) {
         if (editingImageId && imageId !== editingImageId) return;
         const position = getOverlayPosition(container, htmlImg, "image");
         if (position) {
@@ -569,21 +539,21 @@ function BlockpagesCanvasEnhancer({
             title: "Edit Image",
           });
         }
-      }
-    });
+      });
+    }
 
-    const buttonElements = Array.from(container.querySelectorAll("button, a")).filter((el): el is HTMLElement =>
-      isEditableButton(el as HTMLElement)
-    );
+    if (isButtonEditingMode && onEditButton) {
+      const buttonElements = Array.from(container.querySelectorAll("button, a")).filter((el): el is HTMLElement =>
+        isEditableButton(el as HTMLElement)
+      );
 
-    buttonElements.forEach((element, index) => {
-      const buttonId =
-        element.getAttribute("data-button-id") ||
-        element.getAttribute("data-blockpages-button-id") ||
-        `btn_${index}`;
-      element.setAttribute("data-blockpages-button-id", buttonId);
+      buttonElements.forEach((element, index) => {
+        const buttonId =
+          element.getAttribute("data-button-id") ||
+          element.getAttribute("data-blockpages-button-id") ||
+          `btn_${index}`;
+        element.setAttribute("data-blockpages-button-id", buttonId);
 
-      if (isButtonEditingMode && onEditButton) {
         if (editingButtonId && buttonId !== editingButtonId) return;
         const position = getOverlayPosition(container, element, "button");
         if (position) {
@@ -595,15 +565,15 @@ function BlockpagesCanvasEnhancer({
             title: "Edit Button",
           });
         }
-      }
-    });
+      });
+    }
 
-    const iconAnchors = collectEditableIconAnchors(container);
-    iconAnchors.forEach((anchor, index) => {
-      const iconId = anchor.getAttribute("data-blockpages-icon-id") || `icon_${index}`;
-      anchor.setAttribute("data-blockpages-icon-id", iconId);
+    if (isIconEditingMode && onEditIcon) {
+      const iconAnchors = collectEditableIconAnchors(container);
+      iconAnchors.forEach((anchor, index) => {
+        const iconId = anchor.getAttribute("data-blockpages-icon-id") || `icon_${index}`;
+        anchor.setAttribute("data-blockpages-icon-id", iconId);
 
-      if (isIconEditingMode && onEditIcon) {
         if (editingIconId && iconId !== editingIconId) return;
         const position = getOverlayPosition(container, anchor, "icon");
         if (position) {
@@ -615,8 +585,8 @@ function BlockpagesCanvasEnhancer({
             title: "Edit Icon",
           });
         }
-      }
-    });
+      });
+    }
 
     if (isVideoEditingMode && onEditVideo) {
       const videoAnchors = Array.from(
@@ -645,7 +615,21 @@ function BlockpagesCanvasEnhancer({
       });
     }
 
-    setOverlayTargets(targets);
+    setOverlayTargets((prev) => {
+      if (
+        prev.length === targets.length &&
+        prev.every(
+          (t, i) =>
+            t.id === targets[i].id &&
+            t.kind === targets[i].kind &&
+            Math.abs(t.top - targets[i].top) < 1 &&
+            Math.abs(t.left - targets[i].left) < 1
+        )
+      ) {
+        return prev;
+      }
+      return targets;
+    });
   }, [
     isImageEditingMode,
     isButtonEditingMode,
@@ -654,16 +638,36 @@ function BlockpagesCanvasEnhancer({
     editingImageId,
     editingButtonId,
     editingIconId,
+    editingVideoId,
     onEditImage,
     onEditButton,
     onEditVideo,
     onEditIcon,
   ]);
 
+  const handleOverlayAction = useCallback(
+    (target: EditOverlayTarget, event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (target.kind === "image") {
+        onEditImage?.(target.id);
+      } else if (target.kind === "button") {
+        onEditButton?.(target.id);
+      } else if (target.kind === "video") {
+        onEditVideo?.(target.id);
+      } else if (target.kind === "icon") {
+        onEditIcon?.(target.id);
+      }
+    },
+    [onEditImage, onEditButton, onEditVideo, onEditIcon]
+  );
+
   const applyCanvasCustomizations = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    // 1. Synchronize Images
     const images = Array.from(container.querySelectorAll("img")).filter((img) => !isInsideBuilderChrome(img));
     images.forEach((img, index) => {
       const htmlImg = img as HTMLImageElement;
@@ -671,10 +675,18 @@ function BlockpagesCanvasEnhancer({
         htmlImg.getAttribute("data-image-id") ||
         htmlImg.getAttribute("data-blockpages-image-id") ||
         `img_${index}`;
+      htmlImg.setAttribute("data-blockpages-image-id", imageId);
 
       const customSrc = customImages[imageId];
-      if (customSrc && htmlImg.src !== customSrc) {
-        htmlImg.src = customSrc;
+      if (customSrc) {
+        if (htmlImg.hasAttribute("srcset")) htmlImg.removeAttribute("srcset");
+        if (htmlImg.hasAttribute("srcSet")) htmlImg.removeAttribute("srcSet");
+        if (htmlImg.srcset) htmlImg.srcset = "";
+
+        if (htmlImg.src !== customSrc) {
+          htmlImg.src = customSrc;
+          htmlImg.setAttribute("src", customSrc);
+        }
       }
 
       if (editingImageId === imageId) {
@@ -686,6 +698,7 @@ function BlockpagesCanvasEnhancer({
       }
     });
 
+    // 2. Synchronize Buttons
     const buttonElements = Array.from(container.querySelectorAll("button, a")).filter((el): el is HTMLElement =>
       isEditableButton(el as HTMLElement)
     );
@@ -695,6 +708,7 @@ function BlockpagesCanvasEnhancer({
         element.getAttribute("data-button-id") ||
         element.getAttribute("data-blockpages-button-id") ||
         `btn_${index}`;
+      element.setAttribute("data-blockpages-button-id", buttonId);
 
       applyCustomButtonStyle(element, buttonId, customButtons);
 
@@ -707,6 +721,16 @@ function BlockpagesCanvasEnhancer({
       }
     });
 
+    // 3. Synchronize Texts
+    // syncCanvasTexts internally checks and protects any actively edited element from innerHTML writes.
+    syncCanvasTexts(
+      container,
+      template || "tpl",
+      customTexts,
+      (typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null)
+    );
+
+    // 4. Synchronize Icons
     const iconAnchors = collectEditableIconAnchors(container);
     iconAnchors.forEach((anchor, index) => {
       const iconId = anchor.getAttribute("data-blockpages-icon-id") || `icon_${index}`;
@@ -726,6 +750,50 @@ function BlockpagesCanvasEnhancer({
       }
     });
 
+    if (customIcons && Object.keys(customIcons).length > 0) {
+      const roots = iconRootsRef.current;
+      Object.entries(customIcons).forEach(([iconId, props]) => {
+        const anchor = container.querySelector(`[data-blockpages-icon-id="${iconId}"]`) as HTMLElement | null;
+        if (!anchor) return;
+
+        anchor.querySelectorAll("svg, img").forEach((element) => {
+          (element as HTMLElement).style.display = "none";
+        });
+
+        let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
+        if (!mountPoint) {
+          mountPoint = document.createElement("span");
+          mountPoint.setAttribute("data-blockpages-custom-icon-mount", "true");
+          mountPoint.className = "inline-flex items-center justify-center";
+          anchor.appendChild(mountPoint);
+        }
+
+        let root = roots.get(iconId);
+        if (!root) {
+          root = createRoot(mountPoint);
+          roots.set(iconId, root);
+        }
+        root.render(createElement(IconPreview, { props }));
+      });
+    }
+
+    // 5. Synchronize Section Styles
+    if (sectionStyles && Object.keys(sectionStyles).length > 0) {
+      Object.entries(sectionStyles).forEach(([sectionId, config]) => {
+        if (!config || typeof config !== "object") return;
+        const sectionEl =
+          container.querySelector(`#${sectionId}`) ||
+          container.querySelector(`[data-section-id="${sectionId}"]`) ||
+          container.querySelector(`[data-blockpages-section-id="${sectionId}"]`);
+        if (sectionEl instanceof HTMLElement) {
+          if (config.backgroundColor) sectionEl.style.backgroundColor = config.backgroundColor;
+          if (config.textColor) sectionEl.style.color = config.textColor;
+          if (config.padding) sectionEl.style.padding = `${config.padding}px`;
+        }
+      });
+    }
+
+    // 6. Synchronize Video Slots
     container.querySelectorAll<HTMLElement>("[data-blockpages-video-slot='true']").forEach((slot, index) => {
       const videoId = slot.getAttribute("data-blockpages-video-id") || `video_${index}`;
       slot.setAttribute("data-blockpages-video-id", videoId);
@@ -746,6 +814,11 @@ function BlockpagesCanvasEnhancer({
   }, [
     customImages,
     customButtons,
+    customIcons,
+    customTexts,
+    sectionStyles,
+    textStyles,
+    template,
     editingImageId,
     editingButtonId,
     editingIconId,
@@ -934,6 +1007,7 @@ function BlockpagesCanvasEnhancer({
   }, [customIcons]);
 
   useLayoutEffect(() => {
+    applyCanvasCustomizations();
     syncOverlayTargets();
 
     const container = containerRef.current;
@@ -941,7 +1015,10 @@ function BlockpagesCanvasEnhancer({
 
     const handleReposition = () => {
       if (isBlockpagesTextEditingActive()) return;
-      window.requestAnimationFrame(syncOverlayTargets);
+      window.requestAnimationFrame(() => {
+        applyCanvasCustomizations();
+        syncOverlayTargets();
+      });
     };
 
     const handleScrollToSection = (event: Event) => {
@@ -956,9 +1033,14 @@ function BlockpagesCanvasEnhancer({
 
     const observer = new MutationObserver((mutations) => {
       if (mutationsAreFromTextEditing(mutations)) return;
+      const isSelfOverlayMutation = mutations.every((m) => {
+        const target = m.target as HTMLElement | null;
+        return target?.closest?.("[data-blockpages-edit-overlay='true'], [data-blockpages-overlay='true']");
+      });
+      if (isSelfOverlayMutation) return;
       handleReposition();
     });
-    observer.observe(container, { childList: true, subtree: true, attributes: true });
+    observer.observe(container, { childList: true, subtree: true });
 
     const delayed = window.setTimeout(handleReposition, 400);
     const delayed2 = window.setTimeout(handleReposition, 1200);
@@ -971,7 +1053,7 @@ function BlockpagesCanvasEnhancer({
       window.removeEventListener("scrollToSectionEvent", handleScrollToSection as EventListener);
       observer.disconnect();
     };
-  }, [syncOverlayTargets]);
+  }, [applyCanvasCustomizations, syncOverlayTargets]);
 
   const handleDividerPositionChange = useCallback(
     (overlayId: string, nextPosition: BlockpagesOverlayPosition) => {
@@ -1037,14 +1119,14 @@ function BlockpagesCanvasEnhancer({
       </div>
 
       {overlayTargets.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[120] overflow-visible" aria-hidden={false}>
+        <div className="pointer-events-none absolute inset-0 z-120 overflow-visible" aria-hidden={false}>
           {overlayTargets.map((target) => (
             <button
               key={`${target.kind}-${target.id}`}
               type="button"
               data-blockpages-edit-overlay="true"
               title={target.title}
-              className={`pointer-events-auto absolute z-[121] flex cursor-pointer items-center justify-center ${OVERLAY_BUTTON_CLASS[target.kind]}`}
+              className={`pointer-events-auto absolute z-121 flex cursor-pointer items-center justify-center ${OVERLAY_BUTTON_CLASS[target.kind]}`}
               style={{ top: target.top, left: target.left }}
               onClick={(event) => {
                 event.preventDefault();

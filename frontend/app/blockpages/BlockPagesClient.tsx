@@ -631,6 +631,8 @@ export default function BlockPagesClient() {
   };
  
   useEffect(() => {
+    if (searchParams.get("projectId")) return;
+
     try {
       const storedImages = readBlockpagesStorageItem("stackly-custom-images");
       if (storedImages) {
@@ -665,8 +667,6 @@ export default function BlockPagesClient() {
     }
  
     try {
-      if (searchParams.get("projectId")) return;
-
       const storedIcons = readBlockpagesStorageItem("stackly-custom-icons");
       if (storedIcons) {
         window.setTimeout(() => {
@@ -689,7 +689,7 @@ export default function BlockPagesClient() {
     } catch (e) {
       console.error("Failed to load custom static icons", e);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (isBlockpagesVideoApplied(textTemplate)) {

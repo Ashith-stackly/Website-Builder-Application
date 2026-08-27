@@ -21,6 +21,7 @@ import {
   getBlockpagesTemplateSections,
 } from "@/lib/blockpagesTemplateSections";
 import StandardModal from "@/components/StandardModal";
+import { compressImage, blobToDataUrl } from "@/lib/assetUtils";
 
 
 type LeftSidebarProps = {
@@ -853,15 +854,22 @@ export default function LeftSidebar({
                       id="mobile-image-upload"
                       className="hidden"
                       accept="image/*"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            onImageSelected?.(reader.result as string);
+                          try {
+                            const compressed = await compressImage(file, 500 * 1024, 0.85);
+                            const dataUrl = await blobToDataUrl(compressed);
+                            onImageSelected?.(dataUrl);
+                          } catch {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              onImageSelected?.(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          } finally {
                             setIsOpen(false);
-                          };
-                          reader.readAsDataURL(file);
+                          }
                         }
                       }}
                     />

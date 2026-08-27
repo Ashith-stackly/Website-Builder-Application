@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import IconPreview from "./IconPreview";
 import { ICON_OPTIONS, type IconBlockData, type IconBlockProps } from "./types";
+import { compressImage, blobToDataUrl } from "@/lib/assetUtils";
  
 interface RightSidebarProps {
   selectedBlock: IconBlockData | null;
@@ -140,14 +141,20 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                              update({ customIconUrl: event.target?.result as string });
-                            };
-                            reader.readAsDataURL(file);
+                            try {
+                              const compressed = await compressImage(file, 200 * 1024, 0.85);
+                              const dataUrl = await blobToDataUrl(compressed);
+                              update({ customIconUrl: dataUrl });
+                            } catch {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                update({ customIconUrl: event.target?.result as string });
+                              };
+                              reader.readAsDataURL(file);
+                            }
                           }
                         }}
                       />

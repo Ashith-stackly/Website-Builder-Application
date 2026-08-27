@@ -134,6 +134,18 @@ export default function MainCanvas({
           targetHeight = sh;
         }
  
+        // Cap maximum dimensions to 1600px to maintain crisp retina display while keeping payload under ~200KB
+        const MAX_DIMENSION = 1600;
+        if (targetWidth > MAX_DIMENSION || targetHeight > MAX_DIMENSION) {
+          if (targetWidth >= targetHeight) {
+            targetHeight = Math.round((targetHeight * MAX_DIMENSION) / targetWidth);
+            targetWidth = MAX_DIMENSION;
+          } else {
+            targetWidth = Math.round((targetWidth * MAX_DIMENSION) / targetHeight);
+            targetHeight = MAX_DIMENSION;
+          }
+        }
+ 
         canvas.width = targetWidth;
         canvas.height = targetHeight;
  
@@ -158,7 +170,10 @@ export default function MainCanvas({
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
  
         try {
-          const dataUrl = canvas.toDataURL("image/png");
+          let dataUrl = canvas.toDataURL("image/webp", 0.85);
+          if (!dataUrl || !dataUrl.startsWith("data:image/webp")) {
+            dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          }
           resolve(dataUrl);
         } catch(e) {
           console.error("Canvas export failed", e);

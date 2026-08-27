@@ -18,8 +18,22 @@ export function getCustomButtonStyle(buttonId: string, customButtons: Record<str
   const parsedBr = br !== "" && !isNaN(Number(br)) ? `${br}px` : br;
   const effect = props.effect as string;
 
+  const textColor = (props.color as string) || (props.textColor as string);
+  const fontSize = props.fontSize;
+  const fontFamily = props.fontFamily as string;
+  const fontWeight = props.fontWeight as string;
+  const cornerRadiusValues = props.cornerRadiusValues as { tl?: number; tr?: number; br?: number; bl?: number } | undefined;
+
+  let calculatedRadius = variant === "pill" ? "9999px" : parsedBr;
+  if (cornerRadiusValues && typeof cornerRadiusValues === "object") {
+    const { tl = 0, tr = 0, br = 0, bl = 0 } = cornerRadiusValues;
+    if (tl || tr || br || bl) {
+      calculatedRadius = `${tl}px ${tr}px ${br}px ${bl}px`;
+    }
+  }
+
   const style: CSSProperties = {
-    borderRadius: variant === "pill" ? "9999px" : parsedBr,
+    borderRadius: calculatedRadius,
     opacity: op / 100,
     backdropFilter: effect === "blur" ? "blur(8px)" : undefined,
     boxShadow: props.dropShadow
@@ -31,6 +45,10 @@ export function getCustomButtonStyle(buttonId: string, customButtons: Record<str
   if (parsedW && parsedW !== "auto") style.width = parsedW;
   if (parsedH && parsedH !== "auto") style.height = parsedH;
   if (bg) style.background = bg;
+  if (textColor) style.color = textColor;
+  if (fontSize) style.fontSize = typeof fontSize === "number" ? `${fontSize}px` : (fontSize as string);
+  if (fontFamily) style.fontFamily = fontFamily;
+  if (fontWeight) style.fontWeight = fontWeight;
   if (props.padding !== undefined) style.padding = `${props.padding}px`;
 
   const borderThickness = typeof props.borderThickness === "number" ? props.borderThickness : undefined;
@@ -51,6 +69,24 @@ export function getCustomButtonStyle(buttonId: string, customButtons: Record<str
 }
 
 export function applyCustomButtonStyle(element: HTMLElement, buttonId: string, customButtons: Record<string, ButtonProps>) {
+  const props = customButtons?.[buttonId];
+  if (!props) return;
+
   const { style } = getCustomButtonStyle(buttonId, customButtons, element.className);
   Object.assign(element.style, style);
+
+  // Apply custom label/text if present
+  const customLabel = (props.label as string) || (props.text as string) || (props.content as string);
+  if (customLabel) {
+    const textNode = element.querySelector("span, p") || element;
+    if (textNode && textNode.textContent !== customLabel) {
+      textNode.textContent = customLabel;
+    }
+  }
+
+  // Apply custom link URL if anchor
+  const customUrl = (props.url as string) || (props.link as string) || (props.href as string);
+  if (customUrl && element instanceof HTMLAnchorElement && element.getAttribute("href") !== customUrl) {
+    element.setAttribute("href", customUrl);
+  }
 }

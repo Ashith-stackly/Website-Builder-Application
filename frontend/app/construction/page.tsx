@@ -256,7 +256,7 @@ function ConstructionHeader({ deviceMode, onProjectCategorySelect }: { deviceMod
             aria-label="Menu"
             aria-controls="construction-mobile-nav"
             aria-expanded={mobileOpen}
-            className={`flex ${showDesktopNav ? "md:hidden" : ""} w-11 h-11 sm:w-12 sm:h-12 items-center justify-center rounded-[12px] border border-white/30 text-white hover:bg-white/10 active:scale-95 transition-all shrink-0`}
+            className={`flex ${showDesktopNav ? "md:hidden" : ""} w-11 h-11 sm:w-12 sm:h-12 items-center justify-center rounded-xl border border-white/30 text-white hover:bg-white/10 active:scale-95 transition-all shrink-0`}
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <FaXmark size={22} /> : <FaBars size={22} />}
@@ -604,7 +604,7 @@ export default function ConstructionTemplatePage() {
   return (
     <main className={isBlockpages ? "@container construction-shell w-full min-w-0 max-w-full overflow-x-hidden bg-[#FDF8F5] font-sans text-gray-900 box-border [&_button]:cursor-pointer [&_a]:cursor-pointer" : "flex flex-col min-h-screen bg-[#F3F4F6] overflow-x-hidden font-sans text-gray-900 pt-6 [&_button]:cursor-pointer [&_a]:cursor-pointer"}>
       {!isBlockpages && (
-        <div className="fixed z-[100] bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
+        <div className="fixed z-100 bottom-6 left-1/2 -translate-x-1/2 hidden md:block" data-template-chrome="true" data-device-preview-toolbar="true">
           <div className="flex items-center gap-2 bg-white rounded-full border border-gray-200 shadow-xl px-4 py-2">
             <Link
               href="/landing#templates"
@@ -643,11 +643,11 @@ export default function ConstructionTemplatePage() {
         <div
           ref={isBlockpages ? undefined : canvasScrollRef}
           className={isBlockpages ? "w-full min-w-0" : `bg-white relative flex flex-col overflow-x-hidden overflow-y-auto transition-all duration-500 ease-in-out ${deviceMode === "mobile"
-            ? "w-full max-w-[375px] h-[85vh] rounded-[2.5rem] border-[8px] border-gray-800 shadow-2xl"
+            ? "w-full max-w-93.75 h-[85vh] rounded-[2.5rem] border-8 border-gray-800 shadow-2xl"
             : deviceMode === "tablet"
-              ? "w-full max-w-[768px] h-[90vh] rounded-[2rem] border-[8px] border-gray-800 shadow-2xl"
+              ? "w-full max-w-3xl h-[90vh] rounded-4xl border-8 border-gray-800 shadow-2xl"
               : deviceMode === "desktop"
-                ? "w-full max-w-[1200px] h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
+                ? "w-full max-w-300 h-[85vh] rounded-[1.75rem] border-2 border-gray-300 shadow-2xl"
                 : "w-full min-h-screen"
             }`}
         >
@@ -669,9 +669,10 @@ export default function ConstructionTemplatePage() {
               <div className="max-w-7xl mx-auto">
                 <div className={r("relative w-full rounded-3xl sm:rounded-[2.5rem] md:rounded-[3rem] overflow-hidden bg-[#CDC7C0] flex flex-col md:flex-row shadow-sm")}>
                   <div className={r("absolute inset-0 md:left-1/3")}>
-                    <div className={r("absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-[#CDC7C0] via-[#CDC7C0]/85 to-[#CDC7C0]/40 md:to-transparent z-10")} />
+                    <div className={r("absolute inset-0 bg-linear-to-b md:bg-linear-to-r from-[#CDC7C0] via-[#CDC7C0]/85 to-[#CDC7C0]/40 md:to-transparent z-10")} />
                     <img
-                      src={assetPath("/construnction.webp")}
+                      src={blockpagesEditor?.getImageSrc?.(assetPath("/construnction.webp"), "img_0") ?? assetPath("/construnction.webp")}
+                      data-blockpages-image-id="img_0"
                       alt="Construction Silhouette"
                       className={r("w-full h-full object-cover object-center mix-blend-multiply opacity-40 md:opacity-90")}
                       loading="eager"
@@ -679,13 +680,19 @@ export default function ConstructionTemplatePage() {
                   </div>
 
                   <div className={r("relative z-20 w-full md:w-3/5 p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col justify-center")}>
-                    <h1 className={r("font-black text-[#0A1E3D] leading-[1.15] mb-3 text-[28px] sm:text-4xl lg:text-5xl")}>
+                    <h1
+                      data-blockpages-text-id="txt-construction-h1-0"
+                      className={r("font-black text-[#0A1E3D] leading-[1.15] mb-3 text-[28px] sm:text-4xl lg:text-5xl")}
+                    >
                       WE TURN YOUR DREAMS
                       <br />
                       INTO REALITY
                     </h1>
 
-                    <p className={r("text-gray-600 mb-6 text-base leading-relaxed sm:mb-8 text-left")}>
+                    <p
+                      data-blockpages-text-id="txt-construction-p-1"
+                      className={r("text-gray-600 mb-6 text-base leading-relaxed sm:mb-8 text-left")}
+                    >
                       Innovative and functional architectural solutions tailored to your vision and needs.
                     </p>
 
@@ -751,14 +758,14 @@ export default function ConstructionTemplatePage() {
             <section id="const-projects" className={r("w-full py-10 px-4 sm:py-16 sm:px-6 lg:px-8")}>
               <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-center gap-3 mb-3 sm:hidden">
-                  <span className="w-6 h-[2px] bg-gray-300 block" />
+                  <span className="w-6 h-0.5 bg-gray-300 block" />
                   <p className="text-gray-900 font-medium text-xs">Our Projects</p>
-                  <span className="w-6 h-[2px] bg-gray-300 block" />
+                  <span className="w-6 h-0.5 bg-gray-300 block" />
                 </div>
 
                 <div className={r("relative hidden sm:flex items-center justify-center mb-10")}>
                   <div className={r("absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-4")}>
-                    <span className="w-8 h-[2px] bg-gray-300 block" />
+                    <span className="w-8 h-0.5 bg-gray-300 block" />
                     <p className="text-gray-700 font-medium text-sm">Our Projects</p>
                   </div>
                   <h2 className="font-black text-[#0A1E3D] text-center text-3xl">Our Construction Projects</h2>
@@ -860,7 +867,7 @@ export default function ConstructionTemplatePage() {
                   <div className={r("grid grid-cols-1 gap-8 items-center lg:grid-cols-2 lg:gap-12")}>
                     <div>
                       <p className={r("text-gray-500 font-medium text-sm flex items-center gap-3 mb-4 sm:gap-4")}>
-                        <span className={r("w-6 h-[2px] bg-gray-400 block shrink-0 sm:w-8")} /> Best Service
+                        <span className={r("w-6 h-0.5 bg-gray-400 block shrink-0 sm:w-8")} /> Best Service
                       </p>
                       <h2 className={r("text-2xl font-black text-[#0A1E3D] mb-5 leading-tight sm:text-3xl lg:text-4xl sm:mb-6")}>
                         Our Services That We Provide.
@@ -869,7 +876,7 @@ export default function ConstructionTemplatePage() {
                         We deliver reliable construction solutions with quality craftsmanship and industry expertise. From planning to project completion, our team ensures every detail is built to perfection.
                       </p>
                     </div>
-                    <div className={r("rounded-2xl overflow-hidden shadow-lg h-52 sm:h-64 lg:h-[350px]")}>
+                    <div className={r("rounded-2xl overflow-hidden shadow-lg h-52 sm:h-64 lg:h-87.5")}>
                       <img
                         src={assetPath("/Build.webp")}
                         className="w-full h-full object-cover"
@@ -885,13 +892,13 @@ export default function ConstructionTemplatePage() {
                     {services.map((s, i) => (
                       <div
                         key={i}
-                        className={r("blockpages-card group flex flex-col p-6 rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-2 sm:p-8 lg:p-10 lg:min-h-[400px] bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white")}
+                        className={r("blockpages-card group flex flex-col p-6 rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-2 sm:p-8 lg:p-10 lg:min-h-100 bg-white text-[#0A1E3D] hover:bg-[#0A1E3D] hover:text-white")}
                       >
                         <h3 className={r("text-lg font-black mb-4 leading-snug whitespace-pre-line sm:text-xl sm:mb-6 lg:text-2xl")}>{s.title}</h3>
                         <p className={r("text-base mb-7 leading-relaxed flex-1 sm:mb-10 text-gray-600 group-hover:text-gray-300 transition-colors duration-300 text-left")}>{s.desc}</p>
                         <button
                           onClick={() => scrollToSection("const-contact")}
-                          className={r("px-3 py-2 rounded-full font-bold text-xs transition-all duration-300 border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm border-[#0A1E3D]/30 text-[#0A1E3D] group-hover:border-white/30 group-hover:text-white hover:!bg-white hover:!text-[#0A1E3D]")}
+                          className={r("px-3 py-2 rounded-full font-bold text-xs transition-all duration-300 border w-fit text-center whitespace-nowrap sm:px-6 sm:py-3 sm:text-sm border-[#0A1E3D]/30 text-[#0A1E3D] group-hover:border-white/30 group-hover:text-white hover:bg-white! hover:text-[#0A1E3D]!")}
                         >
                           Explore Service
                         </button>
@@ -910,14 +917,14 @@ export default function ConstructionTemplatePage() {
               <div className={r("max-w-7xl mx-auto grid grid-cols-1 gap-8 items-start lg:grid-cols-2 lg:gap-16")}>
                 <div className="flex flex-col">
                   <div className={r("flex items-center gap-3 mb-4 sm:gap-4 sm:mb-6")}>
-                    <span className={r("w-6 h-[2px] bg-gray-300 block shrink-0 sm:w-8")} />
+                    <span className={r("w-6 h-0.5 bg-gray-300 block shrink-0 sm:w-8")} />
                     <p className="text-gray-500 font-medium text-sm">How We Works</p>
                   </div>
                   <h2 className={r("font-black text-[#0A1E3D] leading-tight mb-6 text-2xl sm:text-4xl sm:mb-10")}>
                     Our Streamlined Four-Step
                     <br className="hidden lg:block" /> Construction Process.
                   </h2>
-                  <div className={r("rounded-2xl overflow-hidden shadow-lg w-full h-56 sm:h-72 lg:h-[400px]")}>
+                  <div className={r("rounded-2xl overflow-hidden shadow-lg w-full h-56 sm:h-72 lg:h-100")}>
                     <img
                       src={assetPath("/plan.webp")}
                       alt="Construction Process"
@@ -956,21 +963,21 @@ export default function ConstructionTemplatePage() {
 
               <div className="max-w-7xl mx-auto px-4 relative sm:px-6 lg:px-8">
                 <div className={r("flex items-center justify-center gap-3 mb-3 sm:gap-4 sm:mb-4")}>
-                  <span className={r("w-8 h-[1px] bg-gray-400 block shrink-0 sm:w-12")} />
+                  <span className={r("w-8 h-px bg-gray-400 block shrink-0 sm:w-12")} />
                   <p className="text-gray-500 font-medium text-xs whitespace-nowrap sm:text-sm">Recent Work</p>
-                  <span className={r("w-8 h-[1px] bg-gray-400 block shrink-0 sm:w-12")} />
+                  <span className={r("w-8 h-px bg-gray-400 block shrink-0 sm:w-12")} />
                 </div>
 
                 <h2 className={r("font-black text-[#0A1E3D] text-center mb-8 text-2xl sm:text-4xl sm:mb-12")}>Explore Our Latest Projects</h2>
 
                 <div className={r("flex flex-col gap-6 mb-8 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-8 sm:mb-12 w-full")}>
-                  <p className={r("text-gray-600 text-base leading-relaxed w-full sm:flex-1 sm:min-w-[250px] text-left")}>
+                  <p className={r("text-gray-600 text-base leading-relaxed w-full sm:flex-1 sm:min-w-62.5 text-left")}>
                     Stay ahead of potential issues with regular maintenance that reduces downtime and avoids costly repairs.
                   </p>
 
-                  <div className={r("hidden md:flex flex-1 items-center justify-center px-8 min-w-[100px]")}>
+                  <div className={r("hidden md:flex flex-1 items-center justify-center px-8 min-w-25")}>
                     <div className="w-full flex items-center">
-                      <div className="h-[1px] bg-gray-400 flex-1" />
+                      <div className="h-px bg-gray-400 flex-1" />
                       <FaArrowRight className="text-gray-400 -ml-1 shrink-0" size={12} />
                     </div>
                   </div>
@@ -1008,10 +1015,10 @@ export default function ConstructionTemplatePage() {
                   {recentProjects.map((project, i) => (
                     <div
                       key={i}
-                      className={r("blockpages-card group shrink-0 snap-center w-[85%] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-[450px] sm:rounded-[2rem] relative")}
+                      className={r("blockpages-card group shrink-0 snap-center w-[85%] sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl overflow-hidden shadow-xl h-56 sm:h-80 lg:h-112.5 sm:rounded-4xl relative")}
                     >
                       <img src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E3D] via-[#0A1E3D]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 sm:p-8">
+                      <div className="absolute inset-0 bg-linear-to-t from-[#0A1E3D] via-[#0A1E3D]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6 sm:p-8">
                         <span className={r("text-blue-400 text-xs sm:text-sm font-bold uppercase tracking-widest mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500")}>{project.category}</span>
                         <h3 className={r("text-white font-black text-xl sm:text-3xl mb-3 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75")}>{project.title}</h3>
                         <p className={r("text-white/80 text-base leading-relaxed line-clamp-none sm:line-clamp-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-150 text-left")}>{project.desc}</p>
@@ -1030,7 +1037,7 @@ export default function ConstructionTemplatePage() {
               <div className="max-w-7xl mx-auto">
                 <div className={r("mb-6 sm:hidden")}>
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="w-6 h-[2px] bg-gray-400 block shrink-0" />
+                    <span className="w-6 h-0.5 bg-gray-400 block shrink-0" />
                     <p className="text-gray-500 font-medium text-xs uppercase tracking-widest">FAQS</p>
                   </div>
                   <h2 className="font-black text-[#0A1E3D] leading-tight text-2xl">Everything to Know About Our Construction Process</h2>
@@ -1042,7 +1049,7 @@ export default function ConstructionTemplatePage() {
                 <div className={r("hidden sm:grid grid-cols-2 gap-x-8 gap-y-8")}>
                   <div>
                     <div className="flex items-center gap-4 mb-6">
-                      <span className="w-8 h-[2px] bg-gray-400 block shrink-0" />
+                      <span className="w-8 h-0.5 bg-gray-400 block shrink-0" />
                       <p className="text-gray-500 font-medium text-sm uppercase tracking-widest">FAQS</p>
                     </div>
                     <h2 className="font-black text-[#0A1E3D] leading-tight text-4xl">
@@ -1401,7 +1408,7 @@ export default function ConstructionTemplatePage() {
                       <button
                         type="submit"
                         disabled={isSubmitted}
-                        className={r(`text-white px-4 py-3 sm:py-3.5 sm:px-8 rounded-[2rem] font-bold flex flex-wrap items-center justify-center gap-2 sm:gap-3 transition-colors shadow-lg text-sm w-full sm:w-auto whitespace-normal break-words text-center ${isSubmitted ? 'bg-green-600' : 'bg-[#0A1E3D] hover:bg-blue-900'}`)}
+                        className={r(`text-white px-4 py-3 sm:py-3.5 sm:px-8 rounded-4xl font-bold flex flex-wrap items-center justify-center gap-2 sm:gap-3 transition-colors shadow-lg text-sm w-full sm:w-auto whitespace-normal wrap-break-word text-center ${isSubmitted ? 'bg-green-600' : 'bg-[#0A1E3D] hover:bg-blue-900'}`)}
                       >
                         {isSubmitted ? "Sending..." : "Send Message"}
                         {!isSubmitted && (
@@ -1503,7 +1510,7 @@ export default function ConstructionTemplatePage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
+                    className="fixed inset-0 z-999 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
                   >
                     <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}
@@ -1557,7 +1564,7 @@ export default function ConstructionTemplatePage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
+                    className="fixed inset-0 z-999 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm @md:p-8"
                   >
                     <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}

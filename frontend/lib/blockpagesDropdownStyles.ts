@@ -4,7 +4,13 @@ export const BLOCKPAGES_DROPDOWN_EXCLUDE =
 
 export function isBlockpagesTextEditingActive() {
   if (typeof document === "undefined") return false;
-  return Boolean(document.querySelector('[data-blockpages-text-editing="true"]'));
+  const active = document.activeElement;
+  if (!active) return false;
+  return Boolean(
+    active.getAttribute("contenteditable") === "true" ||
+    active.closest('[contenteditable="true"]') ||
+    active.classList.contains("editable-text-active")
+  );
 }
 
 export function mutationIsInsideContentEditable(mutation: MutationRecord) {
@@ -14,7 +20,7 @@ export function mutationIsInsideContentEditable(mutation: MutationRecord) {
 }
 
 export function mutationsAreFromTextEditing(mutations: MutationRecord[]) {
-  if (!isBlockpagesTextEditingActive() || mutations.length === 0) return false;
+  if (mutations.length === 0) return false;
   return mutations.every(mutationIsInsideContentEditable);
 }
 
