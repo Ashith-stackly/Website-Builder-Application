@@ -73,6 +73,12 @@ import {
   templateUsesHtmlCanvasPersistence,
   TEXTBLOCK_PREVIEW_STORAGE_KEY,
   BLOCKPAGES_REQUEST_PREVIEW_EVENT,
+  loadCustomImagesForTemplate,
+  persistCustomImagesForTemplate,
+  loadCustomButtonsForTemplate,
+  persistCustomButtonsForTemplate,
+  loadCustomStaticIconsForTemplate,
+  persistCustomStaticIconsForTemplate,
 } from "@/lib/blockpagesEditorPersistence";
 import { buildPreviewHtmlFromCanvas, flushBlockpagesPreviewSnapshot, persistPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
 import VideoCanvas from "./videoblock/Canvas";
@@ -483,6 +489,11 @@ export default function BlockPagesClient() {
   ]);
 
   const handleSwitchTemplate = useCallback(async (newTemplate: TextTemplateType) => {
+    // ── Persist current template's custom data before switching ──────
+    persistCustomImagesForTemplate(textTemplate, customImages);
+    persistCustomButtonsForTemplate(textTemplate, customButtons);
+    persistCustomStaticIconsForTemplate(textTemplate, customIcons);
+
     setTextTemplate(newTemplate);
     setActiveBlockPage("text");
 
@@ -518,6 +529,14 @@ export default function BlockPagesClient() {
     const loadedIcons = loadAppliedIconsForTemplate(newTemplate);
     setAppliedIcons(loadedIcons);
 
+    // ── Load the NEW template's custom data (isolated from old template) ──
+    const newCustomImages = loadCustomImagesForTemplate(newTemplate);
+    const newCustomButtons = loadCustomButtonsForTemplate(newTemplate) as Record<string, ButtonProps>;
+    const newCustomIcons = loadCustomStaticIconsForTemplate(newTemplate) as Record<string, IconBlockProps>;
+    setCustomImages(newCustomImages);
+    setCustomButtons(newCustomButtons);
+    setCustomIcons(newCustomIcons);
+
     // Update URL query parameters
     const url = new URL(window.location.href);
     url.searchParams.set("template", newTemplate);
@@ -526,7 +545,7 @@ export default function BlockPagesClient() {
     }
     window.history.replaceState({}, "", url.toString());
 
-    // Auto-persist new template choice and editability to backend project
+    // Auto-persist new template choice with the NEW template's data
     if (draftProjectId) {
       const payload: BlockPagesDraftPayload = {
         template: newTemplate,
@@ -535,9 +554,9 @@ export default function BlockPagesClient() {
         videoBlocks,
         dividerBlocks,
         iconBlocks,
-        customImages,
-        customButtons,
-        customIcons,
+        customImages: newCustomImages,
+        customButtons: newCustomButtons,
+        customIcons: newCustomIcons,
         appliedDividers: loadedDividers,
         appliedIcons: loadedIcons,
       };
@@ -546,7 +565,7 @@ export default function BlockPagesClient() {
       });
     }
   }, [
-    draftProjectId, buttonBlocks, videoBlocks, dividerBlocks, iconBlocks,
+    draftProjectId, textTemplate, buttonBlocks, videoBlocks, dividerBlocks, iconBlocks,
     customImages, customButtons, customIcons,
   ]);
 
@@ -633,35 +652,22 @@ export default function BlockPagesClient() {
   useEffect(() => {
     if (searchParams.get("projectId")) return;
 
+    // ── Load custom images from TEMPLATE-SCOPED localStorage key ────
     try {
-      const storedImages = readBlockpagesStorageItem("stackly-custom-images");
-      if (storedImages) {
-        const parsed = JSON.parse(storedImages);
-        const validImages: Record<string, string> = {};
-        let hasChanges = false;
-        for (const key in parsed) {
-          if (typeof parsed[key] === "string" && parsed[key].startsWith("blob:")) {
-            hasChanges = true;
-          } else {
-            validImages[key] = parsed[key];
-          }
-        }
-        window.setTimeout(() => setCustomImages(validImages), 0);
-        if (hasChanges) {
-          writeBlockpagesStorageItem("stackly-custom-images", JSON.stringify(validImages));
-        }
+      const loadedImages = loadCustomImagesForTemplate(textTemplate);
+      if (Object.keys(loadedImages).length > 0) {
+        window.setTimeout(() => setCustomImages(loadedImages), 0);
+      } else {
+        window.setTimeout(() => setCustomImages({}), 0);
       }
     } catch (e) {
       console.error("Failed to load custom images", e);
     }
  
+    // ── Load custom buttons from TEMPLATE-SCOPED localStorage key ───
     try {
-      const storedButtons = readBlockpagesStorageItem("stackly-custom-buttons");
-      if (storedButtons) {
-        window.setTimeout(() => {
-          setCustomButtons(JSON.parse(storedButtons) as Record<string, ButtonProps>);
-        }, 0);
-      }
+      const loadedButtons = loadCustomButtonsForTemplate(textTemplate) as Record<string, ButtonProps>;
+      window.setTimeout(() => setCustomButtons(loadedButtons), 0);
     } catch (e) {
       console.error("Failed to load custom buttons", e);
     }
@@ -679,17 +685,14 @@ export default function BlockPagesClient() {
       console.error("Failed to load custom icons", e);
     }
  
+    // ── Load custom static icons from TEMPLATE-SCOPED localStorage key ──
     try {
-      const storedStaticIcons = readBlockpagesStorageItem("stackly-custom-static-icons");
-      if (storedStaticIcons) {
-        window.setTimeout(() => {
-          setCustomIcons(JSON.parse(storedStaticIcons) as Record<string, IconBlockProps>);
-        }, 0);
-      }
+      const loadedStaticIcons = loadCustomStaticIconsForTemplate(textTemplate) as Record<string, IconBlockProps>;
+      window.setTimeout(() => setCustomIcons(loadedStaticIcons), 0);
     } catch (e) {
       console.error("Failed to load custom static icons", e);
     }
-  }, [searchParams]);
+  }, [searchParams, textTemplate]);
 
   useEffect(() => {
     if (isBlockpagesVideoApplied(textTemplate)) {
@@ -1044,7 +1047,7 @@ export default function BlockPagesClient() {
               if (editingImageId) {
                 setCustomImages((prev) => {
                   const next = { ...prev, [editingImageId]: url };
-                  writeBlockpagesStorageItem("stackly-custom-images", JSON.stringify(next));
+                  persistCustomImagesForTemplate(textTemplate, next);
                   return next;
                 });
               }
@@ -1164,7 +1167,7 @@ export default function BlockPagesClient() {
                   if (editingButtonId) {
                     setCustomButtons((prev) => {
                       const next = { ...prev, [editingButtonId]: props };
-                      writeBlockpagesStorageItem("stackly-custom-buttons", JSON.stringify(next));
+                      persistCustomButtonsForTemplate(textTemplate, next);
                       return next;
                     });
                   }
@@ -1317,7 +1320,7 @@ export default function BlockPagesClient() {
                 if (editingImageId) {
                   setCustomImages((prev) => {
                     const next = { ...prev, [editingImageId]: url };
-                    writeBlockpagesStorageItem("stackly-custom-images", JSON.stringify(next));
+                    persistCustomImagesForTemplate(textTemplate, next);
                     return next;
                   });
                 }
@@ -1497,7 +1500,7 @@ export default function BlockPagesClient() {
                     if (editingIconId) {
                       setCustomIcons((prev) => {
                         const next = { ...prev, [editingIconId]: block.props };
-                        writeBlockpagesStorageItem("stackly-custom-static-icons", JSON.stringify(next));
+                        persistCustomStaticIconsForTemplate(textTemplate, next);
                         return next;
                       });
                     } else {

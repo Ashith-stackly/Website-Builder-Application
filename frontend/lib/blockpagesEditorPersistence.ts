@@ -361,6 +361,84 @@ export function persistAppliedIconsForTemplate(template: TextTemplateType, icons
   writeBlockpagesStorageItem(getBlockpagesAppliedIconsKey(template), JSON.stringify(icons));
 }
 
+// ── Template-scoped custom images / buttons / icons ─────────────────────
+
+export function getBlockpagesCustomImagesKey(template: TextTemplateType) {
+  return `stackly-custom-images-${template}`;
+}
+
+export function getBlockpagesCustomButtonsKey(template: TextTemplateType) {
+  return `stackly-custom-buttons-${template}`;
+}
+
+export function getBlockpagesCustomStaticIconsKey(template: TextTemplateType) {
+  return `stackly-custom-static-icons-${template}`;
+}
+
+/** Load customImages from template-scoped localStorage, with migration from legacy global key. */
+export function loadCustomImagesForTemplate(template: TextTemplateType): Record<string, string> {
+  // Try template-scoped key first
+  const scoped = readBlockpagesStorageItem(getBlockpagesCustomImagesKey(template));
+  if (scoped) {
+    try {
+      const parsed = JSON.parse(scoped);
+      const valid: Record<string, string> = {};
+      for (const key in parsed) {
+        if (typeof parsed[key] === "string" && !parsed[key].startsWith("blob:")) {
+          valid[key] = parsed[key];
+        }
+      }
+      return valid;
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+export function persistCustomImagesForTemplate(template: TextTemplateType, images: Record<string, string>) {
+  // Strip blob: URLs before persisting
+  const clean: Record<string, string> = {};
+  for (const [key, value] of Object.entries(images)) {
+    if (typeof value === "string" && !value.startsWith("blob:")) {
+      clean[key] = value;
+    }
+  }
+  writeBlockpagesStorageItem(getBlockpagesCustomImagesKey(template), JSON.stringify(clean));
+}
+
+export function loadCustomButtonsForTemplate(template: TextTemplateType): Record<string, unknown> {
+  const scoped = readBlockpagesStorageItem(getBlockpagesCustomButtonsKey(template));
+  if (scoped) {
+    try {
+      return JSON.parse(scoped) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+export function persistCustomButtonsForTemplate(template: TextTemplateType, buttons: Record<string, unknown>) {
+  writeBlockpagesStorageItem(getBlockpagesCustomButtonsKey(template), JSON.stringify(buttons));
+}
+
+export function loadCustomStaticIconsForTemplate(template: TextTemplateType): Record<string, unknown> {
+  const scoped = readBlockpagesStorageItem(getBlockpagesCustomStaticIconsKey(template));
+  if (scoped) {
+    try {
+      return JSON.parse(scoped) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+export function persistCustomStaticIconsForTemplate(template: TextTemplateType, icons: Record<string, unknown>) {
+  writeBlockpagesStorageItem(getBlockpagesCustomStaticIconsKey(template), JSON.stringify(icons));
+}
+
 export function getTextBlockStateStorageKey(template: TextTemplateType) {
   return `stackly-textblock-state-${template}`;
 }
