@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -25,19 +25,11 @@ export default function StandardModal({
   footer,
   badge,
 }: StandardModalProps) {
-  const [mounted, setMounted] = useState(false);
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-    let container = document.getElementById("blockpages-modal-portal");
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "blockpages-modal-portal";
-      document.body.appendChild(container);
-    }
-    setPortalContainer(container);
-  }, []);
+  const isClient = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -50,11 +42,17 @@ export default function StandardModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted || !portalContainer) return null;
+  if (!isOpen || !isClient || typeof document === "undefined") return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#0B182B]/80 backdrop-blur-sm p-4 pt-[80px] animate-in fade-in duration-200">
-      <div className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 relative z-[100000]`}>
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#0B182B]/80 backdrop-blur-sm p-4 pt-[80px] animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 relative z-[100000]`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-[#F6F4EB]">
           <h2 className="text-xl sm:text-2xl font-bold text-[#0B1D40] flex items-center gap-3">
             {badge ? (
@@ -89,5 +87,5 @@ export default function StandardModal({
     </div>
   );
 
-  return createPortal(modalContent, portalContainer);
+  return createPortal(modalContent, document.body);
 }

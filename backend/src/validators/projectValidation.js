@@ -26,6 +26,7 @@ const autosaveValidation = [
   body('ecommerceData').optional().isObject().withMessage('ecommerceData must be an object'),
   body('htmlContent').optional().isString().withMessage('htmlContent must be a string'),
   body('category').optional({ values: 'falsy' }).trim().isLength({ max: 80 }).withMessage('Category is too long'),
+  body('projectName').optional().trim().isLength({ min: 1, max: 100 }).withMessage('Project name must be 1-100 characters'),
 ];
 
 const saveHtmlValidation = [

@@ -188,6 +188,7 @@ export async function autosaveProject(
     editorType?: "builder" | "ecommerce" | "blockpages";
     htmlContent?: string;
     category?: string;
+    projectName?: string;
   },
   signal?: AbortSignal,
 ): Promise<{ success: boolean; savedAt?: string }> {

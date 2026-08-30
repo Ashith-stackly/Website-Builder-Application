@@ -7,7 +7,6 @@ import {
   createBlockPagesDraft,
   saveBlockPagesDraft,
   loadBlockPagesDraft,
-  isProjectConnectionError,
   type BlockPagesDraftPayload,
 } from "@/lib/blockPagesDraftApi";
 import { routePath } from "@/lib/paths";
@@ -29,7 +28,6 @@ import {
   DEFAULT_PORTFOLIO_VIDEO_PROPS,
 } from "@/lib/blockpagesVideoStorage";
 import {
-  getBlockpagesTemplateLabel,
   isTextEditorTemplate,
   parseBlockpagesTemplate,
 } from "@/lib/blockpagesTemplates";
@@ -39,14 +37,12 @@ import {
   getBlockpagesFooterScrollId,
   getBlockpagesHeaderScrollId,
   getBlockpagesVideoScrollId,
-  getBlockpagesAboutScrollId,
   getBlockpagesIconScrollId,
   scrollCanvasToModifiedElement,
 } from "@/lib/blockpagesTemplateSections";
 import {
   getBlockpagesCanvasElement,
   scanCanvasForIconTargets,
-  scanCanvasForVideoTargets,
   scrollToFirstIconTarget,
   templateHasBuiltInIconSlots,
   templateHasBuiltInVideoSlots,
@@ -164,6 +160,13 @@ export default function BlockPagesClient() {
   const [isDraftLoading, setIsDraftLoading] = useState(!!searchParams.get("projectId"));
   const isSavingRef = useRef(false);
   const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Monotonically-increasing version counter.  Every template switch and every
+  // Save Draft bumps this.  Async save responses whose captured version doesn't
+  // match the current value are discarded — this prevents a slow save from an
+  // OLD template from overwriting the draftProjectId after the user has already
+  // switched to a new template.
+  const saveVersionRef = useRef(0);
 
   useEffect(() => {
     // If a projectId is present, the MongoDB draft loading effect manages state hydration.
@@ -424,6 +427,16 @@ export default function BlockPagesClient() {
   }, [appliedDividers]);
 
   // ── Save Draft handler ─────────────────────────────────────────────────
+  //
+  // KEY DESIGN: We capture an IMMUTABLE SNAPSHOT of the entire editor context
+  // at call time.  The snapshot is what gets sent to the API.  This means that
+  // even if the user switches templates while a save is in-flight, the save
+  // still writes the correct template + data pair.
+  //
+  // We also bump `saveVersionRef` and capture its value.  When the async save
+  // completes, we compare the captured version with the current version; if
+  // they differ the user has switched templates and we must NOT update
+  // `draftProjectId` from the stale response.
   const handleSaveDraft = useCallback(async () => {
     if (isSavingRef.current) return;
     isSavingRef.current = true;
@@ -435,8 +448,12 @@ export default function BlockPagesClient() {
       saveStatusTimerRef.current = null;
     }
 
+    // ── 1. Capture immutable snapshot ────────────────────────────────
+    const snapshotVersion = ++saveVersionRef.current;
+    const snapshotTemplate = textTemplate;
+    const snapshotProjectId = draftProjectId;
     const payload: BlockPagesDraftPayload = {
-      template: textTemplate,
+      template: snapshotTemplate,
       textBlockState: {
         ...textBlockState,
         isTextEditable: true,
@@ -453,32 +470,42 @@ export default function BlockPagesClient() {
     };
 
     try {
-      let currentProjectId = draftProjectId;
+      let currentProjectId = snapshotProjectId;
 
-      // First save: create a new project
+      // First save: create a new project for this template
       if (!currentProjectId) {
-        const created = await createBlockPagesDraft(textTemplate);
+        const created = await createBlockPagesDraft(snapshotTemplate);
         currentProjectId = created._id;
-        setDraftProjectId(currentProjectId);
 
-        // Update URL with projectId and template without full page reload
-        const url = new URL(window.location.href);
-        url.searchParams.set("projectId", currentProjectId);
-        url.searchParams.set("template", textTemplate);
-        window.history.replaceState({}, "", url.toString());
+        // Only update draftProjectId if the user hasn't switched templates
+        // since this save was initiated.
+        if (saveVersionRef.current === snapshotVersion) {
+          setDraftProjectId(currentProjectId);
+
+          // Update URL with projectId and template without full page reload
+          const url = new URL(window.location.href);
+          url.searchParams.set("projectId", currentProjectId);
+          url.searchParams.set("template", snapshotTemplate);
+          window.history.replaceState({}, "", url.toString());
+        }
       }
 
       // Save structured draft data, plus rendered HTML if the website canvas is mounted.
-      writeBlockpagesStorageItem("stackly-last-active-template", textTemplate);
-      const htmlContent = buildPreviewHtml(false) || readBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate)) || undefined;
+      writeBlockpagesStorageItem("stackly-last-active-template", snapshotTemplate);
+      const htmlContent = buildPreviewHtml(false) || readBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(snapshotTemplate)) || undefined;
       await saveBlockPagesDraft(currentProjectId, payload, undefined, htmlContent || undefined);
 
-      setSaveStatus("saved");
-      saveStatusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2500);
+      // Only update UI status if still on the same save generation
+      if (saveVersionRef.current === snapshotVersion) {
+        setSaveStatus("saved");
+        saveStatusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2500);
+      }
     } catch (err) {
       console.error("Save draft failed:", err);
-      setSaveStatus("error");
-      saveStatusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 4000);
+      if (saveVersionRef.current === snapshotVersion) {
+        setSaveStatus("error");
+        saveStatusTimerRef.current = setTimeout(() => setSaveStatus("idle"), 4000);
+      }
     } finally {
       isSavingRef.current = false;
     }
@@ -489,11 +516,47 @@ export default function BlockPagesClient() {
   ]);
 
   const handleSwitchTemplate = useCallback(async (newTemplate: TextTemplateType) => {
-    // ── Persist current template's custom data before switching ──────
+    // ── 1. Persist current template's custom data to localStorage ────
     persistCustomImagesForTemplate(textTemplate, customImages);
     persistCustomButtonsForTemplate(textTemplate, customButtons);
     persistCustomStaticIconsForTemplate(textTemplate, customIcons);
 
+    // ── 2. If the current template has a saved project, save it first ─
+    //    Await completion so the old project's data is safely persisted
+    //    before we switch away.
+    if (draftProjectId && !isSavingRef.current) {
+      try {
+        isSavingRef.current = true;
+        const currentPayload: BlockPagesDraftPayload = {
+          template: textTemplate,
+          textBlockState: { ...textBlockState, isTextEditable: true },
+          buttonBlocks,
+          videoBlocks,
+          dividerBlocks,
+          iconBlocks,
+          customImages,
+          customButtons,
+          customIcons,
+          appliedDividers,
+          appliedIcons,
+        };
+        const htmlContent = buildPreviewHtml(false) || readBlockpagesStorageItem(getBlockpagesPreviewSnapshotKey(textTemplate)) || undefined;
+        await saveBlockPagesDraft(draftProjectId, currentPayload, undefined, htmlContent || undefined);
+      } catch (err) {
+        console.warn("Saving current template before switch failed:", err);
+      } finally {
+        isSavingRef.current = false;
+      }
+    }
+
+    // ── 3. Bump save version — any in-flight saves from the OLD template
+    //    will see a version mismatch and skip draftProjectId updates ──
+    ++saveVersionRef.current;
+
+    // ── 4. Clear project context — the new template is a NEW project ─
+    setDraftProjectId(null);
+
+    // ── 5. Switch template and reset editor state ────────────────────
     setTextTemplate(newTemplate);
     setActiveBlockPage("text");
 
@@ -529,7 +592,7 @@ export default function BlockPagesClient() {
     const loadedIcons = loadAppliedIconsForTemplate(newTemplate);
     setAppliedIcons(loadedIcons);
 
-    // ── Load the NEW template's custom data (isolated from old template) ──
+    // ── 6. Load the NEW template's custom data (isolated) ────────────
     const newCustomImages = loadCustomImagesForTemplate(newTemplate);
     const newCustomButtons = loadCustomButtonsForTemplate(newTemplate) as Record<string, ButtonProps>;
     const newCustomIcons = loadCustomStaticIconsForTemplate(newTemplate) as Record<string, IconBlockProps>;
@@ -537,36 +600,34 @@ export default function BlockPagesClient() {
     setCustomButtons(newCustomButtons);
     setCustomIcons(newCustomIcons);
 
-    // Update URL query parameters
+    // ── 7. Reset undo/redo history for the new template ──────────────
+    setPastButtonStates([]);
+    setFutureButtonStates([]);
+    setPastTextStates([]);
+    setFutureTextStates([]);
+    setPastVideoStates([]);
+    setFutureVideoStates([]);
+    setPastDividerStates([]);
+    setFutureDividerStates([]);
+    setPastIconStates([]);
+    setFutureIconStates([]);
+
+    // ── 8. Update URL — no projectId (new template = new project) ────
     const url = new URL(window.location.href);
     url.searchParams.set("template", newTemplate);
-    if (draftProjectId) {
-      url.searchParams.set("projectId", draftProjectId);
-    }
+    url.searchParams.delete("projectId");
     window.history.replaceState({}, "", url.toString());
 
-    // Auto-persist new template choice with the NEW template's data
-    if (draftProjectId) {
-      const payload: BlockPagesDraftPayload = {
-        template: newTemplate,
-        textBlockState: nextTextBlockState,
-        buttonBlocks,
-        videoBlocks,
-        dividerBlocks,
-        iconBlocks,
-        customImages: newCustomImages,
-        customButtons: newCustomButtons,
-        customIcons: newCustomIcons,
-        appliedDividers: loadedDividers,
-        appliedIcons: loadedIcons,
-      };
-      void saveBlockPagesDraft(draftProjectId, payload, undefined, undefined).catch((err) => {
-        console.warn("Auto-saving switched template draft failed:", err);
-      });
+    // ── 9. Reset save status ─────────────────────────────────────────
+    setSaveStatus("idle");
+    if (saveStatusTimerRef.current) {
+      clearTimeout(saveStatusTimerRef.current);
+      saveStatusTimerRef.current = null;
     }
   }, [
-    draftProjectId, textTemplate, buttonBlocks, videoBlocks, dividerBlocks, iconBlocks,
-    customImages, customButtons, customIcons,
+    draftProjectId, textTemplate, textBlockState, buttonBlocks, videoBlocks,
+    dividerBlocks, iconBlocks, customImages, customButtons, customIcons,
+    appliedDividers, appliedIcons, buildPreviewHtml,
   ]);
 
   const handlePreview = useCallback(() => {
@@ -603,14 +664,7 @@ export default function BlockPagesClient() {
     };
 
     attemptCapture();
-  }, [textTemplate]);
-
-  const verifyCanvasHasVideoTargets = (template: TextTemplateType) => {
-    if (templateHasBuiltInVideoSlots(template)) return true;
-    const canvas = getBlockpagesCanvasElement();
-    if (!canvas) return false;
-    return scanCanvasForVideoTargets(canvas);
-  };
+  }, [textTemplate, draftProjectId]);
 
   const verifyCanvasHasIconTargets = (template: TextTemplateType) => {
     if (templateHasBuiltInIconSlots(template)) return true;
@@ -673,14 +727,8 @@ export default function BlockPagesClient() {
     }
  
     try {
-      const storedIcons = readBlockpagesStorageItem("stackly-custom-icons");
-      if (storedIcons) {
-        window.setTimeout(() => {
-          const parsed = JSON.parse(storedIcons);
-          if (Array.isArray(parsed)) setAppliedIcons(parsed);
-          else if (parsed) setAppliedIcons([{ id: 'legacy', props: parsed }]);
-        }, 0);
-      }
+      const loadedAppliedIcons = loadAppliedIconsForTemplate(textTemplate);
+      window.setTimeout(() => setAppliedIcons(loadedAppliedIcons), 0);
     } catch (e) {
       console.error("Failed to load custom icons", e);
     }

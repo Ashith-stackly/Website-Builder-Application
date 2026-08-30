@@ -24,6 +24,7 @@ import type { DividerBlockData } from "@/app/blockpages/dividerblock/types";
 import type { DividerBlockProps } from "@/app/blockpages/dividerblock/types";
 import type { IconBlockData } from "@/app/blockpages/iconsblock/types";
 import type { IconBlockProps } from "@/app/blockpages/iconsblock/types";
+import { getBlockpagesTemplateLabel } from "@/lib/blockpagesTemplates";
 
 // ── Payload Types ────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ export async function createBlockPagesDraft(
   template: TextTemplateType,
   signal?: AbortSignal,
 ): Promise<ProjectApiProject> {
-  const templateLabel = template.charAt(0).toUpperCase() + template.slice(1);
+  const templateLabel = getBlockpagesTemplateLabel(template);
   return createProject(
     {
       projectName: `Block Pages — ${templateLabel}`,
@@ -107,10 +108,14 @@ export async function saveBlockPagesDraft(
     customImages: sanitiseImages(payload.customImages),
   };
 
+  // Build a human-readable project name from the template slug
+  const templateLabel = getBlockpagesTemplateLabel(payload.template);
+
   const autosavePayload: {
     builderData: Record<string, unknown>;
     editorType: "blockpages";
     category: string;
+    projectName: string;
     htmlContent?: string;
   } = {
     builderData: {
@@ -119,6 +124,7 @@ export async function saveBlockPagesDraft(
     } as Record<string, unknown>,
     editorType: "blockpages",
     category: payload.template,
+    projectName: `Block Pages — ${templateLabel}`,
   };
 
   if (typeof htmlContent === "string") {

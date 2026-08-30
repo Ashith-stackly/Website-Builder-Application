@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   ChevronDown, Check, Search, Utensils, HardHat, Briefcase,
-  Newspaper, Megaphone, ShoppingBag, LayoutGrid, Sparkles
+  Newspaper, Megaphone, ShoppingBag, LayoutGrid, Sparkles, Building2,
+  type LucideIcon,
 } from "lucide-react";
 import {
   parseBlockpagesTemplate,
@@ -18,7 +19,7 @@ const TEMPLATE_CARDS: {
   label: string;
   category: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   accent: string;
   tagColor: string;
 }[] = [
@@ -75,6 +76,15 @@ const TEMPLATE_CARDS: {
     icon: Megaphone,
     accent: "bg-indigo-50 text-indigo-600 border-indigo-200 group-hover:bg-indigo-600 group-hover:text-white",
     tagColor: "bg-indigo-100 text-indigo-700",
+  },
+  {
+    id: "business",
+    label: "Business",
+    category: "Business & Services",
+    description: "Professional business site with services, team, and client sections.",
+    icon: Building2,
+    accent: "bg-slate-50 text-slate-600 border-slate-200 group-hover:bg-slate-600 group-hover:text-white",
+    tagColor: "bg-slate-100 text-slate-700",
   },
 ];
 

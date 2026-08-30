@@ -110,7 +110,7 @@ async function getProject(userId, id) {
   return toProject(doc);
 }
 
-async function autosave(userId, id, { builderData, ecommerceData, editorType, htmlContent, category }) {
+async function autosave(userId, id, { builderData, ecommerceData, editorType, htmlContent, category, projectName }) {
   const $set = {};
 
   if (editorType) {
@@ -120,6 +120,11 @@ async function autosave(userId, id, { builderData, ecommerceData, editorType, ht
   // Allow callers to update the category (e.g. blockpages persisting template slug)
   if (typeof category === 'string') {
     $set.category = category;
+  }
+
+  // Allow callers to update the project name (e.g. blockpages keeping name consistent with template)
+  if (typeof projectName === 'string' && projectName.trim()) {
+    $set.projectName = projectName.trim();
   }
 
   if (editorType === 'ecommerce' || ecommerceData) {
