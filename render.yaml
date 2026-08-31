@@ -40,3 +40,11 @@ services:
         sync: false
       - key: RAZORPAY_KEY_SECRET
         sync: false
+      - key: JWT_ADMIN_SECRET
+        sync: false
+      - key: JWT_ADMIN_EXPIRES_IN
+        value: 8h
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

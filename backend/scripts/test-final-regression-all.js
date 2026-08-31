@@ -8,6 +8,8 @@ const Invoice = require('../src/models/Invoice');
 const Workspace = require('../src/models/Workspace');
 const { signAccessToken } = require('../src/utils/jwt');
 
+const connectDB = require('../src/database/connection');
+
 const BASE_URL = 'http://localhost:5000/api';
 
 async function runFullRegression() {
@@ -15,7 +17,7 @@ async function runFullRegression() {
   console.log('STARTING FINAL COMPREHENSIVE REGRESSION SUITE');
   console.log('================================================================\n');
 
-  await mongoose.connect(process.env.MONGODB_URI);
+  await connectDB();
   console.log('Connected to MongoDB directly for verification.\n');
 
   const createdUserIds = [];

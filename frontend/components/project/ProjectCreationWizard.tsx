@@ -497,10 +497,12 @@ export default function ProjectCreationWizard({
     setIsBuilding(true);
 
     const token = typeof window !== "undefined" ? getAuthToken() : null;
-    const isEcommerce = projectData.category === "E-commerce";
-    const editorType: "builder" | "ecommerce" | "blockpages" = isEcommerce
-      ? "ecommerce"
-      : "builder";
+
+    // The wizard always creates Builder projects regardless of category.
+    // The category (e.g. "E-commerce") is preserved as metadata but does
+    // NOT determine the editor type.  Dedicated E-Commerce projects with
+    // editorType "ecommerce" are created through separate flows.
+    const editorType: "builder" | "ecommerce" | "blockpages" = "builder";
 
     try {
       if (token) {
@@ -526,8 +528,7 @@ export default function ProjectCreationWizard({
         }
 
         handleClose();
-        const editorPath = editorType === "ecommerce" ? "/e-commerce" : "/builder";
-        router.push(`${editorPath}?projectId=${project._id}`);
+        router.push(`/builder?projectId=${project._id}`);
       } else {
         // Unauthenticated: pass requirements directly to editor
         const params = new URLSearchParams({
@@ -539,8 +540,7 @@ export default function ProjectCreationWizard({
         });
 
         handleClose();
-        const editorPath = editorType === "ecommerce" ? "/e-commerce" : "/builder";
-        router.push(`${editorPath}?${params.toString()}`);
+        router.push(`/builder?${params.toString()}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create the project. Please try again.");

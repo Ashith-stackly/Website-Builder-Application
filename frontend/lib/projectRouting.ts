@@ -109,11 +109,6 @@ export function getProjectEditorRoute(project: RoutableProject): string {
     return `/blockpages?projectId=${id}&template=${encodeURIComponent(tpl)}`;
   }
 
-  // Legacy E-commerce category (without explicit editorType)
-  if (category === "E-commerce" || category.toLowerCase() === "e-commerce") {
-    return `/e-commerce?projectId=${id}`;
-  }
-
   // ── 5. Default: builder ───────────────────────────────────────────
   return `/builder?projectId=${id}`;
 }

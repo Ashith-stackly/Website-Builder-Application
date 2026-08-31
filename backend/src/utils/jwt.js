@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const ApiError = require('./ApiError');
+const logger = require('./logger');
 
 /**
  * Sign a JWT access token.
@@ -47,10 +49,12 @@ function signResetToken(payload) {
 function adminSecret() {
   const secret = process.env.JWT_ADMIN_SECRET;
   if (!secret) {
-    throw new Error(
-      'FATAL: JWT_ADMIN_SECRET is not set. Admin authentication requires an explicit secret. '
+    // Log the diagnostic details server-side only — never expose to clients.
+    logger.error(
+      'JWT_ADMIN_SECRET is not set. Admin authentication requires an explicit secret. '
       + 'Add JWT_ADMIN_SECRET to backend/.env and restart the server.',
     );
+    throw ApiError.internal('Admin authentication is temporarily unavailable.');
   }
   return secret;
 }

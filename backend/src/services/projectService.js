@@ -40,7 +40,6 @@ async function assertProjectCapacity(userId, knownUser) {
  */
 function toProject(doc) {
   if (!doc) return null;
-  const isEcommerce = doc.editorType === 'ecommerce' || doc.category === 'E-commerce';
   const isBlockpages = doc.editorType === 'blockpages';
   const builderData =
     doc.builderData && Object.keys(doc.builderData).length > 0
@@ -57,11 +56,11 @@ function toProject(doc) {
     _id: doc._id,
     projectName: doc.projectName,
     description: doc.description || '',
-    category: doc.category || (isEcommerce ? 'E-commerce' : ''),
+    category: doc.category || '',
     style: doc.style || '',
     sections: doc.sections || [],
     status: doc.status || 'active',
-    editorType: doc.editorType || (isEcommerce ? 'ecommerce' : 'builder'),
+    editorType: doc.editorType || 'builder',
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     builderData,
@@ -83,14 +82,13 @@ async function createProject(userId, body) {
   // ── Plan-based project limit enforcement ────────────────────────────
   await assertProjectCapacity(userId);
 
-  const isEcommerce = body.editorType === 'ecommerce' || body.category === 'E-commerce';
   const isBlockpages = body.editorType === 'blockpages';
-  const editorType = isBlockpages ? 'blockpages' : (isEcommerce ? 'ecommerce' : (body.editorType || 'builder'));
+  const editorType = isBlockpages ? 'blockpages' : (body.editorType || 'builder');
 
   const doc = await Workspace.create({
     userId,
     projectName: body.projectName,
-    category: body.category || (isEcommerce ? 'E-commerce' : ''),
+    category: body.category || '',
     style: body.style || '',
     sections: Array.isArray(body.sections) ? body.sections : [],
     description: body.description || '',
@@ -98,7 +96,7 @@ async function createProject(userId, body) {
     components: [],
     designTokens: {},
     builderData: {},
-    ecommerceData: body.ecommerceData || {},
+    ecommerceData: editorType === 'ecommerce' ? (body.ecommerceData || {}) : undefined,
     htmlContent: '',
   });
   return toProject(doc.toObject());
@@ -208,7 +206,7 @@ async function duplicateProject(userId, id) {
     userId,
     projectName: `${source.projectName || 'Untitled Project'} (Copy)`,
     status: 'active',
-    editorType: source.editorType || (source.category === 'E-commerce' ? 'ecommerce' : 'builder'),
+    editorType: source.editorType || 'builder',
     category: source.category,
     style: source.style || '',
     sections: Array.isArray(source.sections) ? source.sections : [],
