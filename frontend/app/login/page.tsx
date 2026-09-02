@@ -38,6 +38,7 @@ import {
   passwordContainsWhitespace,
 } from "@/lib/resetFlowValidation";
 import { setAuthToken } from "@/lib/authToken";
+import { useProjectStore } from "@/store/projectStore";
 import {
   clearRememberedLogin,
   readRememberedLogin,
@@ -443,6 +444,10 @@ export default function LoginPage() {
         // Otherwise → sessionStorage (cleared when the tab/session ends).
         setAuthToken(result.token, form.rememberMe);
       }
+
+      // Clear any stale project data from a previous user's session so the
+      // new user never briefly sees another user's projects.
+      useProjectStore.getState().resetProjects();
 
       if (form.rememberMe) {
         saveRememberedLogin(contact, form.password);

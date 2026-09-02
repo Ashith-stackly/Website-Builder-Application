@@ -12,7 +12,6 @@ import {
   FaCamera,
   FaChartLine,
   FaChevronDown,
-  FaChevronRight,
   FaCircleUser,
   FaGear,
   FaGraduationCap,
@@ -21,7 +20,6 @@ import {
   FaLayerGroup,
   FaMagnifyingGlass,
   FaMinus,
-  FaNewspaper,
   FaPenNib,
   FaPlane,
   FaPlus,
@@ -32,10 +30,6 @@ import {
 } from "react-icons/fa6";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { assetPath } from "@/lib/paths";
-import { useAssetStore } from "@/store/assetStore";
-import { useBuilderStore } from "@/store/builderStore";
-import { useDesignStore } from "@/store/designStore";
-import { useProjectStore } from "@/store/projectStore";
 import { fetchProfile, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
 import { defaultUserSettings } from "@/lib/userSettings";
 import {
@@ -45,8 +39,8 @@ import {
   openRazorpayCheckout,
 } from "@/lib/razorpayClient";
 import MockCheckoutModal from "@/components/MockCheckoutModal";
-import { LOGOUT_PRESERVED_STORAGE_KEYS } from "@/lib/rememberLogin";
 import { getAuthToken } from "@/lib/authToken";
+import { performFullLogout, STORAGE_SYNC_EVENT } from "@/lib/logoutUtils";
 
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
  
@@ -172,32 +166,8 @@ type StoredCommerceItem = {
   qty?: number;
 };
  
-const STORAGE_SYNC_EVENT = "stackly-storage-change";
-
-const LOGOUT_STORAGE_KEYS = new Set([
-  "cartItems",
-  "cartCount",
-  "wishlistItems",
-  "buyscreenCartItemsV1",
-  "buyscreenFavoriteIdsV1",
-  "portfolioVideoData",
-]);
-
-function shouldClearOnLogout(key: string) {
-  if (LOGOUT_PRESERVED_STORAGE_KEYS.has(key)) {
-    return false;
-  }
-  return key.toLowerCase().startsWith("stackly") || LOGOUT_STORAGE_KEYS.has(key);
-}
-
-function clearLogoutStorage(storage: Storage) {
-  for (let index = storage.length - 1; index >= 0; index -= 1) {
-    const key = storage.key(index);
-    if (key && shouldClearOnLogout(key)) {
-      storage.removeItem(key);
-    }
-  }
-}
+// STORAGE_SYNC_EVENT, clearLogoutStorage, and LOGOUT_STORAGE_KEYS are now in
+// @/lib/logoutUtils — imported above.
 
 const FOCUSABLE_SELECTOR = [
   "a[href]",
@@ -686,14 +656,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     setIsLoggedIn(false);
     setDisplayUser(defaultUserSettings);
 
-    useBuilderStore.getState().resetBuilder();
-    useProjectStore.getState().resetProjects();
-    useDesignStore.getState().resetDesignStore();
-    await useAssetStore.getState().resetAssets();
-
-    clearLogoutStorage(window.localStorage);
-    clearLogoutStorage(window.sessionStorage);
-    window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
+    await performFullLogout();
     router.push("/login");
   }, [router]);
 

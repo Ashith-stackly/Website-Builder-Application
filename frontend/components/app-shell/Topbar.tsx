@@ -24,8 +24,7 @@ import { scaleIn, spring, staggerChild, staggerContainer } from "@/lib/motion";
 import { useThemeStore, type ThemeMode } from "@/lib/theme";
 import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { fetchProfile, formatPlanLabel, resolveActivePlan, PROFILE_UPDATED_EVENT, type UserProfile } from "@/lib/profileApi";
-import { clearAuthToken } from "@/lib/authToken";
-import { clearDemoSession } from "@/lib/demoAuth";
+import { performFullLogout } from "@/lib/logoutUtils";
 import { useLanguageStore } from "@/lib/i18n";
  
 const SEGMENT_LABELS: Record<string, string> = {
@@ -220,20 +219,23 @@ function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [recentPurchasePlan, setRecentPurchasePlan] = useState<string | undefined>();
-  const t = useLanguageStore((s) => s.t);
- 
-  useEffect(() => {
+  const [recentPurchasePlan] = useState<string | undefined>(() => {
+    if (typeof window === "undefined") return undefined;
     try {
       const raw = localStorage.getItem("stacklyPlanningBillingHistory");
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed[0]) {
           const latest = parsed[0] as { planTier?: string; planName?: string };
-          setRecentPurchasePlan(latest.planTier || latest.planName);
+          return latest.planTier || latest.planName;
         }
       }
     } catch { /* ignore */ }
+    return undefined;
+  });
+  const t = useLanguageStore((s) => s.t);
+ 
+  useEffect(() => {
  
     const controller = new AbortController();
     void fetchProfile(controller.signal)
@@ -260,13 +262,9 @@ function ProfileMenu() {
   const planLabel = formatPlanLabel(resolveActivePlan(user?.plan, recentPurchasePlan));
  
   const signOut = () => {
-    try {
-      clearAuthToken();
-      clearDemoSession();
-    } catch {
-      /* ignore */
-    }
-    router.push("/login");
+    void performFullLogout().finally(() => {
+      router.push("/login");
+    });
   };
  
   return (

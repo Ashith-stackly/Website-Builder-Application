@@ -1,6 +1,7 @@
 const Workspace = require('../models/Workspace');
 const Deployment = require('../models/Deployment');
 const analyticsService = require('./analyticsService');
+const mongoose = require('mongoose');
 
 /**
  * Dashboard summary endpoint — returns all the data the dashboard page needs
@@ -8,9 +9,13 @@ const analyticsService = require('./analyticsService');
  * was previously calling getProjectAnalytics() once per project.
  */
 async function getDashboardSummary(userId) {
+  // Explicit ObjectId cast — Mongoose aggregation pipelines do NOT auto-cast
+  // types like find() does, so we ensure an exact type match.
+  const ownerFilter = { userId: new mongoose.Types.ObjectId(userId), status: { $ne: 'deleted' } };
+
   // 1. Get project counts by status (single aggregation)
   const statusCounts = await Workspace.aggregate([
-    { $match: { userId, status: { $ne: 'deleted' } } },
+    { $match: ownerFilter },
     {
       $group: {
         _id: null,
