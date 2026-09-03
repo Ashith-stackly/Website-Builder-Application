@@ -11,7 +11,7 @@ export type AuthBootstrapResult = "restored" | "missing" | "invalid" | "offline"
 
 export function isProtectedAuthPath(pathname: string): boolean {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
-  const protectedPrefixes = ["/dashboard", "/blog/manage", "/builder"];
+  const protectedPrefixes = ["/dashboard", "/blog/manage", "/builder", "/blockpages", "/e-commerce"];
   return protectedPrefixes.some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );

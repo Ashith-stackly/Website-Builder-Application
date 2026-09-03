@@ -111,6 +111,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   error: null,
 
   loadProjects: async (signal) => {
+    // Deduplicate: skip if a load is already in-flight and the caller did
+    // not pass an explicit abort signal (which implies a fresh intent).
+    if (get().isLoading && !signal) return;
+
     set({ isLoading: true, error: null });
 
     try {

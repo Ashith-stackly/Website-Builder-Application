@@ -30,7 +30,7 @@ const INITIAL_FORM: ContactPayload = {
 };
 
 /** Standard email regex for client-side validation */
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
+const EMAIL_REGEX = /^[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
 
 // ── Component ──────────────────────────────────────────────────────────
 
@@ -93,7 +93,11 @@ const ContactSection = () => {
 
     // Live Email Validation
     if (name === 'email') {
-      if (nextValue.endsWith(" ")) {
+      if (nextValue.startsWith(".")) {
+        setErrors({ ...errors, email: 'Email address cannot start with a period.' });
+      } else if (nextValue.includes("..")) {
+        setErrors({ ...errors, email: 'Email address cannot contain consecutive periods.' });
+      } else if (nextValue.endsWith(" ")) {
         setErrors({ ...errors, email: 'Email address cannot contain trailing spaces.' });
       } else if (nextValue && !EMAIL_REGEX.test(nextValue)) {
         setErrors({ ...errors, email: 'Please enter a valid email address (e.g., ranade@gmail.com)' });
@@ -118,6 +122,18 @@ const ContactSection = () => {
     if (firstName.trim().length < 2) {
       setErrors((prev) => ({ ...prev, firstName: 'First Name must be at least 2 characters.' }));
       setSubmitError('First Name must be at least 2 characters.');
+      return false;
+    }
+
+    if (email.startsWith(".")) {
+      setErrors((prev) => ({ ...prev, email: 'Email address cannot start with a period.' }));
+      setSubmitError('Email address cannot start with a period.');
+      return false;
+    }
+
+    if (email.includes("..")) {
+      setErrors((prev) => ({ ...prev, email: 'Email address cannot contain consecutive periods.' }));
+      setSubmitError('Email address cannot contain consecutive periods.');
       return false;
     }
 
@@ -352,10 +368,10 @@ const ContactSection = () => {
               </div>
 
               {/* Submit button — shows loading state & is disabled while request is in-flight */}
-              <button type="submit" className="cursor-pointer flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98]">
-                            <span>Send Message</span>
-                            <FaPaperPlane className="text-[10px] shrink-0" aria-hidden="true" />
-                          </button>
+              <button type="submit" className="cursor-pointer flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-[#06224C] px-4 py-4 text-xs font-black uppercase tracking-wider sm:tracking-[0.2em] text-white shadow-lg transition hover:scale-[1.02] hover:bg-blue-900 hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2">
+                <span>Send Message</span>
+                <FaPaperPlane className="text-[10px] shrink-0" aria-hidden="true" />
+              </button>
             </form>
           </motion.div>
         </div>

@@ -118,9 +118,10 @@ export const heroSpec: BlockSpec<HeroProps> = {
       `<p>${escapeHtml(data.description)}</p>` +
       `<a href="${escapeHtml(href)}" role="button">${escapeHtml(data.cta.label)}</a>` +
       `</div>`;
-    /* Always render the two-column split layout (matching the canvas renderer)
-       regardless of whether there is a real image or a placeholder. */
-    const inner = `<div class="hero-split">${textHtml}<div class="hero-media">${mediaHtml}</div></div>`;
+    const isCentered = data.layout === "centered" || data.align === "center";
+    const inner = isCentered
+      ? `<div class="hero-centered" style="text-align:center;max-width:760px;margin:0 auto;">${textHtml}</div>`
+      : `<div class="hero-split">${textHtml}<div class="hero-media">${mediaHtml}</div></div>`;
     return `<section${styleAttr}>${inner}</section>`;
   },
   ai: {

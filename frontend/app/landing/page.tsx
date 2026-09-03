@@ -99,35 +99,35 @@ const categories: Array<{
   editHref?: string;
   badge?: "Free" | "Premium";
 }> = [
-  { title: "Portfolio", image: "/landing-optimized/port.webp", alt: "Portfolio website preview", previewHref: "/portfolio", editHref: "/blockpages?template=portfolio", badge: "Premium" },
-  { title: "E-Commerce Templates", image: "/landing-optimized/ecommerce.webp", alt: "E-commerce website preview", previewHref: "/e-commerce", editHref: "/blockpages?template=ecommerce", badge: "Premium" },
-  { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview", previewHref: "/digital-marketing", editHref: "/blockpages?template=digital-marketing", badge: "Premium" },
+    { title: "Portfolio", image: "/landing-optimized/port.webp", alt: "Portfolio website preview", previewHref: "/portfolio", editHref: "/blockpages?template=portfolio", badge: "Premium" },
+    { title: "E-Commerce Templates", image: "/landing-optimized/ecommerce.webp", alt: "E-commerce website preview", previewHref: "/e-commerce", editHref: "/blockpages?template=ecommerce", badge: "Premium" },
+    { title: "Digital Marketing Templates", image: "/landing-optimized/digital01.webp", alt: "Digital marketing website preview", previewHref: "/digital-marketing", editHref: "/blockpages?template=digital-marketing", badge: "Premium" },
 
-  {
-    title: "Blogging",
-    image: "/landing-optimized/bloggg.webp",
-    alt: "Blogging website preview",
-    previewHref: "/blog",
-    editHref: "/blockpages?template=blog",
-    badge: "Premium",
-  },
-  {
-    title: "Construction Themes",
-    image: "/landing-optimized/construction02.webp",
-    alt: "Construction website preview",
-    previewHref: "/construction",
-    editHref: "/blockpages?template=construction",
-    badge: "Premium",
-  },
-  {
-    title: "Restaurant",
-    image: "/landing-optimized/foodd03.webp",
-    alt: "Restaurant website preview",
-    previewHref: "/restaurant",
-    editHref: "/blockpages?template=restaurant",
-    badge: "Premium",
-  },
-];
+    {
+      title: "Blogging",
+      image: "/landing-optimized/bloggg.webp",
+      alt: "Blogging website preview",
+      previewHref: "/blog",
+      editHref: "/blockpages?template=blog",
+      badge: "Premium",
+    },
+    {
+      title: "Construction Themes",
+      image: "/landing-optimized/construction02.webp",
+      alt: "Construction website preview",
+      previewHref: "/construction",
+      editHref: "/blockpages?template=construction",
+      badge: "Premium",
+    },
+    {
+      title: "Restaurant",
+      image: "/landing-optimized/foodd03.webp",
+      alt: "Restaurant website preview",
+      previewHref: "/restaurant",
+      editHref: "/blockpages?template=restaurant",
+      badge: "Premium",
+    },
+  ];
 
 const topProducts = [
   { title: "ShopNest", type: "E-commerce Website", price: 290, sales: "10.5K", image: "/landing-optimized/shopnest.webp", alt: "ShopNest template preview", rating: 5.0 },
@@ -193,17 +193,17 @@ const templates: Array<{
   price?: number;
   badge: "Free" | "Premium";
 }> = [
-  { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", price: 300, badge: "Premium" },
-  { title: "Digital Marketing", category: "digital-marketing", image: "/landing-optimized/digital01.webp", alt: "Digital Marketing template", description: "A polished showcase for marketing agencies.", price: 190, badge: "Premium" },
-  { title: "Restaurant", category: "restaurant", image: "/landing-optimized/foodd03.webp", alt: "Restaurant template", description: "Appetizing menu and dining layout.", price: 250, badge: "Premium" },
-  { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", price: 200, badge: "Premium" },
-  { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
-  { title: "E-Commerce", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "E-Commerce template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
-  { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
-  { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 250, badge: "Premium" },
-  { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 290, badge: "Premium" },
-  { title: "Construction", category: "construction", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 250, badge: "Premium" },
-];
+    { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", price: 300, badge: "Premium" },
+    { title: "Digital Marketing", category: "digital-marketing", image: "/landing-optimized/digital01.webp", alt: "Digital Marketing template", description: "A polished showcase for marketing agencies.", price: 190, badge: "Premium" },
+    { title: "Restaurant", category: "restaurant", image: "/landing-optimized/foodd03.webp", alt: "Restaurant template", description: "Appetizing menu and dining layout.", price: 250, badge: "Premium" },
+    { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", price: 200, badge: "Premium" },
+    { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
+    { title: "E-Commerce", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "E-Commerce template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
+    { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
+    { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 250, badge: "Premium" },
+    { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 290, badge: "Premium" },
+    { title: "Construction", category: "construction", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 250, badge: "Premium" },
+  ];
 
 const features = [
   {
@@ -320,8 +320,12 @@ function LandingContactSection() {
     }
 
     if (name === "email") {
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
-      if (nextValue.endsWith(" ")) {
+      const emailRegex = /^[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
+      if (nextValue.startsWith(".")) {
+        setEmailError("Email address cannot start with a period.");
+      } else if (nextValue.includes("..")) {
+        setEmailError("Email address cannot contain consecutive periods.");
+      } else if (nextValue.endsWith(" ")) {
         setEmailError("Email address cannot contain trailing spaces.");
       } else if (nextValue && !emailRegex.test(nextValue)) {
         setEmailError("Please enter a valid email address (e.g., ranade@gmail.com)");
@@ -339,12 +343,22 @@ function LandingContactSection() {
       return;
     }
 
+    if (formData.email.startsWith(".")) {
+      setEmailError("Email address cannot start with a period.");
+      return;
+    }
+
+    if (formData.email.includes("..")) {
+      setEmailError("Email address cannot contain consecutive periods.");
+      return;
+    }
+
     if (formData.email.endsWith(" ")) {
       setEmailError("Email address cannot contain trailing spaces.");
       return;
     }
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
+    const emailRegex = /^[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|live\.com|icloud\.com|me\.com|mac\.com|aol\.com|proton\.me|protonmail\.com|zoho\.com|yandex\.com|mail\.com|gmx\.com|rediffmail\.com)$/i;
     if (!formData.email || !emailRegex.test(formData.email)) {
       setEmailError("Please enter a valid email address (e.g., ranade@gmail.com)");
       return;
@@ -1280,8 +1294,8 @@ export default function Home() {
             </motion.article>
           ))}
         </motion.div>
-        
-        
+
+
       </section>
 
       <section id="top-selling" className="mx-auto mt-16 max-w-7xl px-4 md:mt-24 md:px-8">
@@ -1353,11 +1367,10 @@ export default function Home() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setActiveFilter(filter.value)}
-                  className={`cursor-pointer inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${
-                    filter.value === "all" ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2" : ""
-                  } ${active
-                    ? "border-[#06224C] bg-[#06224C] text-white"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                  className={`cursor-pointer inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:scale-[1.03] hover:brightness-105 ${filter.value === "all" ? "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2" : ""
+                    } ${active
+                      ? "border-[#06224C] bg-[#06224C] text-white"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
                     }`}
                 >
                   {filter.label}
@@ -1376,145 +1389,145 @@ export default function Home() {
 
               return (
                 <motion.article key={template.title} className="group" variants={scaleIn} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
-                <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-md">
-                  <img src={assetPath(template.image)} alt={template.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
-                  <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase ${template.badge === "Free" ? "bg-green-500 text-white" : "bg-yellow-400 text-[#06224C]"}`}>
-                    {template.badge}
-                  </span>
-                  {isWishlistableTemplate && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isUnderDevelopment) {
-                          setSuccessModalProduct(template.title);
-                        } else {
-                          toggleWishlistItem({
-                            title: template.title,
-                            type: template.price ? "Premium Template" : "Free Template",
-                            price: template.price || 0,
-                            image: template.image,
-                            alt: template.alt,
-                          });
-                        }
-                      }}
-                      className={`absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-xs transition hover:scale-110 active:scale-95 ${isTemplateWishlisted ? "text-red-500" : "text-gray-400"}`}
-                      aria-label={`${isTemplateWishlisted ? "Remove" : "Add"} ${template.title} to wishlist`}
-                      aria-pressed={isTemplateWishlisted}
-                    >
-                      <FaHeart className="text-sm" />
-                    </button>
-                  )}
-                </div>
-                <div className="px-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-xl font-black leading-tight text-[#06224C]">{template.title}</h3>
-                      {template.price && (
-                        <span className="mt-1.5 block text-sm font-bold text-blue-600 sm:hidden">
-                          ₹ {template.price}
-                        </span>
-                      )}
-                    </div>
-                    {template.price ? (
-                      <span className="hidden text-sm font-bold text-blue-600 shrink-0 sm:block">₹ {template.price}</span>
-                    ) : (
-                      <FaArrowRight className="mt-1 text-[#06224C] shrink-0 hidden sm:block" />
-                    )}
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-500">{template.description}</p>
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isUnderDevelopment) {
-                          setSuccessModalProduct(template.title);
-                        } else {
-                          addToCart({
-                            title: template.title,
-                            type: template.badge === "Free" ? "Free Template" : "Premium Template",
-                            price: template.price || 0,
-                            image: template.image,
-                            alt: template.alt,
-                          });
-                        }
-                      }}
-                      disabled={!isUnderDevelopment && cartTitles.includes(template.title)}
-                      aria-label={cartTitles.includes(template.title) ? `${template.title} is already in cart` : `Add ${template.title} to cart`}
-                      className={`cursor-pointer flex h-10 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition w-full sm:w-12 sm:flex-shrink-0 ${!isUnderDevelopment && cartTitles.includes(template.title) ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
-                    >
-                      <span className="flex items-center justify-center gap-2 text-sm font-bold">
-                        {!isUnderDevelopment && cartTitles.includes(template.title) ? (
-                          <>
-                            <FaCheck className="text-sm" />
-                            <span className="sm:hidden">In Cart</span>
-                          </>
-                        ) : (
-                          <>
-                            <FaCartShopping />
-                            <span className="sm:hidden">Add to Cart</span>
-                          </>
-                        )}
-                      </span>
-                    </button>
-                    <div className="flex gap-2 w-full sm:flex-1">
-                      <Link
-                        href={
-                          template.title === "Digital Marketing"
-                            ? "/digital-marketing"
-                            : template.title === "Restaurant"
-                              ? "/restaurant"
-                              : template.title === "Construction"
-                                ? "/construction"
-                                : ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)
-                                  ? "/coming-soon"
-                                  : template.category === "portfolio"
-                                    ? "/portfolio"
-                                    : template.category === "ecommerce"
-                                      ? "/e-commerce"
-                                      : template.category === "blog"
-                                        ? "/blog"
-                                        : "#features"
-                        }
-                        onClick={(e) => {
+                  <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-2xl bg-gray-50 shadow-md">
+                    <img src={assetPath(template.image)} alt={template.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                    <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase ${template.badge === "Free" ? "bg-green-500 text-white" : "bg-yellow-400 text-[#06224C]"}`}>
+                      {template.badge}
+                    </span>
+                    {isWishlistableTemplate && (
+                      <button
+                        type="button"
+                        onClick={() => {
                           if (isUnderDevelopment) {
-                            e.preventDefault();
                             setSuccessModalProduct(template.title);
-                          }
-                        }}
-                        className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap flex items-center justify-center"
-                      >
-                        Preview
-                      </Link>
-                      <Link
-                        href={template.price && !isPurchased ? "/planning" : `/blockpages?template=${template.category}`}
-                        onClick={(e) => {
-                          if (isUnderDevelopment) {
-                            e.preventDefault();
-                            setSuccessModalProduct(template.title);
-                          } else if (template.price && !isPurchased) {
-                            e.preventDefault();
-                            handleBuyNow({
+                          } else {
+                            toggleWishlistItem({
                               title: template.title,
                               type: template.price ? "Premium Template" : "Free Template",
-                              price: template.price,
+                              price: template.price || 0,
                               image: template.image,
                               alt: template.alt,
                             });
-                          } else if (!template.price || isPurchased) {
-                            checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
                           }
                         }}
-                        className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                        className={`absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-xs transition hover:scale-110 active:scale-95 ${isTemplateWishlisted ? "text-red-500" : "text-gray-400"}`}
+                        aria-label={`${isTemplateWishlisted ? "Remove" : "Add"} ${template.title} to wishlist`}
+                        aria-pressed={isTemplateWishlisted}
                       >
-                        {template.price && !isPurchased ? "Buy" : "Edit"}
-                      </Link>
+                        <FaHeart className="text-sm" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="px-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-xl font-black leading-tight text-[#06224C]">{template.title}</h3>
+                        {template.price && (
+                          <span className="mt-1.5 block text-sm font-bold text-blue-600 sm:hidden">
+                            ₹ {template.price}
+                          </span>
+                        )}
+                      </div>
+                      {template.price ? (
+                        <span className="hidden text-sm font-bold text-blue-600 shrink-0 sm:block">₹ {template.price}</span>
+                      ) : (
+                        <FaArrowRight className="mt-1 text-[#06224C] shrink-0 hidden sm:block" />
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-gray-500">{template.description}</p>
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isUnderDevelopment) {
+                            setSuccessModalProduct(template.title);
+                          } else {
+                            addToCart({
+                              title: template.title,
+                              type: template.badge === "Free" ? "Free Template" : "Premium Template",
+                              price: template.price || 0,
+                              image: template.image,
+                              alt: template.alt,
+                            });
+                          }
+                        }}
+                        disabled={!isUnderDevelopment && cartTitles.includes(template.title)}
+                        aria-label={cartTitles.includes(template.title) ? `${template.title} is already in cart` : `Add ${template.title} to cart`}
+                        className={`cursor-pointer flex h-10 items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-blue-500 transition w-full sm:w-12 sm:flex-shrink-0 ${!isUnderDevelopment && cartTitles.includes(template.title) ? "opacity-60 !cursor-not-allowed bg-blue-50/50 border-solid" : "hover:bg-blue-50"}`}
+                      >
+                        <span className="flex items-center justify-center gap-2 text-sm font-bold">
+                          {!isUnderDevelopment && cartTitles.includes(template.title) ? (
+                            <>
+                              <FaCheck className="text-sm" />
+                              <span className="sm:hidden">In Cart</span>
+                            </>
+                          ) : (
+                            <>
+                              <FaCartShopping />
+                              <span className="sm:hidden">Add to Cart</span>
+                            </>
+                          )}
+                        </span>
+                      </button>
+                      <div className="flex gap-2 w-full sm:flex-1">
+                        <Link
+                          href={
+                            template.title === "Digital Marketing"
+                              ? "/digital-marketing"
+                              : template.title === "Restaurant"
+                                ? "/restaurant"
+                                : template.title === "Construction"
+                                  ? "/construction"
+                                  : ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title)
+                                    ? "/coming-soon"
+                                    : template.category === "portfolio"
+                                      ? "/portfolio"
+                                      : template.category === "ecommerce"
+                                        ? "/e-commerce"
+                                        : template.category === "blog"
+                                          ? "/blog"
+                                          : "#features"
+                          }
+                          onClick={(e) => {
+                            if (isUnderDevelopment) {
+                              e.preventDefault();
+                              setSuccessModalProduct(template.title);
+                            }
+                          }}
+                          className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap flex items-center justify-center"
+                        >
+                          Preview
+                        </Link>
+                        <Link
+                          href={template.price && !isPurchased ? "/planning" : `/blockpages?template=${template.category}`}
+                          onClick={(e) => {
+                            if (isUnderDevelopment) {
+                              e.preventDefault();
+                              setSuccessModalProduct(template.title);
+                            } else if (template.price && !isPurchased) {
+                              e.preventDefault();
+                              handleBuyNow({
+                                title: template.title,
+                                type: template.price ? "Premium Template" : "Free Template",
+                                price: template.price,
+                                image: template.image,
+                                alt: template.alt,
+                              });
+                            } else if (!template.price || isPurchased) {
+                              checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
+                            }
+                          }}
+                          className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                        >
+                          {template.price && !isPurchased ? "Buy" : "Edit"}
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.article>
-            );
-          })}
-        </motion.div>
+                </motion.article>
+              );
+            })}
+          </motion.div>
           {visibleTemplates.length === 0 && (
             <div className="py-16 text-center">
               <p className="text-sm font-black uppercase tracking-widest text-[#06224C]">No matching websites found</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { getAuthToken } from "@/lib/authToken";
 import { getAdminAuthToken } from "@/lib/adminAuthToken";
 import { isAdminPath, isProtectedAuthPath, restoreAuthSession } from "@/lib/authSession";
@@ -11,11 +11,15 @@ function AuthSessionProviderInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [bootstrapped, setBootstrapped] = useState(false);
+  const bootstrappedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     void restoreAuthSession().finally(() => {
-      if (!cancelled) setBootstrapped(true);
+      if (!cancelled) {
+        bootstrappedRef.current = true;
+        setBootstrapped(true);
+      }
     });
     return () => {
       cancelled = true;
@@ -23,7 +27,12 @@ function AuthSessionProviderInner({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const handlePageShow = () => {
+    const handleAuthCheck = () => {
+      // Do not redirect while auth restoration is still in progress.
+      // The token may be valid in storage but the async bootstrap hasn't
+      // finished confirming it yet — redirecting now would be premature.
+      if (!bootstrappedRef.current) return;
+
       const path = window.location.pathname.replace(/\/+$/, "") || "/";
       if (isAdminPath(path) && !getAdminAuthToken()) {
         window.location.replace("/admin/login");
@@ -34,22 +43,11 @@ function AuthSessionProviderInner({ children }: { children: ReactNode }) {
       }
     };
 
-    const handlePopState = () => {
-      const path = window.location.pathname.replace(/\/+$/, "") || "/";
-      if (isAdminPath(path) && !getAdminAuthToken()) {
-        window.location.replace("/admin/login");
-        return;
-      }
-      if (!getAuthToken() && isProtectedAuthPath(path)) {
-        window.location.replace("/login");
-      }
-    };
-
-    window.addEventListener("pageshow", handlePageShow);
-    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("pageshow", handleAuthCheck);
+    window.addEventListener("popstate", handleAuthCheck);
     return () => {
-      window.removeEventListener("pageshow", handlePageShow);
-      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("pageshow", handleAuthCheck);
+      window.removeEventListener("popstate", handleAuthCheck);
     };
   }, []);
 

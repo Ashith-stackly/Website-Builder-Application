@@ -449,35 +449,53 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
 
   // ── Style-driven design tokens ──────────────────────────────────────────
   // These tokens propagate the user's Modern / Minimal / Bold choice across
-  // every section, not just the hero.
-  const surface        = minimal ? "#ffffff" : bold ? "#f0f4fa" : "#f7f9fc";
-  const cardBg         = minimal ? "#ffffff" : bold ? "#f8fafd" : "#ffffff";
-  const sectionRadius  = minimal ? "0" : bold ? "20px" : "16px";
-  const sectionPadding = minimal ? "32px" : bold ? "44px 28px" : "36px";
-  const cardPadding    = minimal ? "28px 20px" : bold ? "44px 28px" : "40px 24px";
-  const footerRadius   = minimal ? "0" : bold ? "20px" : "16px";
-  const galleryBg      = minimal ? "#fafafa" : bold ? "#eef2f9" : "#ffffff";
-  const galleryPadding = minimal ? "20px" : bold ? "32px" : "28px";
-  const contactBg      = minimal ? "#ffffff" : bold ? "#0B1D40" : undefined;
-  const contactColor   = bold ? "#ffffff" : undefined;
+  // every section so the three styles are clearly visually distinct.
+  //
+  // MINIMAL  → flat white, no radius, generous whitespace, understated
+  // MODERN   → tinted surfaces, medium radius, subtle depth, contemporary
+  // BOLD     → dark hero, high-contrast cards, large radius, expressive
 
+  const surface        = minimal ? "#ffffff" : bold ? "#0e1726" : "#f0f4fb";
+  const surfaceText    = bold ? "#e8edf5" : "#0B1D40";
+  const cardBg         = minimal ? "#ffffff" : bold ? "#162032" : "#ffffff";
+  const cardText       = bold ? "#e8edf5" : "#0B1D40";
+  const sectionRadius  = minimal ? "0" : bold ? "24px" : "16px";
+  const sectionPadding = minimal ? "56px 24px" : bold ? "52px 36px" : "44px 32px";
+  const cardPadding    = minimal ? "40px 20px" : bold ? "48px 32px" : "40px 28px";
+  const footerRadius   = minimal ? "0" : bold ? "24px" : "16px";
+  const galleryBg      = minimal ? "#f8f8f8" : bold ? "#111b2e" : "#f5f7fc";
+  const galleryPadding = minimal ? "32px 16px" : bold ? "40px 28px" : "32px 24px";
+  const contactBg      = minimal ? "#f5f5f5" : bold ? "#0B1D40" : "#eef4fb";
+  const contactColor   = bold ? "#ffffff" : "#0B1D40";
+  const navBg          = minimal ? "#ffffff" : bold ? "#070d18" : "#ffffff";
+  const navColor       = minimal ? "#0B1D40" : bold ? "#e8edf5" : "#0B1D40";
+
+  // Hero — the most visually impactful section and key differentiator
   const heroBg    = bold ? "#0B1D40" : minimal ? "#ffffff" : "#eef4fb";
   const heroColor = bold ? "#ffffff" : "#0B1D40";
+  const heroLayout: "centered" | "split" = minimal ? "centered" : "split";
 
-  const baseHeroStyles = {
+  const baseHeroStyles: Partial<ComponentStyles> = {
     backgroundColor: heroBg,
     color: heroColor,
-    padding: bold ? "64px 48px" : minimal ? "48px 32px" : "56px 40px",
-    borderRadius: minimal ? "0" : bold ? "22px" : "18px",
-    margin: "0 0 20px",
+    padding: bold ? "72px 48px" : minimal ? "64px 32px" : "56px 40px",
+    borderRadius: minimal ? "0" : bold ? "28px" : "18px",
+    margin: minimal ? "0 0 0" : "0 0 20px",
+    ...(minimal ? { textAlign: "center" as const } : {}),
   };
 
-  const featuresStyles  = { backgroundColor: surface, padding: sectionPadding, borderRadius: sectionRadius };
-  const galleryStyles   = { backgroundColor: galleryBg, padding: galleryPadding, borderRadius: sectionRadius };
-  const pricingStyles   = { backgroundColor: surface, padding: cardPadding, borderRadius: sectionRadius };
-  const testimonialStyles = { backgroundColor: cardBg, padding: cardPadding, borderRadius: sectionRadius };
-  const footerStyles    = { borderRadius: footerRadius };
-  const contactStyles   = contactBg ? { backgroundColor: contactBg, color: contactColor, borderRadius: sectionRadius } : undefined;
+  const navStyles = {
+    backgroundColor: navBg,
+    color: navColor,
+    borderRadius: minimal ? "0" : bold ? "20px" : "12px",
+  };
+
+  const featuresStyles  = { backgroundColor: surface, color: surfaceText, padding: sectionPadding, borderRadius: sectionRadius };
+  const galleryStyles   = { backgroundColor: galleryBg, color: bold ? "#e8edf5" : "#0B1D40", padding: galleryPadding, borderRadius: sectionRadius };
+  const pricingStyles   = { backgroundColor: surface, color: surfaceText, padding: cardPadding, borderRadius: sectionRadius };
+  const testimonialStyles = { backgroundColor: cardBg, color: cardText, padding: cardPadding, borderRadius: sectionRadius };
+  const footerStyles    = { borderRadius: footerRadius, backgroundColor: bold ? "#070d18" : undefined, color: bold ? "#c0c8d8" : undefined };
+  const contactStyles   = { backgroundColor: contactBg, color: contactColor, borderRadius: sectionRadius };
 
   // Persisted template categories use the API value "store", while the
   // original requirements flow used the display value "E-Commerce".
@@ -494,9 +512,9 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
 
   const templates: Record<string, () => BuilderComponent[]> = {
     "e-commerce": () => [
-      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Shop" }, { label: "Collections" }, { label: "Reviews" }, { label: "Contact" }], "Shop Now") }),
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Shop" }, { label: "Collections" }, { label: "Reviews" }, { label: "Contact" }], "Shop Now"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
-        props: { ...heroDefaults, title: "Launch a storefront customers trust", description: "Showcase collections, highlight offers, and guide shoppers from discovery to checkout with a polished commerce homepage.", cta: { label: "Explore Products", href: "#products" }, layout: "split" },
+        props: { ...heroDefaults, title: "Launch a storefront customers trust", description: "Showcase collections, highlight offers, and guide shoppers from discovery to checkout with a polished commerce homepage.", cta: { label: "Explore Products", href: "#products" }, layout: heroLayout, align: minimal ? "center" : "left" },
         styles: baseHeroStyles,
       }),
       withComponentOverrides("features", 2, {
@@ -510,13 +528,13 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("gallery", 3, { content: "/landing-optimized/store11.webp|Featured store layout\n/landing-optimized/fashion06.webp|Fashion collection\n/landing-optimized/jewellery07.webp|Premium product showcase", styles: galleryStyles }),
       withComponentOverrides("pricing-table", 4, { props: { ...pricingTableDefaults, heading: "Simple launch packages" }, styles: pricingStyles }),
       withComponentOverrides("testimonial", 5, { props: { ...testimonialDefaults, heading: "Loved by growing stores" }, styles: testimonialStyles }),
-      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Ready to open your store?", description: "Share your email and start shaping your product-first website.", cta: { label: "Start Selling", href: "#contact" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Ready to open your store?", description: "Share your email and start shaping your product-first website.", cta: { label: "Start Selling", href: "#contact" } }, styles: contactStyles }),
       withComponentOverrides("footer", 7, { props: templateFooter(projectName, "A modern storefront built with Stackly."), styles: footerStyles }),
     ],
     portfolio: () => [
-      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Work" }, { label: "About" }, { label: "Services" }, { label: "Contact" }], "Hire Me") }),
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Work" }, { label: "About" }, { label: "Services" }, { label: "Contact" }], "Hire Me"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
-        props: { ...heroDefaults, title: "Showcase your work with clarity", description: "Present your best projects, tell your story, and make it simple for clients to start a conversation.", cta: { label: "View Work", href: "#work" }, layout: "split" },
+        props: { ...heroDefaults, title: "Showcase your work with clarity", description: "Present your best projects, tell your story, and make it simple for clients to start a conversation.", cta: { label: "View Work", href: "#work" }, layout: heroLayout, align: minimal ? "center" : "left" },
         styles: baseHeroStyles,
       }),
       withComponentOverrides("gallery", 2, { content: "/landing-optimized/port.webp|Signature portfolio homepage\n/landing-optimized/portfolio03.webp|Agency case study\n/landing-optimized/portfolio04.webp|Minimal project grid", styles: galleryStyles }),
@@ -530,9 +548,9 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Portfolio, selected work, and contact."), styles: footerStyles }),
     ],
     blog: () => [
-      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Stories" }, { label: "Categories" }, { label: "Guides" }, { label: "Subscribe" }], "Subscribe") }),
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Stories" }, { label: "Categories" }, { label: "Guides" }, { label: "Subscribe" }], "Subscribe"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
-        props: { ...heroDefaults, title: "Create a blog worth returning to", description: "Build a readable home for essays, guides, and updates with sections that support discovery and reader growth.", cta: { label: "Start Reading", href: "#posts" }, layout: "split" },
+        props: { ...heroDefaults, title: "Create a blog worth returning to", description: "Build a readable home for essays, guides, and updates with sections that support discovery and reader growth.", cta: { label: "Start Reading", href: "#posts" }, layout: heroLayout, align: minimal ? "center" : "left" },
         styles: baseHeroStyles,
       }),
       withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "Editorial foundations", items: [
@@ -546,13 +564,13 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
         { label: "Categories", content: "Organize posts around practical topics your readers revisit." },
         { label: "Growth", content: "Use subscription CTAs and featured content to build an audience." },
       ] } }),
-      withComponentOverrides("contact", 5, { props: { ...contactDefaults, title: "Join the newsletter", description: "Invite readers to subscribe for new posts and updates.", inputPlaceholder: "reader@example.com", cta: { label: "Subscribe", href: "#subscribe" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("contact", 5, { props: { ...contactDefaults, title: "Join the newsletter", description: "Invite readers to subscribe for new posts and updates.", inputPlaceholder: "reader@example.com", cta: { label: "Subscribe", href: "#subscribe" } }, styles: contactStyles }),
       withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Stories, ideas, and reader updates."), styles: footerStyles }),
     ],
     business: () => [
-      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Results" }, { label: "Pricing" }, { label: "Contact" }], "Book a Call") }),
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Results" }, { label: "Pricing" }, { label: "Contact" }], "Book a Call"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
-        props: { ...heroDefaults, title: "Build trust for your business", description: "Explain services, show credibility, and create a direct path from visitor interest to qualified leads.", cta: { label: "Book a Consultation", href: "#contact" }, layout: "split" },
+        props: { ...heroDefaults, title: "Build trust for your business", description: "Explain services, show credibility, and create a direct path from visitor interest to qualified leads.", cta: { label: "Book a Consultation", href: "#contact" }, layout: heroLayout, align: minimal ? "center" : "left" },
         styles: baseHeroStyles,
       }),
       withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "How you help", items: [
@@ -566,42 +584,42 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("footer", 6, { props: templateFooter(projectName, "Professional services and business growth."), styles: footerStyles }),
     ],
     restaurant: () => [
-      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Menu" }, { label: "About" }, { label: "Reservations" }, { label: "Contact" }], "Reserve") }),
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Menu" }, { label: "About" }, { label: "Reservations" }, { label: "Contact" }], "Reserve"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
-        props: { ...heroDefaults, title: "Create a mouth-watering restaurant website", description: "Showcase signature dishes, share your story, and help guests find, call, or reserve from any device.", cta: { label: "View Menu", href: "#menu" }, layout: "split" },
-        styles: { ...baseHeroStyles, backgroundColor: bold ? "#3A1111" : minimal ? "#ffffff" : "#FFF5F5", color: bold ? "#ffffff" : "#0A1E3D" },
+        props: { ...heroDefaults, title: "Create a mouth-watering restaurant website", description: "Showcase signature dishes, share your story, and help guests find, call, or reserve from any device.", cta: { label: "View Menu", href: "#menu" }, layout: heroLayout, align: minimal ? "center" : "left" },
+        styles: { ...baseHeroStyles, backgroundColor: bold ? "#2e0d0d" : minimal ? "#ffffff" : "#FFF5F5", color: bold ? "#ffffff" : "#0A1E3D" },
       }),
       withComponentOverrides("gallery", 2, { content: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop|Premium ribeye steak\nhttps://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=800&auto=format&fit=crop|Wood-fired pizza\nhttps://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop|Classic cheeseburger", styles: galleryStyles }),
       withComponentOverrides("features", 3, { props: { ...featuresDefaults, heading: "Restaurant essentials", items: [
         { title: "Signature menu", description: "Highlight best sellers, prices, and seasonal dishes." },
         { title: "Guest confidence", description: "Tell your story and show atmosphere before guests arrive." },
         { title: "Reservation path", description: "Make contact, hours, and booking details easy to find." },
-      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#2D0E0E" : minimal ? "#ffffff" : "#FFF5F5", ...(bold ? { color: "#ffffff" } : {}) } }),
+      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#220a0a" : minimal ? "#ffffff" : "#FFF5F5", ...(bold ? { color: "#ffffff" } : {}) } }),
       withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "Guest reviews" }, styles: testimonialStyles }),
       withComponentOverrides("map", 5, { props: { ...mapDefaults, address: "123 Culinary Avenue, Food District", zoom: 14, height: "320px" }, styles: { backgroundColor: cardBg, padding: "20px", borderRadius: sectionRadius } }),
-      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Book a table", description: "Invite guests to reserve, call, or ask about private dining.", inputPlaceholder: "guest@example.com", cta: { label: "Reserve Now", href: "#contact" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Book a table", description: "Invite guests to reserve, call, or ask about private dining.", inputPlaceholder: "guest@example.com", cta: { label: "Reserve Now", href: "#contact" } }, styles: contactStyles }),
       withComponentOverrides("footer", 7, { props: templateFooter(projectName, "Fresh flavors, warm service, and easy reservations."), styles: footerStyles }),
     ],
     construction: () => [
-      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Projects" }, { label: "Safety" }, { label: "Contact" }], "Request Quote") }),
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Projects" }, { label: "Safety" }, { label: "Contact" }], "Request Quote"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
-        props: { ...heroDefaults, title: "Building Excellence with Precision", description: "Heavy machinery, project showcases, safety commitments, and expert building contracting.", cta: { label: "Explore Projects", href: "#projects" }, layout: "split" },
-        styles: { ...baseHeroStyles, backgroundColor: "#0A1E3D", color: "#ffffff" },
+        props: { ...heroDefaults, title: "Building Excellence with Precision", description: "Heavy machinery, project showcases, safety commitments, and expert building contracting.", cta: { label: "Explore Projects", href: "#projects" }, layout: heroLayout, align: minimal ? "center" : "left" },
+        styles: { ...baseHeroStyles, backgroundColor: bold ? "#061325" : minimal ? "#ffffff" : "#0A1E3D", color: minimal ? "#0A1E3D" : "#ffffff" },
       }),
       withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "Construction & Engineering Services", items: [
         { title: "Commercial Construction", description: "State-of-the-art office buildings and retail developments." },
         { title: "Heavy Civil & Infrastructure", description: "Roads, bridges, and large-scale site preparation." },
         { title: "Safety & Quality Control", description: "Uncompromising safety standards on every job site." },
-      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#0F2A4D" : "#F8F9FA", ...(bold ? { color: "#ffffff" } : {}) } }),
+      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#0a1f3c" : minimal ? "#ffffff" : "#F8F9FA", ...(bold ? { color: "#ffffff" } : {}) } }),
       withComponentOverrides("gallery", 3, { content: "/landing-optimized/construction02.webp|Industrial project site\n/landing-optimized/constrctio10.webp|Heavy equipment operation", styles: galleryStyles }),
-      withComponentOverrides("contact", 4, { props: { ...contactDefaults, title: "Request a Project Quote", description: "Speak with our contracting engineers about your next build.", inputPlaceholder: "contractor@example.com", cta: { label: "Get Quote", href: "#contact" } }, ...(contactStyles ? { styles: contactStyles } : {}) }),
+      withComponentOverrides("contact", 4, { props: { ...contactDefaults, title: "Request a Project Quote", description: "Speak with our contracting engineers about your next build.", inputPlaceholder: "contractor@example.com", cta: { label: "Get Quote", href: "#contact" } }, styles: contactStyles }),
       withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Heavy construction, infrastructure, and contracting."), styles: footerStyles }),
     ],
     "digital-marketing": () => [
-      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Growth Stats" }, { label: "Reviews" }, { label: "Contact" }], "Book Strategy Call") }),
+      withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Growth Stats" }, { label: "Reviews" }, { label: "Contact" }], "Book Strategy Call"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
-        props: { ...heroDefaults, title: "Accelerate Your Business Growth", description: "High-converting digital marketing strategies, SEO, brand positioning, and performance campaigns.", cta: { label: "Get Started", href: "#services" }, layout: "split" },
-        styles: { ...baseHeroStyles, backgroundColor: "#0A1E3D", color: "#ffffff" },
+        props: { ...heroDefaults, title: "Accelerate Your Business Growth", description: "High-converting digital marketing strategies, SEO, brand positioning, and performance campaigns.", cta: { label: "Get Started", href: "#services" }, layout: heroLayout, align: minimal ? "center" : "left" },
+        styles: { ...baseHeroStyles, backgroundColor: bold ? "#08152c" : minimal ? "#ffffff" : "#0A1E3D", color: minimal ? "#0A1E3D" : "#ffffff" },
       }),
       withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "Growth & Marketing Capabilities", items: [
         { title: "SEO & Organic Search", description: "Drive targeted search traffic and rank higher." },
@@ -731,6 +749,8 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
     }
 
     if (type === "hero") {
+      const isMinimal = style === "Minimal";
+      const isBold = style === "Bold";
       return {
         ...component,
         // Write typed props; AI generation follows the same HeroProps shape.
@@ -739,10 +759,16 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
           title: copy.hero,
           description: copy.description,
           cta: { label: "Start Building" },
+          layout: isMinimal ? "centered" : "split",
+          align: isMinimal ? "center" : "left",
         },
         styles: {
           ...component.styles,
-          backgroundColor: style === "Minimal" ? "#ffffff" : style === "Bold" ? "#eef4fb" : "#f7f9fc",
+          backgroundColor: isMinimal ? "#ffffff" : isBold ? "#0B1D40" : "#eef4fb",
+          color: isBold ? "#ffffff" : "#0B1D40",
+          borderRadius: isMinimal ? "0" : isBold ? "28px" : "18px",
+          padding: isBold ? "72px 48px" : isMinimal ? "64px 32px" : "56px 40px",
+          ...(isMinimal ? { textAlign: "center" as const } : {}),
         },
       };
     }
