@@ -42,7 +42,7 @@ export default function Canvas({
 }: CanvasProps) {
   const handleApply = (e: React.MouseEvent, block: IconBlockData) => {
     e.stopPropagation();
-    localStorage.setItem("stackly-custom-icon", JSON.stringify(block.props));
+    onSelectBlock(block.id);
     onApplyIcon?.();
   };
  

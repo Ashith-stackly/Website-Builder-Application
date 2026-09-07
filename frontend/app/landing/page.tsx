@@ -58,6 +58,7 @@ import {
 } from "react-icons/fa6";
 import { fadeUp, scaleIn, staggerContainer } from "@/lib/motion";
 import { hasDemoSubscription } from "@/lib/demoAuth";
+import { useSubscriptionAccess } from "@/lib/subscriptionAccess";
 import { assetPath } from "@/lib/paths";
 import {
   loadRazorpayCheckoutScript,
@@ -726,13 +727,16 @@ export default function Home() {
     };
   }, []);
 
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const { canEdit: canEditSubscription, isLoading: subLoading } = useSubscriptionAccess();
+  const [hasDemoSub, setHasDemoSub] = useState(false);
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      setHasActiveSubscription(hasDemoSubscription());
+      setHasDemoSub(hasDemoSubscription());
     });
   }, []);
+
+  const hasActiveSubscription = canEditSubscription || hasDemoSub;
 
   useEffect(() => {
     const syncPurchased = () => {
@@ -758,9 +762,8 @@ export default function Home() {
 
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
     event.preventDefault();
-    // Demo login stores subscription in sessionStorage (current tab only).
-    // BACKEND TEAM: replace hasDemoSubscription() with real API/context state.
-    if (hasDemoSubscription()) {
+    if (subLoading) return;
+    if (canEditSubscription || hasDemoSubscription()) {
       router.push(targetUrl);
     } else {
       router.push("/planning");

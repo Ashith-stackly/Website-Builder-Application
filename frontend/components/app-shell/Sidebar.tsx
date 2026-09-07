@@ -20,6 +20,7 @@ import { useClickOutside, useModKeyLabel } from "@/lib/hooks";
 import { primaryNav, isActivePath, type NavItem } from "./navConfig";
 import { useLanguageStore } from "@/lib/i18n";
 import { getProjectEditorRoute } from "@/lib/projectRouting";
+import { useSubscriptionAccess, editOrUpgrade } from "@/lib/subscriptionAccess";
 
 const WORKSPACES = [
   { id: "personal", name: "Personal", initial: "P", tone: "#4f6bed" },
@@ -46,6 +47,7 @@ export default function Sidebar({
   const wsRef = useClickOutside<HTMLDivElement>(() => setWsOpen(false), wsOpen);
   const modKey = useModKeyLabel();
   const t = useLanguageStore((s) => s.t);
+  const { canEdit, isLoading: subLoading } = useSubscriptionAccess();
 
   return (
     <div className="flex h-full flex-col" style={{ background: "var(--surface)" }}>
@@ -229,9 +231,11 @@ export default function Sidebar({
                     <motion.li key={p.id} variants={staggerChild}>
                       <button
                         onClick={() => {
-                          router.push(getProjectEditorRoute(p));
+                          if (subLoading) return;
+                          editOrUpgrade(canEdit, getProjectEditorRoute(p), router.push);
                           onNavigate?.();
                         }}
+                        disabled={subLoading}
                         className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors hover:bg-(--surface-2)"
                         style={{ color: "var(--text-muted)" }}
                       >

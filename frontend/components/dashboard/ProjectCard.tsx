@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -21,6 +22,7 @@ import {
 import { scaleIn } from "@/lib/motion";
 import type { Project } from "@/types/project";
 import { getProjectEditorRoute } from "@/lib/projectRouting";
+import { useSubscriptionAccess, editOrUpgrade } from "@/lib/subscriptionAccess";
 import DeleteProjectModal from "@/components/dashboard/DeleteProjectModal";
 
 interface ProjectCardProps {
@@ -78,6 +80,8 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
   const [renameValue, setRenameValue] = useState(project.name);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const { canEdit, isLoading: subLoading } = useSubscriptionAccess();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -114,6 +118,11 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
   const isEcommerce = project.editorType === "ecommerce" || project.category === "E-commerce";
   const editorHref = getProjectEditorRoute(project);
 
+  const handleEditClick = () => {
+    if (subLoading) return;
+    editOrUpgrade(canEdit, editorHref, router.push);
+  };
+
   return (
     <motion.div
       layout
@@ -123,7 +132,7 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
         menuOpen ? "z-40" : "z-0 hover:z-20"
       }`}
     >
-      <Link href={editorHref} className="block rounded-t-2xl overflow-hidden">
+      <button onClick={handleEditClick} disabled={subLoading} className="block w-full rounded-t-2xl overflow-hidden text-left" style={{ opacity: subLoading ? 0.6 : 1 }}>
         <div className={`relative aspect-16/10 w-full overflow-hidden bg-linear-to-br ${style.gradient}`}>
           <motion.div
             aria-hidden="true"
@@ -166,7 +175,7 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
             </span>
           </motion.div>
         </div>
-      </Link>
+      </button>
 
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
@@ -276,12 +285,13 @@ export default function ProjectCard({ project, onRename, onDelete, onDuplicate }
             <span className="text-slate-300">.</span>
             <span>{project.status || "draft"}</span>
           </p>
-          <Link
-            href={editorHref}
-            className="rounded-lg bg-[#06224C] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-900"
+          <button
+            onClick={handleEditClick}
+            disabled={subLoading}
+            className="rounded-lg bg-[#06224C] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-blue-900 cursor-pointer disabled:opacity-50"
           >
             Edit
-          </Link>
+          </button>
         </div>
       </div>
 

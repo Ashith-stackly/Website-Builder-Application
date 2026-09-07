@@ -1,6 +1,6 @@
 /** Descendant selector: skip dropdown flyout panels and header CTA buttons. */
 export const BLOCKPAGES_DROPDOWN_EXCLUDE =
-  ':not(:is([data-blockpages-dropdown-panel="true"], [data-blockpages-dropdown-panel="true"] *, [data-blockpages-header-cta="true"], [data-blockpages-header-cta="true"] *))';
+  ':not(:is([data-blockpages-dropdown-panel="true"], [data-blockpages-dropdown-panel="true"] *, .buyscreen-all-categories-dropdown, .buyscreen-all-categories-dropdown *, [data-blockpages-header-cta="true"], [data-blockpages-header-cta="true"] *))';
 
 export function isBlockpagesTextEditingActive() {
   if (typeof document === "undefined") return false;
@@ -129,8 +129,8 @@ export function buildBlockpagesDropdownStylesCss() {
       pointer-events: none !important;
     }
 
-    [data-textblock-canvas] .group:hover > .buyscreen-all-categories-dropdown,
-    [data-textblock-canvas] .group:has(.buyscreen-all-categories-dropdown .editable-text-active) > .buyscreen-all-categories-dropdown,
+    [data-textblock-canvas] .group:hover .buyscreen-all-categories-dropdown,
+    [data-textblock-canvas] .group:has(.buyscreen-all-categories-dropdown .editable-text-active) .buyscreen-all-categories-dropdown,
     [data-textblock-canvas] .buyscreen-all-categories-dropdown--open {
       opacity: 1 !important;
       visibility: visible !important;
@@ -162,6 +162,8 @@ export function buildBlockpagesDropdownStylesCss() {
     }
 
     [data-textblock-canvas] [data-blockpages-dropdown-panel="true"] .buyscreen-all-categories-item,
+    [data-textblock-canvas] .buyscreen-all-categories-dropdown .buyscreen-all-categories-item,
+    [data-textblock-canvas] .buyscreen-all-categories-item,
     [data-textblock-canvas] [data-blockpages-dropdown-panel="true"] .buyscreen-user-menu-item,
     [data-textblock-canvas] [data-blockpages-dropdown-panel="true"] button,
     [data-textblock-canvas] [data-blockpages-dropdown-panel="true"] p {

@@ -44,6 +44,7 @@ import EmptyProjects from "@/components/dashboard/EmptyProjects";
 import type { Project } from "@/types/project";
 import { useLanguageStore } from "@/lib/i18n";
 import { getProjectEditorRoute } from "@/lib/projectRouting";
+import { useSubscriptionAccess, editOrUpgrade } from "@/lib/subscriptionAccess";
  
 /* ─── helpers ──────────────────────────────────────────────────────────── */
  
@@ -94,6 +95,7 @@ export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("there");
   const t = useLanguageStore((s) => s.t);
+  const { canEdit, isLoading: subLoading } = useSubscriptionAccess();
  
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
@@ -285,11 +287,13 @@ export default function DashboardPage() {
                     project={p}
                     tone={TILE_TONES[i % TILE_TONES.length]}
                     onOpen={() => {
-                      router.push(getProjectEditorRoute(p));
+                      if (subLoading) return;
+                      editOrUpgrade(canEdit, getProjectEditorRoute(p), router.push);
                     }}
                     onRename={renameProject}
                     onDelete={deleteProject}
                     onDuplicate={duplicateProject}
+                    editDisabled={subLoading}
                   />
                 ))}
               </motion.div>
@@ -390,6 +394,7 @@ function ProjectTile({
   onRename,
   onDelete,
   onDuplicate,
+  editDisabled,
 }: {
   project: Project;
   tone: string;
@@ -397,6 +402,7 @@ function ProjectTile({
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  editDisabled?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
@@ -423,7 +429,7 @@ function ProjectTile({
         style={{ borderColor: "var(--border)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
       >
         {/* Thumbnail */}
-        <button onClick={onOpen} className="relative h-28 w-full overflow-hidden rounded-t-2xl" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)` }}>
+        <button onClick={onOpen} disabled={editDisabled} className="relative h-28 w-full overflow-hidden rounded-t-2xl" style={{ background: `linear-gradient(135deg, ${tone}22, ${tone}05)`, opacity: editDisabled ? 0.6 : 1 }}>
           <div className="absolute inset-0 grid place-items-center">
             <span className="grid h-11 w-11 place-items-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ background: tone }}>
               <Blocks className="h-5 w-5" />

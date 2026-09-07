@@ -119,14 +119,14 @@ const OVERLAY_BUTTON_CLASS: Record<OverlayKind, string> = {
   video:
     "bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform border border-gray-200",
   icon:
-    "bg-white/90 text-gray-800 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-transform border border-gray-200",
+    "w-5.5 h-5.5 rounded-full bg-[#0B1D40] text-white shadow-md hover:bg-[#163568] hover:scale-110 transition-all flex items-center justify-center border border-white",
 };
 
 const OVERLAY_DIMENSION: Record<OverlayKind, { width: number; height: number }> = {
   image: { width: 36, height: 36 },
   button: { width: 28, height: 28 },
   video: { width: 36, height: 36 },
-  icon: { width: 36, height: 36 },
+  icon: { width: 22, height: 22 },
 };
 
 const OVERLAY_EDGE_PADDING = 4;
@@ -330,10 +330,15 @@ function getOverlayPosition(
   let top =
     kind === "video"
       ? elementRect.top - containerRect.top + 16
+      : kind === "icon"
+      ? elementRect.top - containerRect.top - 6
       : elementRect.top - containerRect.top + pad;
 
   // Place inside the top-right corner so overflow-x-hidden on the canvas does not clip the icon.
-  let left = elementRect.right - containerRect.left - overlayWidth - pad;
+  let left =
+    kind === "icon"
+      ? elementRect.right - containerRect.left - 14
+      : elementRect.right - containerRect.left - overlayWidth - pad;
 
   const containerWidth = containerRect.width;
   const containerHeight = containerRect.height;
@@ -757,7 +762,9 @@ function BlockpagesCanvasEnhancer({
         if (!anchor) return;
 
         anchor.querySelectorAll("svg, img").forEach((element) => {
+          if (element.closest("[data-blockpages-custom-icon-mount]")) return;
           (element as HTMLElement).style.display = "none";
+          element.setAttribute("data-blockpages-original-icon", "true");
         });
 
         let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
@@ -853,10 +860,16 @@ function BlockpagesCanvasEnhancer({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !isIconEditingMode || !onEditIcon) return;
+    if (!container || !onEditIcon) return;
 
     const handleClick = (event: MouseEvent) => {
-      const slot = (event.target as Element | null)?.closest('[data-blockpages-icon-slot="true"]');
+      const target = event.target as Element | null;
+      if (target?.closest('[contenteditable="true"]')) return;
+
+      // Match both explicitly marked slots and dynamically discovered icon anchors
+      const slot =
+        target?.closest('[data-blockpages-icon-slot="true"]') ??
+        target?.closest('[data-blockpages-icon-id]');
       if (!slot || !container.contains(slot)) return;
 
       const iconId = slot.getAttribute("data-blockpages-icon-id");
@@ -869,7 +882,7 @@ function BlockpagesCanvasEnhancer({
 
     container.addEventListener("click", handleClick, true);
     return () => container.removeEventListener("click", handleClick, true);
-  }, [isIconEditingMode, onEditIcon]);
+  }, [onEditIcon]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -969,7 +982,9 @@ function BlockpagesCanvasEnhancer({
       if (!anchor) return;
 
       anchor.querySelectorAll("svg, img").forEach((element) => {
+        if (element.closest("[data-blockpages-custom-icon-mount]")) return;
         (element as HTMLElement).style.display = "none";
+        element.setAttribute("data-blockpages-original-icon", "true");
       });
 
       let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
@@ -994,8 +1009,9 @@ function BlockpagesCanvasEnhancer({
       if (!iconId || activeIconIds.has(iconId)) return;
 
       anchor.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((mount) => mount.remove());
-      anchor.querySelectorAll("svg, img").forEach((element) => {
-        (element as HTMLElement).style.display = "";
+      anchor.querySelectorAll<HTMLElement>("[data-blockpages-original-icon='true']").forEach((element) => {
+        element.style.display = "";
+        element.removeAttribute("data-blockpages-original-icon");
       });
 
       const root = roots.get(iconId);
@@ -1134,7 +1150,7 @@ function BlockpagesCanvasEnhancer({
                 handleOverlayClick(target);
               }}
             >
-              <FaPen size={target.kind === "button" ? 12 : 14} />
+              <FaPen size={target.kind === "button" ? 12 : target.kind === "icon" ? 9 : 14} />
             </button>
           ))}
         </div>

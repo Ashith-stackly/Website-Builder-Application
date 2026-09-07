@@ -921,7 +921,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
             style={{ backgroundColor: section?.backgroundColor || "#f8fafc", textAlign: section?.alignment || "left" }}
           >
             {isTextEditable && !isPreviewMode ? (
-              <style>{`
+              <style suppressHydrationWarning>{`
                 [data-textblock-canvas] [contenteditable="true"] {
                   user-select: text !important;
                   -webkit-user-select: text !important;
@@ -946,7 +946,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                 }
               `}</style>
             ) : null}
-            <style>{`
+            <style suppressHydrationWarning>{`
               ${buildBlockpagesSectionStylesCss(state.sectionStyles)}
 
               ${buildBlockpagesTemplateChromeCss(section)}
@@ -969,7 +969,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
                   data-blockpages-text-editing={isTextEditable ? "true" : undefined}
                   className="@container min-h-140 h-[calc(100vh-220px)] w-full min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar wrap-break-words"
                 >
-                  <style>{`
+                  <style suppressHydrationWarning>{`
                     [data-textblock-canvas] .portfolio-shell,
                     [data-textblock-canvas] .buyscreen-page,
                     [data-textblock-canvas] .restaurant-shell,

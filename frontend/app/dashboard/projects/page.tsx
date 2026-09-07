@@ -31,6 +31,7 @@ import EmptyProjects from "@/components/dashboard/EmptyProjects";
 import type { Project } from "@/types/project";
 import type { ProjectSortKey } from "@/types/project";
 import { getProjectEditorRoute } from "@/lib/projectRouting";
+import { useSubscriptionAccess, editOrUpgrade } from "@/lib/subscriptionAccess";
  
 type ViewMode = "grid" | "list";
 type Segment = "all" | "favorites" | "archived";
@@ -82,6 +83,7 @@ export default function ProjectsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const sortRef = useClickOutside<HTMLDivElement>(() => setSortOpen(false), sortOpen);
+  const { canEdit, isLoading: subLoading } = useSubscriptionAccess();
  
   useEffect(() => {
     const c = new AbortController();
@@ -238,7 +240,8 @@ export default function ProjectsPage() {
                   fav={favorites.includes(p.id)}
                   onToggleFav={() => toggleFav(p.id)}
                   onOpen={() => {
-                    router.push(getProjectEditorRoute(p));
+                    if (subLoading) return;
+                    editOrUpgrade(canEdit, getProjectEditorRoute(p), router.push);
                   }}
                   onRename={renameProject}
                   onDelete={deleteProject}

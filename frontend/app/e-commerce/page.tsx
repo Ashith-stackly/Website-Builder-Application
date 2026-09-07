@@ -9,6 +9,7 @@ import { assetPath, routePath } from "@/lib/paths";
 import { FaEye, FaLaptop, FaTabletAlt, FaMobileAlt } from "react-icons/fa";
 import { Heart, CheckCircle2, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useBlockpagesEditor } from "@/lib/blockpagesEditorContext";
 import { getProject, autosaveProject, type ProjectApiProject } from "@/lib/projectApi";
 import {
   loadRazorpayCheckoutScript,
@@ -429,6 +430,8 @@ export default function ECommercePage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const blockpagesEditor = useBlockpagesEditor();
+  const isBlockpages = Boolean(blockpagesEditor?.enabled) || pathname?.startsWith("/blockpages");
   const projectId = searchParams.get("projectId")?.trim() || null;
   const isEmbeddedPreview = searchParams.get(BUY_PREVIEW_QUERY_KEY) === "embed";
   const requestedStorefrontWorkspaceId =
@@ -1378,7 +1381,7 @@ export default function ECommercePage() {
 
   return (
     <main className="buyscreen-page flex w-full max-w-full min-w-0 flex-col overflow-visible bg-[#f5f7fb] text-[#111827]">
-      {projectId && !isEmbeddedPreview && (
+      {projectId && !isEmbeddedPreview && !isBlockpages && (
         <div className="sticky top-0 z-[100] flex flex-wrap items-center justify-between gap-3 border-b border-[#06224C]/10 bg-[#06224C] px-4 py-2.5 text-white shadow-md">
           <div className="flex items-center gap-3">
             <Link
@@ -2785,6 +2788,7 @@ export default function ECommercePage() {
                         <div
                           id="buyscreen-all-categories-menu"
                           role="menu"
+                          data-blockpages-dropdown-panel="true"
                           className={`buyscreen-all-categories-dropdown ${isAllCategoriesDropdownOpen ? "buyscreen-all-categories-dropdown--open" : ""}`}
                         >
                           {buyAllSubCategories.map((subCategory) => (
@@ -2793,7 +2797,7 @@ export default function ECommercePage() {
                               type="button"
                               role="menuitem"
                               tabIndex={isAllCategoriesDropdownOpen ? 0 : -1}
-                              className="buyscreen-all-categories-item focus-visible:outline-none focus-visible:bg-[#f1f5f9] focus-visible:text-[#06224C]"
+                              className="buyscreen-all-categories-item !text-[#1f2937] hover:!text-white hover:!bg-[#2563eb] focus-visible:outline-none focus-visible:!bg-[#2563eb] focus-visible:!text-white"
                               onClick={() => handleSubCategoryClick(subCategory.key)}
                             >
                               {subCategory.label}
@@ -3512,8 +3516,8 @@ export default function ECommercePage() {
           )}
         </section>
       </div>
-      {!isEmbeddedPreview && <Footer />}
-      {!isEmbeddedPreview && (
+      {!isBlockpages && !isEmbeddedPreview && <Footer />}
+      {!isBlockpages && !isEmbeddedPreview && (
         <div className="fixed z-[100] transition-all duration-500 ease-in-out shrink-0 bottom-5 left-1/2 -translate-x-1/2 max-w-[calc(100vw-2rem)] overflow-x-hidden flex-nowrap whitespace-nowrap hidden md:block">
           <div className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-full border border-[#E5E7EB] shadow-[0_8px_30px_rgba(0,0,0,0.12)] px-2.5 py-1 sm:px-3 sm:py-1.5 flex-nowrap whitespace-nowrap shrink-0 overflow-x-hidden">
             <Link href="/landing#templates" className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md text-[#06224C] transition shrink-0" title="Preview">

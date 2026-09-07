@@ -141,6 +141,9 @@ export function getBlockpagesCanvasElement(): Element | null {
 }
 
 export function getIconAnchorElement(svg: SVGElement): HTMLElement {
+  const existingAnchor = svg.closest("[data-blockpages-icon-id]") as HTMLElement | null;
+  if (existingAnchor) return existingAnchor;
+
   const parent = svg.parentElement;
   if (!parent) return svg as unknown as HTMLElement;
 
@@ -166,9 +169,17 @@ export function isEditableTemplateIcon(svg: SVGElement): boolean {
   if (isInsideBuilderChrome(svg)) return false;
   if (isInsideTemplateHeader(svg)) return false;
 
+  // Never treat a mounted custom icon as an editable template icon
+  if (svg.closest("[data-blockpages-custom-icon-mount]")) return false;
+
   const interactiveParent = svg.closest("button, a");
   if (interactiveParent && isTemplateChromeButton(interactiveParent as HTMLElement)) {
     return false;
+  }
+
+  // If this SVG was previously marked as an original icon or is inside an anchored slot, it's editable
+  if (svg.hasAttribute("data-blockpages-original-icon") || svg.closest("[data-blockpages-icon-id]")) {
+    return true;
   }
 
   const rect = svg.getBoundingClientRect();
@@ -199,8 +210,18 @@ export function collectEditableIconAnchors(container: Element): HTMLElement[] {
   const seen = new Set<HTMLElement>();
   const anchors: HTMLElement[] = [];
 
+  // First, include any anchor that already has a data-blockpages-icon-id
+  container.querySelectorAll<HTMLElement>("[data-blockpages-icon-id]").forEach((el) => {
+    if (!isInsideBuilderChrome(el) && !isInsideTemplateHeader(el)) {
+      seen.add(el);
+      anchors.push(el);
+    }
+  });
+
+  // Then discover any SVGs that haven't been anchored yet
   container.querySelectorAll("svg").forEach((node) => {
     const svg = node as SVGElement;
+    if (svg.closest("[data-blockpages-custom-icon-mount]")) return;
     if (!isEditableTemplateIcon(svg)) return;
 
     const anchor = getIconAnchorElement(svg);

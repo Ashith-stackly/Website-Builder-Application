@@ -1576,6 +1576,7 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                           key={subCategory.key}
                           type="button"
                           className="buyscreen-all-categories-item !text-[#1f2937] focus-visible:outline-none focus-visible:bg-[#f1f5f9] focus-visible:!text-[#06224C]"
+                          style={{ color: "#1f2937", WebkitTextFillColor: "#1f2937" }}
                           onClick={(event) => {
                             if (event.currentTarget.isContentEditable) return;
                             handleSubCategoryClick(subCategory.key);

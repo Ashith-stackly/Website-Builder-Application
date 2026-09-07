@@ -75,6 +75,7 @@ import {
   persistCustomButtonsForTemplate,
   loadCustomStaticIconsForTemplate,
   persistCustomStaticIconsForTemplate,
+  BLOCKPAGES_CANVAS_RESTORED_EVENT,
 } from "@/lib/blockpagesEditorPersistence";
 import { buildPreviewHtmlFromCanvas, flushBlockpagesPreviewSnapshot, persistPreviewSnapshot } from "@/lib/blockpagesPreviewSanitize";
 import VideoCanvas from "./videoblock/Canvas";
@@ -1304,6 +1305,16 @@ export default function BlockPagesClient() {
               onEditIcon={(iconId) => {
                 flushBlockpagesPreviewSnapshot(textTemplate, appliedDividers);
                 setEditingIconId(iconId);
+                setIsIconEditingMode(true);
+                setIsImageEditingMode(false);
+                setIsButtonEditingMode(false);
+                setIsVideoEditingMode(false);
+                if (customIcons[iconId]) {
+                  const targetBlockId = selectedIconBlockId ?? iconBlocks[0]?.id;
+                  if (targetBlockId) {
+                    updateIconBlock(targetBlockId, customIcons[iconId]);
+                  }
+                }
                 if (typeof window !== "undefined" && window.innerWidth >= 1024) {
                   setActiveBlockPage("icons");
                 }
@@ -1570,7 +1581,10 @@ export default function BlockPagesClient() {
                   }
                   setActiveBlockPage("text");
                   setEditingIconId(null);
-                  setIsIconEditingMode(false);
+                  setIsIconEditingMode(true);
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                  }
                   if (lastId) {
                     window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
                   }

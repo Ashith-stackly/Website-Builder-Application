@@ -20,6 +20,7 @@ import { useThemeStore } from "@/lib/theme";
 import { primaryNav } from "./navConfig";
 import { useLanguageStore } from "@/lib/i18n";
 import { getProjectEditorRoute } from "@/lib/projectRouting";
+import { useSubscriptionAccess, editOrUpgrade } from "@/lib/subscriptionAccess";
 
 interface Command {
   id: string;
@@ -48,6 +49,7 @@ export default function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const t = useLanguageStore((s) => s.t);
+  const { canEdit, isLoading: subLoading } = useSubscriptionAccess();
 
   const commands = useMemo<Command[]>(() => {
     const nav: Command[] = primaryNav.map((n) => ({
@@ -97,12 +99,13 @@ export default function CommandPalette({
       keywords: `${p.category} project open edit`,
       group: "Recent projects",
       run: () => {
-        router.push(getProjectEditorRoute(p));
+        if (subLoading) return;
+        editOrUpgrade(canEdit, getProjectEditorRoute(p), router.push);
       },
     }));
 
     return [...actions, ...nav, ...recent];
-  }, [projects, router, toggleTheme, resolved, t.nav]);
+  }, [projects, router, toggleTheme, resolved, t.nav, canEdit, subLoading]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
