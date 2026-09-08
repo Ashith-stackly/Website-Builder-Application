@@ -62,6 +62,7 @@ type PreviewDevice = "desktop" | "tablet" | "mobile";
 type TextCanvasProps = {
   state: TextBlockState;
   onStateChange: (nextState: TextBlockState) => void;
+  onSyncTextStyles?: (styles: TextStyles) => void;
   canUndo?: boolean;
   canRedo?: boolean;
   onUndo?: () => void;
@@ -154,7 +155,7 @@ const DEFAULT_CANVAS_SECTION = {
   shadow: false,
 };
 
-export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onUndo, onRedo, template = "ecommerce", isImageEditingMode = false, customImages = {}, onEditImage, editingImageId, isButtonEditingMode = false, customButtons = {},
+export default function TextCanvas({ state, onStateChange, onSyncTextStyles, canUndo, canRedo, onUndo, onRedo, template = "ecommerce", isImageEditingMode = false, customImages = {}, onEditImage, editingImageId, isButtonEditingMode = false, customButtons = {},
   onEditButton,
   editingButtonId,
   videoBlocks = [],
@@ -212,12 +213,10 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   // Re-apply saved custom text overrides whenever customTexts updates (e.g. from loaded draft)
   // GUARD: Skip when user is actively editing to avoid resetting the caret/destroying contentEditable state.
   useLayoutEffect(() => {
-    // If a text element is currently being edited, the browser owns the DOM.
-    // Do NOT rewrite innerHTML — it would reset the caret and reverse character order.
-    if (activeEditableRef.current) return;
+    // If a text element is currently being typed in, skip to avoid resetting caret
+    if (activeEditableRef.current && typeof document !== "undefined" && document.activeElement === activeEditableRef.current) return;
 
-    const customTexts = state?.customTexts;
-    if (!customTexts || !Object.keys(customTexts).length) return;
+    const customTexts = state?.customTexts ?? {};
     if (!canvasRef.current) return;
 
     const contentRoot = getCanvasContentRoot(canvasRef.current);
@@ -535,7 +534,11 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       };
 
       if (textStylesEqual(stateRef.current.textStyles, nextTextStyles)) return;
-      onStateChangeRef.current({ ...stateRef.current, textStyles: nextTextStyles });
+      if (onSyncTextStyles) {
+        onSyncTextStyles(nextTextStyles);
+      } else {
+        onStateChangeRef.current({ ...stateRef.current, textStyles: nextTextStyles });
+      }
     };
 
     const activateEditableNode = (resolvedNode: HTMLElement) => {
@@ -671,15 +674,26 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-nav-${textNodeCounter++}`;
         htmlNode.setAttribute("data-blockpages-text-id", textId);
 
+        if (!htmlNode.hasAttribute("data-blockpages-default-text")) {
+          htmlNode.setAttribute("data-blockpages-default-text", htmlNode.innerHTML);
+        }
+
         const isEditing =
           Boolean(activeEditableRef.current && (activeEditableRef.current === htmlNode || activeEditableRef.current.contains(htmlNode) || htmlNode.contains(activeEditableRef.current))) ||
           Boolean(activeElement && (activeElement === htmlNode || htmlNode.contains(activeElement)));
 
         const savedOverride = stateRef.current.customTexts?.[textId];
-        if (!isEditing && typeof savedOverride === "string") {
-          const cleaned = cleanCorruptedHtmlEntities(savedOverride);
-          if (htmlNode.innerHTML !== cleaned) {
-            htmlNode.innerHTML = cleaned;
+        if (!isEditing) {
+          if (typeof savedOverride === "string") {
+            const cleaned = cleanCorruptedHtmlEntities(savedOverride);
+            if (htmlNode.innerHTML !== cleaned) {
+              htmlNode.innerHTML = cleaned;
+            }
+          } else {
+            const defaultText = htmlNode.getAttribute("data-blockpages-default-text");
+            if (defaultText !== null && htmlNode.innerHTML !== defaultText) {
+              htmlNode.innerHTML = defaultText;
+            }
           }
         }
 
@@ -705,15 +719,26 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
         const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-${node.tagName.toLowerCase()}-${textNodeCounter++}`;
         htmlNode.setAttribute("data-blockpages-text-id", textId);
 
+        if (!htmlNode.hasAttribute("data-blockpages-default-text")) {
+          htmlNode.setAttribute("data-blockpages-default-text", htmlNode.innerHTML);
+        }
+
         const isEditing =
           Boolean(activeEditableRef.current && (activeEditableRef.current === htmlNode || activeEditableRef.current.contains(htmlNode) || htmlNode.contains(activeEditableRef.current))) ||
           Boolean(activeElement && (activeElement === htmlNode || htmlNode.contains(activeElement)));
 
         const savedOverride = stateRef.current.customTexts?.[textId];
-        if (!isEditing && typeof savedOverride === "string") {
-          const cleaned = cleanCorruptedHtmlEntities(savedOverride);
-          if (htmlNode.innerHTML !== cleaned) {
-            htmlNode.innerHTML = cleaned;
+        if (!isEditing) {
+          if (typeof savedOverride === "string") {
+            const cleaned = cleanCorruptedHtmlEntities(savedOverride);
+            if (htmlNode.innerHTML !== cleaned) {
+              htmlNode.innerHTML = cleaned;
+            }
+          } else {
+            const defaultText = htmlNode.getAttribute("data-blockpages-default-text");
+            if (defaultText !== null && htmlNode.innerHTML !== defaultText) {
+              htmlNode.innerHTML = defaultText;
+            }
           }
         }
 
@@ -735,9 +760,18 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       Array.from(node.children).forEach(makeEditable);
     };
 
+    const handleFocusOut = (event: Event) => {
+      const focusEvent = event as FocusEvent;
+      const related = focusEvent.relatedTarget as HTMLElement | null;
+      if (!related || !related.closest('[contenteditable="true"]')) {
+        activeEditableRef.current = null;
+      }
+    };
+
     makeEditable(contentRoot);
     contentRoot.addEventListener("mousedown", handleTextMouseDown, true);
     contentRoot.addEventListener("focusin", handleTextFocusIn, true);
+    contentRoot.addEventListener("focusout", handleFocusOut, true);
     contentRoot.addEventListener("input", handleTextInput, true);
     document.addEventListener("mouseup", handleTextMouseUp, true);
 
@@ -755,6 +789,7 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
       if (resyncTimer) window.clearTimeout(resyncTimer);
       contentRoot.removeEventListener("mousedown", handleTextMouseDown, true);
       contentRoot.removeEventListener("focusin", handleTextFocusIn, true);
+      contentRoot.removeEventListener("focusout", handleFocusOut, true);
       contentRoot.removeEventListener("input", handleTextInput, true);
       document.removeEventListener("mouseup", handleTextMouseUp, true);
       const removeListeners = (node: Element) => {
@@ -779,15 +814,19 @@ export default function TextCanvas({ state, onStateChange, canUndo, canRedo, onU
   };
  
   const handleUndo = () => {
-    if (!runNativeTextCommand("undo")) {
-      onUndo?.();
+    if (activeEditableRef.current) {
+      activeEditableRef.current.blur();
+      activeEditableRef.current = null;
     }
+    onUndo?.();
   };
  
   const handleRedo = () => {
-    if (!runNativeTextCommand("redo")) {
-      onRedo?.();
+    if (activeEditableRef.current) {
+      activeEditableRef.current.blur();
+      activeEditableRef.current = null;
     }
+    onRedo?.();
   };
  
   const openPreviewPage = useCallback(() => {

@@ -62,14 +62,25 @@ export function syncCanvasTexts(
       const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-nav-${counter++}`;
       htmlNode.setAttribute("data-blockpages-text-id", textId);
 
+      if (!htmlNode.hasAttribute("data-blockpages-default-text")) {
+        htmlNode.setAttribute("data-blockpages-default-text", htmlNode.innerHTML);
+      }
+
       const isEditing =
         Boolean(activeEditableNode && (activeEditableNode === htmlNode || activeEditableNode.contains(htmlNode) || htmlNode.contains(activeEditableNode))) ||
         Boolean(activeElement && (activeElement === htmlNode || htmlNode.contains(activeElement)));
 
-      if (!isEditing && customTexts && typeof customTexts[textId] === "string") {
-        const cleaned = cleanCorruptedHtmlEntities(customTexts[textId]);
-        if (htmlNode.innerHTML !== cleaned) {
-          htmlNode.innerHTML = cleaned;
+      if (!isEditing) {
+        if (customTexts && typeof customTexts[textId] === "string") {
+          const cleaned = cleanCorruptedHtmlEntities(customTexts[textId]);
+          if (htmlNode.innerHTML !== cleaned) {
+            htmlNode.innerHTML = cleaned;
+          }
+        } else {
+          const defaultText = htmlNode.getAttribute("data-blockpages-default-text");
+          if (defaultText !== null && htmlNode.innerHTML !== defaultText) {
+            htmlNode.innerHTML = defaultText;
+          }
         }
       }
 
@@ -82,14 +93,25 @@ export function syncCanvasTexts(
       const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-${node.tagName.toLowerCase()}-${counter++}`;
       htmlNode.setAttribute("data-blockpages-text-id", textId);
 
+      if (!htmlNode.hasAttribute("data-blockpages-default-text")) {
+        htmlNode.setAttribute("data-blockpages-default-text", htmlNode.innerHTML);
+      }
+
       const isEditing =
         Boolean(activeEditableNode && (activeEditableNode === htmlNode || activeEditableNode.contains(htmlNode) || htmlNode.contains(activeEditableNode))) ||
         Boolean(activeElement && (activeElement === htmlNode || htmlNode.contains(activeElement)));
 
-      if (!isEditing && customTexts && typeof customTexts[textId] === "string") {
-        const cleaned = cleanCorruptedHtmlEntities(customTexts[textId]);
-        if (htmlNode.innerHTML !== cleaned) {
-          htmlNode.innerHTML = cleaned;
+      if (!isEditing) {
+        if (customTexts && typeof customTexts[textId] === "string") {
+          const cleaned = cleanCorruptedHtmlEntities(customTexts[textId]);
+          if (htmlNode.innerHTML !== cleaned) {
+            htmlNode.innerHTML = cleaned;
+          }
+        } else {
+          const defaultText = htmlNode.getAttribute("data-blockpages-default-text");
+          if (defaultText !== null && htmlNode.innerHTML !== defaultText) {
+            htmlNode.innerHTML = defaultText;
+          }
         }
       }
     }

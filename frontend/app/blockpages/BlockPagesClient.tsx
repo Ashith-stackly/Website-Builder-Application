@@ -992,22 +992,42 @@ export default function BlockPagesClient() {
   // Captures ALL editable state so undo/redo works across text, images,
   // buttons, and icons in a single chronological timeline.
 
-  const captureEditorSnapshot = (): EditorSnapshot => ({
-    textBlockState: { ...textBlockState },
-    customImages: { ...customImages },
-    customButtons: { ...customButtons },
-    customIcons: { ...customIcons },
-  });
+  const captureEditorSnapshot = (): EditorSnapshot => {
+    try {
+      return {
+        textBlockState: JSON.parse(JSON.stringify(textBlockState)),
+        customImages: { ...customImages },
+        customButtons: JSON.parse(JSON.stringify(customButtons)),
+        customIcons: JSON.parse(JSON.stringify(customIcons)),
+      };
+    } catch {
+      return {
+        textBlockState: { ...textBlockState },
+        customImages: { ...customImages },
+        customButtons: { ...customButtons },
+        customIcons: { ...customIcons },
+      };
+    }
+  };
 
   const restoreEditorSnapshot = (snapshot: EditorSnapshot) => {
-    setTextBlockState(snapshot.textBlockState);
-    persistTextBlockState(textTemplate, snapshot.textBlockState);
-    setCustomImages(snapshot.customImages);
+    let nextTextState = snapshot.textBlockState;
+    let nextButtons = snapshot.customButtons;
+    let nextIcons = snapshot.customIcons;
+    try {
+      nextTextState = JSON.parse(JSON.stringify(snapshot.textBlockState));
+      nextButtons = JSON.parse(JSON.stringify(snapshot.customButtons));
+      nextIcons = JSON.parse(JSON.stringify(snapshot.customIcons));
+    } catch {}
+
+    setTextBlockState(nextTextState);
+    persistTextBlockState(textTemplate, nextTextState);
+    setCustomImages({ ...snapshot.customImages });
     persistCustomImagesForTemplate(textTemplate, snapshot.customImages);
-    setCustomButtons(snapshot.customButtons);
-    persistCustomButtonsForTemplate(textTemplate, snapshot.customButtons);
-    setCustomIcons(snapshot.customIcons);
-    persistCustomStaticIconsForTemplate(textTemplate, snapshot.customIcons);
+    setCustomButtons(nextButtons);
+    persistCustomButtonsForTemplate(textTemplate, nextButtons);
+    setCustomIcons(nextIcons);
+    persistCustomStaticIconsForTemplate(textTemplate, nextIcons);
   };
 
   const pushEditorSnapshot = (
@@ -1039,6 +1059,19 @@ export default function BlockPagesClient() {
 
   /** Backward-compatible alias: pushes text-only change into unified history. */
   const pushTextState = (nextState: TextBlockState) => {
+    const prev = textBlockState;
+    const isOnlyNavChange =
+      JSON.stringify(nextState.customTexts || {}) === JSON.stringify(prev.customTexts || {}) &&
+      JSON.stringify(nextState.section || {}) === JSON.stringify(prev.section || {}) &&
+      JSON.stringify(nextState.sectionStyles || {}) === JSON.stringify(prev.sectionStyles || {}) &&
+      JSON.stringify(nextState.textStyles || {}) === JSON.stringify(prev.textStyles || {});
+
+    if (isOnlyNavChange) {
+      setTextBlockState(nextState);
+      persistTextBlockState(textTemplate, nextState);
+      return;
+    }
+
     pushEditorSnapshot(nextState);
   };
  
@@ -1316,6 +1349,7 @@ export default function BlockPagesClient() {
             <TextCanvas
               state={textBlockState}
               onStateChange={pushTextState}
+              onSyncTextStyles={(styles) => setTextBlockState((prev) => ({ ...prev, textStyles: styles }))}
               onSaveDraft={handleSaveDraft}
               saveStatus={saveStatus}
               canUndo={pastEditorSnapshots.length > 0}
