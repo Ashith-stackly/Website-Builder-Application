@@ -277,12 +277,14 @@ function BuyProductActionButtons({
   onFavoriteClick,
   onShareClick,
   compact,
+  productId,
 }: {
   isFavorite: boolean;
   onCartClick: () => void;
   onFavoriteClick: () => void;
   onShareClick: () => void;
   compact?: boolean;
+  productId?: string;
 }) {
   const size = "w-[28px] h-[28px] min-[400px]:w-[30px] min-[400px]:h-[30px] sm:w-[32px] sm:h-[32px] md:w-[32px] md:h-[32px] lg:w-[36px] lg:h-[36px]";
   const shadow = compact ? "shadow-sm" : "shadow-md";
@@ -293,10 +295,16 @@ function BuyProductActionButtons({
   const iconClass = "w-[12px] h-[12px] sm:w-[14px] sm:h-[14px] shrink-0";
   return (
     <>
-      <button type="button" className={inactive} aria-label="Add to cart" onClick={(e) => {
-        e.stopPropagation();
-        onCartClick();
-      }}>
+      <button
+        type="button"
+        className={inactive}
+        aria-label="Add to cart"
+        data-blockpages-button-id={productId ? `btn-ecommerce-product-${productId}-cart` : undefined}
+        onClick={(e) => {
+          e.stopPropagation();
+          onCartClick();
+        }}
+      >
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={iconClass} aria-hidden>
           <path d="M3 4h2l1.6 9.2a1 1 0 0 0 1 .8H18a1 1 0 0 0 1-.8L20.6 7H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="10" cy="19" r="1.5" fill="currentColor" />
@@ -308,6 +316,7 @@ function BuyProductActionButtons({
         className={favoriteBtn}
         aria-label={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
         aria-pressed={isFavorite}
+        data-blockpages-button-id={productId ? `btn-ecommerce-product-${productId}-wishlist` : undefined}
         onClick={(e) => {
           e.stopPropagation();
           onFavoriteClick();
@@ -324,6 +333,7 @@ function BuyProductActionButtons({
         type="button"
         className={inactive}
         aria-label="Share product"
+        data-blockpages-button-id={productId ? `btn-ecommerce-product-${productId}-share` : undefined}
         onClick={(e) => {
           e.stopPropagation();
           onShareClick();
@@ -2837,6 +2847,7 @@ export default function ECommercePage() {
                     <div className="mt-5 flex flex-col items-center gap-3 sm:mt-7 sm:flex-row lg:justify-start">
                       <button
                         type="button"
+                        data-blockpages-button-id="btn-ecommerce-hero-shop-now"
                         className="inline-flex w-full items-center justify-center rounded-full bg-white px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-[#06224C] shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#fef3c7] sm:w-auto sm:px-6"
                         onClick={() => featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
                       >
@@ -2928,6 +2939,7 @@ export default function ECommercePage() {
                       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                         <button
                           type="button"
+                          data-blockpages-button-id="btn-ecommerce-deal-view-sale"
                           className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-[#06224C] transition duration-300 hover:-translate-y-0.5 hover:bg-[#fef3c7]"
                           onClick={() => {
                             setActiveCategoryLabel("Limited Sale");
@@ -2940,6 +2952,7 @@ export default function ECommercePage() {
                         </button>
                         <button
                           type="button"
+                          data-blockpages-button-id="btn-ecommerce-deal-add-item"
                           className="inline-flex items-center justify-center rounded-full border border-white/30 px-5 py-2.5 text-xs font-black uppercase tracking-[0.14em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-white/10"
                           disabled={!dealProduct}
                           onClick={() => {
@@ -2969,6 +2982,7 @@ export default function ECommercePage() {
                     </div>
                     <button
                       type="button"
+                      data-blockpages-button-id="btn-ecommerce-products-view-all"
                       disabled={isProductsLoading || !products.length}
                       className="buyscreen-view-all-btn inline-flex items-center gap-2 rounded-full border border-[#fecaca] bg-[#fff7ed] px-4 py-2 text-sm font-black text-[#ff664f] transition duration-300 hover:-translate-y-0.5 hover:bg-[#ff664f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={() => setShowAllProducts((prev) => !prev)}
@@ -3034,6 +3048,7 @@ export default function ECommercePage() {
                                   <div className="pointer-events-auto flex flex-nowrap items-center justify-center gap-[12px] overflow-hidden whitespace-nowrap">
                                     <BuyProductActionButtons
                                       compact={false}
+                                      productId={product.id}
                                       isFavorite={favoriteProductIds.includes(product.id)}
                                       onCartClick={() => openLicenseModal(product)}
                                       onFavoriteClick={() => toggleFavorite(product)}
@@ -3048,6 +3063,7 @@ export default function ECommercePage() {
                             <div className="buyscreen-product-actions-mobile flex shrink-0 items-center justify-center gap-1.5 border-t border-[#f3f4f6] px-1 py-1.5 lg:hidden">
                               <BuyProductActionButtons
                                 compact
+                                productId={product.id}
                                 isFavorite={favoriteProductIds.includes(product.id)}
                                 onCartClick={() => openLicenseModal(product)}
                                 onFavoriteClick={() => toggleFavorite(product)}
@@ -3068,6 +3084,7 @@ export default function ECommercePage() {
                               </p>
                               <button
                                 type="button"
+                                data-blockpages-button-id={`btn-ecommerce-product-${product.id}-buynow`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleBuyNow(product);
@@ -3269,6 +3286,7 @@ export default function ECommercePage() {
                         />
                         <button
                           type="submit"
+                          data-blockpages-button-id="btn-ecommerce-stay-updated-subscribe"
                           className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#06224C] px-5 text-xs font-black uppercase tracking-[0.14em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#0f3b89]"
                         >
                           Subscribe
@@ -3311,6 +3329,7 @@ export default function ECommercePage() {
                     </div>
                     <button
                       type="button"
+                      data-blockpages-button-id="btn-ecommerce-blog-view-all"
                       className="buyscreen-blog-read-btn inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-4 text-xs font-black uppercase tracking-[0.1em] text-[#2563eb] transition duration-300 hover:-translate-y-0.5 hover:bg-[#2563eb] hover:text-white sm:w-auto sm:tracking-[0.14em]"
                       onClick={() => showActionToast("More articles coming soon")}
                     >
@@ -3350,6 +3369,7 @@ export default function ECommercePage() {
                           </p>
                           <button
                             type="button"
+                            data-blockpages-button-id={`btn-ecommerce-blog-read-${post.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
                             className="buyscreen-blog-read-btn mt-4 inline-flex min-h-10 items-center justify-center rounded-full bg-[#06224C] px-4 text-[11px] font-black uppercase tracking-[0.1em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#0f3b89] sm:text-xs sm:tracking-[0.12em]"
                             onClick={() => setActiveBlogPost(post)}
                           >
@@ -3490,6 +3510,7 @@ export default function ECommercePage() {
                         <div className="flex flex-col items-start gap-3">
                           <button
                             type="submit"
+                            data-blockpages-button-id="btn-ecommerce-contact-submit"
                             className="buyscreen-contact-submit inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#06224C] px-4 text-xs font-black uppercase tracking-[0.1em] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-[#0f3b89] sm:px-5 sm:tracking-[0.14em]"
                           >
                             Send message

@@ -401,7 +401,7 @@ function Footer() {
                       disabled={isSubmitting}
                     />
                   </label>
-                  <button type="submit" aria-label="Subscribe with email" className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed" disabled={isSubmitting}>
+                  <button type="submit" aria-label="Subscribe with email" data-blockpages-button-id="btn-portfolio-newsletter-submit" className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A2357] text-white transition duration-300 hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed" disabled={isSubmitting}>
                     <FaPaperPlane6 className="text-sm" />
                   </button>
                 </div>
@@ -866,21 +866,21 @@ export default function Portfolioedit() {
 
                           <button
                             type="button"
-                            data-blockpages-button-id="btn_0"
+                            data-blockpages-button-id="btn-portfolio-hero-view-work"
                             onClick={() => scrollToSection("projects")}
-                            className={blockpagesEditor?.getButtonStyle?.("btn_0", "w-auto min-w-35 flex justify-center items-center px-3 py-2 bg-linear-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] wrap-break-word cursor-pointer").className}
-                            style={blockpagesEditor?.getButtonStyle?.("btn_0", "").style}
+                            className={blockpagesEditor?.getButtonStyle?.("btn-portfolio-hero-view-work", "w-auto min-w-35 flex justify-center items-center px-3 py-2 bg-linear-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] wrap-break-word cursor-pointer").className}
+                            style={blockpagesEditor?.getButtonStyle?.("btn-portfolio-hero-view-work", "").style}
                           >
-                            {blockpagesEditor?.getTextContent?.("View My Works", "btn_0_text") ?? "View My Works"}
+                            {blockpagesEditor?.getTextContent?.("View My Works", "btn-portfolio-hero-view-work_text") ?? "View My Works"}
                           </button>
 
                           <Link
                             href="/page-not-found"
-                            data-blockpages-button-id="btn_1"
-                            className={blockpagesEditor?.getButtonStyle?.("btn_1", "w-auto min-w-35 flex justify-center items-center px-3 py-2 bg-linear-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] wrap-break-word cursor-pointer").className}
-                            style={blockpagesEditor?.getButtonStyle?.("btn_1", "").style}
+                            data-blockpages-button-id="btn-portfolio-hero-download-cv"
+                            className={blockpagesEditor?.getButtonStyle?.("btn-portfolio-hero-download-cv", "w-auto min-w-35 flex justify-center items-center px-3 py-2 bg-linear-to-r from-[#06224C] to-[#1A5BBC] text-white rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg outline-none focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] wrap-break-word cursor-pointer").className}
+                            style={blockpagesEditor?.getButtonStyle?.("btn-portfolio-hero-download-cv", "").style}
                           >
-                            {blockpagesEditor?.getTextContent?.("Download CV", "btn_1_text") ?? "Download CV"}
+                            {blockpagesEditor?.getTextContent?.("Download CV", "btn-portfolio-hero-download-cv_text") ?? "Download CV"}
                           </Link>
 
                         </div>
@@ -1680,7 +1680,7 @@ export default function Portfolioedit() {
                             <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 wrap-break-word">Message</label>
                             <textarea rows={4} placeholder="Tell us about your project..." className="w-full max-w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#63e5ff] focus:border-transparent transition-all resize-none min-w-0"></textarea>
                           </div>
-                          <button className="w-full max-w-full wrap-break-word flex-wrap bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20 overflow-hidden cursor-pointer">
+                          <button type="submit" data-blockpages-button-id="btn-portfolio-contact-submit" className="w-full max-w-full wrap-break-word flex-wrap bg-[#1a3636] hover:bg-gray-900 text-white font-bold rounded-xl px-4 py-3.5 text-sm transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20 overflow-hidden cursor-pointer">
                             Send Message
                             <FaPaperPlane className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform shrink-0" />
                           </button>

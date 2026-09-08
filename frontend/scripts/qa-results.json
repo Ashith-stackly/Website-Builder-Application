@@ -1,0 +1,280 @@
+{
+  "timestamp": "2026-09-08T08:56:10.097Z",
+  "templates": {
+    "ecommerce": {
+      "name": "E-Commerce",
+      "totalPens": 36,
+      "uniqueButtonsCount": 36,
+      "samplePenIds": [
+        "btn-ecommerce-hero-shop-now",
+        "btn-ecommerce-article-explore",
+        "btn-ecommerce-article-explore-1",
+        "btn-ecommerce-article-explore-2",
+        "btn-ecommerce-deal-view-sale",
+        "btn-ecommerce-deal-add-item"
+      ],
+      "missingExpected": [],
+      "duplicates": [],
+      "status": "PASSED"
+    },
+    "restaurant": {
+      "name": "Restaurant",
+      "totalPens": 7,
+      "uniqueButtonsCount": 7,
+      "samplePenIds": [
+        "btn-restaurant-hero-explore-food",
+        "btn-restaurant-hero-reserve-table",
+        "btn-restaurant-restaurant-faq-can-i-easily-update-my-menu-pric",
+        "btn-restaurant-restaurant-faq-do-i-need-to-pay-commission-for-",
+        "btn-restaurant-restaurant-faq-can-customers-book-tables-throug",
+        "btn-restaurant-restaurant-faq-are-the-restaurant-templates-mob"
+      ],
+      "missingExpected": [],
+      "duplicates": [],
+      "status": "PASSED"
+    },
+    "portfolio": {
+      "name": "Portfolio",
+      "totalPens": 12,
+      "uniqueButtonsCount": 12,
+      "samplePenIds": [
+        "btn-portfolio-hero-view-work",
+        "btn-portfolio-hero-download-cv",
+        "btn-portfolio-video-watch-now",
+        "btn-portfolio-contact-submit",
+        "btn-portfolio-newsletter-submit",
+        "btn-portfolio-footer-btn"
+      ],
+      "missingExpected": [],
+      "duplicates": [],
+      "status": "PASSED"
+    },
+    "construction": {
+      "name": "Construction",
+      "totalPens": 20,
+      "uniqueButtonsCount": 21,
+      "samplePenIds": [
+        "btn-construction-hero-consultation",
+        "btn-construction-hero-how-it-works",
+        "btn-construction-const-projects-all-projects",
+        "btn-construction-const-projects-construction",
+        "btn-construction-const-projects-building",
+        "btn-construction-const-projects-architecture"
+      ],
+      "missingExpected": [],
+      "duplicates": [],
+      "status": "PASSED"
+    },
+    "digital-marketing": {
+      "name": "Digital Marketing",
+      "totalPens": 4,
+      "uniqueButtonsCount": 4,
+      "samplePenIds": [
+        "btn-digital-marketing-hero-learn-more",
+        "btn-digital-marketing-cta-schedule-call",
+        "btn-digital-marketing-contact-submit",
+        "btn-digital-marketing-newsletter-submit"
+      ],
+      "missingExpected": [],
+      "duplicates": [],
+      "status": "PASSED"
+    },
+    "business": {
+      "name": "Business",
+      "totalPens": 4,
+      "uniqueButtonsCount": 4,
+      "samplePenIds": [
+        "btn-digital-marketing-hero-learn-more",
+        "btn-digital-marketing-cta-schedule-call",
+        "btn-digital-marketing-contact-submit",
+        "btn-digital-marketing-newsletter-submit"
+      ],
+      "missingExpected": [],
+      "duplicates": [],
+      "status": "PASSED"
+    },
+    "blog": {
+      "name": "Blog",
+      "totalPens": 18,
+      "uniqueButtonsCount": 19,
+      "samplePenIds": [
+        "btn-blog-blog-home-explore-now",
+        "btn-blog-start-blogging-hero",
+        "btn-blog-start-blogging-run",
+        "btn-blog-start-blogging-analytics",
+        "btn-blog-get-in-touch",
+        "btn-blog-article-learn-more"
+      ],
+      "missingExpected": [],
+      "duplicates": [],
+      "status": "PASSED"
+    }
+  },
+  "ecommerceFixes": {
+    "product1Pens": {
+      "hasCartPen": true,
+      "hasWishlistPen": true,
+      "hasSharePen": true,
+      "hasBuyNowPen": true
+    }
+  },
+  "isolationTests": {
+    "p1BuyNowUpdated": true,
+    "subscribeUnchangedAfterP1": true,
+    "blogViewAllUnchangedAfterP1": true,
+    "blogReadArticleUnchangedAfterP1": true,
+    "p2BuyNowUpdated": false,
+    "blogViewAllUnchangedAfterP2": true,
+    "p3BuyNowUpdated": false,
+    "blogReadArticleUnchangedAfterP3": true
+  },
+  "zoomResponsiveTests": {
+    "100% Zoom Desktop (1536x864)": {
+      "p1BuyNowRect": {
+        "width": 17,
+        "height": 17
+      },
+      "p1CartRect": {
+        "width": 36,
+        "height": 36
+      },
+      "p1BuyNowPenVisible": true,
+      "p1CartPenVisible": true
+    },
+    "125% Zoom Desktop (1228x691)": {
+      "p1BuyNowRect": {
+        "width": 17,
+        "height": 17
+      },
+      "p1CartRect": {
+        "width": 36,
+        "height": 36
+      },
+      "p1BuyNowPenVisible": true,
+      "p1CartPenVisible": true
+    },
+    "75% Zoom Desktop (2048x1152)": {
+      "p1BuyNowRect": {
+        "width": 17,
+        "height": 17
+      },
+      "p1CartRect": {
+        "width": 36,
+        "height": 36
+      },
+      "p1BuyNowPenVisible": true,
+      "p1CartPenVisible": true
+    },
+    "Mobile Viewport (375x667)": {
+      "p1BuyNowRect": {
+        "width": 28,
+        "height": 28
+      },
+      "p1CartRect": {
+        "width": 0,
+        "height": 0
+      },
+      "p1BuyNowPenVisible": true,
+      "p1CartPenVisible": true
+    },
+    "Tablet Viewport (768x1024)": {
+      "p1BuyNowRect": {
+        "width": 32,
+        "height": 32
+      },
+      "p1CartRect": {
+        "width": 0,
+        "height": 0
+      },
+      "p1BuyNowPenVisible": true,
+      "p1CartPenVisible": true
+    }
+  },
+  "iconLayoutLifecycle": {
+    "found": true,
+    "width": 36,
+    "height": 36,
+    "hasSvg": true,
+    "svgTagName": "svg",
+    "svgChildCount": 3,
+    "className": "buyscreen-action-btn flex shrink-0 items-center justify-center rounded-full border-2 border-[#ff664f] transition-colors duration-150 w-[28px] h-[28px] min-[400px]:w-[30px] min-[400px]:h-[30px] sm:w-[32px] sm:h-[32px] md:w-[32px] md:h-[32px] lg:w-[36px] lg:h-[36px] shadow-md flex-shrink-0 overflow-hidden flex-nowrap bg-white text-[#ff664f] hover:bg-[#ff664f] hover:text-white",
+    "hasBuyscreenClass": true,
+    "bg": "rgb(255, 255, 255)",
+    "color": "rgb(255, 102, 79)"
+  },
+  "draftPersistence": {
+    "localStorageData": {
+      "key": "stackly-custom-buttons-ecommerce",
+      "data": {
+        "btn-ecommerce-product-6a38d6bb644b30ee7769bf59-buynow": {
+          "width": "600 px",
+          "borderRadius": "18 px",
+          "styleVariant": "primary",
+          "backgroundColor": "#0f3b89",
+          "color": "#ffffff"
+        },
+        "btn-ecommerce-product-6a38d6bb644b30ee7769bf5b-buynow": {
+          "width": "600 px",
+          "borderRadius": "18 px",
+          "styleVariant": "secondary",
+          "backgroundColor": "transparent",
+          "borderThickness": 2,
+          "borderColor": "#0f3b89",
+          "color": "#0f3b89"
+        },
+        "btn-ecommerce-product-6a38d6bb644b30ee7769bf5c-buynow": {
+          "width": "600 px",
+          "borderRadius": "18 px",
+          "styleVariant": "primary",
+          "backgroundColor": "#0f3b89",
+          "color": "#ffffff"
+        },
+        "btn-ecommerce-product-6a38d6bb644b30ee7769bf59-cart": {
+          "width": "600 px",
+          "borderRadius": "18 px",
+          "styleVariant": "primary",
+          "backgroundColor": "#0f3b89",
+          "color": "#ffffff"
+        }
+      }
+    },
+    "rehydratedStyles": {
+      "p1": {
+        "bg": "rgb(15, 59, 137)",
+        "border": "rgb(6, 34, 76)"
+      },
+      "cart": {
+        "bg": "rgb(15, 59, 137)",
+        "border": "rgb(255, 102, 79)"
+      }
+    },
+    "persistedCleanly": true
+  },
+  "nonButtonRegression": {
+    "Text": {
+      "canvasPresent": true,
+      "bodyTextLength": 5317,
+      "activeElementTag": "BODY"
+    },
+    "Image": {
+      "canvasPresent": true,
+      "bodyTextLength": 5317,
+      "activeElementTag": "BODY"
+    },
+    "Icon": {
+      "canvasPresent": true,
+      "bodyTextLength": 5317,
+      "activeElementTag": "BODY"
+    },
+    "Divider": {
+      "canvasPresent": false,
+      "bodyTextLength": 1048,
+      "activeElementTag": "BODY"
+    },
+    "Button": {
+      "canvasPresent": false,
+      "bodyTextLength": 911,
+      "activeElementTag": "BODY"
+    }
+  }
+}

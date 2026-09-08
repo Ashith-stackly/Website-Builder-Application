@@ -192,12 +192,14 @@ function BuyProductActionButtons({
   onFavoriteClick,
   onShareClick,
   compact,
+  productId,
 }: {
   isFavorite: boolean;
   onCartClick: () => void;
   onFavoriteClick: () => void;
   onShareClick: () => void;
   compact?: boolean;
+  productId?: string;
 }) {
   const size = compact ? "h-6 w-6 sm:h-6 sm:w-6" : "h-7 w-7 sm:h-8 sm:w-8";
   const shadow = compact ? "shadow-sm" : "shadow-md";
@@ -209,10 +211,16 @@ function BuyProductActionButtons({
   const icon = compact ? 11 : 14;
   return (
     <>
-      <button type="button" className={inactive} aria-label="Add to cart" onClick={(e) => {
-        e.stopPropagation();
-        onCartClick();
-      }}>
+      <button
+        type="button"
+        className={inactive}
+        aria-label="Add to cart"
+        data-blockpages-button-id={productId ? `btn-ecommerce-product-${productId}-cart` : undefined}
+        onClick={(e) => {
+          e.stopPropagation();
+          onCartClick();
+        }}
+      >
         <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
           <path d="M3 4h2l1.6 9.2a1 1 0 0 0 1 .8H18a1 1 0 0 0 1-.8L20.6 7H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="10" cy="19" r="1.5" fill="currentColor" />
@@ -224,6 +232,7 @@ function BuyProductActionButtons({
         className={favoriteBtn}
         aria-label={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
         aria-pressed={isFavorite}
+        data-blockpages-button-id={productId ? `btn-ecommerce-product-${productId}-wishlist` : undefined}
         onClick={(e) => {
           e.stopPropagation();
           onFavoriteClick();
@@ -244,6 +253,7 @@ function BuyProductActionButtons({
         type="button"
         className={inactive}
         aria-label="Share product"
+        data-blockpages-button-id={productId ? `btn-ecommerce-product-${productId}-share` : undefined}
         onClick={(e) => {
           e.stopPropagation();
           onShareClick();
@@ -1775,6 +1785,7 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                             <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
                               <BuyProductActionButtons
                                 compact={false}
+                                productId={product.id}
                                 isFavorite={favoriteProductIds.includes(product.id)}
                                 onCartClick={() => openLicenseModal(product)}
                                 onFavoriteClick={() => toggleFavorite(product)}
@@ -1788,6 +1799,7 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                         <div className="buyscreen-product-actions-mobile flex shrink-0 items-center justify-center gap-1.5 border-t border-[#f3f4f6] px-1 py-1 lg:hidden">
                           <BuyProductActionButtons
                             compact
+                            productId={product.id}
                             isFavorite={favoriteProductIds.includes(product.id)}
                             onCartClick={() => openLicenseModal(product)}
                             onFavoriteClick={() => toggleFavorite(product)}

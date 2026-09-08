@@ -120,6 +120,14 @@ const initialButtonBlock: BlockData = {
 };
  
 type ButtonProps = BlockData["props"];
+
+/** Unified snapshot capturing all editable state for undo/redo. */
+type EditorSnapshot = {
+  textBlockState: TextBlockState;
+  customImages: Record<string, string>;
+  customButtons: Record<string, ButtonProps>;
+  customIcons: Record<string, IconBlockProps>;
+};
  
 const initialTextBlockState: TextBlockState = {
   selectedTarget: "main",
@@ -206,8 +214,8 @@ export default function BlockPagesClient() {
   const [pastButtonStates, setPastButtonStates] = useState<BlockData[][]>([]);
   const [futureButtonStates, setFutureButtonStates] = useState<BlockData[][]>([]);
   const [textBlockState, setTextBlockState] = useState<TextBlockState>(initialTextBlockState);
-  const [pastTextStates, setPastTextStates] = useState<TextBlockState[]>([]);
-  const [futureTextStates, setFutureTextStates] = useState<TextBlockState[]>([]);
+  const [pastEditorSnapshots, setPastEditorSnapshots] = useState<EditorSnapshot[]>([]);
+  const [futureEditorSnapshots, setFutureEditorSnapshots] = useState<EditorSnapshot[]>([]);
  
   const [videoBlocks, setVideoBlocks] = useState<VideoBlockData[]>([initialVideoBlock]);
   const [selectedVideoBlockId, setSelectedVideoBlockId] = useState<string | null>(initialVideoBlock.id);
@@ -388,8 +396,8 @@ export default function BlockPagesClient() {
         // Clear undo/redo history when loading a saved draft
         setPastButtonStates([]);
         setFutureButtonStates([]);
-        setPastTextStates([]);
-        setFutureTextStates([]);
+        setPastEditorSnapshots([]);
+        setFutureEditorSnapshots([]);
         setPastVideoStates([]);
         setFutureVideoStates([]);
         setPastDividerStates([]);
@@ -604,8 +612,8 @@ export default function BlockPagesClient() {
     // ── 7. Reset undo/redo history for the new template ──────────────
     setPastButtonStates([]);
     setFutureButtonStates([]);
-    setPastTextStates([]);
-    setFutureTextStates([]);
+    setPastEditorSnapshots([]);
+    setFutureEditorSnapshots([]);
     setPastVideoStates([]);
     setFutureVideoStates([]);
     setPastDividerStates([]);
@@ -980,35 +988,84 @@ export default function BlockPagesClient() {
   const selectedIconBlock =
     iconBlocks.find((block) => block.id === selectedIconBlockId) ?? iconBlocks[0] ?? null;
  
+  // ── Unified editor snapshot for undo/redo ──────────────────────────
+  // Captures ALL editable state so undo/redo works across text, images,
+  // buttons, and icons in a single chronological timeline.
+
+  const captureEditorSnapshot = (): EditorSnapshot => ({
+    textBlockState: { ...textBlockState },
+    customImages: { ...customImages },
+    customButtons: { ...customButtons },
+    customIcons: { ...customIcons },
+  });
+
+  const restoreEditorSnapshot = (snapshot: EditorSnapshot) => {
+    setTextBlockState(snapshot.textBlockState);
+    persistTextBlockState(textTemplate, snapshot.textBlockState);
+    setCustomImages(snapshot.customImages);
+    persistCustomImagesForTemplate(textTemplate, snapshot.customImages);
+    setCustomButtons(snapshot.customButtons);
+    persistCustomButtonsForTemplate(textTemplate, snapshot.customButtons);
+    setCustomIcons(snapshot.customIcons);
+    persistCustomStaticIconsForTemplate(textTemplate, snapshot.customIcons);
+  };
+
+  const pushEditorSnapshot = (
+    nextTextState: TextBlockState,
+    overrides?: {
+      customImages?: Record<string, string>;
+      customButtons?: Record<string, ButtonProps>;
+      customIcons?: Record<string, IconBlockProps>;
+    }
+  ) => {
+    const snapshot = captureEditorSnapshot();
+    setPastEditorSnapshots((current) => [...current, snapshot]);
+    setFutureEditorSnapshots([]);
+    setTextBlockState(nextTextState);
+    persistTextBlockState(textTemplate, nextTextState);
+    if (overrides?.customImages !== undefined) {
+      setCustomImages(overrides.customImages);
+      persistCustomImagesForTemplate(textTemplate, overrides.customImages);
+    }
+    if (overrides?.customButtons !== undefined) {
+      setCustomButtons(overrides.customButtons);
+      persistCustomButtonsForTemplate(textTemplate, overrides.customButtons);
+    }
+    if (overrides?.customIcons !== undefined) {
+      setCustomIcons(overrides.customIcons);
+      persistCustomStaticIconsForTemplate(textTemplate, overrides.customIcons);
+    }
+  };
+
+  /** Backward-compatible alias: pushes text-only change into unified history. */
   const pushTextState = (nextState: TextBlockState) => {
-    setPastTextStates((current) => [...current, textBlockState]);
-    setFutureTextStates([]);
-    setTextBlockState(nextState);
-    persistTextBlockState(textTemplate, nextState);
+    pushEditorSnapshot(nextState);
   };
  
-  const undoText = () => {
-    setPastTextStates((currentPast) => {
+  const undoEditor = () => {
+    setPastEditorSnapshots((currentPast) => {
       if (currentPast.length === 0) {
         return currentPast;
       }
  
       const previous = currentPast[currentPast.length - 1];
-      setFutureTextStates((currentFuture) => [textBlockState, ...currentFuture]);
-      setTextBlockState(previous);
+      const currentSnapshot = captureEditorSnapshot();
+      setFutureEditorSnapshots((currentFuture) => [currentSnapshot, ...currentFuture]);
+      restoreEditorSnapshot(previous);
       return currentPast.slice(0, -1);
     });
   };
  
-  const redoText = () => {
-    setFutureTextStates((currentFuture) => {
+  const redoEditor = () => {
+    setFutureEditorSnapshots((currentFuture) => {
       if (currentFuture.length === 0) {
         return currentFuture;
       }
  
       const [next, ...remaining] = currentFuture;
-      setPastTextStates((currentPast) => [...currentPast, textBlockState]);
-      setTextBlockState(next);
+      const currentSnapshot = captureEditorSnapshot();
+      setPastEditorSnapshots((currentPast) => [...currentPast, currentSnapshot]);
+      restoreEditorSnapshot(next);
       return remaining;
     });
   };
@@ -1094,11 +1151,8 @@ export default function BlockPagesClient() {
             onImageSelected={(url) => {
               const lastId = editingImageId;
               if (editingImageId) {
-                setCustomImages((prev) => {
-                  const next = { ...prev, [editingImageId]: url };
-                  persistCustomImagesForTemplate(textTemplate, next);
-                  return next;
-                });
+                const nextImages = { ...customImages, [editingImageId]: url };
+                pushEditorSnapshot(textBlockState, { customImages: nextImages });
               }
               setEditingImageId(null);
               setIsImageEditingMode(false);
@@ -1120,6 +1174,8 @@ export default function BlockPagesClient() {
               if (page === "image" && activeBlockPage === "text") {
                 setIsImageEditingMode((prev) => !prev);
                 setIsButtonEditingMode(false);
+                setIsVideoEditingMode(false);
+                setIsIconEditingMode(false);
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 return;
               }
@@ -1127,6 +1183,7 @@ export default function BlockPagesClient() {
                 setIsButtonEditingMode((prev) => !prev);
                 setIsImageEditingMode(false);
                 setIsVideoEditingMode(false);
+                setIsIconEditingMode(false);
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 return;
               }
@@ -1159,6 +1216,7 @@ export default function BlockPagesClient() {
                 setIsImageEditingMode(false);
                 setIsButtonEditingMode(false);
                 setIsVideoEditingMode(false);
+                setIsIconEditingMode(false);
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 setActiveBlockPage("divider");
                 return;
@@ -1214,11 +1272,8 @@ export default function BlockPagesClient() {
                 onButtonSelected={(props) => {
                   const lastId = editingButtonId;
                   if (editingButtonId) {
-                    setCustomButtons((prev) => {
-                      const next = { ...prev, [editingButtonId]: props };
-                      persistCustomButtonsForTemplate(textTemplate, next);
-                      return next;
-                    });
+                    const nextButtons = { ...customButtons, [editingButtonId]: props };
+                    pushEditorSnapshot(textBlockState, { customButtons: nextButtons });
                   }
                   setActiveBlockPage("text");
                   setEditingButtonId(null);
@@ -1263,10 +1318,10 @@ export default function BlockPagesClient() {
               onStateChange={pushTextState}
               onSaveDraft={handleSaveDraft}
               saveStatus={saveStatus}
-              canUndo={pastTextStates.length > 0}
-              canRedo={futureTextStates.length > 0}
-              onUndo={undoText}
-              onRedo={redoText}
+              canUndo={pastEditorSnapshots.length > 0}
+              canRedo={futureEditorSnapshots.length > 0}
+              onUndo={undoEditor}
+              onRedo={redoEditor}
               template={textTemplate}
               isImageEditingMode={isImageEditingMode}
               editingImageId={editingImageId}
@@ -1377,11 +1432,8 @@ export default function BlockPagesClient() {
               editingImageId={editingImageId}
               onImageSelected={(url) => {
                 if (editingImageId) {
-                  setCustomImages((prev) => {
-                    const next = { ...prev, [editingImageId]: url };
-                    persistCustomImagesForTemplate(textTemplate, next);
-                    return next;
-                  });
+                  const nextImages = { ...customImages, [editingImageId]: url };
+                  pushEditorSnapshot(textBlockState, { customImages: nextImages });
                 }
                 setActiveBlockPage("text");
                 setEditingImageId(null);
@@ -1557,11 +1609,16 @@ export default function BlockPagesClient() {
                   const lastId = editingIconId;
                   if (block) {
                     if (editingIconId) {
-                      setCustomIcons((prev) => {
-                        const next = { ...prev, [editingIconId]: block.props };
-                        persistCustomStaticIconsForTemplate(textTemplate, next);
-                        return next;
-                      });
+                      const isIconDeletion =
+                        (!block.props.iconType || (block.props.iconType as string) === "none") &&
+                        !block.props.customIconUrl;
+                      const nextIcons = { ...customIcons };
+                      if (isIconDeletion) {
+                        delete nextIcons[editingIconId];
+                      } else {
+                        nextIcons[editingIconId] = block.props;
+                      }
+                      pushEditorSnapshot(textBlockState, { customIcons: nextIcons });
                     } else {
                       setAppliedIcons((prev) => {
                         const newIcon = {

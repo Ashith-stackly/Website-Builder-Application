@@ -240,6 +240,50 @@ function isTemplateChromeButton(element: HTMLElement) {
   return false;
 }
 
+function resolveStableButtonId(
+  element: HTMLElement,
+  templateName = "tpl",
+  seenCounts?: Map<string, number>
+): string {
+  const explicit =
+    element.getAttribute("data-blockpages-button-id") ||
+    element.getAttribute("data-button-id");
+  if (explicit) return explicit;
+
+  // Derive stable identity from parent section/article + control role or label
+  const section = element.closest("section[id], [data-blockpages-section-id], article, footer, [id]");
+  const sectionId =
+    section?.getAttribute("data-blockpages-section-id") ||
+    section?.id ||
+    section?.tagName.toLowerCase() ||
+    "sec";
+
+  const label = (
+    element.getAttribute("aria-label") ||
+    element.getAttribute("title") ||
+    element.textContent ||
+    ""
+  )
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32) || "btn";
+
+  let baseId = `btn-${templateName}-${sectionId}-${label}`;
+
+  if (seenCounts) {
+    const count = seenCounts.get(baseId) ?? 0;
+    seenCounts.set(baseId, count + 1);
+    if (count > 0) {
+      baseId = `${baseId}-${count}`;
+    }
+  }
+
+  element.setAttribute("data-blockpages-button-id", baseId);
+  return baseId;
+}
+
 function isEditableButton(element: HTMLElement) {
   if (isInsideBuilderChrome(element)) return false;
 
@@ -252,24 +296,50 @@ function isEditableButton(element: HTMLElement) {
 
   if (element.getAttribute("data-blockpages-edit-overlay") === "true") return false;
 
-  const rect = element.getBoundingClientRect();
-  if (rect.width < 28 || rect.height < 22) return false;
-
   const className = getElementClassName(element).toLowerCase();
   const tag = element.tagName.toLowerCase();
+  const hasExplicitId =
+    element.hasAttribute("data-blockpages-button-id") ||
+    element.hasAttribute("data-button-id");
+  const isActionBtn =
+    className.includes("buyscreen-action-btn") ||
+    hasExplicitId;
+
+  // Functional navigation / utility controls that should never be edited as content buttons:
+  if (
+    className.includes("buyscreen-products-arrow") ||
+    className.includes("buyscreen-mobile-nav-btn") ||
+    className.includes("buyscreen-qty-btn") ||
+    className.includes("buyscreen-cart-remove-btn") ||
+    className.includes("buyscreen-blog-article-close-btn") ||
+    className.includes("buyscreen-blog-article-dismiss")
+  ) {
+    return false;
+  }
+
+  if (element.hasAttribute("data-blockpages-button-id")) {
+    return true;
+  }
+
+  // Subpixel tolerance: buttons sized at 28px in CSS may report 27.98px under scaling.
+  // We use 18px minimum for standard buttons, and allow action buttons through regardless of subpixel jitter.
+  const rect = element.getBoundingClientRect();
+  if (!isActionBtn) {
+    if (rect.width < 18 || rect.height < 16) return false;
+  }
 
   if (tag === "button") {
     const label = getControlLabel(element);
     if (matchesChromeControlLabel(label)) {
       return false;
     }
+    // Only exclude pure modal dismiss / close controls
     if (
-      label.includes("menu") ||
-      label.includes("close") ||
-      label.includes("cart") ||
-      label.includes("wishlist") ||
-      label.includes("search") ||
-      label.includes("profile")
+      label === "close" ||
+      label === "close menu" ||
+      label === "close cart" ||
+      label === "close dialog" ||
+      label === "dismiss"
     ) {
       return false;
     }
@@ -284,6 +354,7 @@ function isEditableButton(element: HTMLElement) {
     }
 
     return (
+      isActionBtn ||
       className.includes("bg-") ||
       className.includes("rounded-full") ||
       className.includes("rounded-xl") ||
@@ -301,6 +372,7 @@ function isEditableButton(element: HTMLElement) {
     }
 
     return (
+      isActionBtn ||
       className.includes("rounded-full") ||
       className.includes("rounded-lg") ||
       className.includes("rounded-xl") ||
@@ -552,14 +624,22 @@ function BlockpagesCanvasEnhancer({
         isEditableButton(el as HTMLElement)
       );
 
-      buttonElements.forEach((element, index) => {
-        const buttonId =
-          element.getAttribute("data-button-id") ||
-          element.getAttribute("data-blockpages-button-id") ||
-          `btn_${index}`;
-        element.setAttribute("data-blockpages-button-id", buttonId);
+      const seenOverlayButtonIds = new Set<string>();
+
+      buttonElements.forEach((element) => {
+        const buttonId = resolveStableButtonId(element, template);
 
         if (editingButtonId && buttonId !== editingButtonId) return;
+
+        // Skip hidden responsive elements (e.g. mobile buttons when in desktop view) from overlay generation
+        if (element.offsetParent === null && element.tagName !== "BODY") return;
+        const rect = element.getBoundingClientRect();
+        if (rect.width < 1 || rect.height < 1) return;
+
+        // Avoid duplicate overlay pens if responsive markup renders the same button twice
+        if (seenOverlayButtonIds.has(buttonId)) return;
+        seenOverlayButtonIds.add(buttonId);
+
         const position = getOverlayPosition(container, element, "button");
         if (position) {
           targets.push({
@@ -682,6 +762,14 @@ function BlockpagesCanvasEnhancer({
         `img_${index}`;
       htmlImg.setAttribute("data-blockpages-image-id", imageId);
 
+      if (!htmlImg.hasAttribute("data-blockpages-default-src")) {
+        htmlImg.setAttribute("data-blockpages-default-src", htmlImg.getAttribute("src") || htmlImg.src || "");
+      }
+      const initialSrcset = htmlImg.getAttribute("srcset") || htmlImg.getAttribute("srcSet");
+      if (initialSrcset && !htmlImg.hasAttribute("data-blockpages-default-srcset")) {
+        htmlImg.setAttribute("data-blockpages-default-srcset", initialSrcset);
+      }
+
       const customSrc = customImages[imageId];
       if (customSrc) {
         if (htmlImg.hasAttribute("srcset")) htmlImg.removeAttribute("srcset");
@@ -691,6 +779,16 @@ function BlockpagesCanvasEnhancer({
         if (htmlImg.src !== customSrc) {
           htmlImg.src = customSrc;
           htmlImg.setAttribute("src", customSrc);
+        }
+      } else {
+        const defaultSrc = htmlImg.getAttribute("data-blockpages-default-src");
+        if (defaultSrc && (htmlImg.getAttribute("src") !== defaultSrc || htmlImg.src !== defaultSrc)) {
+          htmlImg.src = defaultSrc;
+          htmlImg.setAttribute("src", defaultSrc);
+        }
+        const defaultSrcset = htmlImg.getAttribute("data-blockpages-default-srcset");
+        if (defaultSrcset && !htmlImg.hasAttribute("srcset")) {
+          htmlImg.setAttribute("srcset", defaultSrcset);
         }
       }
 
@@ -708,12 +806,10 @@ function BlockpagesCanvasEnhancer({
       isEditableButton(el as HTMLElement)
     );
 
-    buttonElements.forEach((element, index) => {
-      const buttonId =
-        element.getAttribute("data-button-id") ||
-        element.getAttribute("data-blockpages-button-id") ||
-        `btn_${index}`;
-      element.setAttribute("data-blockpages-button-id", buttonId);
+    const buttonCounts = new Map<string, number>();
+
+    buttonElements.forEach((element) => {
+      const buttonId = resolveStableButtonId(element, template, buttonCounts);
 
       applyCustomButtonStyle(element, buttonId, customButtons);
 
@@ -758,6 +854,9 @@ function BlockpagesCanvasEnhancer({
     if (customIcons && Object.keys(customIcons).length > 0) {
       const roots = iconRootsRef.current;
       Object.entries(customIcons).forEach(([iconId, props]) => {
+        // Skip deleted/reset icons — they should not render a mount
+        if ((!props.iconType || (props.iconType as string) === "none") && !props.customIconUrl) return;
+
         const anchor = container.querySelector(`[data-blockpages-icon-id="${iconId}"]`) as HTMLElement | null;
         if (!anchor) return;
 
@@ -785,6 +884,17 @@ function BlockpagesCanvasEnhancer({
     }
 
     // 5. Synchronize Section Styles
+    container.querySelectorAll<HTMLElement>("[data-blockpages-customized-section='true']").forEach((sectionEl) => {
+      const sectionId = sectionEl.id || sectionEl.getAttribute("data-section-id") || sectionEl.getAttribute("data-blockpages-section-id");
+      if (!sectionId || !sectionStyles?.[sectionId]) {
+        sectionEl.style.background = "";
+        sectionEl.style.backgroundColor = "";
+        sectionEl.style.color = "";
+        sectionEl.style.padding = "";
+        sectionEl.removeAttribute("data-blockpages-customized-section");
+      }
+    });
+
     if (sectionStyles && Object.keys(sectionStyles).length > 0) {
       Object.entries(sectionStyles).forEach(([sectionId, config]) => {
         if (!config || typeof config !== "object") return;
@@ -793,6 +903,7 @@ function BlockpagesCanvasEnhancer({
           container.querySelector(`[data-section-id="${sectionId}"]`) ||
           container.querySelector(`[data-blockpages-section-id="${sectionId}"]`);
         if (sectionEl instanceof HTMLElement) {
+          sectionEl.setAttribute("data-blockpages-customized-section", "true");
           if (config.gradientBackground) {
             sectionEl.style.background = config.gradientBackground;
           } else if (config.backgroundColor) {
@@ -979,9 +1090,16 @@ function BlockpagesCanvasEnhancer({
     if (!container) return;
 
     const roots = iconRootsRef.current;
-    const activeIconIds = new Set(Object.keys(customIcons));
+    const activeIconIds = new Set(
+      Object.entries(customIcons || {})
+        .filter(([_, props]) => props && ((props.iconType && (props.iconType as string) !== "none") || props.customIconUrl))
+        .map(([id]) => id)
+    );
 
     Object.entries(customIcons).forEach(([iconId, props]) => {
+      // Skip deleted/reset icons — they should not render a mount
+      if ((!props.iconType || (props.iconType as string) === "none") && !props.customIconUrl) return;
+
       const anchor = container.querySelector(`[data-blockpages-icon-id="${iconId}"]`) as HTMLElement | null;
       if (!anchor) return;
 
@@ -1012,17 +1130,16 @@ function BlockpagesCanvasEnhancer({
       const iconId = anchor.getAttribute("data-blockpages-icon-id");
       if (!iconId || activeIconIds.has(iconId)) return;
 
-      anchor.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((mount) => mount.remove());
-      anchor.querySelectorAll<HTMLElement>("[data-blockpages-original-icon='true']").forEach((element) => {
-        element.style.display = "";
-        element.removeAttribute("data-blockpages-original-icon");
-      });
-
       const root = roots.get(iconId);
       if (root) {
         root.unmount();
         roots.delete(iconId);
       }
+      anchor.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((mount) => mount.remove());
+      anchor.querySelectorAll<HTMLElement>("[data-blockpages-original-icon='true']").forEach((element) => {
+        element.style.display = "";
+        element.removeAttribute("data-blockpages-original-icon");
+      });
     });
   }, [customIcons]);
 
@@ -1145,6 +1262,9 @@ function BlockpagesCanvasEnhancer({
               key={`${target.kind}-${target.id}`}
               type="button"
               data-blockpages-edit-overlay="true"
+              data-blockpages-overlay-btn={target.id}
+              data-blockpages-overlay-kind={target.kind}
+              aria-label={`Edit ${target.kind} ${target.id}`}
               title={target.title}
               className={`pointer-events-auto absolute z-121 flex cursor-pointer items-center justify-center ${OVERLAY_BUTTON_CLASS[target.kind]}`}
               style={{ top: target.top, left: target.left }}

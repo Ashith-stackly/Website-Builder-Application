@@ -104,7 +104,12 @@ export default function Canvas({
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
-                    onButtonSelected({ ...block.props, styleVariant: 'primary' });
+                    onButtonSelected({
+                      ...block.props,
+                      styleVariant: 'primary',
+                      backgroundColor: (block.props.backgroundColor as string) || '#0f3b89',
+                      color: (block.props.color as string) || '#ffffff',
+                    });
                   }
                 }}
                 className="w-full flex items-center justify-center gap-2 py-3.5 font-bold text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-lg active:scale-[0.98]"
@@ -118,7 +123,14 @@ export default function Canvas({
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
-                    onButtonSelected({ ...block.props, styleVariant: 'secondary' });
+                    onButtonSelected({
+                      ...block.props,
+                      styleVariant: 'secondary',
+                      backgroundColor: 'transparent',
+                      borderThickness: typeof block.props.borderThickness === 'number' ? block.props.borderThickness : 2,
+                      borderColor: (block.props.borderColor as string) || (block.props.backgroundColor as string) || '#0f3b89',
+                      color: (block.props.color as string) || (bg && !bg.includes('gradient') ? bg : '#0f3b89'),
+                    });
                   }
                 }}
                 className="w-full flex items-center justify-center gap-2 border py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"
@@ -137,7 +149,12 @@ export default function Canvas({
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
-                    onButtonSelected({ ...block.props, styleVariant: 'primary2' });
+                    onButtonSelected({
+                      ...block.props,
+                      styleVariant: 'primary2',
+                      backgroundColor: (block.props.backgroundColor as string) || '#0f3b89',
+                      color: (block.props.color as string) || '#ffffff',
+                    });
                   }
                 }}
                 className="w-full flex items-center justify-center gap-2 py-3.5 font-bold text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-lg active:scale-[0.98]"
@@ -151,7 +168,14 @@ export default function Canvas({
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
-                    onButtonSelected({ ...block.props, styleVariant: 'outline' });
+                    onButtonSelected({
+                      ...block.props,
+                      styleVariant: 'outline',
+                      backgroundColor: 'transparent',
+                      borderThickness: typeof block.props.borderThickness === 'number' ? block.props.borderThickness : 2,
+                      borderColor: (block.props.borderColor as string) || (block.props.backgroundColor as string) || '#0f3b89',
+                      color: (block.props.color as string) || (bg && !bg.includes('gradient') ? bg : '#0f3b89'),
+                    });
                   }
                 }}
                 className="w-full flex items-center justify-center gap-2 border py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"

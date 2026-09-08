@@ -346,21 +346,21 @@ export default function RestaurantTemplatesPage() {
                   <div className={r("flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-start w-full sm:w-auto")}>
                     <button
                       type="button"
-                      data-blockpages-button-id="btn_0"
+                      data-blockpages-button-id="btn-restaurant-hero-explore-food"
                       onClick={() => scrollToSection("restaurant-menu")}
-                      className={blockpagesEditor?.getButtonStyle?.("btn_0", r("explore-food-btn inline-flex items-center justify-center min-h-14 px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] w-full sm:w-auto text-center cursor-pointer")).className}
-                      style={blockpagesEditor?.getButtonStyle?.("btn_0", "").style}
+                      className={blockpagesEditor?.getButtonStyle?.("btn-restaurant-hero-explore-food", r("explore-food-btn inline-flex items-center justify-center min-h-14 px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] w-full sm:w-auto text-center cursor-pointer")).className}
+                      style={blockpagesEditor?.getButtonStyle?.("btn-restaurant-hero-explore-food", "").style}
                     >
-                      {blockpagesEditor?.getTextContent?.("Explore Food", "btn_0_text") ?? "Explore Food"}
+                      {blockpagesEditor?.getTextContent?.("Explore Food", "btn-restaurant-hero-explore-food_text") ?? "Explore Food"}
                     </button>
                     <button
                       type="button"
-                      data-blockpages-button-id="btn_1"
+                      data-blockpages-button-id="btn-restaurant-hero-reserve-table"
                       onClick={() => scrollToSection("restaurant-contact")}
-                      className={blockpagesEditor?.getButtonStyle?.("btn_1", r("reserve-table-btn inline-flex items-center justify-center min-h-14 px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] w-full sm:w-auto text-center cursor-pointer")).className}
-                      style={blockpagesEditor?.getButtonStyle?.("btn_1", "").style}
+                      className={blockpagesEditor?.getButtonStyle?.("btn-restaurant-hero-reserve-table", r("reserve-table-btn inline-flex items-center justify-center min-h-14 px-4 sm:px-8 rounded-full bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] text-sm sm:text-base font-bold transition-all hover:bg-[#0A1E3D] hover:text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] w-full sm:w-auto text-center cursor-pointer")).className}
+                      style={blockpagesEditor?.getButtonStyle?.("btn-restaurant-hero-reserve-table", "").style}
                     >
-                      {blockpagesEditor?.getTextContent?.("Reserve Table", "btn_1_text") ?? "Reserve Table"}
+                      {blockpagesEditor?.getTextContent?.("Reserve Table", "btn-restaurant-hero-reserve-table_text") ?? "Reserve Table"}
                     </button>
                   </div>
                 </div>
@@ -799,6 +799,7 @@ export default function RestaurantTemplatesPage() {
                         <button
                           type="submit"
                           aria-label="Subscribe"
+                          data-blockpages-button-id="btn-restaurant-newsletter-submit"
                           disabled={!isEmailValid || newsletterStatus === "loading" || email.length === 0}
                           className="sm:absolute sm:right-1.5 flex h-10 w-full sm:w-10 shrink-0 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#112a52] hover:shadow-lg active:scale-95 disabled:pointer-events-none cursor-pointer"
                         >

@@ -734,12 +734,16 @@ export default function ConstructionTemplatePage() {
 
                     <div className={r("flex flex-row items-center gap-3 flex-wrap sm:gap-4")}>
                       <button
+                        type="button"
+                        data-blockpages-button-id="btn-construction-hero-consultation"
                         onClick={() => scrollToSection("const-contact")}
                         className="bg-[#0A1E3D] text-white px-5 py-3 rounded-md font-bold hover:bg-blue-900 transition-colors shadow-md text-sm text-center w-fit cursor-pointer"
                       >
                         Free Consultation
                       </button>
                       <button
+                        type="button"
+                        data-blockpages-button-id="btn-construction-hero-how-it-works"
                         onClick={() => scrollToSection("const-process")}
                         className="bg-transparent border-2 border-[#0A1E3D] text-[#0A1E3D] px-5 py-2.5 rounded-md font-bold hover:bg-[#0A1E3D] hover:text-white transition-colors shadow-sm text-sm text-center w-fit cursor-pointer"
                       >
@@ -1407,6 +1411,7 @@ export default function ConstructionTemplatePage() {
                     <div className={r("flex justify-end pt-1 sm:pt-2")}>
                       <button
                         type="submit"
+                        data-blockpages-button-id="btn-construction-contact-submit"
                         disabled={isSubmitted}
                         className={r(`text-white px-4 py-3 sm:py-3.5 sm:px-8 rounded-4xl font-bold flex flex-wrap items-center justify-center gap-2 sm:gap-3 transition-colors shadow-lg text-sm w-full sm:w-auto whitespace-normal wrap-break-word text-center ${isSubmitted ? 'bg-green-600' : 'bg-[#0A1E3D] hover:bg-blue-900'}`)}
                       >
@@ -1474,6 +1479,7 @@ export default function ConstructionTemplatePage() {
                         <button
                           type="submit"
                           aria-label="Subscribe"
+                          data-blockpages-button-id="btn-construction-newsletter-submit"
                           disabled={!isEmailValid || newsletterStatus === "loading" || email.length === 0}
                           className="absolute right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1E56E5] hover:shadow-lg active:scale-95 disabled:pointer-events-none"
                         >

@@ -781,7 +781,7 @@ function BlogMarketingTemplate() {
                         </li>
                       ))}
                     </ul>
-                    <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[1.35rem] min-h-[2.65rem] py-[0.55rem] px-[1.5rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                    <Link href={START_BLOGGING_HREF} data-blockpages-button-id="btn-blog-start-blogging-hero" className="inline-flex items-center justify-center mt-[1.35rem] min-h-[2.65rem] py-[0.55rem] px-[1.5rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                       Start Blogging
                     </Link>
                   </div>
@@ -842,7 +842,7 @@ function BlogMarketingTemplate() {
                         </li>
                       ))}
                     </ul>
-                    <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(2rem,4cqw,2.5rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                    <Link href={START_BLOGGING_HREF} data-blockpages-button-id="btn-blog-start-blogging-run" className="inline-flex items-center justify-center mt-[clamp(2rem,4cqw,2.5rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                       Start Blogging
                     </Link>
                   </div>
@@ -863,7 +863,7 @@ function BlogMarketingTemplate() {
                           engages your audience, so you can strategically plan for the
                           future.
                         </p>
-                        <Link href={START_BLOGGING_HREF} className="inline-flex items-center gap-[0.35rem] mt-[clamp(1.5rem,3cqw,2rem)] text-[clamp(0.9rem,2cqw,1rem)] font-bold text-[var(--blog-navy)] underline [text-underline-offset:4px] cursor-pointer transition-[color,opacity] duration-200 ease max-w-full text-center hover:text-[var(--blog-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                        <Link href={START_BLOGGING_HREF} data-blockpages-button-id="btn-blog-start-blogging-analytics" className="inline-flex items-center gap-[0.35rem] mt-[clamp(1.5rem,3cqw,2rem)] text-[clamp(0.9rem,2cqw,1rem)] font-bold text-[var(--blog-navy)] underline [text-underline-offset:4px] cursor-pointer transition-[color,opacity] duration-200 ease max-w-full text-center hover:text-[var(--blog-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                           Start Blogging
                           <span className="inline-flex items-center justify-center w-[1.15rem] h-[1.15rem] text-[var(--blog-accent)] text-[0.9rem]" aria-hidden>
                             ↗
@@ -896,6 +896,7 @@ function BlogMarketingTemplate() {
                     </p>
                     <Link
                       href="#blog-contact"
+                      data-blockpages-button-id="btn-blog-get-in-touch"
                       className="inline-block mt-[clamp(1.5rem,3cqw,2rem)] text-[clamp(0.9rem,2cqw,1rem)] font-bold text-[var(--blog-navy)] no-underline pb-[0.4rem] border-b-2 border-[#e5e7eb] group-hover/card:border-b-[var(--blog-accent)] group-hover/card:text-[var(--blog-accent)]"
                       onClick={(event) => {
                         event.preventDefault();
@@ -935,6 +936,7 @@ function BlogMarketingTemplate() {
                       </ul>
                       <Link
                         href="#blog-contact"
+                        data-blockpages-button-id="btn-blog-request-match"
                         className="inline-block mt-[1.15rem] text-[0.875rem] font-bold text-[var(--blog-accent)] no-underline border-b-2 border-transparent transition-[color,border-color] duration-200 ease hover:border-[var(--blog-accent)]"
                         onClick={(event) => {
                           event.preventDefault();
@@ -1169,7 +1171,7 @@ function BlogMarketingTemplate() {
                 <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
                   <div className="bg-[linear-gradient(180deg,#b0b8e8_0%,#e8eaf4_55%,#f5f6fa_100%)] border border-[#9ca3af] rounded-[var(--blog-radius-lg)] shadow-[0_8px_28px_rgba(0,31,63,0.14)] p-[clamp(4rem,10cqw,6.5rem)] px-[clamp(2rem,5cqw,3rem)] text-center min-w-0 min-h-[clamp(14rem,30cqw,18rem)] flex flex-col items-center justify-center @max-[899px]:p-[clamp(2.5rem,8cqw,4rem)] @max-[899px]:px-[clamp(1.25rem,4cqw,2rem)] @max-[899px]:min-h-auto @max-[480px]:p-10 @max-[480px]:px-5 @max-[340px]:p-8 @max-[340px]:px-3">
                     <h2 className="text-[clamp(1.75rem,4.5cqw,2.5rem)] font-semibold leading-[1.2] text-[var(--blog-navy)] [text-wrap:balance]">Create a blog that inspires.</h2>
-                    <Link href={START_BLOGGING_HREF} className="inline-flex items-center justify-center mt-[clamp(1.5rem,3cqw,2rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                    <Link href={START_BLOGGING_HREF} data-blockpages-button-id="btn-blog-start-blogging-cta" className="inline-flex items-center justify-center mt-[clamp(1.5rem,3cqw,2rem)] min-h-[3rem] py-[0.65rem] px-[1.75rem] rounded-full bg-[var(--blog-navy)] border-2 border-[var(--blog-navy)] text-[var(--blog-white)] text-[clamp(0.875rem,1.8cqw,1rem)] font-bold no-underline shadow-[0_6px_16px_rgba(0,31,63,0.22)] cursor-pointer transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease max-w-full text-center hover:bg-[var(--blog-accent)] hover:border-[var(--blog-accent)] hover:text-[var(--blog-white)] hover:shadow-[0_10px_24px_rgba(45,140,240,0.35)] hover:-translate-y-[2px] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                       Start Blogging
                     </Link>
                   </div>

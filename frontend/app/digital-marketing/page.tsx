@@ -272,6 +272,7 @@ function TemplateFooter() {
                 <button
                   type="submit"
                   aria-label="Subscribe"
+                  data-blockpages-button-id="btn-digital-marketing-newsletter-submit"
                   disabled={!isEmailValid || status === "loading" || email.length === 0}
                   className="absolute right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A1E3D] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#1E56E5] hover:shadow-lg active:scale-95 disabled:pointer-events-none"
                 >
@@ -641,6 +642,7 @@ export default function DigitalMarketingPreviewPage() {
 
                       <button
                         type="button"
+                        data-blockpages-button-id="btn-digital-marketing-hero-learn-more"
                         onClick={() => scrollToSection("about")}
                         className="cursor-pointer rounded-lg bg-[#0A1E3D] px-8 py-3.5 text-[15px] font-bold text-white transition hover:scale-105"
                       >
@@ -1012,6 +1014,7 @@ export default function DigitalMarketingPreviewPage() {
 
                       <button
                         type="button"
+                        data-blockpages-button-id="btn-digital-marketing-cta-schedule-call"
                         onClick={() => scrollToSection("contact")}
                         className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0A1E3D] transition hover:scale-105"
                       >
@@ -1129,6 +1132,7 @@ export default function DigitalMarketingPreviewPage() {
                         <div className="mt-2 flex w-full min-w-0 justify-center">
                           <button
                             type="submit"
+                            data-blockpages-button-id="btn-digital-marketing-contact-submit"
                             disabled={contactStatus === "loading"}
                             className="group flex w-full min-w-0 items-center justify-center gap-2 @sm:gap-3 rounded-full bg-[#0A1E3D] px-2 py-2 @sm:pl-8 @sm:pr-2 text-[clamp(10px,3cqw,15px)] font-semibold text-white transition hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
