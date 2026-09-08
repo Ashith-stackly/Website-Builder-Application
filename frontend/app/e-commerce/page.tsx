@@ -2665,16 +2665,16 @@ export default function ECommercePage() {
           ) : (
             <>
               {/* RESTORED E-SHOP NAVIGATION SECTION */}
-              <header className="buyscreen-header flex flex-col gap-4 border-b border-[#e7edf5] bg-white/95 px-4 py-4 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4">
-                <div className="flex shrink-0 items-center justify-between lg:justify-start">
+              <header data-blockpages-template-header="true" className="buyscreen-header flex flex-col gap-3 border-b border-[#e7edf5] bg-white/95 px-4 py-3 sm:px-8 sm:py-4 sm:flex-row sm:items-center sm:justify-between lg:gap-6">
+                <div className="flex shrink-0 items-center justify-between sm:justify-start">
                   <span className="inline-flex items-center gap-2 text-base font-black tracking-tight text-[#06224C] sm:text-lg">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_5px_rgba(34,197,94,0.14)]" aria-hidden />
                     {project?.projectName || "e-shop"}
                   </span>
                 </div>
 
-                <div className="buyscreen-header-actions flex w-full min-w-0 flex-wrap items-center justify-between sm:justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
-                  <label className="buyscreen-search flex h-9 w-full max-w-[150px] sm:max-w-[210px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:text-xs">
+                <div className="buyscreen-header-actions flex shrink-0 min-w-0 flex-nowrap items-center justify-end gap-2 text-[#4b5563] sm:gap-3 w-auto">
+                  <label className="buyscreen-search flex h-9 w-[170px] sm:w-[210px] max-w-[220px] items-center rounded-full border border-[#dbe3ef] bg-white px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:text-xs">
                     <input
                       type="text"
                       value={searchQuery}
@@ -2692,9 +2692,9 @@ export default function ECommercePage() {
                         featuredProductsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                       }}
                       placeholder="Search..."
-                      className="min-w-0 flex-1 bg-transparent text-[#4b5563] outline-none placeholder:text-[#4b5563] placeholder:opacity-100"
+                      className="min-w-0 flex-1 bg-transparent text-[#111827] outline-none placeholder:text-[#6b7280] placeholder:opacity-100"
                     />
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#374151]" aria-hidden>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#4b5563] shrink-0 ml-1" aria-hidden>
                       <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.7" />
                       <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                     </svg>
@@ -2738,7 +2738,7 @@ export default function ECommercePage() {
                 </div>
               </header>
 
-              <nav className="buyscreen-categories border-b border-[#e7edf5] bg-[#06224C] px-4 py-3 text-[10px] font-semibold text-white sm:px-8 sm:text-xs">
+              <nav data-blockpages-template-header="true" className="buyscreen-categories border-b border-[#e7edf5] bg-[#06224C] px-4 py-3 text-[10px] font-semibold text-white sm:px-8 sm:text-xs">
                 <div className="flex items-center justify-end lg:hidden">
                   <button
                     type="button"
@@ -2821,7 +2821,7 @@ export default function ECommercePage() {
               {/* -------------------------------------- */}
 
               <div className="space-y-10 px-4 py-8 sm:space-y-12 sm:px-8 sm:py-10 lg:py-12">
-                <section className="buyscreen-hero relative flex min-h-[400px] items-center overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] px-5 py-12 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] sm:min-h-[500px] sm:p-8 lg:min-h-0 lg:aspect-[16/8] lg:p-12">
+                <section id="buyscreen-home" className="buyscreen-hero relative flex min-h-[400px] items-center overflow-hidden rounded-[1.75rem] border border-[#dbe3ef] px-5 py-12 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] sm:min-h-[500px] sm:p-8 lg:min-h-0 lg:aspect-[16/8] lg:p-12">
                   <picture className="absolute inset-0 block h-full w-full">
                     <source media="(max-width: 767px)" srcSet={assetPath("/mobilebackground.png")} />
                     <img src={assetPath("/background.webp")} alt="Electronics hero background" className="h-full w-full object-cover object-center" loading="eager" fetchPriority="high" decoding="async" />
@@ -2851,7 +2851,7 @@ export default function ECommercePage() {
                   </p>
                 ) : null}
 
-                <section className="buyscreen-features grid gap-4 border-b border-[#e7edf5] pb-10 text-sm text-[#4b5563] sm:grid-cols-2 lg:grid-cols-4">
+                <section id="buyscreen-about" className="buyscreen-features grid gap-4 border-b border-[#e7edf5] pb-10 text-sm text-[#4b5563] sm:grid-cols-2 lg:grid-cols-4">
                   {buyFeatures.map((feature) => (
                     <div key={feature.title} className="buyscreen-feature-card flex items-start gap-4 rounded-2xl border border-[#e7edf5] bg-[#f8fafc] p-4 transition duration-300">
                       <span aria-hidden className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0f3b89] shadow-sm">
@@ -2865,7 +2865,7 @@ export default function ECommercePage() {
                   ))}
                 </section>
 
-                <section className="buyscreen-section-reveal">
+                <section id="buyscreen-categories" className="buyscreen-section-reveal">
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">Popular departments</p>
@@ -2961,7 +2961,7 @@ export default function ECommercePage() {
                   </div>
                 </section>
 
-                <section ref={featuredProductsRef} className="scroll-mt-24">
+                <section id="buyscreen-products" ref={featuredProductsRef} className="scroll-mt-24">
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#2563eb]">Curated collection</p>
@@ -3363,7 +3363,7 @@ export default function ECommercePage() {
 
                 <section
                   ref={contactSectionRef}
-                  id="contact"
+                  id="buyscreen-contact"
                   className="buyscreen-section-reveal buyscreen-contact scroll-mt-24 rounded-[1.75rem] border border-[#e7edf5] bg-[#f8fafc] p-4 sm:p-7 lg:p-8"
                 >
                   <div className="buyscreen-contact-grid grid min-w-0 max-w-full gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">

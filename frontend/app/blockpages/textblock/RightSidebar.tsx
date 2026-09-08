@@ -279,12 +279,25 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
   );
 }
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  const safeColor = /^#[0-9A-Fa-f]{6}$/.test(value) ? value : "#000000";
   return (
     <div>
       <p className="mb-1 text-xs text-[#06224C]/70">{label}</p>
       <div className="flex items-center gap-2">
-        <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-10 cursor-pointer border-0 bg-transparent p-0" />
-        <span className="font-mono text-xs text-[#06224C]/70">{value}</span>
+        <input
+          type="color"
+          value={safeColor}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-10 w-10 cursor-pointer border-0 bg-transparent p-0"
+        />
+        <input
+          type="text"
+          value={value || ""}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="#ffffff"
+          aria-label={label}
+          className="w-24 rounded border border-[#06224C]/20 bg-[#F4F6FA] px-2 py-1 font-mono text-xs text-[#06224C] outline-none"
+        />
       </div>
     </div>
   );

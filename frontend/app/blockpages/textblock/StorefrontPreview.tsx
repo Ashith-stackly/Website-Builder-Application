@@ -1407,18 +1407,18 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
         </div>
 
         <section className="buyscreen-shell rounded-[2rem] border border-white/80 bg-white shadow-[0_28px_90px_rgba(15,35,75,0.13)]">
-          <header data-blockpages-template-header="true" className="buyscreen-header flex flex-col gap-4 border-b border-[#e7edf5] bg-white/95 px-4 py-4 sm:px-8 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4">
-            <div className="flex shrink-0 items-center justify-between lg:justify-start">
+          <header data-blockpages-template-header="true" className="buyscreen-header flex flex-col gap-3 border-b border-[#e7edf5] bg-white/95 px-4 py-3 sm:px-8 sm:py-4 sm:flex-row sm:items-center sm:justify-between lg:gap-6">
+            <div className="flex shrink-0 items-center justify-between sm:justify-start">
               <span className="inline-flex items-center gap-2 text-base font-black tracking-tight text-[#06224C] sm:text-lg">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_0_5px_rgba(34,197,94,0.14)]" aria-hidden />
                 e-shop.
               </span>
             </div>
 
-            <div className="buyscreen-header-actions flex w-full min-w-0 flex-wrap items-center justify-between sm:justify-end gap-2 text-[#4b5563] sm:gap-3 lg:w-auto">
+            <div className="buyscreen-header-actions flex shrink-0 min-w-0 flex-nowrap items-center justify-end gap-2 text-[#4b5563] sm:gap-3 w-auto">
               <label
                 data-blockpages-interactive="true"
-                className="buyscreen-search flex h-9 w-full max-w-[150px] sm:max-w-[210px] items-center rounded-full border border-[#dbe3ef] bg-[#f8fafc] px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:text-xs"
+                className="buyscreen-search flex h-9 w-[170px] sm:w-[210px] max-w-[220px] items-center rounded-full border border-[#dbe3ef] bg-white px-3 text-[11px] text-[#4b5563] shadow-inner sm:h-10 sm:text-xs"
               >
                 <input
                   type="text"
@@ -1438,9 +1438,9 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
                     scrollToBuyscreenSection("buyscreen-products");
                   }}
                   placeholder="Search..."
-                  className="min-w-0 flex-1 bg-white text-[#111827] outline-none placeholder:text-[#6b7280] placeholder:opacity-100"
+                  className="min-w-0 flex-1 bg-transparent text-[#111827] outline-none placeholder:text-[#6b7280] placeholder:opacity-100"
                 />
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#374151]" aria-hidden>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#4b5563] shrink-0 ml-1" aria-hidden>
                   <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.7" />
                   <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                 </svg>

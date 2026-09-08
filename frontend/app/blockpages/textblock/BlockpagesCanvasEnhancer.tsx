@@ -793,7 +793,11 @@ function BlockpagesCanvasEnhancer({
           container.querySelector(`[data-section-id="${sectionId}"]`) ||
           container.querySelector(`[data-blockpages-section-id="${sectionId}"]`);
         if (sectionEl instanceof HTMLElement) {
-          if (config.backgroundColor) sectionEl.style.backgroundColor = config.backgroundColor;
+          if (config.gradientBackground) {
+            sectionEl.style.background = config.gradientBackground;
+          } else if (config.backgroundColor) {
+            sectionEl.style.backgroundColor = config.backgroundColor;
+          }
           if (config.textColor) sectionEl.style.color = config.textColor;
           if (config.padding) sectionEl.style.padding = `${config.padding}px`;
         }
