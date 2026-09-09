@@ -270,7 +270,24 @@ function resolveStableButtonId(
   const explicit =
     element.getAttribute("data-blockpages-button-id") ||
     element.getAttribute("data-button-id");
-  if (explicit) return explicit;
+  if (explicit) {
+    if (seenCounts) {
+      const count = seenCounts.get(explicit) ?? 0;
+      seenCounts.set(explicit, count + 1);
+      const baseExplicit = explicit.replace(/-\d+$/, "");
+      if (baseExplicit !== explicit) {
+        const baseCount = seenCounts.get(baseExplicit) ?? 0;
+        seenCounts.set(baseExplicit, Math.max(baseCount, count + 1));
+      }
+      if (count > 0) {
+        const disambiguated = `${explicit}-${count + 1}`;
+        element.setAttribute("data-blockpages-button-id", disambiguated);
+        seenCounts.set(disambiguated, 1);
+        return disambiguated;
+      }
+    }
+    return explicit;
+  }
 
   // 1. Derive stable identity from parent section/header/footer
   const section = element.closest(
@@ -293,7 +310,7 @@ function resolveStableButtonId(
 
   // 2. Derive card/product/item context if within a repeating card or article
   const card = element.closest(
-    ".buyscreen-product-card, article, [data-product-id], .card, [class*='product-card'], [class*='blog-card'], [class*='item-card'], [class*='menu-item']"
+    ".buyscreen-product-card, .blockpages-card, [class*='blockpages-card'], article, [data-product-id], .card, [class*='product-card'], [class*='blog-card'], [class*='item-card'], [class*='menu-item']"
   );
   let cardId = "";
   if (card && card !== section) {
@@ -340,11 +357,18 @@ function resolveStableButtonId(
   baseId += `-${label}`;
 
   if (seenCounts) {
-    const count = seenCounts.get(baseId) ?? 0;
-    seenCounts.set(baseId, count + 1);
-    if (count > 0) {
-      baseId = `${baseId}-${count}`;
+    let candidate = baseId;
+    let count = seenCounts.get(candidate) ?? 0;
+    while (count > 0 || (candidate !== baseId && seenCounts.has(candidate))) {
+      count += 1;
+      candidate = `${baseId}-${count}`;
+      if (!seenCounts.has(candidate)) {
+        break;
+      }
     }
+    seenCounts.set(baseId, count + 1);
+    seenCounts.set(candidate, 1);
+    baseId = candidate;
   }
 
   element.setAttribute("data-blockpages-button-id", baseId);
@@ -668,20 +692,25 @@ function BlockpagesCanvasEnhancer({
 
     if (isImageEditingMode && onEditImage) {
       const images = Array.from(container.querySelectorAll("img")).filter((img) => !isInsideBuilderChrome(img));
+      const seenOverlayImageIds = new Set<string>();
       images.forEach((img, index) => {
         const htmlImg = img as HTMLImageElement;
+        if (htmlImg.offsetParent === null && htmlImg.tagName !== "BODY") return;
+        const rect = htmlImg.getBoundingClientRect();
+        if (rect.width < 1 || rect.height < 1) return;
+        if (rect.width > 0 && rect.width < 36 && rect.height < 36) return;
+        if (isInsideTemplateHeader(htmlImg)) return;
+
         const imageId =
           htmlImg.getAttribute("data-image-id") ||
           htmlImg.getAttribute("data-blockpages-image-id") ||
           `img_${index}`;
         htmlImg.setAttribute("data-blockpages-image-id", imageId);
 
-        if (isInsideTemplateHeader(htmlImg)) return;
-
-        const rect = htmlImg.getBoundingClientRect();
-        if (rect.width > 0 && rect.width < 36 && rect.height < 36) return;
-
         if (editingImageId && imageId !== editingImageId) return;
+        if (seenOverlayImageIds.has(imageId)) return;
+        seenOverlayImageIds.add(imageId);
+
         const position = getOverlayPosition(container, htmlImg, "image");
         if (position) {
           targets.push({
@@ -732,12 +761,28 @@ function BlockpagesCanvasEnhancer({
 
     if (isIconEditingMode && onEditIcon) {
       const iconAnchors = collectEditableIconAnchors(container);
-      const iconCounts = new Map<string, number>();
+
+      // Pre-stamp stable IDs on all icon anchors before building overlay targets.
+      const preStampCounts = new Map<string, number>();
       iconAnchors.forEach((anchor) => {
-        const iconId = resolveStableIconId(anchor, template, iconCounts);
+        const iconId = resolveStableIconId(anchor, template, preStampCounts);
         anchor.setAttribute("data-blockpages-icon-id", iconId);
+      });
+
+      const seenOverlayIconIds = new Set<string>();
+      iconAnchors.forEach((anchor) => {
+        const iconId = anchor.getAttribute("data-blockpages-icon-id") || "";
+
+        // Skip hidden responsive elements
+        if (anchor.offsetParent === null && anchor.tagName !== "BODY") return;
+        const rect = anchor.getBoundingClientRect();
+        if (rect.width < 1 || rect.height < 1) return;
+        if (!iconId) return;
 
         if (editingIconId && iconId !== editingIconId) return;
+        if (seenOverlayIconIds.has(iconId)) return;
+        seenOverlayIconIds.add(iconId);
+
         const position = getOverlayPosition(container, anchor, "icon");
         if (position) {
           targets.push({
@@ -757,13 +802,18 @@ function BlockpagesCanvasEnhancer({
           "[data-blockpages-video-slot='true'], [data-blockpages-video-id], video"
         )
       ).filter((element) => !isInsideBuilderChrome(element));
+      const seenOverlayVideoIds = new Set<string>();
 
       videoAnchors.forEach((anchor, index) => {
+        if (anchor.offsetParent === null && anchor.tagName !== "BODY") return;
         const rect = anchor.getBoundingClientRect();
         if (rect.width < 48 || rect.height < 48) return;
 
         const videoId = anchor.getAttribute("data-blockpages-video-id") || `video_${index}`;
         anchor.setAttribute("data-blockpages-video-id", videoId);
+
+        if (seenOverlayVideoIds.has(videoId)) return;
+        seenOverlayVideoIds.add(videoId);
 
         const position = getOverlayPosition(container, anchor, "video");
         if (position) {
@@ -778,20 +828,29 @@ function BlockpagesCanvasEnhancer({
       });
     }
 
+    // Final deduplication guarantee: ensure no two targets share the same kind and id
+    const seenTargetKeys = new Set<string>();
+    const uniqueTargets = targets.filter((target) => {
+      const targetKey = `${target.kind}-${target.id}`;
+      if (seenTargetKeys.has(targetKey)) return false;
+      seenTargetKeys.add(targetKey);
+      return true;
+    });
+
     setOverlayTargets((prev) => {
       if (
-        prev.length === targets.length &&
+        prev.length === uniqueTargets.length &&
         prev.every(
           (t, i) =>
-            t.id === targets[i].id &&
-            t.kind === targets[i].kind &&
-            Math.abs(t.top - targets[i].top) < 1 &&
-            Math.abs(t.left - targets[i].left) < 1
+            t.id === uniqueTargets[i].id &&
+            t.kind === uniqueTargets[i].kind &&
+            Math.abs(t.top - uniqueTargets[i].top) < 1 &&
+            Math.abs(t.left - uniqueTargets[i].left) < 1
         )
       ) {
         return prev;
       }
-      return targets;
+      return uniqueTargets;
     });
   }, [
     isImageEditingMode,
@@ -806,6 +865,7 @@ function BlockpagesCanvasEnhancer({
     onEditButton,
     onEditVideo,
     onEditIcon,
+    template,
   ]);
 
   const handleOverlayAction = useCallback(
@@ -1365,34 +1425,44 @@ function BlockpagesCanvasEnhancer({
         {children}
       </div>
 
-      {overlayTargets.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 z-120 overflow-visible" aria-hidden={false}>
-          {overlayTargets.map((target) => (
-            <button
-              key={`${target.kind}-${target.id}`}
-              type="button"
-              data-blockpages-edit-overlay="true"
-              data-blockpages-overlay-btn={target.id}
-              data-blockpages-overlay-kind={target.kind}
-              aria-label={`Edit ${target.kind} ${target.id}`}
-              title={target.title}
-              className={`pointer-events-auto absolute z-121 flex cursor-pointer items-center justify-center ${OVERLAY_BUTTON_CLASS[target.kind]}`}
-              style={{ top: target.top, left: target.left }}
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                handleOverlayClick(target);
-              }}
-            >
-              <FaPen size={target.kind === "button" ? 12 : target.kind === "icon" ? 9 : 14} />
-            </button>
-          ))}
-        </div>
-      )}
+      {overlayTargets.length > 0 && (() => {
+        const seenKeys = new Set<string>();
+        const uniqueOverlayTargets = overlayTargets.filter((target) => {
+          const key = `${target.kind}-${target.id}`;
+          if (seenKeys.has(key)) return false;
+          seenKeys.add(key);
+          return true;
+        });
+
+        return (
+          <div className="pointer-events-none absolute inset-0 z-120 overflow-visible" aria-hidden={false}>
+            {uniqueOverlayTargets.map((target, index) => (
+              <button
+                key={`${target.kind}-${target.id}-${index}`}
+                type="button"
+                data-blockpages-edit-overlay="true"
+                data-blockpages-overlay-btn={target.id}
+                data-blockpages-overlay-kind={target.kind}
+                aria-label={`Edit ${target.kind} ${target.id}`}
+                title={target.title}
+                className={`pointer-events-auto absolute z-121 flex cursor-pointer items-center justify-center ${OVERLAY_BUTTON_CLASS[target.kind]}`}
+                style={{ top: target.top, left: target.left }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleOverlayClick(target);
+                }}
+              >
+                <FaPen size={target.kind === "button" ? 12 : target.kind === "icon" ? 9 : 14} />
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {appliedIcons.map((icon, index) => (
         <BlockpagesPositionedOverlay
-          key={icon.id}
+          key={`${icon.id}-${index}`}
           id={icon.id}
           index={index}
           kind="icon"
@@ -1413,7 +1483,7 @@ function BlockpagesCanvasEnhancer({
 
       {appliedDividers.map((divider, index) => (
         <BlockpagesPositionedOverlay
-          key={divider.id}
+          key={`${divider.id}-${index}`}
           id={divider.id}
           index={index}
           kind="divider"

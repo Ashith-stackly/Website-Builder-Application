@@ -6,7 +6,7 @@ import {
   Video, Minus, AppWindow, Columns, Heading,
   ChevronDown, Circle, ChevronLeft, ChevronRight, Plus, AlignLeft, AlignCenter, AlignRight, Ban, Pipette,
   Play, Download, ShoppingBag, FlipHorizontal, FlipVertical, RotateCcw, ArrowUpDown, SlidersHorizontal, Filter, Crop,
-  Section, X, Star
+  Section, X, Star, Info
 } from 'lucide-react';
 import { useBuilder } from './BuilderContext';
 import {
@@ -194,6 +194,9 @@ export default function LeftSidebar({
   const [mobileCornerRadii, setMobileCornerRadii] = useState([0, 0, 0, 0]);
 
   const handlePageClick = (pageName: string, id: string) => {
+    if (activeBlockPage === 'icons') {
+      return;
+    }
     setActiveMobilePage(pageName);
     onSelectBlockPage?.('text');
     onSelectTextTarget?.('main');
@@ -280,6 +283,9 @@ export default function LeftSidebar({
   ];
 
   const addBlock = (type: string) => {
+    if (activeBlockPage === 'icons') {
+      return;
+    }
     if (type === 'Image') {
       onSelectBlockPage?.('image');
       return;
@@ -583,35 +589,47 @@ export default function LeftSidebar({
                     {/* Blocks Grid */}
                     <div className="flex justify-between items-center gap-2 px-5 pb-4 overflow-x-auto no-scrollbar">
                       <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
                         addBlock('Text');
-                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border hover:border-[#0B182B]/20 ${activeTextTarget === 'text' ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed border-transparent' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'} ${activeTextTarget === 'text' ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
                         <Type className="w-5 h-5 text-[#0B182B] mb-1" strokeWidth={1.5} />
                         <span className="text-[10px] font-semibold text-[#0B182B]">Text</span>
                       </div>
 
                       <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
                         onSelectBlockPage?.('image');
-                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border hover:border-[#0B182B]/20 ${(activeBlockPage === 'image' || isImageEditingMode) ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed border-transparent' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'} ${(activeBlockPage === 'image' || isImageEditingMode) ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
                         <ImageIcon className="w-5 h-5 text-[#0B182B] mb-1" strokeWidth={1.5} />
                         <span className="text-[10px] font-semibold text-[#0B182B]">Images</span>
                       </div>
                       <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
                         onSelectBlockPage?.('button');
-                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border hover:border-[#0B182B]/20 ${(activeBlockPage === 'button' || isButtonEditingMode) ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed border-transparent' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'} ${(activeBlockPage === 'button' || isButtonEditingMode) ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
                         <div className="w-5 h-5 border-[1.5px] border-[#0B182B] rounded-md flex items-center justify-center mb-1">
                           <div className="w-2.5 h-[1.5px] bg-[#0B182B]"></div>
                         </div>
                         <span className="text-[10px] font-semibold text-[#0B182B]">Button</span>
                       </div>
-                      <div onClick={() => setMobileOverlayTab('Video')} className="bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border border-transparent hover:border-[#0B182B]/20">
+                      <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
+                        setMobileOverlayTab('Video');
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border border-transparent ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'}`}>
                         <Video className="w-5 h-5 text-[#0B182B] mb-1" strokeWidth={1.5} />
                         <span className="text-[10px] font-semibold text-[#0B182B]">Video</span>
                       </div>
-                      <div onClick={() => addBlock('Icon')} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border hover:border-[#0B182B]/20 ${(activeBlockPage === 'icons' || isIconEditingMode) ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
+                      <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
+                        addBlock('Icon');
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed border-transparent' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'} ${(activeBlockPage === 'icons' || isIconEditingMode) ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
                         <ImageIcon className="w-5 h-5 text-[#0B182B] mb-1" strokeWidth={1.5} />
                         <span className="text-[10px] font-semibold text-[#0B182B]">Icon</span>
                       </div>
-                      <div onClick={() => addBlock('Divider')} className="bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border border-transparent hover:border-[#0B182B]/20">
+                      <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
+                        addBlock('Divider');
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border border-transparent ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'}`}>
                         <Minus className="w-5 h-5 text-[#0B182B] mb-1" strokeWidth={1.5} />
                         <span className="text-[10px] font-semibold text-[#0B182B]">Divider</span>
                       </div>
@@ -624,15 +642,17 @@ export default function LeftSidebar({
                       </div> */}
 
                       <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
                         addBlock('Footer');
-                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border hover:border-[#0B182B]/20 ${activeTextTarget === 'footer' ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed border-transparent' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'} ${activeTextTarget === 'footer' ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
                         <FaWindowMinimize className="w-5 h-5 text-[#0B182B] mb-1" strokeWidth={1.5} />
                         <span className="text-[10px] font-semibold text-[#0B182B]">Footer</span>
                       </div>
 
                       <div onClick={() => {
+                        if (activeBlockPage === 'icons') return;
                         addBlock('Header');
-                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 cursor-pointer shadow-sm hover:scale-105 transition-transform border hover:border-[#0B182B]/20 ${activeTextTarget === 'header' ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
+                      }} className={`bg-white rounded-xl flex flex-col items-center justify-center w-[60px] h-[64px] shrink-0 shadow-sm transition-transform border ${activeBlockPage === 'icons' ? 'opacity-40 cursor-not-allowed border-transparent' : 'cursor-pointer hover:scale-105 hover:border-[#0B182B]/20'} ${activeTextTarget === 'header' ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-transparent'}`}>
                         <Heading className="w-5 h-5 text-[#0B182B] mb-1" strokeWidth={1.5} />
                         <span className="text-[10px] font-semibold text-[#0B182B]">Header</span>
                       </div>
@@ -1394,6 +1414,17 @@ export default function LeftSidebar({
             {activeTab === 'Blocks' ? (
               /* Blocks Content */
               <>
+                {activeBlockPage === 'icons' && (
+                  <div className="mb-4 rounded-xl bg-[#203354] border border-[#517AA5]/40 p-3 text-xs text-[#dbe3ef] shadow-sm">
+                    <div className="flex items-center gap-1.5 font-semibold text-white mb-1">
+                      <Info className="w-3.5 h-3.5 text-[#84a9d4]" />
+                      <span>Icon Editor Active</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-snug">
+                      Use <strong className="text-white font-bold">Apply</strong> or <strong className="text-white font-bold">← Back</strong> in the editor to return to canvas.
+                    </p>
+                  </div>
+                )}
                 {blockCategories.map((cat, idx) => {
                   const filteredBlocks = cat.blocks.filter(block =>
                     block.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -1419,6 +1450,7 @@ export default function LeftSidebar({
                         <>
                           <div className="grid grid-cols-3 gap-2">
                             {filteredBlocks.map((block, bIdx) => {
+                              const isIconEditorActive = activeBlockPage === 'icons';
                               const isActive =
                                 (block.name === 'Image' && (activeBlockPage === 'image' || isImageEditingMode)) ||
                                 (block.name === 'Button' && (activeBlockPage === 'button' || isButtonEditingMode)) ||
@@ -1433,8 +1465,18 @@ export default function LeftSidebar({
                               return (
                                 <div
                                   key={bIdx}
-                                  onClick={() => addBlock(block.name)}
-                                  className={`bg-[#FAF8ED] rounded-xl flex flex-col items-center justify-center pt-2 pb-1.5 cursor-pointer shadow-sm border hover:ring-2 hover:ring-[#517AA5] hover:-translate-y-1 hover:shadow-md transition-all duration-300 ${isActive ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-[#E8E6DB]'}`}
+                                  onClick={() => {
+                                    if (isIconEditorActive) return;
+                                    addBlock(block.name);
+                                  }}
+                                  title={isIconEditorActive ? "Apply changes or click Back on the editor to exit" : undefined}
+                                  className={`bg-[#FAF8ED] rounded-xl flex flex-col items-center justify-center pt-2 pb-1.5 shadow-sm border transition-all duration-300 ${
+                                    isIconEditorActive
+                                      ? 'opacity-40 cursor-not-allowed border-[#E8E6DB]'
+                                      : `cursor-pointer hover:ring-2 hover:ring-[#517AA5] hover:-translate-y-1 hover:shadow-md ${
+                                          isActive ? 'ring-2 ring-[#517AA5] border-[#517AA5]' : 'border-[#E8E6DB]'
+                                        }`
+                                  }`}
                                 >
                                   {block.icon}
                                   <span className="text-[10px] font-semibold text-[#517AA5]">{block.name}</span>
@@ -1455,7 +1497,13 @@ export default function LeftSidebar({
                   <div
                     key={sectionOption.id}
                     onClick={() => handlePageClick(sectionOption.label, sectionOption.id)}
-                    className={`border rounded-lg p-3 cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] transition-all duration-300 ${activeMobilePage === sectionOption.label ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'}`}
+                    className={`border rounded-lg p-3 transition-all duration-300 ${
+                      activeBlockPage === 'icons'
+                        ? 'opacity-40 cursor-not-allowed bg-[#1A2B4C] border-[#4E627C]'
+                        : `cursor-pointer hover:bg-[#2a436e] hover:border-[#517AA5] ${
+                            activeMobilePage === sectionOption.label ? 'bg-[#1f345c] border-[#517AA5]' : 'bg-[#1A2B4C] border-[#4E627C]'
+                          }`
+                    }`}
                   >
                     <span className={`text-sm font-medium ${activeMobilePage === sectionOption.label ? 'text-white' : 'text-[#8495A5]'}`}>{sectionOption.label}</span>
                   </div>

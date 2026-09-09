@@ -761,6 +761,10 @@ export default function BlockPagesClient() {
     setIsImageEditingMode(false);
     setIsButtonEditingMode(false);
     setIsVideoEditingMode(false);
+    setEditingIconId(null);
+    setEditingImageId(null);
+    setEditingButtonId(null);
+    setEditingVideoId(null);
     pushTextState({ ...textBlockState, isTextEditable: false });
 
     if (typeof window !== "undefined") {
@@ -1305,10 +1309,19 @@ export default function BlockPagesClient() {
             }}
             activeTextTarget={textBlockState.isTextEditable ? textBlockState.selectedTarget : null}
             onSelectTextTarget={(target) => {
+              if (activeBlockPage === "icons") {
+                return;
+              }
               if (activeBlockPage !== "text") {
                 setActiveBlockPage("text");
                 setIsImageEditingMode(false);
                 setIsButtonEditingMode(false);
+                setIsVideoEditingMode(false);
+                setIsIconEditingMode(false);
+                setEditingIconId(null);
+                setEditingImageId(null);
+                setEditingButtonId(null);
+                setEditingVideoId(null);
                 pushTextState({
                   ...textBlockState,
                   isTextEditable: true,
@@ -1361,6 +1374,10 @@ export default function BlockPagesClient() {
             }}
             onCloseMobileImageSelect={() => setEditingImageId(null)}
             onSelectBlockPage={(page) => {
+              if (activeBlockPage === "icons") {
+                return;
+              }
+
               const keepsTextCanvasMounted =
                 activeBlockPage === "text" &&
                 (page === "text" || page === "image" || page === "button" || page === "video");
@@ -1374,6 +1391,10 @@ export default function BlockPagesClient() {
                 setIsButtonEditingMode(false);
                 setIsVideoEditingMode(false);
                 setIsIconEditingMode(false);
+                setEditingImageId(null);
+                setEditingButtonId(null);
+                setEditingIconId(null);
+                setEditingVideoId(null);
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 return;
               }
@@ -1382,6 +1403,10 @@ export default function BlockPagesClient() {
                 setIsImageEditingMode(false);
                 setIsVideoEditingMode(false);
                 setIsIconEditingMode(false);
+                setEditingButtonId(null);
+                setEditingImageId(null);
+                setEditingIconId(null);
+                setEditingVideoId(null);
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 return;
               }
@@ -1394,6 +1419,10 @@ export default function BlockPagesClient() {
                 setIsVideoEditingMode(turningOn);
                 setIsImageEditingMode(false);
                 setIsButtonEditingMode(false);
+                setEditingVideoId(null);
+                setEditingImageId(null);
+                setEditingButtonId(null);
+                setEditingIconId(null);
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 if (turningOn && typeof window !== "undefined") {
                   window.setTimeout(() => {
@@ -1415,6 +1444,10 @@ export default function BlockPagesClient() {
                 setIsButtonEditingMode(false);
                 setIsVideoEditingMode(false);
                 setIsIconEditingMode(false);
+                setEditingImageId(null);
+                setEditingButtonId(null);
+                setEditingVideoId(null);
+                setEditingIconId(null);
                 pushTextState({ ...textBlockState, isTextEditable: false });
                 setActiveBlockPage("divider");
                 return;
@@ -1426,6 +1459,10 @@ export default function BlockPagesClient() {
                   setIsImageEditingMode(false);
                   setIsButtonEditingMode(false);
                   setIsVideoEditingMode(false);
+                  setEditingIconId(null);
+                  setEditingImageId(null);
+                  setEditingButtonId(null);
+                  setEditingVideoId(null);
                   pushTextState({ ...textBlockState, isTextEditable: false });
                   return;
                 }
@@ -1437,12 +1474,20 @@ export default function BlockPagesClient() {
               const wasOnText = activeBlockPage === "text";
               setActiveBlockPage(page);
  
-              if (page === "text") {
-                setIsImageEditingMode(false);
-                setIsButtonEditingMode(false);
-                setIsVideoEditingMode(false);
-                setIsIconEditingMode(false);
+              // Always clear stale editing state when switching pages.
+              // Without this, navigating from e.g. icons → image would
+              // leave editingIconId set, causing only 1 icon overlay on
+              // the next icon-editing activation.
+              setIsImageEditingMode(false);
+              setIsButtonEditingMode(false);
+              setIsVideoEditingMode(false);
+              setIsIconEditingMode(false);
+              setEditingImageId(null);
+              setEditingButtonId(null);
+              setEditingVideoId(null);
+              setEditingIconId(null);
  
+              if (page === "text") {
                 const nextIsEditable = wasOnText ? !textBlockState.isTextEditable : true;
                 pushTextState({
                   ...textBlockState,
@@ -1822,6 +1867,19 @@ export default function BlockPagesClient() {
                 onUndo={undoIcon}
                 onRedo={redoIcon}
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
+                onBackToCanvas={() => {
+                  setActiveBlockPage("text");
+                  setEditingIconId(null);
+                  setIsIconEditingMode(true);
+                  setIsImageEditingMode(false);
+                  setIsButtonEditingMode(false);
+                  setIsVideoEditingMode(false);
+                  if (typeof window !== "undefined") {
+                    window.setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                    }, 80);
+                  }
+                }}
                 onApplyIcon={() => {
                   const block = selectedIconBlock ?? iconBlocks[0];
                   const lastId = editingIconId;
@@ -1857,11 +1915,16 @@ export default function BlockPagesClient() {
                   setActiveBlockPage("text");
                   setEditingIconId(null);
                   setIsIconEditingMode(true);
+                  // Delay the canvas-restored event so React can flush batched
+                  // state updates and re-render the template DOM before the
+                  // handler stamps icon IDs and recalculates overlay targets.
                   if (typeof window !== "undefined") {
-                    window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
-                  }
-                  if (lastId) {
-                    window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+                    window.setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                      if (lastId) {
+                        window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+                      }
+                    }, 80);
                   }
                 }}
                 onDuplicateBlock={(id) => {
