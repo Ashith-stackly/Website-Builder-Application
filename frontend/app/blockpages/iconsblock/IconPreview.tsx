@@ -45,7 +45,7 @@ export default function IconPreview({
         alt="Custom Icon"
         width={size}
         height={size}
-        className={className}
+        className={`max-w-full max-h-full object-contain ${className}`.trim()}
         style={{ objectFit: "contain" }}
       />
     );

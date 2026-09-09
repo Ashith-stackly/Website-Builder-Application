@@ -432,7 +432,10 @@ export default function BlockPagesClient() {
           setCustomButtons(draft.customButtons as Record<string, ButtonProps>);
           persistCustomButtonsForTemplate(activeTpl || textTemplate, draft.customButtons as Record<string, ButtonProps>);
         }
-        if (draft.customIcons) setCustomIcons(draft.customIcons);
+        if (draft.customIcons) {
+          setCustomIcons(draft.customIcons);
+          persistCustomStaticIconsForTemplate(activeTpl || textTemplate, draft.customIcons);
+        }
 
         // Clear undo/redo history when loading a saved draft
         setPastButtonStates([]);

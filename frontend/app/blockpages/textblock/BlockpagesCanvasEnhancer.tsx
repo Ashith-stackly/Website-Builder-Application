@@ -11,6 +11,7 @@ import { applyCustomButtonStyle } from "@/lib/blockpagesButtonStyles";
 import {
   collectEditableIconAnchors,
   isInsideTemplateHeader,
+  resolveStableIconId,
 } from "@/lib/blockpagesEditTargets";
 import { BLOCKPAGES_CANVAS_RESTORED_EVENT } from "@/lib/blockpagesEditorPersistence";
 import { useBlockpagesOverlayToolbar } from "@/lib/blockpagesOverlayToolbar";
@@ -72,6 +73,10 @@ function releaseIconRoots(
   const roots = [...rootsRef.current.values()];
   rootsRef.current.clear();
   container?.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((node) => node.remove());
+  container?.querySelectorAll<HTMLElement>("[data-blockpages-original-icon='true']").forEach((node) => {
+    node.style.display = "";
+    node.removeAttribute("data-blockpages-original-icon");
+  });
   if (roots.length > 0) {
     queueMicrotask(() => unmountRootsSafely(roots));
   }
@@ -727,8 +732,9 @@ function BlockpagesCanvasEnhancer({
 
     if (isIconEditingMode && onEditIcon) {
       const iconAnchors = collectEditableIconAnchors(container);
-      iconAnchors.forEach((anchor, index) => {
-        const iconId = anchor.getAttribute("data-blockpages-icon-id") || `icon_${index}`;
+      const iconCounts = new Map<string, number>();
+      iconAnchors.forEach((anchor) => {
+        const iconId = resolveStableIconId(anchor, template, iconCounts);
         anchor.setAttribute("data-blockpages-icon-id", iconId);
 
         if (editingIconId && iconId !== editingIconId) return;
@@ -905,8 +911,9 @@ function BlockpagesCanvasEnhancer({
 
     // 4. Synchronize Icons
     const iconAnchors = collectEditableIconAnchors(container);
-    iconAnchors.forEach((anchor, index) => {
-      const iconId = anchor.getAttribute("data-blockpages-icon-id") || `icon_${index}`;
+    const iconCounts = new Map<string, number>();
+    iconAnchors.forEach((anchor) => {
+      const iconId = resolveStableIconId(anchor, template, iconCounts);
       anchor.setAttribute("data-blockpages-icon-id", iconId);
 
       if (editingIconId === iconId) {
@@ -923,39 +930,100 @@ function BlockpagesCanvasEnhancer({
       }
     });
 
-    if (customIcons && Object.keys(customIcons).length > 0) {
-      const roots = iconRootsRef.current;
-      Object.entries(customIcons).forEach(([iconId, props]) => {
-        // Skip deleted/reset icons — they should not render a mount
-        if ((!props.iconType || (props.iconType as string) === "none") && !props.customIconUrl) return;
+    const roots = iconRootsRef.current;
+    const activeIconIds = new Set(
+      Object.entries(customIcons || {})
+        .filter(([_, props]) => props && ((props.iconType && (props.iconType as string) !== "none") || props.customIconUrl))
+        .map(([id]) => id)
+    );
 
-        const anchor = container.querySelector(`[data-blockpages-icon-id="${iconId}"]`) as HTMLElement | null;
-        if (!anchor) return;
+    Object.entries(customIcons || {}).forEach(([iconId, props]) => {
+      if (!activeIconIds.has(iconId)) return;
 
+      const anchor = container.querySelector(`[data-blockpages-icon-id="${iconId}"]`) as HTMLElement | null;
+      if (!anchor) return;
+
+      const isSvg = anchor.tagName.toLowerCase() === "svg";
+      if (isSvg) {
+        anchor.style.display = "none";
+        anchor.setAttribute("data-blockpages-original-icon", "true");
+      } else {
         anchor.querySelectorAll("svg, img").forEach((element) => {
           if (element.closest("[data-blockpages-custom-icon-mount]")) return;
           (element as HTMLElement).style.display = "none";
           element.setAttribute("data-blockpages-original-icon", "true");
         });
+      }
 
-        let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
-        let root = roots.get(iconId);
+      let mountPoint = (
+        isSvg
+          ? anchor.parentElement?.querySelector(`[data-blockpages-custom-icon-mount][data-blockpages-mount-for="${iconId}"]`)
+          : anchor.querySelector(`[data-blockpages-custom-icon-mount][data-blockpages-mount-for="${iconId}"]`)
+      ) as HTMLElement | null;
 
-        if (!root || !mountPoint?.isConnected) {
-          if (root) {
-            roots.delete(iconId);
-          }
-          mountPoint?.remove();
-          mountPoint = document.createElement("span");
-          mountPoint.setAttribute("data-blockpages-custom-icon-mount", "true");
-          mountPoint.className = "inline-flex items-center justify-center";
+      let root = roots.get(iconId);
+
+      if (!root || !mountPoint?.isConnected) {
+        if (root) {
+          try {
+            root.unmount();
+          } catch {}
+          roots.delete(iconId);
+        }
+        mountPoint?.remove();
+        mountPoint = document.createElement("span");
+        mountPoint.setAttribute("data-blockpages-custom-icon-mount", "true");
+        mountPoint.setAttribute("data-blockpages-mount-for", iconId);
+
+        if (isSvg) {
+          const origClass = anchor.getAttribute("class") || "";
+          mountPoint.className = `inline-flex items-center justify-center ${origClass}`.trim();
+          anchor.parentElement?.insertBefore(mountPoint, anchor);
+        } else {
+          mountPoint.className = "inline-flex items-center justify-center w-full h-full";
           anchor.appendChild(mountPoint);
-          root = createRoot(mountPoint);
-          roots.set(iconId, root);
         }
 
-        root.render(createElement(IconPreview, { props }));
-      });
+        root = createRoot(mountPoint);
+        roots.set(iconId, root);
+      }
+
+      root.render(createElement(IconPreview, { props }));
+    });
+
+    const staleRoots: Root[] = [];
+    container.querySelectorAll("[data-blockpages-icon-id]").forEach((node) => {
+      const el = node as HTMLElement;
+      const id = el.getAttribute("data-blockpages-icon-id");
+      if (!id || activeIconIds.has(id)) return;
+
+      const root = roots.get(id);
+      if (root) {
+        staleRoots.push(root);
+        roots.delete(id);
+      }
+
+      const isSvgNode = el.tagName.toLowerCase() === "svg";
+      const mounts = isSvgNode
+        ? el.parentElement?.querySelectorAll(`[data-blockpages-custom-icon-mount][data-blockpages-mount-for="${id}"]`)
+        : el.querySelectorAll(`[data-blockpages-custom-icon-mount][data-blockpages-mount-for="${id}"]`);
+      mounts?.forEach((mount) => mount.remove());
+
+      if (isSvgNode) {
+        if (el.getAttribute("data-blockpages-original-icon") === "true") {
+          el.style.display = "";
+          el.removeAttribute("data-blockpages-original-icon");
+        }
+      } else {
+        el.querySelectorAll<HTMLElement>("[data-blockpages-original-icon='true']").forEach((orig) => {
+          orig.style.display = "";
+          orig.removeAttribute("data-blockpages-original-icon");
+        });
+      }
+    });
+
+    if (staleRoots.length > 0) {
+      queueMicrotask(() => unmountRootsSafely(staleRoots));
     }
 
     // 5. Synchronize Section Styles
@@ -1056,13 +1124,21 @@ function BlockpagesCanvasEnhancer({
       const target = event.target as Element | null;
       if (target?.closest('[contenteditable="true"]')) return;
 
-      // Match both explicitly marked slots and dynamically discovered icon anchors
-      const slot =
-        target?.closest('[data-blockpages-icon-slot="true"]') ??
-        target?.closest('[data-blockpages-icon-id]');
-      if (!slot || !container.contains(slot)) return;
+      let iconId: string | null = null;
+      const mount = target?.closest<HTMLElement>("[data-blockpages-custom-icon-mount]");
+      if (mount && container.contains(mount)) {
+        iconId = mount.getAttribute("data-blockpages-mount-for");
+      }
 
-      const iconId = slot.getAttribute("data-blockpages-icon-id");
+      if (!iconId) {
+        const slot =
+          target?.closest('[data-blockpages-icon-slot="true"]') ??
+          target?.closest('[data-blockpages-icon-id]');
+        if (slot && container.contains(slot)) {
+          iconId = slot.getAttribute("data-blockpages-icon-id");
+        }
+      }
+
       if (!iconId) return;
 
       event.preventDefault();
@@ -1162,71 +1238,8 @@ function BlockpagesCanvasEnhancer({
   }, []);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const roots = iconRootsRef.current;
-    const activeIconIds = new Set(
-      Object.entries(customIcons || {})
-        .filter(([_, props]) => props && ((props.iconType && (props.iconType as string) !== "none") || props.customIconUrl))
-        .map(([id]) => id)
-    );
-
-    Object.entries(customIcons).forEach(([iconId, props]) => {
-      // Skip deleted/reset icons — they should not render a mount
-      if ((!props.iconType || (props.iconType as string) === "none") && !props.customIconUrl) return;
-
-      const anchor = container.querySelector(`[data-blockpages-icon-id="${iconId}"]`) as HTMLElement | null;
-      if (!anchor) return;
-
-      anchor.querySelectorAll("svg, img").forEach((element) => {
-        if (element.closest("[data-blockpages-custom-icon-mount]")) return;
-        (element as HTMLElement).style.display = "none";
-        element.setAttribute("data-blockpages-original-icon", "true");
-      });
-
-      let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
-      let root = roots.get(iconId);
-
-      if (!root || !mountPoint?.isConnected) {
-        if (root) {
-          roots.delete(iconId);
-        }
-        mountPoint?.remove();
-        mountPoint = document.createElement("span");
-        mountPoint.setAttribute("data-blockpages-custom-icon-mount", "true");
-        mountPoint.className = "inline-flex items-center justify-center";
-        anchor.appendChild(mountPoint);
-        root = createRoot(mountPoint);
-        roots.set(iconId, root);
-      }
-
-      root.render(createElement(IconPreview, { props }));
-    });
-
-    const staleRoots: Root[] = [];
-
-    container.querySelectorAll("[data-blockpages-icon-id]").forEach((node) => {
-      const anchor = node as HTMLElement;
-      const iconId = anchor.getAttribute("data-blockpages-icon-id");
-      if (!iconId || activeIconIds.has(iconId)) return;
-
-      const root = roots.get(iconId);
-      if (root) {
-        staleRoots.push(root);
-        roots.delete(iconId);
-      }
-      anchor.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((mount) => mount.remove());
-      anchor.querySelectorAll<HTMLElement>("[data-blockpages-original-icon='true']").forEach((element) => {
-        element.style.display = "";
-        element.removeAttribute("data-blockpages-original-icon");
-      });
-    });
-
-    if (staleRoots.length > 0) {
-      queueMicrotask(() => unmountRootsSafely(staleRoots));
-    }
-  }, [customIcons]);
+    releaseIconRoots(iconRootsRef, containerRef.current);
+  }, [template]);
 
   useLayoutEffect(() => {
     applyCanvasCustomizations();

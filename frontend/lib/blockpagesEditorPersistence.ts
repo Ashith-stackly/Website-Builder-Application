@@ -427,7 +427,20 @@ export function loadCustomStaticIconsForTemplate(template: TextTemplateType): Re
   const scoped = readBlockpagesStorageItem(getBlockpagesCustomStaticIconsKey(template));
   if (scoped) {
     try {
-      return JSON.parse(scoped) as Record<string, unknown>;
+      const parsed = JSON.parse(scoped) as Record<string, any>;
+      if (parsed && typeof parsed === "object") {
+        Object.values(parsed).forEach((icon) => {
+          if (
+            icon &&
+            typeof icon === "object" &&
+            typeof icon.customIconUrl === "string" &&
+            icon.customIconUrl.startsWith("blob:")
+          ) {
+            delete icon.customIconUrl;
+          }
+        });
+      }
+      return parsed;
     } catch {
       return {};
     }
@@ -436,7 +449,18 @@ export function loadCustomStaticIconsForTemplate(template: TextTemplateType): Re
 }
 
 export function persistCustomStaticIconsForTemplate(template: TextTemplateType, icons: Record<string, unknown>) {
-  writeBlockpagesStorageItem(getBlockpagesCustomStaticIconsKey(template), JSON.stringify(icons));
+  const sanitized: Record<string, any> = {};
+  if (icons && typeof icons === "object") {
+    Object.entries(icons).forEach(([key, val]) => {
+      if (!val || typeof val !== "object") return;
+      const iconProps = { ...(val as Record<string, any>) };
+      if (typeof iconProps.customIconUrl === "string" && iconProps.customIconUrl.startsWith("blob:")) {
+        delete iconProps.customIconUrl;
+      }
+      sanitized[key] = iconProps;
+    });
+  }
+  writeBlockpagesStorageItem(getBlockpagesCustomStaticIconsKey(template), JSON.stringify(sanitized));
 }
 
 export function getTextBlockStateStorageKey(template: TextTemplateType) {

@@ -50,6 +50,7 @@ export function syncCanvasTexts(
     if (node.closest("[data-builder-chrome='true']")) return;
     if (node.closest('[data-blockpages-interactive="true"], .buyscreen-search, input, textarea, select')) return;
     if (node.closest("[data-blockpages-button-id]")) return;
+    if (node.closest("[data-blockpages-custom-icon-mount='true'], [data-blockpages-icon-slot='true'], [data-blockpages-icon-id]")) return;
     if (node.tagName.toLowerCase() === "svg" || node.closest("svg")) return;
 
     if (
@@ -96,7 +97,14 @@ export function syncCanvasTexts(
 
     if (TEXT_TAGS.has(node.tagName)) {
       const htmlNode = node as HTMLElement;
-      if (htmlNode.querySelector("svg")) {
+      if (
+        htmlNode.hasAttribute("data-blockpages-custom-icon-mount") ||
+        htmlNode.hasAttribute("data-blockpages-icon-id") ||
+        htmlNode.hasAttribute("data-blockpages-icon-slot")
+      ) {
+        return;
+      }
+      if (htmlNode.querySelector("svg, [data-blockpages-custom-icon-mount]")) {
         Array.from(node.children).forEach(walk);
         return;
       }
