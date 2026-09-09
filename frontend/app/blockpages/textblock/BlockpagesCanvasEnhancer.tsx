@@ -939,18 +939,21 @@ function BlockpagesCanvasEnhancer({
         });
 
         let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
-        if (!mountPoint) {
+        let root = roots.get(iconId);
+
+        if (!root || !mountPoint?.isConnected) {
+          if (root) {
+            roots.delete(iconId);
+          }
+          mountPoint?.remove();
           mountPoint = document.createElement("span");
           mountPoint.setAttribute("data-blockpages-custom-icon-mount", "true");
           mountPoint.className = "inline-flex items-center justify-center";
           anchor.appendChild(mountPoint);
-        }
-
-        let root = roots.get(iconId);
-        if (!root) {
           root = createRoot(mountPoint);
           roots.set(iconId, root);
         }
+
         root.render(createElement(IconPreview, { props }));
       });
     }
@@ -1183,18 +1186,21 @@ function BlockpagesCanvasEnhancer({
       });
 
       let mountPoint = anchor.querySelector("[data-blockpages-custom-icon-mount]") as HTMLElement | null;
-      if (!mountPoint) {
+      let root = roots.get(iconId);
+
+      if (!root || !mountPoint?.isConnected) {
+        if (root) {
+          roots.delete(iconId);
+        }
+        mountPoint?.remove();
         mountPoint = document.createElement("span");
         mountPoint.setAttribute("data-blockpages-custom-icon-mount", "true");
         mountPoint.className = "inline-flex items-center justify-center";
         anchor.appendChild(mountPoint);
-      }
-
-      let root = roots.get(iconId);
-      if (!root) {
         root = createRoot(mountPoint);
         roots.set(iconId, root);
       }
+
       root.render(createElement(IconPreview, { props }));
     });
 

@@ -54,7 +54,9 @@ if (typeof window !== "undefined") {
       msg.includes("The node to be removed is not a child") ||
       msg.includes("NotFoundError") ||
       msg.includes("synchronously unmount a root") ||
-      msg.includes("cannot finish unmounting the root until the current render has completed")
+      msg.includes("cannot finish unmounting the root until the current render has completed") ||
+      msg.includes("container that has already been passed to createRoot") ||
+      msg.includes("calling ReactDOMClient.createRoot()")
     );
   };
 
@@ -87,8 +89,10 @@ if (typeof window !== "undefined") {
   if (typeof console !== "undefined" && console.error) {
     const originalConsoleError = console.error;
     console.error = function (...args: unknown[]) {
-      const first = typeof args[0] === "string" ? args[0] : "";
-      if (isBenignDomError(first)) {
+      const fullMsg = args
+        .map((arg) => (typeof arg === "string" ? arg : (arg as any)?.message || ""))
+        .join(" ");
+      if (isBenignDomError(fullMsg)) {
         return;
       }
       originalConsoleError.apply(console, args);
