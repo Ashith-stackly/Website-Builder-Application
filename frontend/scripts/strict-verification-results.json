@@ -1,0 +1,443 @@
+{
+  "restaurant": {
+    "template": "restaurant",
+    "divider": {
+      "canvasDividerCheck": {
+        "canvasDividerPresent": true,
+        "count": 1,
+        "overlayId": "1788883104339",
+        "overlayTop": "280px",
+        "containerWidth": "238.6px",
+        "containerMaxWidth": "100%",
+        "lineBorderColor": "rgb(51, 51, 51)",
+        "lineBorderWidth": "4px",
+        "lineDisplayStyle": "block",
+        "lineVisibility": "visible"
+      },
+      "previewDividerCheck": {
+        "hasPreviewHtml": true,
+        "flowDividerPresent": true,
+        "fallbackDividerPresent": false,
+        "activeDividerPresent": true,
+        "linePresent": true,
+        "lineInlineStyle": "width: 100%; border-top: 4px solid rgb(51, 51, 51);",
+        "containerInlineStyle": "width: 50%; max-width: 100%; margin: 20px auto;",
+        "isNotHidden": true
+      },
+      "postUndoCanvasCheck": {
+        "count": 0
+      },
+      "postRedoCanvasCheck": {
+        "count": 1
+      },
+      "pass": true
+    },
+    "buttonClose": {
+      "buttonEditorState": {
+        "isButtonEditorMounted": true,
+        "hasBackButton": false,
+        "hasCloseXButton": false
+      },
+      "buttonReturnCheck": {
+        "action": ""
+      },
+      "postButtonCloseState": {
+        "hasTextBlockCanvas": true,
+        "buttonEditorClosed": true
+      },
+      "pass": true
+    },
+    "buttonText": {
+      "buttonTextTest": {
+        "targetBtnTag": "BUTTON",
+        "originalText": "Stackly Restaurant",
+        "textAfterEdit": "SPECIAL OFFER NOW",
+        "hasSpacesIntact": true,
+        "spaceKeyHandled": true
+      },
+      "undoButtonText": {
+        "clickedUndo": true
+      },
+      "pass": true
+    },
+    "pass": true
+  },
+  "portfolio": {
+    "template": "portfolio",
+    "divider": {
+      "canvasDividerCheck": {
+        "canvasDividerPresent": true,
+        "count": 1,
+        "overlayId": "1788883119549",
+        "overlayTop": "280px",
+        "containerWidth": "238.6px",
+        "containerMaxWidth": "100%",
+        "lineBorderColor": "rgb(51, 51, 51)",
+        "lineBorderWidth": "4px",
+        "lineDisplayStyle": "block",
+        "lineVisibility": "visible"
+      },
+      "previewDividerCheck": {
+        "hasPreviewHtml": true,
+        "flowDividerPresent": true,
+        "fallbackDividerPresent": false,
+        "activeDividerPresent": true,
+        "linePresent": true,
+        "lineInlineStyle": "width: 100%; border-top: 4px solid rgb(51, 51, 51);",
+        "containerInlineStyle": "width: 50%; max-width: 100%; margin: 20px auto;",
+        "isNotHidden": true
+      },
+      "postUndoCanvasCheck": {
+        "count": 0
+      },
+      "postRedoCanvasCheck": {
+        "count": 1
+      },
+      "pass": true
+    },
+    "buttonClose": {
+      "buttonEditorState": {
+        "isButtonEditorMounted": true,
+        "hasBackButton": false,
+        "hasCloseXButton": false
+      },
+      "buttonReturnCheck": {
+        "action": ""
+      },
+      "postButtonCloseState": {
+        "hasTextBlockCanvas": true,
+        "buttonEditorClosed": true
+      },
+      "pass": true
+    },
+    "buttonText": {
+      "buttonTextTest": {
+        "targetBtnTag": "BUTTON",
+        "originalText": "Home",
+        "textAfterEdit": "SPECIAL OFFER NOW",
+        "hasSpacesIntact": true,
+        "spaceKeyHandled": true
+      },
+      "undoButtonText": {
+        "clickedUndo": true
+      },
+      "pass": true
+    },
+    "pass": true
+  },
+  "construction": {
+    "template": "construction",
+    "divider": {
+      "canvasDividerCheck": {
+        "canvasDividerPresent": true,
+        "count": 1,
+        "overlayId": "1788883139498",
+        "overlayTop": "280px",
+        "containerWidth": "238.6px",
+        "containerMaxWidth": "100%",
+        "lineBorderColor": "rgb(51, 51, 51)",
+        "lineBorderWidth": "4px",
+        "lineDisplayStyle": "block",
+        "lineVisibility": "visible"
+      },
+      "previewDividerCheck": {
+        "hasPreviewHtml": true,
+        "flowDividerPresent": true,
+        "fallbackDividerPresent": false,
+        "activeDividerPresent": true,
+        "linePresent": true,
+        "lineInlineStyle": "width: 100%; border-top: 4px solid rgb(51, 51, 51);",
+        "containerInlineStyle": "width: 50%; max-width: 100%; margin: 20px auto;",
+        "isNotHidden": true
+      },
+      "postUndoCanvasCheck": {
+        "count": 0
+      },
+      "postRedoCanvasCheck": {
+        "count": 1
+      },
+      "pass": true
+    },
+    "buttonClose": {
+      "buttonEditorState": {
+        "isButtonEditorMounted": true,
+        "hasBackButton": false,
+        "hasCloseXButton": false
+      },
+      "buttonReturnCheck": {
+        "action": ""
+      },
+      "postButtonCloseState": {
+        "hasTextBlockCanvas": true,
+        "buttonEditorClosed": true
+      },
+      "pass": true
+    },
+    "buttonText": {
+      "buttonTextTest": {
+        "targetBtnTag": "BUTTON",
+        "originalText": "BuildNest",
+        "textAfterEdit": "SPECIAL OFFER NOW",
+        "hasSpacesIntact": true,
+        "spaceKeyHandled": true
+      },
+      "undoButtonText": {
+        "clickedUndo": true
+      },
+      "pass": true
+    },
+    "pass": true
+  },
+  "digital-marketing": {
+    "template": "digital-marketing",
+    "divider": {
+      "canvasDividerCheck": {
+        "canvasDividerPresent": true,
+        "count": 1,
+        "overlayId": "1788883164526",
+        "overlayTop": "280px",
+        "containerWidth": "238.6px",
+        "containerMaxWidth": "100%",
+        "lineBorderColor": "rgb(51, 51, 51)",
+        "lineBorderWidth": "4px",
+        "lineDisplayStyle": "block",
+        "lineVisibility": "visible"
+      },
+      "previewDividerCheck": {
+        "hasPreviewHtml": true,
+        "flowDividerPresent": true,
+        "fallbackDividerPresent": false,
+        "activeDividerPresent": true,
+        "linePresent": true,
+        "lineInlineStyle": "width: 100%; border-top: 4px solid rgb(51, 51, 51);",
+        "containerInlineStyle": "width: 50%; max-width: 100%; margin: 20px auto;",
+        "isNotHidden": true
+      },
+      "postUndoCanvasCheck": {
+        "count": 0
+      },
+      "postRedoCanvasCheck": {
+        "count": 1
+      },
+      "pass": true
+    },
+    "buttonClose": {
+      "buttonEditorState": {
+        "isButtonEditorMounted": false,
+        "hasBackButton": false,
+        "hasCloseXButton": false
+      },
+      "buttonReturnCheck": {
+        "action": ""
+      },
+      "postButtonCloseState": {
+        "hasTextBlockCanvas": true,
+        "buttonEditorClosed": true
+      },
+      "pass": true
+    },
+    "buttonText": {
+      "buttonTextTest": {
+        "targetBtnTag": "BUTTON",
+        "originalText": "Home",
+        "textAfterEdit": "SPECIAL OFFER NOW",
+        "hasSpacesIntact": true,
+        "spaceKeyHandled": true
+      },
+      "undoButtonText": {
+        "clickedUndo": true
+      },
+      "pass": true
+    },
+    "pass": true
+  },
+  "ecommerce": {
+    "template": "ecommerce",
+    "divider": {
+      "canvasDividerCheck": {
+        "canvasDividerPresent": true,
+        "count": 1,
+        "overlayId": "1788883180228",
+        "overlayTop": "280px",
+        "containerWidth": "239.8px",
+        "containerMaxWidth": "100%",
+        "lineBorderColor": "rgb(51, 51, 51)",
+        "lineBorderWidth": "4px",
+        "lineDisplayStyle": "block",
+        "lineVisibility": "visible"
+      },
+      "previewDividerCheck": {
+        "hasPreviewHtml": true,
+        "flowDividerPresent": true,
+        "fallbackDividerPresent": false,
+        "activeDividerPresent": true,
+        "linePresent": true,
+        "lineInlineStyle": "width: 100%; border-top: 4px solid rgb(51, 51, 51);",
+        "containerInlineStyle": "width: 50%; max-width: 100%; margin: 20px auto;",
+        "isNotHidden": true
+      },
+      "postUndoCanvasCheck": {
+        "count": 0
+      },
+      "postRedoCanvasCheck": {
+        "count": 1
+      },
+      "pass": true
+    },
+    "buttonClose": {
+      "buttonEditorState": {
+        "isButtonEditorMounted": true,
+        "hasBackButton": false,
+        "hasCloseXButton": false
+      },
+      "buttonReturnCheck": {
+        "action": ""
+      },
+      "postButtonCloseState": {
+        "hasTextBlockCanvas": true,
+        "buttonEditorClosed": true
+      },
+      "pass": true
+    },
+    "buttonText": {
+      "buttonTextTest": {
+        "targetBtnTag": "BUTTON",
+        "originalText": "CartEmpty",
+        "textAfterEdit": "SPECIAL OFFER NOW",
+        "hasSpacesIntact": true,
+        "spaceKeyHandled": true
+      },
+      "undoButtonText": {
+        "clickedUndo": true
+      },
+      "pass": true
+    },
+    "pass": true
+  },
+  "blog": {
+    "template": "blog",
+    "divider": {
+      "canvasDividerCheck": {
+        "canvasDividerPresent": true,
+        "count": 1,
+        "overlayId": "1788883196796",
+        "overlayTop": "280px",
+        "containerWidth": "238.6px",
+        "containerMaxWidth": "100%",
+        "lineBorderColor": "rgb(51, 51, 51)",
+        "lineBorderWidth": "4px",
+        "lineDisplayStyle": "block",
+        "lineVisibility": "visible"
+      },
+      "previewDividerCheck": {
+        "hasPreviewHtml": true,
+        "flowDividerPresent": true,
+        "fallbackDividerPresent": false,
+        "activeDividerPresent": true,
+        "linePresent": true,
+        "lineInlineStyle": "width: 100%; border-top: 4px solid rgb(51, 51, 51);",
+        "containerInlineStyle": "width: 50%; max-width: 100%; margin: 20px auto;",
+        "isNotHidden": true
+      },
+      "postUndoCanvasCheck": {
+        "count": 0
+      },
+      "postRedoCanvasCheck": {
+        "count": 1
+      },
+      "pass": true
+    },
+    "buttonClose": {
+      "buttonEditorState": {
+        "isButtonEditorMounted": false,
+        "hasBackButton": false,
+        "hasCloseXButton": false
+      },
+      "buttonReturnCheck": {
+        "action": ""
+      },
+      "postButtonCloseState": {
+        "hasTextBlockCanvas": true,
+        "buttonEditorClosed": true
+      },
+      "pass": true
+    },
+    "buttonText": {
+      "buttonTextTest": {
+        "targetBtnTag": "BUTTON",
+        "originalText": "Blogify",
+        "textAfterEdit": "SPECIAL OFFER NOW",
+        "hasSpacesIntact": true,
+        "spaceKeyHandled": true
+      },
+      "undoButtonText": {
+        "clickedUndo": true
+      },
+      "pass": true
+    },
+    "pass": true
+  },
+  "business": {
+    "template": "business",
+    "divider": {
+      "canvasDividerCheck": {
+        "canvasDividerPresent": true,
+        "count": 1,
+        "overlayId": "1788883211999",
+        "overlayTop": "280px",
+        "containerWidth": "238.6px",
+        "containerMaxWidth": "100%",
+        "lineBorderColor": "rgb(51, 51, 51)",
+        "lineBorderWidth": "4px",
+        "lineDisplayStyle": "block",
+        "lineVisibility": "visible"
+      },
+      "previewDividerCheck": {
+        "hasPreviewHtml": true,
+        "flowDividerPresent": true,
+        "fallbackDividerPresent": false,
+        "activeDividerPresent": true,
+        "linePresent": true,
+        "lineInlineStyle": "width: 100%; border-top: 4px solid rgb(51, 51, 51);",
+        "containerInlineStyle": "width: 50%; max-width: 100%; margin: 20px auto;",
+        "isNotHidden": true
+      },
+      "postUndoCanvasCheck": {
+        "count": 0
+      },
+      "postRedoCanvasCheck": {
+        "count": 1
+      },
+      "pass": true
+    },
+    "buttonClose": {
+      "buttonEditorState": {
+        "isButtonEditorMounted": false,
+        "hasBackButton": false,
+        "hasCloseXButton": false
+      },
+      "buttonReturnCheck": {
+        "action": ""
+      },
+      "postButtonCloseState": {
+        "hasTextBlockCanvas": true,
+        "buttonEditorClosed": true
+      },
+      "pass": true
+    },
+    "buttonText": {
+      "buttonTextTest": {
+        "targetBtnTag": "BUTTON",
+        "originalText": "Home",
+        "textAfterEdit": "SPECIAL OFFER NOW",
+        "hasSpacesIntact": true,
+        "spaceKeyHandled": true
+      },
+      "undoButtonText": {
+        "clickedUndo": true
+      },
+      "pass": true
+    },
+    "pass": true
+  }
+}

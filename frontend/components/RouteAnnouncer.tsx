@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/reactDomPatch";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 

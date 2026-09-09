@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Copy, Trash2, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Copy, Trash2, Check, AlertTriangle, Loader2 } from "lucide-react";
 import DividerPreview from "./DividerPreview";
 import type { DraftSaveStatus } from "../BlockPagesClient";
 import MyWebsiteDropdown from "../MyWebsiteDropdown";
@@ -21,7 +21,8 @@ interface CanvasProps {
   onUndo?: () => void;
   onRedo?: () => void;
   onOpenMobileSidebar?: () => void;
-  onApplyDivider?: () => void;
+  onClose?: () => void;
+  onApplyDivider?: (props: DividerBlockProps) => void;
   onSaveDraft?: () => void;
   onPreview?: () => void;
   saveStatus?: DraftSaveStatus;
@@ -45,6 +46,7 @@ export default function Canvas({
   onUndo,
   onRedo,
   onOpenMobileSidebar,
+  onClose,
   onApplyDivider,
   onSaveDraft,
   onPreview,
@@ -53,7 +55,7 @@ export default function Canvas({
   const handleApply = (e: React.MouseEvent, block: DividerBlockData) => {
     e.stopPropagation();
     localStorage.setItem("stackly-custom-divider", JSON.stringify(block.props));
-    onApplyDivider?.();
+    onApplyDivider?.(block.props);
   };
  
   const handleSelectVariant = (block: DividerBlockData, variant: DividerVariant) => {
@@ -74,7 +76,19 @@ export default function Canvas({
         className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <MyWebsiteDropdown />
+        <div className="flex items-center gap-3">
+          <MyWebsiteDropdown />
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition hover:bg-gray-50 cursor-pointer"
+              title="Back to Editor"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Editor</span>
+            </button>
+          )}
+        </div>
  
         <button
           className="xl:hidden ml-auto mr-2 flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#0f3b89] px-3 py-2 text-[13px] font-bold text-white shadow-sm hover:bg-[#0c2e6b]"

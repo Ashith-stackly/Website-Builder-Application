@@ -63,15 +63,15 @@ export function getCustomButtonStyle(buttonId: string, customButtons: Record<str
 
   let className = defaultClassName;
   if (bg) {
-    className = className.replace(/bg-gradient-to-r\s+from-\[[^\]]+\]\s+to-\[[^\]]+\]/, "");
-    className = className.replace(/bg-\[[^\]]+\]/, "");
-    className = className.replace(/\bbg-\S+/, "");
+    className = className.replace(/bg-gradient-to-r\s+from-\[[^\]]+\]\s+to-\[[^\]]+\]/g, "");
+    className = className.replace(/bg-\[[^\]]+\]/g, "");
+    className = className.replace(/\bbg-\S+/g, "");
   }
   if (textColor) {
-    className = className.replace(/\btext-\[\S+\]/, "");
+    className = className.replace(/\btext-\[[^\]]+\]/g, "");
   }
   if (borderColor) {
-    className = className.replace(/\bborder-\[\S+\]/, "");
+    className = className.replace(/\bborder-\[[^\]]+\]/g, "");
   }
 
   return { className: className.trim(), style };
@@ -93,8 +93,21 @@ export function applyCustomButtonStyle(element: HTMLElement, buttonId: string, c
       }
       const defaultLabel = element.getAttribute("data-blockpages-default-label");
       if (defaultLabel !== null) {
-        const textNode = element.querySelector("span, p") || element;
-        if (textNode) textNode.textContent = defaultLabel;
+        const textSpan = element.querySelector("span, p");
+        if (textSpan) {
+          if (textSpan.textContent !== defaultLabel) {
+            textSpan.textContent = defaultLabel;
+          }
+        } else {
+          const textChild = Array.from(element.childNodes).find((n) => n.nodeType === Node.TEXT_NODE);
+          if (textChild) {
+            if (textChild.textContent !== defaultLabel) {
+              textChild.textContent = defaultLabel;
+            }
+          } else if (!element.querySelector("svg")) {
+            element.textContent = defaultLabel;
+          }
+        }
         element.removeAttribute("title");
         element.removeAttribute("aria-label");
       }
@@ -104,12 +117,25 @@ export function applyCustomButtonStyle(element: HTMLElement, buttonId: string, c
       }
       const svg = element.querySelector("svg");
       if (svg) {
+        svg.style.color = "";
         svg.style.stroke = "";
-        const strokeElements = svg.querySelectorAll("path, rect, circle, line");
-        strokeElements.forEach((el) => {
-          (el as SVGElement).style.stroke = "";
+        svg.style.fill = "";
+        const childElements = svg.querySelectorAll("path, rect, circle, line, polygon");
+        childElements.forEach((el) => {
+          const p = el as SVGElement;
+          p.style.stroke = "";
+          p.style.fill = "";
         });
       }
+      element.removeAttribute("contenteditable");
+      element.removeAttribute("data-blockpages-text-id");
+      element.removeAttribute("data-blockpages-default-text");
+      const textDescendants = element.querySelectorAll("[data-blockpages-text-id], [contenteditable], [data-blockpages-default-text]");
+      textDescendants.forEach((child) => {
+        child.removeAttribute("contenteditable");
+        child.removeAttribute("data-blockpages-text-id");
+        child.removeAttribute("data-blockpages-default-text");
+      });
       element.removeAttribute("data-blockpages-customized-button");
     }
     return;
@@ -123,12 +149,26 @@ export function applyCustomButtonStyle(element: HTMLElement, buttonId: string, c
     element.setAttribute("data-blockpages-default-class", element.className);
   }
   if (!element.hasAttribute("data-blockpages-default-label")) {
-    const textNode = element.querySelector("span, p") || element;
-    element.setAttribute("data-blockpages-default-label", textNode.textContent || "");
+    const textSpan = element.querySelector("span, p");
+    if (textSpan) {
+      element.setAttribute("data-blockpages-default-label", (textSpan.textContent || "").trim());
+    } else {
+      const textChild = Array.from(element.childNodes).find((n) => n.nodeType === Node.TEXT_NODE);
+      element.setAttribute("data-blockpages-default-label", (textChild?.textContent || "").trim());
+    }
   }
   if (element instanceof HTMLAnchorElement && !element.hasAttribute("data-blockpages-default-href")) {
     element.setAttribute("data-blockpages-default-href", element.getAttribute("href") || "");
   }
+  element.removeAttribute("contenteditable");
+  element.removeAttribute("data-blockpages-text-id");
+  element.removeAttribute("data-blockpages-default-text");
+  const textDescendants = element.querySelectorAll("[data-blockpages-text-id], [contenteditable], [data-blockpages-default-text]");
+  textDescendants.forEach((child) => {
+    child.removeAttribute("contenteditable");
+    child.removeAttribute("data-blockpages-text-id");
+    child.removeAttribute("data-blockpages-default-text");
+  });
   element.setAttribute("data-blockpages-customized-button", "true");
 
   const baseClass = element.getAttribute("data-blockpages-default-class") || element.className;
@@ -141,34 +181,48 @@ export function applyCustomButtonStyle(element: HTMLElement, buttonId: string, c
   const svg = element.querySelector("svg");
   const iconColor = (props.color as string) || (props.textColor as string);
   if (svg && iconColor) {
+    svg.style.color = iconColor;
     if (svg.getAttribute("stroke") && svg.getAttribute("stroke") !== "none") {
       svg.style.stroke = iconColor;
     }
-    const strokeElements = svg.querySelectorAll("path, rect, circle, line");
-    strokeElements.forEach((el) => {
+    if (svg.getAttribute("fill") && svg.getAttribute("fill") !== "none") {
+      svg.style.fill = iconColor;
+    }
+    const childElements = svg.querySelectorAll("path, rect, circle, line, polygon");
+    childElements.forEach((el) => {
       const p = el as SVGElement;
-      if (p.getAttribute("stroke") && p.getAttribute("stroke") !== "none") {
+      const strokeAttr = p.getAttribute("stroke");
+      if (strokeAttr && strokeAttr !== "none") {
         p.style.stroke = iconColor;
+      }
+      const fillAttr = p.getAttribute("fill");
+      if (fillAttr && fillAttr !== "none") {
+        p.style.fill = iconColor;
       }
     });
   }
 
-  // Apply custom label/text ONLY if not an icon-only button (which contains an SVG and no text nodes)
-  const isIconOnly = Boolean(
-    svg &&
-    !element.querySelector("span, p") &&
-    !Array.from(element.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && Boolean(n.textContent?.trim()))
-  );
-
+  // Apply custom label/text ONLY without deleting existing child elements (e.g. SVG)
   const customLabel = (props.label as string) || (props.text as string) || (props.content as string);
   if (customLabel) {
-    if (isIconOnly) {
-      element.setAttribute("title", customLabel);
-      element.setAttribute("aria-label", customLabel);
+    const textSpan = element.querySelector("span, p");
+    if (textSpan) {
+      if (textSpan.textContent !== customLabel) {
+        textSpan.textContent = customLabel;
+      }
     } else {
-      const textNode = element.querySelector("span, p") || element;
-      if (textNode && textNode.textContent !== customLabel) {
-        textNode.textContent = customLabel;
+      const textChild = Array.from(element.childNodes).find(
+        (n) => n.nodeType === Node.TEXT_NODE && Boolean(n.textContent?.trim())
+      );
+      if (textChild) {
+        if (textChild.textContent !== customLabel) {
+          textChild.textContent = customLabel;
+        }
+      } else if (!element.querySelector("svg")) {
+        element.textContent = customLabel;
+      } else {
+        element.setAttribute("title", customLabel);
+        element.setAttribute("aria-label", customLabel);
       }
     }
   }

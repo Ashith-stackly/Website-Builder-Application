@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, Mic, Type, Image as ImageIcon, MousePointer2,
   Video, Minus, AppWindow, Columns, Heading,
@@ -43,6 +43,8 @@ type LeftSidebarProps = {
   onUpdateTextSection?: (props: Record<string, string | boolean>) => void;
   textBlockState?: TextBlockState;
   onUpdateTextBlockState?: (state: TextBlockState) => void;
+  /** Live preview state change — updates canvas without pushing history. */
+  onLiveTextBlockState?: (state: TextBlockState) => void;
   textTemplate?: TextTemplateType;
 };
 const styleColors = [
@@ -85,6 +87,55 @@ const blockCategories = [
   }
 ];
 
+function SidebarColorPicker({
+  value,
+  onLiveChange,
+  onCommit,
+}: {
+  value: string;
+  onLiveChange: (color: string) => void;
+  onCommit: (color: string) => void;
+}) {
+  const safeColor = /^#[0-9A-Fa-f]{6}$/.test(value) ? value : "#ffffff";
+  const ref = useRef<HTMLInputElement>(null);
+  const onLiveChangeRef = useRef(onLiveChange);
+  const onCommitRef = useRef(onCommit);
+  onLiveChangeRef.current = onLiveChange;
+  onCommitRef.current = onCommit;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handleInput = (e: Event) => {
+      onLiveChangeRef.current((e.target as HTMLInputElement).value);
+    };
+    const handleChange = (e: Event) => {
+      onCommitRef.current((e.target as HTMLInputElement).value);
+    };
+    el.addEventListener("input", handleInput);
+    el.addEventListener("change", handleChange);
+    return () => {
+      el.removeEventListener("input", handleInput);
+      el.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (ref.current && ref.current.value !== safeColor) {
+      ref.current.value = safeColor;
+    }
+  }, [safeColor]);
+
+  return (
+    <input
+      ref={ref}
+      type="color"
+      defaultValue={safeColor}
+      className="h-10 w-10 cursor-pointer border-0 bg-transparent p-0"
+    />
+  );
+}
+
 export default function LeftSidebar({
   activeBlockPage = 'text',
   onSelectBlockPage,
@@ -104,6 +155,7 @@ export default function LeftSidebar({
   onUpdateTextSection,
   textBlockState,
   onUpdateTextBlockState,
+  onLiveTextBlockState,
   textTemplate = "portfolio",
 }: LeftSidebarProps) {
   const templateSections = getBlockpagesTemplateSections(textTemplate);
@@ -805,21 +857,31 @@ export default function LeftSidebar({
 
                       <h4 className="mb-2 text-[14px] font-bold text-white">Background Color</h4>
                       <div className="flex items-center gap-2 mb-4">
-                        <input
-                          type="color"
+                        <SidebarColorPicker
                           value={textBlockState.sectionStyles?.[activeSectionId]?.backgroundColor || "#ffffff"}
-                          onChange={(e) => {
+                          onLiveChange={(color) => {
                             const currentId = activeSectionId;
                             const currentStyles = textBlockState.sectionStyles || {};
-                            onUpdateTextBlockState({
+                            const liveHandler = onLiveTextBlockState ?? onUpdateTextBlockState;
+                            liveHandler?.({
                               ...textBlockState,
                               sectionStyles: {
                                 ...currentStyles,
-                                [currentId]: { ...(currentStyles[currentId] || {}), backgroundColor: e.target.value }
+                                [currentId]: { ...(currentStyles[currentId] || {}), backgroundColor: color }
                               }
                             });
                           }}
-                          className="h-10 w-10 cursor-pointer border-0 bg-transparent p-0"
+                          onCommit={(color) => {
+                            const currentId = activeSectionId;
+                            const currentStyles = textBlockState.sectionStyles || {};
+                            onUpdateTextBlockState?.({
+                              ...textBlockState,
+                              sectionStyles: {
+                                ...currentStyles,
+                                [currentId]: { ...(currentStyles[currentId] || {}), backgroundColor: color }
+                              }
+                            });
+                          }}
                         />
                         <span className="font-mono text-xs text-[#8495A5]">{textBlockState.sectionStyles?.[activeSectionId]?.backgroundColor || "#ffffff"}</span>
                       </div>
@@ -832,7 +894,19 @@ export default function LeftSidebar({
                         onChange={(e) => {
                           const currentId = activeSectionId;
                           const currentStyles = textBlockState.sectionStyles || {};
-                          onUpdateTextBlockState({
+                          const liveHandler = onLiveTextBlockState ?? onUpdateTextBlockState;
+                          liveHandler?.({
+                            ...textBlockState,
+                            sectionStyles: {
+                              ...currentStyles,
+                              [currentId]: { ...(currentStyles[currentId] || {}), gradientBackground: e.target.value }
+                            }
+                          });
+                        }}
+                        onBlur={(e) => {
+                          const currentId = activeSectionId;
+                          const currentStyles = textBlockState.sectionStyles || {};
+                          onUpdateTextBlockState?.({
                             ...textBlockState,
                             sectionStyles: {
                               ...currentStyles,

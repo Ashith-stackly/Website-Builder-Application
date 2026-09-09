@@ -1,11 +1,11 @@
 const WebSocket = globalThis.WebSocket;
 
-async function checkButtons() {
+async function diagnose() {
   const versionRes = await fetch("http://localhost:9222/json/list");
   const pages = await versionRes.json();
   const page = pages.find((p) => p.type === "page" && p.url.includes("blockpages"));
   if (!page) {
-    console.error("No blockpages target found!");
+    console.error("No blockpages page found on port 9222!");
     return;
   }
 
@@ -48,7 +48,37 @@ async function checkButtons() {
   await send("Page.navigate", { url: "http://localhost:3000/blockpages/?template=ecommerce" });
   await new Promise((r) => setTimeout(r, 2500));
 
-  // Switch to Button editing mode
+  // 1. Audit ALL buttons in DOM
+  const domAudit = await evaluate(() => {
+    const canvas = document.querySelector("[data-textblock-canvas]") || document.body;
+    const elements = Array.from(canvas.querySelectorAll("button, a"));
+    return elements.map((el, i) => {
+      const section = el.closest("section[id], [data-blockpages-section-id], article, footer, [id]");
+      const sectionId = section?.getAttribute("data-blockpages-section-id") || section?.id || section?.tagName.toLowerCase();
+      const productCard = el.closest(".buyscreen-product-card, article");
+      const productName = productCard?.querySelector("p.uppercase, [class*='product-meta'] p")?.textContent?.trim();
+      return {
+        index: i,
+        tagName: el.tagName,
+        text: el.textContent?.trim().slice(0, 30),
+        ariaLabel: el.getAttribute("aria-label"),
+        title: el.getAttribute("title"),
+        existingButtonId: el.getAttribute("data-blockpages-button-id"),
+        sectionId,
+        productName,
+        className: el.className.slice(0, 50),
+        offsetParent: !!el.offsetParent,
+        offsetWidth: el.offsetWidth,
+        offsetHeight: el.offsetHeight,
+      };
+    });
+  });
+
+  console.log("=== ALL BUTTONS AUDIT IN ECOMMERCE CANVAS ===");
+  console.table(domAudit);
+
+  // 2. Switch to Button editing mode
+  console.log("\nSwitching to Button editing mode...");
   await evaluate(() => {
     const spans = Array.from(document.querySelectorAll("span"));
     const btnSpan = spans.find((s) => s.textContent?.trim() === "Button");
@@ -56,50 +86,19 @@ async function checkButtons() {
   });
   await new Promise((r) => setTimeout(r, 1500));
 
-  const details = await evaluate(() => {
-    const container = document.querySelector("[data-textblock-canvas]");
-    if (!container) return { error: "No container" };
-
+  // 3. Inspect Overlays Generated
+  const overlays = await evaluate(() => {
     const pens = Array.from(document.querySelectorAll('[data-blockpages-overlay-kind="button"]'));
-    const penMap = new Map();
-    pens.forEach((p) => {
-      const id = p.getAttribute("data-blockpages-overlay-btn");
-      const top = p.style.top;
-      const left = p.style.left;
-      penMap.set(id, { top, left, title: p.getAttribute("title"), aria: p.getAttribute("aria-label") });
+    return pens.map((pen) => {
+      const id = pen.getAttribute("data-blockpages-overlay-id");
+      const style = pen.getAttribute("style");
+      return { id, style };
     });
-
-    const allButtons = Array.from(container.querySelectorAll("button, a"));
-    return allButtons.map((el, index) => {
-      const id = el.getAttribute("data-blockpages-button-id");
-      const rect = el.getBoundingClientRect();
-      const isVisible = el.offsetParent !== null && rect.width > 0 && rect.height > 0;
-      const section = el.closest("section[id], [data-blockpages-section-id], article, footer, [id]");
-      const sectionId = section?.getAttribute("data-blockpages-section-id") || section?.id || section?.tagName.toLowerCase();
-      const productCard = el.closest(".buyscreen-product-card, article");
-      const productName = productCard?.querySelector("p.uppercase, [class*='product-meta'] p")?.textContent?.trim();
-      const hasPen = penMap.has(id);
-      const pen = penMap.get(id);
-
-      return {
-        index,
-        tagName: el.tagName,
-        id,
-        text: el.textContent?.trim().slice(0, 25) || el.getAttribute("aria-label") || el.getAttribute("title"),
-        aria: el.getAttribute("aria-label"),
-        productName,
-        sectionId,
-        isVisible,
-        hasPen,
-        penPos: pen ? `${pen.top}, ${pen.left}` : null,
-      };
-    }).filter(b => b.id || b.hasPen || b.isVisible);
   });
-
-  console.log("=== BUTTONS WITH ID / PEN IN E-COMMERCE ===");
-  console.table(details);
+  console.log("\n=== GENERATED BUTTON OVERLAYS ===");
+  console.table(overlays);
 
   ws.close();
 }
 
-checkButtons().catch(console.error);
+diagnose().catch(console.error);

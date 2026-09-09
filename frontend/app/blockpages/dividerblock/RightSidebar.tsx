@@ -29,8 +29,9 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
     <aside className="relative flex h-full w-full xl:w-[210px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-[#f4d8cc] bg-[#fff7f4] shadow-[0_18px_45px_rgba(113,63,18,0.10)]">
       {onClose && (
         <button
-          className="xl:hidden absolute top-4 right-4 p-1.5 bg-white hover:bg-gray-50 rounded-md text-gray-600 shadow-sm z-10 border border-gray-200"
+          className="absolute top-4 right-4 p-1.5 bg-white hover:bg-gray-50 rounded-md text-gray-600 shadow-sm z-10 border border-gray-200 transition-all duration-300 hover:rotate-90 hover:scale-110 cursor-pointer"
           onClick={onClose}
+          title="Close Divider Editor"
         >
           <X className="w-4 h-4" />
         </button>

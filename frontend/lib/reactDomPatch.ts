@@ -46,15 +46,39 @@ if (typeof window !== "undefined") {
     };
   }
 
+  const isBenignDomError = (msg: unknown): boolean => {
+    if (typeof msg !== "string") return false;
+    return (
+      msg.includes("removeChild") ||
+      msg.includes("insertBefore") ||
+      msg.includes("The node to be removed is not a child") ||
+      msg.includes("NotFoundError")
+    );
+  };
+
   // Prevent benign React DOM unmount errors from triggering development overlays
-  window.addEventListener("error", (event) => {
-    const msg = event?.message || event?.error?.message;
-    if (
-      typeof msg === "string" &&
-      (msg.includes("removeChild") || msg.includes("insertBefore"))
-    ) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
-  });
+  window.addEventListener(
+    "error",
+    (event) => {
+      const msg = event?.message || event?.error?.message;
+      if (isBenignDomError(msg)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    },
+    true
+  );
+
+  window.addEventListener(
+    "unhandledrejection",
+    (event) => {
+      const reason = event?.reason;
+      const msg = reason?.message || (typeof reason === "string" ? reason : "");
+      if (isBenignDomError(msg)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    },
+    true
+  );
 }

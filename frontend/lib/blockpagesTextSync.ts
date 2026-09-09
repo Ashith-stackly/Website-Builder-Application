@@ -49,6 +49,8 @@ export function syncCanvasTexts(
   const walk = (node: Element) => {
     if (node.closest("[data-builder-chrome='true']")) return;
     if (node.closest('[data-blockpages-interactive="true"], .buyscreen-search, input, textarea, select')) return;
+    if (node.closest("[data-blockpages-button-id]")) return;
+    if (node.tagName.toLowerCase() === "svg" || node.closest("svg")) return;
 
     if (
       node instanceof HTMLElement &&
@@ -59,6 +61,10 @@ export function syncCanvasTexts(
         node.classList.contains("buyscreen-all-categories-item"))
     ) {
       const htmlNode = node as HTMLElement;
+      if (htmlNode.querySelector("svg")) {
+        Array.from(node.children).forEach(walk);
+        return;
+      }
       const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-nav-${counter++}`;
       htmlNode.setAttribute("data-blockpages-text-id", textId);
 
@@ -90,6 +96,10 @@ export function syncCanvasTexts(
 
     if (TEXT_TAGS.has(node.tagName)) {
       const htmlNode = node as HTMLElement;
+      if (htmlNode.querySelector("svg")) {
+        Array.from(node.children).forEach(walk);
+        return;
+      }
       const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-${node.tagName.toLowerCase()}-${counter++}`;
       htmlNode.setAttribute("data-blockpages-text-id", textId);
 

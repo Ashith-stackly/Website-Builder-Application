@@ -101,7 +101,11 @@ type BlockpagesCanvasEnhancerProps = {
     scale?: number;
   }[];
   onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: BlockpagesOverlayPosition) => void;
+  onUpdateDividerPosition?: (
+    id: string,
+    position: BlockpagesOverlayPosition,
+    options?: { pushHistory?: boolean }
+  ) => void;
   onUpdateDividerScale?: (id: string, scale: number) => void;
   appliedIcons?: { id: string; props: IconBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[];
   onRemoveIcon?: (id: string) => void;
@@ -250,27 +254,72 @@ function resolveStableButtonId(
     element.getAttribute("data-button-id");
   if (explicit) return explicit;
 
-  // Derive stable identity from parent section/article + control role or label
-  const section = element.closest("section[id], [data-blockpages-section-id], article, footer, [id]");
-  const sectionId =
-    section?.getAttribute("data-blockpages-section-id") ||
-    section?.id ||
-    section?.tagName.toLowerCase() ||
-    "sec";
+  // 1. Derive stable identity from parent section/header/footer
+  const section = element.closest(
+    "section[id], [data-blockpages-section-id], header, footer, [id*='section' i], [id*='hero' i], [id*='about' i], [id*='product' i], [id*='service' i], [id*='blog' i], [id*='contact' i], [id*='faq' i], [id*='team' i], [id*='pricing' i], [id*='testimonial' i]"
+  ) || element.closest("section, article, footer, header, main, div[id]");
 
-  const label = (
-    element.getAttribute("aria-label") ||
-    element.getAttribute("title") ||
-    element.textContent ||
-    ""
-  )
+  let sectionId =
+    section?.getAttribute("data-blockpages-section-id") ||
+    section?.id;
+
+  if (!sectionId && section) {
+    const tag = section.tagName.toLowerCase();
+    const container = section.closest("[data-blockpages-template-root]") || section.ownerDocument.body;
+    const siblings = Array.from(container.querySelectorAll(tag));
+    const sIdx = siblings.indexOf(section);
+    sectionId = sIdx >= 0 ? `${tag}-${sIdx + 1}` : tag;
+  }
+  if (!sectionId) sectionId = "sec";
+  sectionId = sectionId.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
+
+  // 2. Derive card/product/item context if within a repeating card or article
+  const card = element.closest(
+    ".buyscreen-product-card, article, [data-product-id], .card, [class*='product-card'], [class*='blog-card'], [class*='item-card'], [class*='menu-item']"
+  );
+  let cardId = "";
+  if (card && card !== section) {
+    const explicitCardId = card.getAttribute("data-product-id") || card.getAttribute("id");
+    if (explicitCardId) {
+      cardId = explicitCardId.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    } else {
+      const cardTitle = card.querySelector(
+        "h1, h2, h3, h4, h5, .buyscreen-product-meta p, p.uppercase, p.font-bold, p.font-semibold"
+      )?.textContent?.trim();
+      if (cardTitle) {
+        cardId = cardTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 24);
+      } else {
+        const cardSiblings = Array.from(card.parentElement?.children || []).filter(c => c.tagName === card.tagName);
+        const cIdx = cardSiblings.indexOf(card);
+        cardId = cIdx >= 0 ? `item-${cIdx + 1}` : "";
+      }
+    }
+  }
+  if (cardId) {
+    cardId = cardId.replace(/^-+|-+$/g, "");
+  }
+
+  // 3. Derive role or label
+  const aria = element.getAttribute("aria-label") || element.getAttribute("title");
+  let label = (aria || element.textContent || "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 32) || "btn";
+    .slice(0, 32);
 
-  let baseId = `btn-${templateName}-${sectionId}-${label}`;
+  const className = (element.className || "").toLowerCase();
+  if (!label || label === "btn") {
+    if (className.includes("cart") || aria?.toLowerCase().includes("cart")) label = "cart";
+    else if (className.includes("wishlist") || className.includes("heart") || className.includes("favorite") || aria?.toLowerCase().includes("wishlist")) label = "wishlist";
+    else if (className.includes("share") || aria?.toLowerCase().includes("share")) label = "share";
+    else if (className.includes("buynow") || className.includes("buy-now") || aria?.toLowerCase().includes("buy")) label = "buynow";
+    else label = "btn";
+  }
+
+  let baseId = `btn-${templateName}-${sectionId}`;
+  if (cardId) baseId += `-${cardId}`;
+  baseId += `-${label}`;
 
   if (seenCounts) {
     const count = seenCounts.get(baseId) ?? 0;
@@ -303,6 +352,7 @@ function isEditableButton(element: HTMLElement) {
     element.hasAttribute("data-button-id");
   const isActionBtn =
     className.includes("buyscreen-action-btn") ||
+    className.includes("buyscreen-buynow-btn") ||
     hasExplicitId;
 
   // Functional navigation / utility controls that should never be edited as content buttons:
@@ -502,13 +552,17 @@ function BlockpagesCanvasEnhancer({
               overlay.dataset.blockpagesDividerInsertMode = placement.insertMode ?? "after";
               overlay.dataset.blockpagesDividerSectionId = placement.sectionId;
             }
-            onUpdateDividerPosition?.(divider.id, {
-              top: divider.position?.top ?? placement.top ?? anchorY,
-              left: divider.position?.left ?? placement.left ?? 16,
-              anchorPath: placement.anchorPath,
-              insertMode: placement.insertMode,
-              sectionId: placement.sectionId,
-            });
+            onUpdateDividerPosition?.(
+              divider.id,
+              {
+                top: divider.position?.top ?? placement.top ?? anchorY,
+                left: divider.position?.left ?? placement.left ?? 16,
+                anchorPath: placement.anchorPath,
+                insertMode: placement.insertMode,
+                sectionId: placement.sectionId,
+              },
+              { pushHistory: false }
+            );
           }
         }
 
@@ -528,13 +582,17 @@ function BlockpagesCanvasEnhancer({
         overlay.dataset.blockpagesDividerInsertMode = resolved.mode;
         overlay.dataset.blockpagesDividerSectionId = resolved.sectionId;
 
-        onUpdateDividerPosition?.(divider.id, {
-          top: divider.position?.top ?? resolved.top ?? 0,
-          left: divider.position?.left ?? resolved.left ?? 16,
-          anchorPath: resolved.path,
-          insertMode: resolved.mode,
-          sectionId: resolved.sectionId,
-        });
+        onUpdateDividerPosition?.(
+          divider.id,
+          {
+            top: divider.position?.top ?? resolved.top ?? 0,
+            left: divider.position?.left ?? resolved.left ?? 16,
+            anchorPath: resolved.path,
+            insertMode: resolved.mode,
+            sectionId: resolved.sectionId,
+          },
+          { pushHistory: false }
+        );
 
         if (pendingDividerScrollId === divider.id) {
           requestAnimationFrame(() => {
@@ -625,9 +683,10 @@ function BlockpagesCanvasEnhancer({
       );
 
       const seenOverlayButtonIds = new Set<string>();
+      const buttonCounts = new Map<string, number>();
 
       buttonElements.forEach((element) => {
-        const buttonId = resolveStableButtonId(element, template);
+        const buttonId = resolveStableButtonId(element, template, buttonCounts);
 
         if (editingButtonId && buttonId !== editingButtonId) return;
 
@@ -1204,13 +1263,17 @@ function BlockpagesCanvasEnhancer({
           overlay.dataset.blockpagesDividerAnchorPath = JSON.stringify(resolved.path);
           overlay.dataset.blockpagesDividerInsertMode = resolved.mode;
           overlay.dataset.blockpagesDividerSectionId = resolved.sectionId;
-          onUpdateDividerPosition?.(overlayId, {
-            top: nextPosition.top ?? resolved.top ?? 0,
-            left: nextPosition.left ?? resolved.left ?? 16,
-            anchorPath: resolved.path,
-            insertMode: resolved.mode,
-            sectionId: resolved.sectionId,
-          });
+          onUpdateDividerPosition?.(
+            overlayId,
+            {
+              top: nextPosition.top ?? resolved.top ?? 0,
+              left: nextPosition.left ?? resolved.left ?? 16,
+              anchorPath: resolved.path,
+              insertMode: resolved.mode,
+              sectionId: resolved.sectionId,
+            },
+            { pushHistory: true }
+          );
           return;
         }
 
@@ -1224,20 +1287,28 @@ function BlockpagesCanvasEnhancer({
         if (fallbackSectionId) {
           overlay.dataset.blockpagesDividerSectionId = fallbackSectionId;
           overlay.dataset.blockpagesDividerInsertMode = "after";
-          onUpdateDividerPosition?.(overlayId, {
-            top: nextPosition.top ?? 0,
-            left: nextPosition.left ?? 16,
-            insertMode: "after",
-            sectionId: fallbackSectionId,
-          });
+          onUpdateDividerPosition?.(
+            overlayId,
+            {
+              top: nextPosition.top ?? 0,
+              left: nextPosition.left ?? 16,
+              insertMode: "after",
+              sectionId: fallbackSectionId,
+            },
+            { pushHistory: true }
+          );
           return;
         }
       }
 
-      onUpdateDividerPosition?.(overlayId, {
-        top: nextPosition.top ?? 0,
-        left: nextPosition.left ?? 0,
-      });
+      onUpdateDividerPosition?.(
+        overlayId,
+        {
+          top: nextPosition.top ?? 0,
+          left: nextPosition.left ?? 0,
+        },
+        { pushHistory: true }
+      );
     },
     [onUpdateDividerPosition]
   );

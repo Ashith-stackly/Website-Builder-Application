@@ -279,7 +279,17 @@ export function sanitizeBlockpagesPreviewClone(root: HTMLElement) {
       "group"
     );
   });
-  root.querySelectorAll('[data-blockpages-overlay-kind="divider"]').forEach((overlay) => overlay.remove());
+  const flowDividerIds = new Set(
+    Array.from(root.querySelectorAll<HTMLElement>('[data-blockpages-preview-divider="true"]'))
+      .map((el) => el.dataset.blockpagesOverlayId)
+      .filter(Boolean)
+  );
+  root.querySelectorAll<HTMLElement>('[data-blockpages-overlay-kind="divider"]').forEach((overlay) => {
+    const id = overlay.dataset.blockpagesOverlayId;
+    if (!id || flowDividerIds.has(id)) {
+      overlay.remove();
+    }
+  });
   root.querySelectorAll('[data-blockpages-overlay-toolbar="true"]').forEach((element) => element.remove());
 
   root.querySelectorAll<HTMLElement>(".relative.flex.min-h-0.flex-1.flex-col").forEach((wrapper) => {

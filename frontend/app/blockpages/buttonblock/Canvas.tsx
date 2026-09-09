@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from "next/link";
-import { ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon, ChevronRight, Download, ShoppingBag, Check, AlertTriangle, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon, ChevronRight, Download, ShoppingBag, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { BlockData } from './types';
 import type { DraftSaveStatus } from '../BlockPagesClient';
 import MyWebsiteDropdown from '../MyWebsiteDropdown';
@@ -29,6 +29,7 @@ interface CanvasProps {
   editingButtonId?: string | null;
   onButtonSelected?: (props: BlockData["props"]) => void;
   onOpenMobileSidebar?: () => void;
+  onClose?: () => void;
   onSaveDraft?: () => void;
   onPreview?: () => void;
   saveStatus?: DraftSaveStatus;
@@ -46,6 +47,7 @@ export default function Canvas({
   editingButtonId,
   onButtonSelected,
   onOpenMobileSidebar,
+  onClose,
   onSaveDraft,
   onPreview,
   saveStatus = "idle",
@@ -101,6 +103,8 @@ export default function Canvas({
               style={{ maxWidth: maxWidthValue, width: actualWidth }}
             >
               <button
+                type="button"
+                data-blockpages-preset="0"
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
@@ -120,6 +124,8 @@ export default function Canvas({
                 {iconPos === 'right' && iconType !== 'none' && renderIcon(iconType)}
               </button>
               <button
+                type="button"
+                data-blockpages-preset="1"
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
@@ -146,6 +152,8 @@ export default function Canvas({
                 {iconPos === 'right' && iconType !== 'none' && renderIcon(iconType)}
               </button>
               <button
+                type="button"
+                data-blockpages-preset="2"
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
@@ -165,6 +173,8 @@ export default function Canvas({
                 {iconPos === 'right' && iconType !== 'none' && renderIcon(iconType)}
               </button>
               <button
+                type="button"
+                data-blockpages-preset="3"
                 onClick={(e) => {
                   if (editingButtonId && onButtonSelected) {
                     e.stopPropagation();
@@ -181,6 +191,7 @@ export default function Canvas({
                 className="w-full flex items-center justify-center gap-2 border py-3.5 font-bold hover:bg-gray-50 text-[15px] transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md active:scale-[0.98]"
                 style={{
                   ...buttonStyle,
+
                   background: 'transparent',
                   borderColor: customBorderColor || bg || '#d1d5db',
                   color: (block.props.color as string) || (bg && !bg.includes('gradient') ? bg : '#0f3b89')
@@ -276,7 +287,19 @@ export default function Canvas({
         className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <MyWebsiteDropdown />
+        <div className="flex items-center gap-3">
+          <MyWebsiteDropdown />
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition hover:bg-gray-50 cursor-pointer"
+              title="Back to Editor"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Editor</span>
+            </button>
+          )}
+        </div>
  
         {/* Mobile Settings Trigger */}
         <button
@@ -344,9 +367,15 @@ export default function Canvas({
             {/* Canvas Header */}
             <div className="flex items-center justify-between border-b border-[#e6edf5] bg-white px-5 py-4 sm:px-6">
               <h2 className="text-[#0B1D40] font-bold text-[18px] capitalize">Button Blocks</h2>
-              <button className="text-red-500 hover:bg-red-50 p-1.5 rounded opacity-50 cursor-not-allowed">
-                <X className="w-[18px] h-[18px]" strokeWidth={2.5} />
-              </button>
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded cursor-pointer transition-colors"
+                  title="Close Button Editor"
+                >
+                  <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                </button>
+              )}
             </div>
  
             {/* Block Content Region */}
@@ -371,15 +400,20 @@ export default function Canvas({
                 {/* Canvas Header */}
                 <div className="flex items-center justify-between border-b border-[#e6edf5] bg-white px-5 py-4 sm:px-6">
                   <h2 className="text-[#0B1D40] font-bold text-[18px] capitalize">{block.type} Blocks</h2>
-                  <button
-                    className="text-red-500 hover:bg-red-50 p-1.5 rounded"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveBlock(block.id);
-                    }}
-                  >
-                    <X className="w-[18px] h-[18px]" strokeWidth={2.5} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {onClose && (
+                      <button
+                        className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded cursor-pointer transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClose();
+                        }}
+                        title="Close Button Editor"
+                      >
+                        <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                      </button>
+                    )}
+                  </div>
                 </div>
  
                 {/* Block Content Region */}

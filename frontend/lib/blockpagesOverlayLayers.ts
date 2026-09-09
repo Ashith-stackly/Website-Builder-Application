@@ -651,9 +651,20 @@ function appendDividerLineContent(parent: HTMLElement, props: DividerBlockProps)
 
   const container = document.createElement("div");
   container.style.width = width;
+  container.style.maxWidth = "100%";
   container.style.marginTop = `${margin}px`;
   container.style.marginBottom = `${margin}px`;
   container.style.boxSizing = "border-box";
+  if (props.alignment === "left") {
+    container.style.marginLeft = "0px";
+    container.style.marginRight = "auto";
+  } else if (props.alignment === "right") {
+    container.style.marginLeft = "auto";
+    container.style.marginRight = "0px";
+  } else {
+    container.style.marginLeft = "auto";
+    container.style.marginRight = "auto";
+  }
 
   if (props.variant === "line-with-spacing") {
     container.style.paddingTop = `${spacing}px`;
@@ -662,7 +673,7 @@ function appendDividerLineContent(parent: HTMLElement, props: DividerBlockProps)
 
   const line = document.createElement("div");
   line.setAttribute("data-blockpages-divider-line", "true");
-  line.style.width = width;
+  line.style.width = "100%";
   line.style.borderTop =
     props.variant === "double-line"
       ? `${weight}px double ${color}`
@@ -677,7 +688,7 @@ function appendDividerLineContent(parent: HTMLElement, props: DividerBlockProps)
 
 function createFlowDividerElement(
   overlayId: string,
-  left: number,
+  _left: number,
   source?: HTMLElement | null,
   props?: DividerBlockProps
 ) {
@@ -685,15 +696,10 @@ function createFlowDividerElement(
   wrapper.setAttribute("data-blockpages-preview-divider", "true");
   wrapper.dataset.blockpagesOverlayId = overlayId;
 
-  const insetLeft = Math.max(left, 0);
   wrapper.style.display = "block";
   wrapper.style.position = "relative";
   wrapper.style.width = "100%";
   wrapper.style.maxWidth = "100%";
-  wrapper.style.marginTop = "12px";
-  wrapper.style.marginBottom = "12px";
-  wrapper.style.marginLeft = `${insetLeft}px`;
-  wrapper.style.marginRight = "16px";
   wrapper.style.boxSizing = "border-box";
   wrapper.style.pointerEvents = "none";
   wrapper.style.clear = "both";
@@ -875,7 +881,9 @@ function flattenDividerOverlaysIntoDocumentFlow(
         )?.sectionId;
       }
 
-      if (!sectionId) return null;
+      if (!sectionId && sortedSectionIds.length > 0) {
+        sectionId = sortedSectionIds[0];
+      }
 
       const left =
         liveOverlay && liveContainer
@@ -913,23 +921,31 @@ function flattenDividerOverlaysIntoDocumentFlow(
       continue;
     }
 
-    let inserted = insertPreviewDividerAfterSection(
-      cloneTemplateRoot,
-      job.sectionId,
-      flowDivider,
-      sortedSectionIds
-    );
+    let inserted = false;
+    if (job.sectionId) {
+      inserted = insertPreviewDividerAfterSection(
+        cloneTemplateRoot,
+        job.sectionId,
+        flowDivider,
+        sortedSectionIds
+      );
 
-    if (!inserted) {
-      const marker = findTemplateSectionElement(cloneTemplateRoot, job.sectionId);
-      if (marker) {
-        marker.insertAdjacentElement("afterend", flowDivider);
-        inserted = true;
+      if (!inserted) {
+        const marker = findTemplateSectionElement(cloneTemplateRoot, job.sectionId);
+        if (marker) {
+          marker.insertAdjacentElement("afterend", flowDivider);
+          inserted = true;
+        }
       }
     }
 
     if (!inserted) {
-      flowDivider.remove();
+      if (job.centerY <= 100) {
+        cloneTemplateRoot.prepend(flowDivider);
+      } else {
+        cloneTemplateRoot.appendChild(flowDivider);
+      }
+      inserted = true;
     }
 
     job.cloneOverlay?.remove();
@@ -1018,7 +1034,6 @@ export function buildBlockpagesPreviewOverlayStyles(device: BlockpagesPreviewCap
     }
     [data-blockpages-preview-root] [data-blockpages-preview-divider="true"] [data-blockpages-divider-line="true"] {
       display: block !important;
-      width: 100% !important;
       min-height: 1px !important;
       visibility: visible !important;
       opacity: 1 !important;

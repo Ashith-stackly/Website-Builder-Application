@@ -26,19 +26,28 @@ export default function DividerPreview({
   const color = props.color || "#333333";
   const lineStyle = props.lineStyle || "solid";
  
+  const marginInline =
+    props.alignment === "left"
+      ? { marginLeft: "0px", marginRight: "auto" }
+      : props.alignment === "right"
+        ? { marginLeft: "auto", marginRight: "0px" }
+        : { marginLeft: "auto", marginRight: "auto" };
+ 
   const containerStyle = {
     width,
+    maxWidth: "100%",
     marginTop: `${margin}px`,
     marginBottom: `${margin}px`,
     paddingTop: props.variant === "line-with-spacing" ? `${spacing}px` : undefined,
     paddingBottom: props.variant === "line-with-spacing" ? `${spacing}px` : undefined,
+    ...marginInline,
   };
  
   if (props.variant === "vertical-divider") {
     return (
       <div
-        className={`flex items-stretch justify-center ${compact ? "h-16" : "h-24"}`}
-        style={{ margin: `${margin}px 0` }}
+        className={`flex items-stretch ${props.alignment === "left" ? "justify-start" : props.alignment === "right" ? "justify-end" : "justify-center"} ${compact ? "h-16" : "h-24"}`}
+        style={{ margin: `${margin}px 0`, width: "100%" }}
       >
         <div
           className={alignmentClass(props.alignment)}
@@ -58,7 +67,7 @@ export default function DividerPreview({
       <div className={`w-full ${alignmentClass(props.alignment)}`} style={containerStyle}>
         <div
           data-blockpages-divider-line="true"
-          style={{ width, borderTop: `${weight}px double ${color}` }}
+          style={{ width: "100%", borderTop: `${weight}px double ${color}` }}
         />
       </div>
     );
@@ -73,7 +82,7 @@ export default function DividerPreview({
         <div
           className="flex-1 border-0"
           data-blockpages-divider-line="true"
-          style={{ borderTop: `${weight}px ${lineStyle} ${color}` }}
+          style={{ borderTop: `${weight}px ${lineStyle} ${color}`, minWidth: "10px" }}
         />
         {props.variant === "line-with-icon" ? (
           <Star className="shrink-0" size={compact ? 14 : 16} fill="currentColor" style={{ color }} />
@@ -83,7 +92,7 @@ export default function DividerPreview({
         <div
           className="flex-1 border-0"
           data-blockpages-divider-line="true"
-          style={{ borderTop: `${weight}px ${lineStyle} ${color}` }}
+          style={{ borderTop: `${weight}px ${lineStyle} ${color}`, minWidth: "10px" }}
         />
       </div>
     );
@@ -93,7 +102,7 @@ export default function DividerPreview({
     <div className={`w-full ${alignmentClass(props.alignment)}`} style={containerStyle}>
       <div
         data-blockpages-divider-line="true"
-        style={{ width, borderTop: `${weight}px ${lineStyle} ${color}` }}
+        style={{ width: "100%", borderTop: `${weight}px ${lineStyle} ${color}` }}
       />
     </div>
   );

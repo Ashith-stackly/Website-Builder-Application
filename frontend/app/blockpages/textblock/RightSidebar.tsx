@@ -1,7 +1,7 @@
 "use client";
  
 import { ChevronDown, ChevronLeft, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SectionStyleConfig, TextBlockState, TextEditorTarget, TextTemplateType } from "./types";
 import {
   dispatchBlockpagesScrollToSection,
@@ -17,7 +17,10 @@ import {
  
 type TextRightSidebarProps = {
   state: TextBlockState;
+  /** Committed state change — pushes an undo/redo snapshot. */
   onStateChange: (nextState: TextBlockState) => void;
+  /** Live preview state change — updates canvas without pushing history. */
+  onLiveStateChange?: (nextState: TextBlockState) => void;
   onClose?: () => void;
   template?: TextTemplateType;
 };
@@ -29,13 +32,16 @@ const targetLabels: Record<TextEditorTarget, string> = {
   footer: "Footer",
 };
  
-export default function TextRightSidebar({ state, onStateChange, onClose, template = "portfolio" }: TextRightSidebarProps) {
+export default function TextRightSidebar({ state, onStateChange, onLiveStateChange, onClose, template = "portfolio" }: TextRightSidebarProps) {
   const [activeTab, setActiveTab] = useState<"properties" | "styles">("styles");
   const [showSection, setShowSection] = useState(true);
   const [showUserAccount, setShowUserAccount] = useState(true);
   const { section, textStyles, selectedTarget, sectionStyles = {} } = state;
   const templateSections = getBlockpagesTemplateSections(template);
   const activeSectionId = state.activeSectionId ?? getBlockpagesDefaultSectionId(template);
+
+  // Live update helper — shows change in real-time without history entry
+  const liveUpdate = onLiveStateChange ?? onStateChange;
 
   useEffect(() => {
     if (selectedTarget === "main") {
@@ -58,11 +64,24 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
  
   const setTarget = (selectedTarget: TextEditorTarget) => onStateChange({ ...state, selectedTarget });
   const updateSection = (props: Partial<typeof section>) => onStateChange({ ...state, section: { ...section, ...props } });
+  const updateSectionLive = (props: Partial<typeof section>) => liveUpdate({ ...state, section: { ...section, ...props } });
   const updateText = (props: Partial<typeof textStyles>) => onStateChange({ ...state, textStyles: { ...textStyles, ...props } });
+  const updateTextLive = (props: Partial<typeof textStyles>) => liveUpdate({ ...state, textStyles: { ...textStyles, ...props } });
  
   const updateActiveSectionStyle = (props: Partial<SectionStyleConfig>) => {
     const currentStyles = sectionStyles[activeSectionId] || {};
     onStateChange({
+      ...state,
+      sectionStyles: {
+        ...sectionStyles,
+        [activeSectionId]: { ...currentStyles, ...props }
+      }
+    });
+  };
+
+  const updateActiveSectionStyleLive = (props: Partial<SectionStyleConfig>) => {
+    const currentStyles = sectionStyles[activeSectionId] || {};
+    liveUpdate({
       ...state,
       sectionStyles: {
         ...sectionStyles,
@@ -160,15 +179,16 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
                     <ColorInput
                       label="Background Color"
                       value={activeStyle.backgroundColor || "#ffffff"}
-                      onChange={(backgroundColor) => updateActiveSectionStyle({ backgroundColor })}
+                      onLiveChange={(backgroundColor) => updateActiveSectionStyleLive({ backgroundColor })}
+                      onCommit={(backgroundColor) => updateActiveSectionStyle({ backgroundColor })}
                     />
                     <div className="mt-3">
                       <p className="mb-1 text-xs text-[#06224C]/70">Gradient Background</p>
-                      <input
+                      <DebouncedTextInput
                         value={activeStyle.gradientBackground || ""}
-                        onChange={(e) => updateActiveSectionStyle({ gradientBackground: e.target.value })}
+                        onLiveChange={(gradientBackground) => updateActiveSectionStyleLive({ gradientBackground })}
+                        onCommit={(gradientBackground) => updateActiveSectionStyle({ gradientBackground })}
                         placeholder="e.g. linear-gradient(to right, red, blue)"
-                        type="text"
                         className="w-full rounded bg-[#F4F6FA] p-2 text-[#06224C] border border-[#06224C]/20 text-xs"
                       />
                     </div>
@@ -192,10 +212,22 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
                   Turn on editable text, click copy on the canvas, then adjust the selected text here.
                 </div>
-                <ColorInput label="Text Color" value={textStyles.color || "#000000"} onChange={(color) => updateText({ color })} />
+                <ColorInput
+                  label="Text Color"
+                  value={textStyles.color || "#000000"}
+                  onLiveChange={(color) => updateTextLive({ color })}
+                  onCommit={(color) => updateText({ color })}
+                />
                 <div>
                   <p className="mb-1 text-xs text-[#06224C]/70">Font Size (px)</p>
-                  <input value={textStyles.fontSize} onChange={(event) => updateText({ fontSize: event.target.value })} placeholder="e.g. 16" type="number" className="w-full rounded bg-[#F4F6FA] p-2 text-[#06224C] border border-[#06224C]/20" />
+                  <DebouncedTextInput
+                    value={textStyles.fontSize}
+                    onLiveChange={(fontSize) => updateTextLive({ fontSize })}
+                    onCommit={(fontSize) => updateText({ fontSize })}
+                    placeholder="e.g. 16"
+                    type="number"
+                    className="w-full rounded bg-[#F4F6FA] p-2 text-[#06224C] border border-[#06224C]/20"
+                  />
                 </div>
                 <div>
                   <p className="mb-1 text-xs text-[#06224C]/70">Font Family</p>
@@ -213,11 +245,28 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
  
             {selectedTarget === "header" && (
               <>
-                <ColorInput label="Header Background" value={section.headerBg} onChange={(headerBg) => updateSection({ headerBg })} />
-                <ColorInput label="Header Text Color" value={section.headerText} onChange={(headerText) => updateSection({ headerText })} />
+                <ColorInput
+                  label="Header Background"
+                  value={section.headerBg}
+                  onLiveChange={(headerBg) => updateSectionLive({ headerBg })}
+                  onCommit={(headerBg) => updateSection({ headerBg })}
+                />
+                <ColorInput
+                  label="Header Text Color"
+                  value={section.headerText}
+                  onLiveChange={(headerText) => updateSectionLive({ headerText })}
+                  onCommit={(headerText) => updateSection({ headerText })}
+                />
                 <div>
                   <p className="mb-1 text-xs text-[#06224C]/70">Header Font Size (px)</p>
-                  <input value={section.headerFontSize || ""} onChange={(event) => updateSection({ headerFontSize: event.target.value })} placeholder="e.g. 16" type="number" className="w-full rounded bg-[#F4F6FA] p-2 text-[#06224C] border border-[#06224C]/20" />
+                  <DebouncedTextInput
+                    value={section.headerFontSize || ""}
+                    onLiveChange={(headerFontSize) => updateSectionLive({ headerFontSize })}
+                    onCommit={(headerFontSize) => updateSection({ headerFontSize })}
+                    placeholder="e.g. 16"
+                    type="number"
+                    className="w-full rounded bg-[#F4F6FA] p-2 text-[#06224C] border border-[#06224C]/20"
+                  />
                 </div>
                 <div>
                   <p className="mb-1 text-xs text-[#06224C]/70">Header Font Family</p>
@@ -261,8 +310,18 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
  
             {selectedTarget === "footer" && (
               <>
-                <ColorInput label="Footer Background" value={section.footerBg} onChange={(footerBg) => updateSection({ footerBg })} />
-                <ColorInput label="Footer Text Color" value={section.footerText} onChange={(footerText) => updateSection({ footerText })} />
+                <ColorInput
+                  label="Footer Background"
+                  value={section.footerBg}
+                  onLiveChange={(footerBg) => updateSectionLive({ footerBg })}
+                  onCommit={(footerBg) => updateSection({ footerBg })}
+                />
+                <ColorInput
+                  label="Footer Text Color"
+                  value={section.footerText}
+                  onLiveChange={(footerText) => updateSectionLive({ footerText })}
+                  onCommit={(footerText) => updateSection({ footerText })}
+                />
               </>
             )}
  
@@ -278,22 +337,83 @@ export default function TextRightSidebar({ state, onStateChange, onClose, templa
     </aside>
   );
 }
-function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+
+/**
+ * Color picker with live/commit separation.
+ * - Native color picker: `onInput` → live preview, `onChange` → commit (fires on picker close).
+ * - Hex text input: every keystroke → live preview, `onBlur` → commit.
+ */
+function ColorInput({
+  label,
+  value,
+  onLiveChange,
+  onCommit,
+}: {
+  label: string;
+  value: string;
+  onLiveChange: (value: string) => void;
+  onCommit: (value: string) => void;
+}) {
   const safeColor = /^#[0-9A-Fa-f]{6}$/.test(value) ? value : "#000000";
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const beforePickRef = useRef(value);
+
+  const onLiveChangeRef = useRef(onLiveChange);
+  const onCommitRef = useRef(onCommit);
+  onLiveChangeRef.current = onLiveChange;
+  onCommitRef.current = onCommit;
+
+  useEffect(() => {
+    const el = colorInputRef.current;
+    if (!el) return;
+
+    const handleInput = (e: Event) => {
+      onLiveChangeRef.current((e.target as HTMLInputElement).value);
+    };
+    const handleChange = (e: Event) => {
+      onCommitRef.current((e.target as HTMLInputElement).value);
+    };
+
+    el.addEventListener("input", handleInput);
+    el.addEventListener("change", handleChange);
+    return () => {
+      el.removeEventListener("input", handleInput);
+      el.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (colorInputRef.current && colorInputRef.current.value !== safeColor) {
+      colorInputRef.current.value = safeColor;
+    }
+  }, [safeColor]);
+
   return (
     <div>
       <p className="mb-1 text-xs text-[#06224C]/70">{label}</p>
       <div className="flex items-center gap-2">
         <input
+          ref={colorInputRef}
           type="color"
-          value={safeColor}
-          onChange={(event) => onChange(event.target.value)}
+          defaultValue={safeColor}
+          onFocus={() => { beforePickRef.current = value; }}
           className="h-10 w-10 cursor-pointer border-0 bg-transparent p-0"
         />
         <input
           type="text"
           value={value || ""}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => onLiveChange(event.target.value)}
+          onBlur={(event) => {
+            if (event.target.value !== beforePickRef.current) {
+              onCommit(event.target.value);
+            }
+          }}
+          onFocus={() => { beforePickRef.current = value; }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.currentTarget.blur();
+            }
+          }}
           placeholder="#ffffff"
           aria-label={label}
           className="w-24 rounded border border-[#06224C]/20 bg-[#F4F6FA] px-2 py-1 font-mono text-xs text-[#06224C] outline-none"
@@ -302,4 +422,47 @@ function ColorInput({ label, value, onChange }: { label: string; value: string; 
     </div>
   );
 }
- 
+
+/**
+ * Text input with live/commit separation.
+ * - Every keystroke → live preview (no history entry).
+ * - onBlur / Enter → commit (one history entry).
+ */
+function DebouncedTextInput({
+  value,
+  onLiveChange,
+  onCommit,
+  placeholder,
+  type = "text",
+  className,
+}: {
+  value: string;
+  onLiveChange: (value: string) => void;
+  onCommit: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  className?: string;
+}) {
+  const beforeRef = useRef(value);
+
+  return (
+    <input
+      value={value}
+      onChange={(event) => onLiveChange(event.target.value)}
+      onFocus={() => { beforeRef.current = value; }}
+      onBlur={(event) => {
+        if (event.target.value !== beforeRef.current) {
+          onCommit(event.target.value);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.currentTarget.blur();
+        }
+      }}
+      placeholder={placeholder}
+      type={type}
+      className={className}
+    />
+  );
+}

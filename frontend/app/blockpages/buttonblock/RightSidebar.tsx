@@ -85,12 +85,14 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
   const [localButtonHeight, setLocalButtonHeight] = useState(height);
   const [localButtonWidth, setLocalButtonWidth] = useState(width);
   const [localButtonRadius, setLocalButtonRadius] = useState(borderRadius);
+  const [localButtonLabel, setLocalButtonLabel] = useState((props.label as string) || (props.text as string) || '');
  
   useEffect(() => {
     setLocalButtonHeight(height);
     setLocalButtonWidth(width);
     setLocalButtonRadius(borderRadius);
-  }, [id, height, width, borderRadius]);
+    setLocalButtonLabel((props.label as string) || (props.text as string) || '');
+  }, [id, height, width, borderRadius, props.label, props.text]);
  
   const formatSize = (val: string, defaultVal: string) => {
     if (!val) return defaultVal;
@@ -117,11 +119,12 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
     <aside className={`relative flex h-full w-full xl:w-[210px] flex-shrink-0 flex-col overflow-hidden rounded-xl border shadow-[0_18px_45px_rgba(113,63,18,0.10)] transition-colors duration-300 ${activeTab === 'styles' ? 'bg-[#0B1D40] border-[#0B1D40]' : 'bg-[#fff7f4] border-[#f4d8cc]'}`}>
       {activeTab === 'button' ? (
         <>
-          {/* Mobile Close Button */}
+          {/* Close Button */}
           {onClose && (
             <button
-              className="xl:hidden absolute top-4 right-4 p-1.5 bg-white hover:bg-gray-50 rounded-md text-gray-600 shadow-sm z-10 border border-gray-200 transition-all duration-300 hover:rotate-90 hover:scale-110"
+              className="absolute top-4 right-4 p-1.5 bg-white hover:bg-gray-50 rounded-md text-gray-600 shadow-sm z-10 border border-gray-200 transition-all duration-300 hover:rotate-90 hover:scale-110 cursor-pointer"
               onClick={onClose}
+              title="Close Button Settings"
             >
               <X className="w-4 h-4" />
             </button>
@@ -144,6 +147,30 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
           </div>
  
           <div className="flex-1 space-y-4 overflow-y-auto px-3 pb-8 pt-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {/* Button Text / Label */}
+            <div className="pb-1">
+              <h4 className="text-[#0B1D40] text-[15px] font-bold mb-2">Button Text</h4>
+              <div className="w-full border border-[#0B1D40] bg-transparent rounded-xl flex items-center overflow-hidden focus-within:ring-2 focus-within:ring-blue-100 transition-colors">
+                <input
+                  type="text"
+                  data-testid="button-label-input"
+                  className="w-full px-3 py-2 text-[14px] text-center text-[#0B1D40] font-bold bg-transparent focus:outline-none"
+                  placeholder="Button Label"
+                  value={localButtonLabel}
+                  onChange={(e) => {
+                    console.log("[RIGHT_SIDEBAR_DEBUG] onChange:", { id, val: e.target.value, props });
+                    setLocalButtonLabel(e.target.value);
+                    onUpdateBlock(id, { ...props, label: e.target.value, text: e.target.value });
+                  }}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => {
+                    console.log("[RIGHT_SIDEBAR_DEBUG] onBlur:", { id, localButtonLabel });
+                    onUpdateBlock(id, { ...props, label: localButtonLabel, text: localButtonLabel });
+                  }}
+                />
+              </div>
+            </div>
+
             {/* Settings Accordion Header */}
             <button
               className="w-full flex items-center justify-between text-[15px] font-bold text-[#0B1D40] hover:bg-black/5 p-1 rounded -ml-1 transition"
@@ -306,13 +333,15 @@ export default function RightSidebar({ selectedBlock, onUpdateBlock, onClose }: 
         <div className="flex-1 flex flex-col h-full text-white w-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
-            <button onClick={() => setActiveTab('button')} className="text-white hover:bg-white/10 p-1 rounded transition-colors">
+            <button onClick={() => setActiveTab('button')} className="text-white hover:bg-white/10 p-1 rounded transition-colors" title="Back to Button">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <span className="font-bold text-[15px] tracking-wide">Style</span>
-            <button className="text-white hover:bg-white/10 p-1 rounded transition-colors">
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            {onClose && (
+              <button onClick={onClose} className="text-white hover:bg-white/10 p-1 rounded transition-colors cursor-pointer" title="Close Button Settings">
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
  
           {/* Styles Content */}

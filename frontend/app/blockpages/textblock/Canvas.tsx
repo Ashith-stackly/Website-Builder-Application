@@ -82,7 +82,7 @@ type TextCanvasProps = {
   onEditVideo?: (videoId: string) => void;
   appliedDividers?: { id: string, props: DividerBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveDivider?: (id: string) => void;
-  onUpdateDividerPosition?: (id: string, position: BlockpagesOverlayPosition) => void;
+  onUpdateDividerPosition?: (id: string, position: BlockpagesOverlayPosition, options?: { pushHistory?: boolean }) => void;
   onUpdateDividerScale?: (id: string, scale: number) => void;
   appliedIcons?: { id: string, props: IconBlockProps, position?: { top?: number; left?: number; x?: number; y?: number }, scale?: number }[];
   onRemoveIcon?: (id: string) => void;
@@ -601,6 +601,7 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
 
     const ensureEditablePlaceholder = (editableNode: HTMLElement) => {
       if (editableNode.textContent?.trim()) return;
+      if (editableNode.querySelector("svg")) return;
       if (editableNode.innerHTML === "<br>" || editableNode.innerHTML === "<br/>") return;
       editableNode.innerHTML = "<br>";
     };
@@ -641,10 +642,69 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
       activateEditableNode(resolvedNode);
     };
 
+    const handleEditableButtonClick = (event: Event) => {
+      if (!isTextEditable || isPreviewMode) return;
+      const target = event.target as HTMLElement | null;
+      const editableNode = target?.closest('[contenteditable="true"]');
+      if (editableNode) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    const handleTextKeyDown = (event: Event) => {
+      if (!isTextEditable || isPreviewMode) return;
+
+      const keyEvent = event as KeyboardEvent;
+      const target = keyEvent.target as HTMLElement | null;
+      const editableNode = target?.closest('[contenteditable="true"]') as HTMLElement | null;
+      if (!editableNode?.isContentEditable) return;
+
+      const buttonNode = editableNode.tagName === "BUTTON" ? editableNode : editableNode.closest("button");
+      if (buttonNode) {
+        if (keyEvent.key === " " || keyEvent.code === "Space") {
+          keyEvent.preventDefault();
+          keyEvent.stopPropagation();
+
+          let inserted = false;
+          try {
+            inserted = document.execCommand("insertText", false, " ");
+          } catch {
+            inserted = false;
+          }
+
+          if (!inserted) {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              range.deleteContents();
+              const spaceNode = document.createTextNode(" ");
+              range.insertNode(spaceNode);
+              range.setStartAfter(spaceNode);
+              range.setEndAfter(spaceNode);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+          }
+
+          editableNode.dispatchEvent(new Event("input", { bubbles: true }));
+          return;
+        }
+
+        if (keyEvent.key === "Enter") {
+          keyEvent.preventDefault();
+          editableNode.blur();
+          return;
+        }
+      }
+    };
+
     let textNodeCounter = 0;
     const makeEditable = (node: Element) => {
       if (node.closest("[data-builder-chrome='true']")) return;
       if (node.closest('[data-blockpages-interactive="true"], .buyscreen-search, input, textarea, select')) return;
+      if (node.closest("[data-blockpages-button-id]")) return;
+      if (node.tagName.toLowerCase() === "svg" || node.closest("svg")) return;
 
       const isInDropdown = node.closest('[data-blockpages-dropdown-panel="true"]') !== null;
       const isHeader = !isInDropdown && nodeIsInBlockpagesHeaderChrome(node);
@@ -671,6 +731,11 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
           node.classList.contains("buyscreen-all-categories-item"))
       ) {
         const htmlNode = node as HTMLElement;
+        if (htmlNode.querySelector("svg")) {
+          Array.from(node.children).forEach(makeEditable);
+          return;
+        }
+
         const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-nav-${textNodeCounter++}`;
         htmlNode.setAttribute("data-blockpages-text-id", textId);
 
@@ -714,6 +779,10 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
 
       if (textTags.includes(node.tagName)) {
         const htmlNode = node as HTMLElement;
+        if (htmlNode.querySelector("svg")) {
+          Array.from(node.children).forEach(makeEditable);
+          return;
+        }
         const blockInteractive = isBlockpagesInteractiveControl(node, textEditingOptions) && !shouldBeEditable;
 
         const textId = htmlNode.getAttribute("data-blockpages-text-id") || `txt-${template}-${node.tagName.toLowerCase()}-${textNodeCounter++}`;
@@ -746,6 +815,7 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
           node.setAttribute("contenteditable", "true");
           if (node.tagName === "BUTTON") {
             htmlNode.addEventListener("mousedown", handleEditableMouseDown, true);
+            htmlNode.addEventListener("click", handleEditableButtonClick, true);
           }
         } else {
           if (activeEditableRef.current === htmlNode) {
@@ -753,6 +823,7 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
           }
           node.removeAttribute("contenteditable");
           htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
+          htmlNode.removeEventListener("click", handleEditableButtonClick, true);
           node.classList.remove("editable-text-active");
         }
       }
@@ -773,6 +844,7 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
     contentRoot.addEventListener("focusin", handleTextFocusIn, true);
     contentRoot.addEventListener("focusout", handleFocusOut, true);
     contentRoot.addEventListener("input", handleTextInput, true);
+    contentRoot.addEventListener("keydown", handleTextKeyDown, true);
     document.addEventListener("mouseup", handleTextMouseUp, true);
 
     let resyncTimer: number | null = null;
@@ -791,11 +863,13 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
       contentRoot.removeEventListener("focusin", handleTextFocusIn, true);
       contentRoot.removeEventListener("focusout", handleFocusOut, true);
       contentRoot.removeEventListener("input", handleTextInput, true);
+      contentRoot.removeEventListener("keydown", handleTextKeyDown, true);
       document.removeEventListener("mouseup", handleTextMouseUp, true);
       const removeListeners = (node: Element) => {
         if (textTags.includes(node.tagName)) {
           const htmlNode = node as HTMLElement;
           htmlNode.removeEventListener("mousedown", handleEditableMouseDown, true);
+          htmlNode.removeEventListener("click", handleEditableButtonClick, true);
         }
         Array.from(node.children).forEach(removeListeners);
       };
@@ -880,10 +954,10 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
  
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex shrink-0 overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm">
-            <button className={`border-r border-gray-300 px-3 py-2 ${canUndo || isTextEditable ? "text-gray-600 hover:bg-gray-50" : "cursor-not-allowed text-gray-300"}`} onClick={handleUndo} disabled={!canUndo && !isTextEditable} title="Undo">
+            <button className={`border-r border-gray-300 px-3 py-2 ${canUndo ? "text-gray-600 hover:bg-gray-50" : "cursor-not-allowed text-gray-300"}`} onClick={handleUndo} disabled={!canUndo} title="Undo">
               <Undo2 className="h-4.5 w-4.5" strokeWidth={1.5} />
             </button>
-            <button className={`px-3 py-2 ${canRedo || isTextEditable ? "text-gray-600 hover:bg-gray-50" : "cursor-not-allowed text-gray-300"}`} onClick={handleRedo} disabled={!canRedo && !isTextEditable} title="Redo">
+            <button className={`px-3 py-2 ${canRedo ? "text-gray-600 hover:bg-gray-50" : "cursor-not-allowed text-gray-300"}`} onClick={handleRedo} disabled={!canRedo} title="Redo">
               <Redo2 className="h-4.5 w-4.5" strokeWidth={1.5} />
             </button>
           </div>

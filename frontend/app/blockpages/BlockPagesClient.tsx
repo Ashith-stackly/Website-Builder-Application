@@ -1,5 +1,6 @@
 "use client";
  
+import "@/lib/reactDomPatch";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { flushSync } from "react-dom";
@@ -121,12 +122,28 @@ const initialButtonBlock: BlockData = {
  
 type ButtonProps = BlockData["props"];
 
+type AppliedDividerItem = {
+  id: string;
+  props: DividerBlockProps;
+  position?: {
+    top?: number;
+    left?: number;
+    x?: number;
+    y?: number;
+    sectionId?: string;
+    anchorPath?: number[];
+    insertMode?: "after" | "before";
+  };
+  scale?: number;
+};
+
 /** Unified snapshot capturing all editable state for undo/redo. */
 type EditorSnapshot = {
   textBlockState: TextBlockState;
   customImages: Record<string, string>;
   customButtons: Record<string, ButtonProps>;
   customIcons: Record<string, IconBlockProps>;
+  appliedDividers?: AppliedDividerItem[];
 };
  
 const initialTextBlockState: TextBlockState = {
@@ -216,6 +233,10 @@ export default function BlockPagesClient() {
   const [textBlockState, setTextBlockState] = useState<TextBlockState>(initialTextBlockState);
   const [pastEditorSnapshots, setPastEditorSnapshots] = useState<EditorSnapshot[]>([]);
   const [futureEditorSnapshots, setFutureEditorSnapshots] = useState<EditorSnapshot[]>([]);
+  const pastEditorSnapshotsRef = useRef<EditorSnapshot[]>([]);
+  const futureEditorSnapshotsRef = useRef<EditorSnapshot[]>([]);
+  const isRestoringSnapshotRef = useRef(false);
+  const lastCommittedSnapshotRef = useRef<EditorSnapshot | null>(null);
  
   const [videoBlocks, setVideoBlocks] = useState<VideoBlockData[]>([initialVideoBlock]);
   const [selectedVideoBlockId, setSelectedVideoBlockId] = useState<string | null>(initialVideoBlock.id);
@@ -248,6 +269,17 @@ export default function BlockPagesClient() {
  
   const [appliedDividers, setAppliedDividers] = useState<{ id: string; props: DividerBlockProps; position?: { top?: number; left?: number; x?: number; y?: number; sectionId?: string; anchorPath?: number[]; insertMode?: "after" | "before" }; scale?: number }[]>([]);
   const [appliedIcons, setAppliedIcons] = useState<{ id: string; props: IconBlockProps; position?: { top?: number; left?: number; x?: number; y?: number }; scale?: number }[]>([]);
+
+  const textBlockStateRef = useRef(textBlockState);
+  textBlockStateRef.current = textBlockState;
+  const customImagesRef = useRef(customImages);
+  customImagesRef.current = customImages;
+  const customButtonsRef = useRef(customButtons);
+  customButtonsRef.current = customButtons;
+  const customIconsRef = useRef(customIcons);
+  customIconsRef.current = customIcons;
+  const appliedDividersRef = useRef(appliedDividers);
+  appliedDividersRef.current = appliedDividers;
   const [pendingDividerScrollId, setPendingDividerScrollId] = useState<string | null>(null);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
@@ -389,8 +421,17 @@ export default function BlockPagesClient() {
           setIconBlocks(draft.iconBlocks);
           setSelectedIconBlockId(draft.iconBlocks[0]?.id ?? null);
         }
+        console.log("[DRAFT HYDRATE] Loaded draft from MongoDB:", {
+          hasDraft: Boolean(draft),
+          draftTemplate: draft.template,
+          customButtonsCount: Object.keys(draft.customButtons || {}).length,
+          customButtons: draft.customButtons,
+        });
         if (draft.customImages) setCustomImages(draft.customImages);
-        if (draft.customButtons) setCustomButtons(draft.customButtons as Record<string, ButtonProps>);
+        if (draft.customButtons) {
+          setCustomButtons(draft.customButtons as Record<string, ButtonProps>);
+          persistCustomButtonsForTemplate(activeTpl || textTemplate, draft.customButtons as Record<string, ButtonProps>);
+        }
         if (draft.customIcons) setCustomIcons(draft.customIcons);
 
         // Clear undo/redo history when loading a saved draft
@@ -398,6 +439,8 @@ export default function BlockPagesClient() {
         setFutureButtonStates([]);
         setPastEditorSnapshots([]);
         setFutureEditorSnapshots([]);
+        pastEditorSnapshotsRef.current = [];
+        futureEditorSnapshotsRef.current = [];
         setPastVideoStates([]);
         setFutureVideoStates([]);
         setPastDividerStates([]);
@@ -614,6 +657,9 @@ export default function BlockPagesClient() {
     setFutureButtonStates([]);
     setPastEditorSnapshots([]);
     setFutureEditorSnapshots([]);
+    pastEditorSnapshotsRef.current = [];
+    futureEditorSnapshotsRef.current = [];
+    lastCommittedSnapshotRef.current = null;
     setPastVideoStates([]);
     setFutureVideoStates([]);
     setPastDividerStates([]);
@@ -674,6 +720,17 @@ export default function BlockPagesClient() {
 
     attemptCapture();
   }, [textTemplate, draftProjectId]);
+
+  const handleCloseButtonEditor = useCallback(() => {
+    const lastId = editingButtonId;
+    setActiveBlockPage("text");
+    setEditingButtonId(null);
+    setIsButtonEditingMode(false);
+    setShowMobileSidebar(false);
+    if (lastId) {
+      window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+    }
+  }, [editingButtonId]);
 
   const verifyCanvasHasIconTargets = (template: TextTemplateType) => {
     if (templateHasBuiltInIconSlots(template)) return true;
@@ -995,29 +1052,35 @@ export default function BlockPagesClient() {
   const captureEditorSnapshot = (): EditorSnapshot => {
     try {
       return {
-        textBlockState: JSON.parse(JSON.stringify(textBlockState)),
-        customImages: { ...customImages },
-        customButtons: JSON.parse(JSON.stringify(customButtons)),
-        customIcons: JSON.parse(JSON.stringify(customIcons)),
+        textBlockState: JSON.parse(JSON.stringify(textBlockStateRef.current)),
+        customImages: { ...customImagesRef.current },
+        customButtons: JSON.parse(JSON.stringify(customButtonsRef.current)),
+        customIcons: JSON.parse(JSON.stringify(customIconsRef.current)),
+        appliedDividers: JSON.parse(JSON.stringify(appliedDividersRef.current)),
       };
     } catch {
       return {
-        textBlockState: { ...textBlockState },
-        customImages: { ...customImages },
-        customButtons: { ...customButtons },
-        customIcons: { ...customIcons },
+        textBlockState: { ...textBlockStateRef.current },
+        customImages: { ...customImagesRef.current },
+        customButtons: { ...customButtonsRef.current },
+        customIcons: { ...customIconsRef.current },
+        appliedDividers: [...appliedDividersRef.current],
       };
     }
   };
 
   const restoreEditorSnapshot = (snapshot: EditorSnapshot) => {
+    lastCommittedSnapshotRef.current = null;
+    isRestoringSnapshotRef.current = true;
     let nextTextState = snapshot.textBlockState;
     let nextButtons = snapshot.customButtons;
     let nextIcons = snapshot.customIcons;
+    let nextDividers = snapshot.appliedDividers ?? [];
     try {
       nextTextState = JSON.parse(JSON.stringify(snapshot.textBlockState));
       nextButtons = JSON.parse(JSON.stringify(snapshot.customButtons));
       nextIcons = JSON.parse(JSON.stringify(snapshot.customIcons));
+      nextDividers = JSON.parse(JSON.stringify(snapshot.appliedDividers ?? []));
     } catch {}
 
     setTextBlockState(nextTextState);
@@ -1028,6 +1091,12 @@ export default function BlockPagesClient() {
     persistCustomButtonsForTemplate(textTemplate, nextButtons);
     setCustomIcons(nextIcons);
     persistCustomStaticIconsForTemplate(textTemplate, nextIcons);
+    setAppliedDividers(nextDividers);
+    syncAppliedDividerPersistence(nextDividers);
+
+    window.setTimeout(() => {
+      isRestoringSnapshotRef.current = false;
+    }, 200);
   };
 
   const pushEditorSnapshot = (
@@ -1036,11 +1105,42 @@ export default function BlockPagesClient() {
       customImages?: Record<string, string>;
       customButtons?: Record<string, ButtonProps>;
       customIcons?: Record<string, IconBlockProps>;
+      appliedDividers?: AppliedDividerItem[];
     }
   ) => {
-    const snapshot = captureEditorSnapshot();
-    setPastEditorSnapshots((current) => [...current, snapshot]);
+    if (isRestoringSnapshotRef.current) {
+      lastCommittedSnapshotRef.current = null;
+      setTextBlockState(nextTextState);
+      persistTextBlockState(textTemplate, nextTextState);
+      if (overrides?.customImages !== undefined) {
+        setCustomImages(overrides.customImages);
+        persistCustomImagesForTemplate(textTemplate, overrides.customImages);
+      }
+      if (overrides?.customButtons !== undefined) {
+        setCustomButtons(overrides.customButtons);
+        persistCustomButtonsForTemplate(textTemplate, overrides.customButtons);
+      }
+      if (overrides?.customIcons !== undefined) {
+        setCustomIcons(overrides.customIcons);
+        persistCustomStaticIconsForTemplate(textTemplate, overrides.customIcons);
+      }
+      if (overrides?.appliedDividers !== undefined) {
+        setAppliedDividers(overrides.appliedDividers);
+        syncAppliedDividerPersistence(overrides.appliedDividers);
+      }
+      return;
+    }
+
+    // If there was a live preview in progress, the base snapshot to restore upon Undo
+    // is the snapshot before live preview began. Otherwise capture current state.
+    const snapshot = lastCommittedSnapshotRef.current ?? captureEditorSnapshot();
+    lastCommittedSnapshotRef.current = null;
+
+    pastEditorSnapshotsRef.current = [...pastEditorSnapshotsRef.current, snapshot];
+    futureEditorSnapshotsRef.current = [];
+    setPastEditorSnapshots(pastEditorSnapshotsRef.current);
     setFutureEditorSnapshots([]);
+
     setTextBlockState(nextTextState);
     persistTextBlockState(textTemplate, nextTextState);
     if (overrides?.customImages !== undefined) {
@@ -1055,11 +1155,15 @@ export default function BlockPagesClient() {
       setCustomIcons(overrides.customIcons);
       persistCustomStaticIconsForTemplate(textTemplate, overrides.customIcons);
     }
+    if (overrides?.appliedDividers !== undefined) {
+      setAppliedDividers(overrides.appliedDividers);
+      syncAppliedDividerPersistence(overrides.appliedDividers);
+    }
   };
 
   /** Backward-compatible alias: pushes text-only change into unified history. */
   const pushTextState = (nextState: TextBlockState) => {
-    const prev = textBlockState;
+    const prev = lastCommittedSnapshotRef.current?.textBlockState ?? textBlockState;
     const isOnlyNavChange =
       JSON.stringify(nextState.customTexts || {}) === JSON.stringify(prev.customTexts || {}) &&
       JSON.stringify(nextState.section || {}) === JSON.stringify(prev.section || {}) &&
@@ -1067,6 +1171,7 @@ export default function BlockPagesClient() {
       JSON.stringify(nextState.textStyles || {}) === JSON.stringify(prev.textStyles || {});
 
     if (isOnlyNavChange) {
+      lastCommittedSnapshotRef.current = null;
       setTextBlockState(nextState);
       persistTextBlockState(textTemplate, nextState);
       return;
@@ -1074,34 +1179,90 @@ export default function BlockPagesClient() {
 
     pushEditorSnapshot(nextState);
   };
+
+  /**
+   * Live-preview state update: applies the change to state + persistence
+   * but does NOT push an undo/redo history snapshot.
+   * Remembers the pre-live snapshot so the subsequent commit captures
+   * the true pre-live state as the Undo target.
+   */
+  const setTextBlockStateLive = (nextState: TextBlockState) => {
+    if (!lastCommittedSnapshotRef.current) {
+      lastCommittedSnapshotRef.current = captureEditorSnapshot();
+    }
+    setTextBlockState(nextState);
+    persistTextBlockState(textTemplate, nextState);
+  };
  
   const undoEditor = () => {
-    setPastEditorSnapshots((currentPast) => {
-      if (currentPast.length === 0) {
-        return currentPast;
-      }
- 
-      const previous = currentPast[currentPast.length - 1];
-      const currentSnapshot = captureEditorSnapshot();
-      setFutureEditorSnapshots((currentFuture) => [currentSnapshot, ...currentFuture]);
-      restoreEditorSnapshot(previous);
-      return currentPast.slice(0, -1);
-    });
+    if (pastEditorSnapshotsRef.current.length === 0) {
+      return;
+    }
+
+    lastCommittedSnapshotRef.current = null;
+    const previous = pastEditorSnapshotsRef.current[pastEditorSnapshotsRef.current.length - 1];
+    const currentSnapshot = captureEditorSnapshot();
+
+    pastEditorSnapshotsRef.current = pastEditorSnapshotsRef.current.slice(0, -1);
+    futureEditorSnapshotsRef.current = [currentSnapshot, ...futureEditorSnapshotsRef.current];
+
+    setPastEditorSnapshots(pastEditorSnapshotsRef.current);
+    setFutureEditorSnapshots(futureEditorSnapshotsRef.current);
+
+    restoreEditorSnapshot(previous);
   };
  
   const redoEditor = () => {
-    setFutureEditorSnapshots((currentFuture) => {
-      if (currentFuture.length === 0) {
-        return currentFuture;
-      }
- 
-      const [next, ...remaining] = currentFuture;
-      const currentSnapshot = captureEditorSnapshot();
-      setPastEditorSnapshots((currentPast) => [...currentPast, currentSnapshot]);
-      restoreEditorSnapshot(next);
-      return remaining;
-    });
+    if (futureEditorSnapshotsRef.current.length === 0) {
+      return;
+    }
+
+    lastCommittedSnapshotRef.current = null;
+    const next = futureEditorSnapshotsRef.current[0];
+    const currentSnapshot = captureEditorSnapshot();
+
+    futureEditorSnapshotsRef.current = futureEditorSnapshotsRef.current.slice(1);
+    pastEditorSnapshotsRef.current = [...pastEditorSnapshotsRef.current, currentSnapshot];
+
+    setPastEditorSnapshots(pastEditorSnapshotsRef.current);
+    setFutureEditorSnapshots(futureEditorSnapshotsRef.current);
+
+    restoreEditorSnapshot(next);
   };
+
+  // ── Keyboard shortcuts for Undo/Redo ────────────────────────────────
+  const undoEditorRef = useRef(undoEditor);
+  undoEditorRef.current = undoEditor;
+  const redoEditorRef = useRef(redoEditor);
+  redoEditorRef.current = redoEditor;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMeta = e.ctrlKey || e.metaKey;
+      if (!isMeta) return;
+
+      // Don't intercept if user is typing in an input/textarea/contenteditable
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isEditable = (e.target as HTMLElement)?.isContentEditable;
+      if (tag === "INPUT" || tag === "TEXTAREA" || isEditable) return;
+
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        if (activeBlockPage === "text") {
+          undoEditorRef.current();
+        }
+      } else if (key === "y" || (key === "z" && e.shiftKey)) {
+        e.preventDefault();
+        if (activeBlockPage === "text") {
+          redoEditorRef.current();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeBlockPage]);
  
   if (isDraftLoading) {
     return (
@@ -1176,6 +1337,7 @@ export default function BlockPagesClient() {
             onUpdateTextSection={(props) => pushTextState({ ...textBlockState, section: { ...textBlockState.section, ...props } })}
             textBlockState={textBlockState}
             onUpdateTextBlockState={pushTextState}
+            onLiveTextBlockState={setTextBlockStateLive}
             onUpdateButtonStyle={(newProps) => {
               if (selectedButtonBlock) {
                 updateButtonBlock(selectedButtonBlock.id, newProps);
@@ -1304,8 +1466,23 @@ export default function BlockPagesClient() {
                 editingButtonId={editingButtonId}
                 onButtonSelected={(props) => {
                   const lastId = editingButtonId;
+                  console.log("[ON_BUTTON_SELECTED_DEBUG]", { props, editingButtonId });
                   if (editingButtonId) {
-                    const nextButtons = { ...customButtons, [editingButtonId]: props };
+                    const existingProps = customButtons[editingButtonId] || {};
+                    const resolvedLabel =
+                      typeof props.label === "string" && props.label.trim()
+                        ? props.label.trim()
+                        : typeof existingProps.label === "string" && existingProps.label.trim()
+                          ? existingProps.label.trim()
+                          : undefined;
+                    const nextButtons = {
+                      ...customButtons,
+                      [editingButtonId]: {
+                        ...existingProps,
+                        ...props,
+                        label: resolvedLabel,
+                      },
+                    };
                     pushEditorSnapshot(textBlockState, { customButtons: nextButtons });
                   }
                   setActiveBlockPage("text");
@@ -1316,6 +1493,7 @@ export default function BlockPagesClient() {
                   }
                 }}
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
+                onClose={handleCloseButtonEditor}
                 onSaveDraft={handleSaveDraft}
                 onPreview={handlePreview}
                 saveStatus={saveStatus}
@@ -1340,7 +1518,7 @@ export default function BlockPagesClient() {
               <ButtonRightSidebar
                 selectedBlock={selectedButtonBlock}
                 onUpdateBlock={updateButtonBlock}
-                onClose={() => setShowMobileSidebar(false)}
+                onClose={handleCloseButtonEditor}
               />
             </div>
           </div>
@@ -1371,6 +1549,13 @@ export default function BlockPagesClient() {
               editingButtonId={editingButtonId}
               onEditButton={(buttonId) => {
                 setEditingButtonId(buttonId);
+                const currentProps = customButtons[buttonId];
+                if (currentProps) {
+                  const targetId = selectedButtonBlockId ?? buttonBlocks[0]?.id;
+                  if (targetId) {
+                    updateButtonBlock(targetId, currentProps);
+                  }
+                }
                 setActiveBlockPage("button");
               }}
               videoBlocks={videoBlocks}
@@ -1410,11 +1595,8 @@ export default function BlockPagesClient() {
               }}
               appliedDividers={appliedDividers}
               onRemoveDivider={(id) => {
-                setAppliedDividers((prev) => {
-                  const next = prev.filter((d) => d.id !== id);
-                  syncAppliedDividerPersistence(next);
-                  return next;
-                });
+                const next = appliedDividers.filter((d) => d.id !== id);
+                pushEditorSnapshot(textBlockState, { appliedDividers: next });
               }}
               appliedIcons={appliedIcons}
               onRemoveIcon={(id) => {
@@ -1424,19 +1606,18 @@ export default function BlockPagesClient() {
                   return next;
                 });
               }}
-              onUpdateDividerPosition={(id, position) => {
-                setAppliedDividers((prev) => {
-                  const next = prev.map((d) => (d.id === id ? { ...d, position } : d));
-                  persistAppliedDividersForTemplate(textTemplate, next);
-                  return next;
-                });
+              onUpdateDividerPosition={(id, position, options) => {
+                const next = appliedDividers.map((d) => (d.id === id ? { ...d, position } : d));
+                if (options?.pushHistory) {
+                  pushEditorSnapshot(textBlockState, { appliedDividers: next });
+                } else {
+                  setAppliedDividers(next);
+                  syncAppliedDividerPersistence(next);
+                }
               }}
               onUpdateDividerScale={(id, scale) => {
-                setAppliedDividers((prev) => {
-                  const next = prev.map((d) => (d.id === id ? { ...d, scale } : d));
-                  persistAppliedDividersForTemplate(textTemplate, next);
-                  return next;
-                });
+                const next = appliedDividers.map((d) => (d.id === id ? { ...d, scale } : d));
+                pushEditorSnapshot(textBlockState, { appliedDividers: next });
               }}
               onUpdateIconPosition={(id, position) => {
                 setAppliedIcons((prev) => {
@@ -1457,7 +1638,7 @@ export default function BlockPagesClient() {
               onSelectTemplate={handleSwitchTemplate}
             />
             <div className="hidden w-52.5 shrink-0 xl:block">
-              <TextRightSidebar state={textBlockState} onStateChange={pushTextState} template={textTemplate} />
+              <TextRightSidebar state={textBlockState} onStateChange={pushTextState} onLiveStateChange={setTextBlockStateLive} template={textTemplate} />
             </div>
           </div>
         ) : activeBlockPage === "image" ? (
@@ -1561,44 +1742,41 @@ export default function BlockPagesClient() {
                 onUndo={undoDivider}
                 onRedo={redoDivider}
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
-                onApplyDivider={() => {
+                onClose={() => setActiveBlockPage("text")}
+                onApplyDivider={(appliedProps) => {
                   const block = selectedDividerBlock ?? dividerBlocks[0];
-                  if (block) {
-                    const newDividerId = Date.now().toString();
-                    const canvas = getBlockpagesCanvasElement();
-                    const fallbackTop = getOverlayDefaultTop("divider", appliedDividers.length);
-                    const anchorY =
-                      canvas instanceof HTMLElement
-                        ? getVisibleCanvasAnchorY(canvas)
-                        : fallbackTop;
-                    const placement =
-                      canvas instanceof HTMLElement
-                        ? resolveDividerSectionPlacementAtY(canvas, anchorY)
-                        : null;
+                  const propsToUse = appliedProps ?? block?.props ?? defaultDividerProps;
+                  const newDividerId = Date.now().toString();
+                  const canvas = getBlockpagesCanvasElement();
+                  const fallbackTop = getOverlayDefaultTop("divider", appliedDividers.length);
+                  const anchorY =
+                    canvas instanceof HTMLElement
+                      ? getVisibleCanvasAnchorY(canvas)
+                      : fallbackTop;
+                  const placement =
+                    canvas instanceof HTMLElement
+                      ? resolveDividerSectionPlacementAtY(canvas, anchorY)
+                      : null;
 
-                    setAppliedDividers((prev) => {
-                      const newDivider = {
-                        id: newDividerId,
-                        props: block.props,
-                        position: {
-                          top: anchorY,
-                          left: 16,
-                          ...(placement?.sectionId
-                            ? {
-                                sectionId: placement.sectionId,
-                                anchorPath: placement.anchorPath,
-                                insertMode: placement.insertMode,
-                              }
-                            : {}),
-                        },
-                        scale: 1,
-                      };
-                      const next = [...prev, newDivider];
-                      persistAppliedDividersForTemplate(textTemplate, next);
-                      return next;
-                    });
-                    setPendingDividerScrollId(newDividerId);
-                  }
+                  const newDivider: AppliedDividerItem = {
+                    id: newDividerId,
+                    props: { ...propsToUse },
+                    position: {
+                      top: anchorY,
+                      left: 16,
+                      ...(placement?.sectionId
+                        ? {
+                            sectionId: placement.sectionId,
+                            anchorPath: placement.anchorPath,
+                            insertMode: placement.insertMode,
+                          }
+                        : {}),
+                    },
+                    scale: 1,
+                  };
+                  const next = [...appliedDividers, newDivider];
+                  pushEditorSnapshot(textBlockState, { appliedDividers: next });
+                  setPendingDividerScrollId(newDividerId);
                   setActiveBlockPage("text");
                 }}
                 onSaveDraft={handleSaveDraft}
@@ -1621,7 +1799,10 @@ export default function BlockPagesClient() {
               <DividerRightSidebar
                 selectedBlock={selectedDividerBlock}
                 onUpdateBlock={updateDividerBlock}
-                onClose={() => setShowMobileSidebar(false)}
+                onClose={() => {
+                  setShowMobileSidebar(false);
+                  setActiveBlockPage("text");
+                }}
               />
             </div>
           </div>
