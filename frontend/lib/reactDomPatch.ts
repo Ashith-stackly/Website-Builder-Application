@@ -52,7 +52,9 @@ if (typeof window !== "undefined") {
       msg.includes("removeChild") ||
       msg.includes("insertBefore") ||
       msg.includes("The node to be removed is not a child") ||
-      msg.includes("NotFoundError")
+      msg.includes("NotFoundError") ||
+      msg.includes("synchronously unmount a root") ||
+      msg.includes("cannot finish unmounting the root until the current render has completed")
     );
   };
 
@@ -81,4 +83,15 @@ if (typeof window !== "undefined") {
     },
     true
   );
+
+  if (typeof console !== "undefined" && console.error) {
+    const originalConsoleError = console.error;
+    console.error = function (...args: unknown[]) {
+      const first = typeof args[0] === "string" ? args[0] : "";
+      if (isBenignDomError(first)) {
+        return;
+      }
+      originalConsoleError.apply(console, args);
+    };
+  }
 }

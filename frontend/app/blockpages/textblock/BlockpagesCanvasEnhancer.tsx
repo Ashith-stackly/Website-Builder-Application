@@ -41,7 +41,7 @@ import { syncCanvasTexts } from "@/lib/blockpagesTextSync";
 
 type OverlayKind = "image" | "button" | "video" | "icon";
 
-function unmountVideoRoots(roots: Root[]) {
+function unmountRootsSafely(roots: Root[]) {
   roots.forEach((root) => {
     try {
       root.unmount();
@@ -60,7 +60,20 @@ function releaseVideoRoots(
   rootsRef.current.clear();
   container?.querySelectorAll("[data-blockpages-custom-video-mount]").forEach((node) => node.remove());
   if (roots.length > 0) {
-    queueMicrotask(() => unmountVideoRoots(roots));
+    queueMicrotask(() => unmountRootsSafely(roots));
+  }
+}
+
+/** Drop editor icon mounts without unmounting during an active React render. */
+function releaseIconRoots(
+  rootsRef: MutableRefObject<Map<string, Root>>,
+  container: ParentNode | null | undefined
+) {
+  const roots = [...rootsRef.current.values()];
+  rootsRef.current.clear();
+  container?.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((node) => node.remove());
+  if (roots.length > 0) {
+    queueMicrotask(() => unmountRootsSafely(roots));
   }
 }
 
@@ -1141,6 +1154,7 @@ function BlockpagesCanvasEnhancer({
   useEffect(() => {
     return () => {
       releaseVideoRoots(videoRootsRef, containerRef.current);
+      releaseIconRoots(iconRootsRef, containerRef.current);
     };
   }, []);
 
@@ -1184,6 +1198,8 @@ function BlockpagesCanvasEnhancer({
       root.render(createElement(IconPreview, { props }));
     });
 
+    const staleRoots: Root[] = [];
+
     container.querySelectorAll("[data-blockpages-icon-id]").forEach((node) => {
       const anchor = node as HTMLElement;
       const iconId = anchor.getAttribute("data-blockpages-icon-id");
@@ -1191,7 +1207,7 @@ function BlockpagesCanvasEnhancer({
 
       const root = roots.get(iconId);
       if (root) {
-        root.unmount();
+        staleRoots.push(root);
         roots.delete(iconId);
       }
       anchor.querySelectorAll("[data-blockpages-custom-icon-mount]").forEach((mount) => mount.remove());
@@ -1200,6 +1216,10 @@ function BlockpagesCanvasEnhancer({
         element.removeAttribute("data-blockpages-original-icon");
       });
     });
+
+    if (staleRoots.length > 0) {
+      queueMicrotask(() => unmountRootsSafely(staleRoots));
+    }
   }, [customIcons]);
 
   useLayoutEffect(() => {
