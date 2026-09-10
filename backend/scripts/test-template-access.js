@@ -36,7 +36,14 @@ const ALL_TEMPLATES = [
 async function runVerification() {
   console.log('================================================================');
   console.log('STARTING TEMPLATE ACCESS CONTROL & SECURITY VERIFICATION SUITE');
-  console.log('================================================================\n');
+const dns = require('node:dns');
+
+if (process.env.MONGODB_DNS_SERVERS) {
+  const dnsServers = process.env.MONGODB_DNS_SERVERS.split(',').map((s) => s.trim()).filter(Boolean);
+  if (dnsServers.length > 0) {
+    dns.setServers(dnsServers);
+  }
+}
 
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected to MongoDB successfully.\n');
