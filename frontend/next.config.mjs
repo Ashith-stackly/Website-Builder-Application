@@ -23,6 +23,9 @@ const nextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "react-icons", "framer-motion"],
+  },
 };
 
 export default nextConfig;

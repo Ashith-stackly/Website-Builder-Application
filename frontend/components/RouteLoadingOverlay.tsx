@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import StacklyLoader from "./StacklyLoader";
 
-const SHOW_DELAY_MS = 140;
-const MIN_VISIBLE_MS = 2000;
-const MAX_VISIBLE_MS = 3000;
+const SHOW_DELAY_MS = 250;
+const MIN_VISIBLE_MS = 0;
+const MAX_VISIBLE_MS = 4000;
 
 function isModifiedClick(event: globalThis.MouseEvent) {
   return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;

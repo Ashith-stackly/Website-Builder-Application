@@ -1496,7 +1496,7 @@ export default function BlockPagesClient() {
               </div>
 
               <Link
-                href="/pricing"
+                href="/planning"
                 className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110 active:scale-95"
               >
                 <Sparkles className="h-4 w-4" />

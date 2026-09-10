@@ -89,13 +89,43 @@ function configureLocalDevEnv() {
   delete process.env.NEXT_PUBLIC_BASE_PATH;
 }
 
+function clearDevCacheIfRequested() {
+  const shouldClean =
+    process.argv.includes("--clean") || process.env.STACKLY_CLEAN_CACHE === "1";
+  if (shouldClean) {
+    const nextDir = resolve(PROJECT_ROOT, ".next");
+    if (existsSync(nextDir)) {
+      try {
+        rmSync(nextDir, { recursive: true, force: true });
+        console.log("[dev-safe] Cleaned .next directory");
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
 function startNextDev() {
   configureLocalDevEnv();
   const nextCli = resolve(PROJECT_ROOT, "node_modules", "next", "dist", "bin", "next");
-  const child = spawn(process.execPath, [nextCli, "dev"], {
+  const useWebpack =
+    process.argv.includes("--webpack") || process.env.STACKLY_USE_WEBPACK === "1";
+  const devArgs = useWebpack ? ["dev"] : ["dev", "--turbo"];
+
+  const nodeOptions = process.env.NODE_OPTIONS || "";
+  const childEnv = {
+    ...process.env,
+    NODE_OPTIONS: nodeOptions.includes("--max-old-space-size")
+      ? nodeOptions
+      : `${nodeOptions} --max-old-space-size=4096`.trim(),
+  };
+
+  console.log(`[dev-safe] Starting Next.js with ${useWebpack ? "Webpack" : "Turbopack"}...`);
+
+  const child = spawn(process.execPath, [nextCli, ...devArgs], {
     cwd: PROJECT_ROOT,
     stdio: "inherit",
-    env: { ...process.env },
+    env: childEnv,
   });
 
   child.on("exit", (code, signal) => {
@@ -109,4 +139,5 @@ function startNextDev() {
 
 stopConflictingDevServers();
 clearNextLockFile();
+clearDevCacheIfRequested();
 startNextDev();
