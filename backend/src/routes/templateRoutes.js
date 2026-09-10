@@ -1,5 +1,6 @@
 const express = require('express');
 const authenticate = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const templateController = require('../controllers/templateController');
 
 const router = express.Router();
@@ -9,6 +10,9 @@ router.get('/list', templateController.listTemplates);
 
 // Authenticated template wishlist and cart routes must precede the dynamic
 // template route below so their literal paths are never interpreted as slugs.
+router.get('/access', optionalAuth, templateController.getTemplateAccess);
+router.get('/access/:templateId', optionalAuth, templateController.checkTemplateAccess);
+
 router.get('/wishlist', authenticate, templateController.getWishlist);
 router.post('/wishlist/:templateId', authenticate, templateController.addToWishlist);
 router.delete('/wishlist/:templateId', authenticate, templateController.removeFromWishlist);

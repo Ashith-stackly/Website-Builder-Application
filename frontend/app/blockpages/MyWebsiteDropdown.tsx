@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   ChevronDown, Check, Search, Utensils, HardHat, Briefcase,
   Newspaper, Megaphone, ShoppingBag, LayoutGrid, Sparkles, Building2,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -13,6 +14,7 @@ import {
   type BlockpagesTemplateId,
 } from "@/lib/blockpagesTemplates";
 import StandardModal from "@/components/StandardModal";
+import { useTemplateAccess } from "@/lib/templateAccessApi";
 
 const TEMPLATE_CARDS: {
   id: BlockpagesTemplateId;
@@ -98,6 +100,7 @@ export default function MyWebsiteDropdown({ currentTemplate, onSelectTemplate }:
   const [searchQuery, setSearchQuery] = useState("");
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { canEditTemplate, isLoading: isAccessLoading } = useTemplateAccess();
 
   const activeTemplate = currentTemplate ?? parseBlockpagesTemplate(searchParams.get("template"));
   const projectId = searchParams.get("projectId");
@@ -181,10 +184,11 @@ export default function MyWebsiteDropdown({ currentTemplate, onSelectTemplate }:
             </div>
           </div>
 
-          {/* 6 Template Cards Grid - All Visible simultaneously */}
+          {/* 7 Template Cards Grid - All Visible simultaneously */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTemplates.map((t) => {
               const isSelected = t.id === activeTemplate;
+              const isLocked = !isAccessLoading && !canEditTemplate(t.id);
               const IconComp = t.icon;
 
               return (
@@ -195,7 +199,9 @@ export default function MyWebsiteDropdown({ currentTemplate, onSelectTemplate }:
                   className={`group relative flex flex-col justify-between rounded-2xl border p-5 text-left transition-all duration-200 cursor-pointer ${
                     isSelected
                       ? "border-[#517AA5] bg-slate-50/80 shadow-md ring-2 ring-[#517AA5]/30"
-                      : "border-slate-200 bg-white hover:border-[#517AA5]/50 hover:shadow-lg hover:-translate-y-0.5"
+                      : isLocked
+                        ? "border-amber-200/80 bg-amber-50/20 hover:border-amber-400 hover:shadow-md hover:-translate-y-0.5"
+                        : "border-slate-200 bg-white hover:border-[#517AA5]/50 hover:shadow-lg hover:-translate-y-0.5"
                   }`}
                 >
                   <div>
@@ -206,6 +212,10 @@ export default function MyWebsiteDropdown({ currentTemplate, onSelectTemplate }:
                       {isSelected ? (
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-[#517AA5] bg-[#517AA5]/10 px-2.5 py-1 rounded-full border border-[#517AA5]/20">
                           <Check size={14} /> Active
+                        </span>
+                      ) : isLocked ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
+                          <Lock size={11} /> Locked
                         </span>
                       ) : (
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${t.tagColor}`}>
@@ -222,9 +232,15 @@ export default function MyWebsiteDropdown({ currentTemplate, onSelectTemplate }:
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#517AA5]">
-                    <span>{isSelected ? "Currently editing" : "Switch to layout"}</span>
-                    <Sparkles className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className={`mt-4 pt-3 border-t flex items-center justify-between text-xs font-semibold ${
+                    isLocked ? "border-amber-100 text-amber-700" : "border-slate-100 text-[#517AA5]"
+                  }`}>
+                    <span>{isSelected ? "Currently editing" : isLocked ? "Requires purchase / plan" : "Switch to layout"}</span>
+                    {isLocked ? (
+                      <Lock className="h-3.5 w-3.5 text-amber-600" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
                   </div>
                 </button>
               );

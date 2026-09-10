@@ -1,4 +1,5 @@
 const templateService = require('../services/templateService');
+const templateAccessService = require('../services/templateAccessService');
 
 async function listTemplates(req, res, next) {
   try {
@@ -24,8 +25,6 @@ async function useTemplate(req, res, next) {
       success: true,
       message: 'Project created from template',
       projectId: result.project._id,
-      // A project is backed by the same Workspace record. Keep both names in
-      // the public response while the legacy workspace API remains available.
       workspaceId: result.workspaceId,
       project: result.project,
       builderData: result.builderData,
@@ -90,6 +89,30 @@ async function removeFromCart(req, res, next) {
   }
 }
 
+// ─── Template Access Control ────────────────────────────────
+
+async function getTemplateAccess(req, res, next) {
+  try {
+    const access = await templateAccessService.getUserTemplateAccess(req.user);
+    res.json({ success: true, ...access });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function checkTemplateAccess(req, res, next) {
+  try {
+    const canEdit = await templateAccessService.canUserEditTemplate(req.user, req.params.templateId);
+    res.json({
+      success: true,
+      templateId: req.params.templateId,
+      canEdit,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listTemplates,
   getTemplate,
@@ -100,4 +123,6 @@ module.exports = {
   getCart,
   addToCart,
   removeFromCart,
+  getTemplateAccess,
+  checkTemplateAccess,
 };

@@ -59,6 +59,7 @@ import {
 import { fadeUp, scaleIn, staggerContainer } from "@/lib/motion";
 import { hasDemoSubscription } from "@/lib/demoAuth";
 import { useSubscriptionAccess } from "@/lib/subscriptionAccess";
+import { useTemplateAccess } from "@/lib/templateAccessApi";
 import { assetPath } from "@/lib/paths";
 import {
   loadRazorpayCheckoutScript,
@@ -546,7 +547,7 @@ export default function Home() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [productRatings, setProductRatings] = useState<Record<string, number>>({});
   const [successModalProduct, setSuccessModalProduct] = useState<string | null>(null);
-  const [purchasedTemplates, setPurchasedTemplates] = useState<string[]>([]);
+  const { access: templateAccess, canEditTemplate, refresh: refreshTemplateAccess } = useTemplateAccess();
   const [hoveredStar, setHoveredStar] = useState<{ productTitle: string; starIndex: number } | null>(null);
   const [ratingSubmitting, setRatingSubmitting] = useState<Record<string, boolean>>({});
 
@@ -588,11 +589,16 @@ export default function Home() {
 
       const totalPaise = Math.round(product.price * 100);
       const planName = product.title;
+      const matchedTemplate = templates.find((t) => t.title === product.title);
+      const templateSlug = matchedTemplate?.category || product.title.toLowerCase().replace(/\s+/g, "-");
 
       const order = await createRazorpayOrder({
         amountPaise: totalPaise,
         planName,
         billingPeriod: "One-Time",
+        itemType: "template",
+        templateId: templateSlug,
+        templateName: product.title,
       });
 
       openRazorpayCheckout({
@@ -605,14 +611,15 @@ export default function Home() {
         onSuccess: async (response) => {
           setPaymentLoading(true);
           try {
-            const verified = await verifyRazorpayPayment(response);
+            const verified = await verifyRazorpayPayment({
+              ...response,
+              itemType: "template",
+              templateId: templateSlug,
+              templateName: product.title,
+            });
             if (!verified) throw new Error("Payment verification failed");
 
-            setPurchasedTemplates((prev) => {
-              const next = prev.includes(product.title) ? prev : [...prev, product.title];
-              window.localStorage.setItem("stackly-purchased-templates", JSON.stringify(next));
-              return next;
-            });
+            await refreshTemplateAccess();
             window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
             setWishlistToast(`Successfully purchased ${product.title}!`);
             window.setTimeout(() => setWishlistToast(null), 3000);
@@ -738,27 +745,6 @@ export default function Home() {
 
   const hasActiveSubscription = canEditSubscription || hasDemoSub;
 
-  useEffect(() => {
-    const syncPurchased = () => {
-      try {
-        const stored = window.localStorage.getItem("stackly-purchased-templates");
-        if (stored) {
-          setPurchasedTemplates(JSON.parse(stored) as string[]);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    syncPurchased();
-    window.addEventListener("storage", syncPurchased);
-    window.addEventListener(STORAGE_SYNC_EVENT, syncPurchased);
-
-    return () => {
-      window.removeEventListener("storage", syncPurchased);
-      window.removeEventListener(STORAGE_SYNC_EVENT, syncPurchased);
-    };
-  }, []);
 
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
     event.preventDefault();
@@ -1388,7 +1374,8 @@ export default function Home() {
               const isWishlistableTemplate = ["Classic Portfolio", "Digital Marketing", "Restaurant", "Blogging Page", "E-Commerce", "Construction", "Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title);
               const isTemplateWishlisted = wishlistItems.some((item) => item.title === template.title);
               const isUnderDevelopment = ["Tech Insights", "Fashion", "Jewelry", "Business"].includes(template.title);
-              const isPurchased = purchasedTemplates.includes(template.title);
+              const canonicalTemplateId = template.category;
+              const userCanEdit = canEditTemplate(canonicalTemplateId);
 
               return (
                 <motion.article key={template.title} className="group" variants={scaleIn} whileHover={{ y: -5, transition: { duration: 0.22 } }}>
@@ -1502,27 +1489,25 @@ export default function Home() {
                           Preview
                         </Link>
                         <Link
-                          href={template.price && !isPurchased ? "/planning" : `/blockpages?template=${template.category}`}
+                          href={userCanEdit ? `/blockpages?template=${canonicalTemplateId}` : "#templates"}
                           onClick={(e) => {
                             if (isUnderDevelopment) {
                               e.preventDefault();
                               setSuccessModalProduct(template.title);
-                            } else if (template.price && !isPurchased) {
+                            } else if (!userCanEdit) {
                               e.preventDefault();
                               handleBuyNow({
                                 title: template.title,
                                 type: template.price ? "Premium Template" : "Free Template",
-                                price: template.price,
+                                price: template.price || 190,
                                 image: template.image,
                                 alt: template.alt,
                               });
-                            } else if (!template.price || isPurchased) {
-                              checkSubscriptionAndRoute(e, `/blockpages?template=${template.category}`);
                             }
                           }}
                           className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
                         >
-                          {template.price && !isPurchased ? "Buy" : "Edit"}
+                          {userCanEdit ? "Edit" : "Buy"}
                         </Link>
                       </div>
                     </div>

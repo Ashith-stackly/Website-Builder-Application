@@ -11,7 +11,23 @@ import {
   type BlockPagesDraftPayload,
 } from "@/lib/blockPagesDraftApi";
 import { routePath } from "@/lib/paths";
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import {
+  Loader2,
+  Lock,
+  Sparkles,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  ShoppingBag,
+  AlertCircle,
+} from "lucide-react";
+import { useTemplateAccess, STORAGE_SYNC_EVENT } from "@/lib/templateAccessApi";
+import {
+  createRazorpayOrder,
+  openRazorpayCheckout,
+  verifyRazorpayPayment,
+} from "@/lib/razorpayClient";
 import ButtonCanvas from "./buttonblock/Canvas";
 import ButtonRightSidebar from "./buttonblock/RightSidebar";
 import type { BlockData } from "./buttonblock/types";
@@ -31,6 +47,7 @@ import {
 import {
   isTextEditorTemplate,
   parseBlockpagesTemplate,
+  getBlockpagesTemplateLabel,
 } from "@/lib/blockpagesTemplates";
 import {
   dispatchBlockpagesScrollToSection,
@@ -92,6 +109,26 @@ import IconsRightSidebar from "./iconsblock/RightSidebar";
 import type { IconBlockData } from "./iconsblock/types";
 import { defaultIconProps } from "./iconsblock/types";
 import type { IconBlockProps } from "./iconsblock/types";
+
+const TEMPLATE_PRICES: Record<string, number> = {
+  portfolio: 250,
+  ecommerce: 290,
+  blog: 200,
+  construction: 250,
+  restaurant: 250,
+  "digital-marketing": 250,
+  business: 290,
+};
+
+const TEMPLATE_PREVIEW_URLS: Record<string, string> = {
+  portfolio: "/portfolio",
+  ecommerce: "/e-commerce",
+  blog: "/blog",
+  construction: "/construction",
+  restaurant: "/restaurant",
+  "digital-marketing": "/digital-marketing",
+  business: "/coming-soon",
+};
  
 const initialVideoBlock: VideoBlockData = {
   id: "video_block",
@@ -186,6 +223,67 @@ export default function BlockPagesClient() {
   const [isDraftLoading, setIsDraftLoading] = useState(!!searchParams.get("projectId"));
   const isSavingRef = useRef(false);
   const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Template Access Control ──────────────────────────────────────────
+  const { access, isLoading: isAccessLoading, canEditTemplate, refresh: refreshAccess } = useTemplateAccess();
+  const isAuthorized = canEditTemplate(textTemplate);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
+
+  const handleBuyCurrentTemplate = async () => {
+    if (!access.authenticated) {
+      window.location.href = `/login?redirect=${encodeURIComponent(`/blockpages?template=${textTemplate}`)}`;
+      return;
+    }
+
+    const price = TEMPLATE_PRICES[textTemplate] || 250;
+    const templateLabel = getBlockpagesTemplateLabel(textTemplate);
+    setIsPurchasing(true);
+    setPurchaseError(null);
+
+    try {
+      const order = await createRazorpayOrder({
+        amount: price,
+        planName: templateLabel,
+        itemType: "template",
+        templateId: textTemplate,
+        templateName: `${templateLabel} Template`,
+      });
+
+      openRazorpayCheckout({
+        order,
+        planLabel: `Purchase of ${templateLabel} Template`,
+        customerName: "Stackly User",
+        customerEmail: "user@example.com",
+        customerPhone: "9876543210",
+        onDismiss: () => setIsPurchasing(false),
+        onSuccess: async (response) => {
+          setIsPurchasing(true);
+          try {
+            const verified = await verifyRazorpayPayment({
+              ...response,
+              itemType: "template",
+              templateId: textTemplate,
+              templateName: `${templateLabel} Template`,
+            });
+            if (!verified) throw new Error("Payment verification failed");
+
+            await refreshAccess();
+            window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
+            setPurchaseSuccess(`Template ${templateLabel} unlocked successfully!`);
+          } catch (err) {
+            setPurchaseError(err instanceof Error ? err.message : "Payment verification failed");
+          } finally {
+            setIsPurchasing(false);
+          }
+        },
+      });
+    } catch (err) {
+      setPurchaseError(err instanceof Error ? err.message : "Could not initialize checkout");
+      setIsPurchasing(false);
+    }
+  };
 
   // Monotonically-increasing version counter.  Every template switch and every
   // Save Draft bumps this.  Async save responses whose captured version doesn't
@@ -493,6 +591,10 @@ export default function BlockPagesClient() {
   // they differ the user has switched templates and we must NOT update
   // `draftProjectId` from the stale response.
   const handleSaveDraft = useCallback(async () => {
+    if (!isAuthorized) {
+      console.warn("Save draft blocked: user is not authorized to edit template", textTemplate);
+      return;
+    }
     if (isSavingRef.current) return;
     isSavingRef.current = true;
     setSaveStatus("saving");
@@ -567,7 +669,7 @@ export default function BlockPagesClient() {
   }, [
     draftProjectId, textTemplate, textBlockState, buttonBlocks, videoBlocks,
     dividerBlocks, iconBlocks, customImages, customButtons, customIcons,
-    appliedDividers, appliedIcons, buildPreviewHtml,
+    appliedDividers, appliedIcons, buildPreviewHtml, isAuthorized,
   ]);
 
   const handleSwitchTemplate = useCallback(async (newTemplate: TextTemplateType) => {
@@ -730,8 +832,13 @@ export default function BlockPagesClient() {
     setEditingButtonId(null);
     setIsButtonEditingMode(false);
     setShowMobileSidebar(false);
-    if (lastId) {
-      window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+        if (lastId) {
+          window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+        }
+      }, 80);
     }
   }, [editingButtonId]);
 
@@ -1271,6 +1378,18 @@ export default function BlockPagesClient() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeBlockPage]);
  
+  if (isAccessLoading) {
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center bg-[#f0f2f5] text-[#0B1D40]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-[#0B1D40]" />
+          <h2 className="text-xl font-bold tracking-tight">Verifying Template Access...</h2>
+          <p className="text-sm text-slate-500">Checking your subscription permissions</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isDraftLoading) {
     return (
       <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center bg-[#f0f2f5] text-[#0B1D40]">
@@ -1278,6 +1397,131 @@ export default function BlockPagesClient() {
           <Loader2 className="h-10 w-10 animate-spin text-[#0B1D40]" />
           <h2 className="text-xl font-bold tracking-tight">Loading Saved Draft...</h2>
           <p className="text-sm text-slate-500">Retrieving template & styles from database</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    const templateLabel = getBlockpagesTemplateLabel(textTemplate);
+    const templatePrice = TEMPLATE_PRICES[textTemplate] || 250;
+    const previewUrl = TEMPLATE_PREVIEW_URLS[textTemplate] || "/portfolio";
+
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center bg-[#f0f2f5] px-4 py-12 text-[#0B1D40]">
+        <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 sm:p-12 shadow-xl shadow-slate-200/50 text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/80 shadow-inner">
+            <Lock className="h-10 w-10" />
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider mb-3">
+            <span>Template Access Required</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#06224C] mb-3">
+            {templateLabel} Template
+          </h1>
+
+          <p className="text-base text-slate-600 max-w-lg mx-auto leading-relaxed mb-6">
+            This premium template is locked on your current plan
+            {access.authenticated && access.plan ? (
+              <span className="font-bold text-[#06224C]"> ({access.plan.toUpperCase()})</span>
+            ) : (
+              <span className="font-bold text-[#06224C]"> (Guest / Not Signed In)</span>
+            )}.
+            Purchase this template individually or upgrade your plan to unlock editing for all templates.
+          </p>
+
+          {purchaseError && (
+            <div className="mb-6 flex items-center justify-center gap-2 rounded-xl bg-red-50 border border-red-200 p-3 text-sm font-semibold text-red-700">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{purchaseError}</span>
+            </div>
+          )}
+
+          {purchaseSuccess && (
+            <div className="mb-6 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm font-semibold text-emerald-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>{purchaseSuccess}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left my-8">
+            <div className="rounded-2xl border-2 border-[#06224C] bg-slate-50/50 p-6 flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-[#06224C] text-white text-[10px] font-black uppercase px-3 py-1 rounded-bl-xl tracking-wider">
+                Instant Access
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Option 1</span>
+                <h3 className="text-lg font-black text-[#06224C] mt-1">Buy This Template</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Get lifetime editing and publishing rights for the {templateLabel} template.
+                </p>
+                <div className="mt-4 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-black text-[#06224C]">₹{templatePrice}</span>
+                  <span className="text-xs text-slate-400 font-semibold">one-time</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleBuyCurrentTemplate}
+                disabled={isPurchasing}
+                className="mt-6 w-full cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-[#06224C] px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-900 active:scale-95 disabled:opacity-60"
+              >
+                {isPurchasing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="h-4 w-4" />
+                    <span>Buy Template — ₹{templatePrice}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-blue-50/40 to-indigo-50/40 p-6 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Option 2</span>
+                <h3 className="text-lg font-black text-[#06224C] mt-1">Upgrade Plan</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Unlock full access to ALL 7 templates (Portfolio, E-Commerce, Blog, Construction, Restaurant, Digital Marketing, Business).
+                </p>
+                <div className="mt-4 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-black text-blue-600">Business Plan</span>
+                </div>
+              </div>
+
+              <Link
+                href="/pricing"
+                className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110 active:scale-95"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>Upgrade to Business</span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-500">
+            <Link
+              href="/landing#templates"
+              className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[#06224C] transition"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to All Templates</span>
+            </Link>
+
+            <Link
+              href={previewUrl}
+              className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition"
+            >
+              <span>Preview live demo of {templateLabel}</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -1693,7 +1937,9 @@ export default function BlockPagesClient() {
           <div className="flex min-w-0 flex-1 gap-4">
             <ImageMainCanvas
               editingImageId={editingImageId}
+              currentImageUrl={editingImageId ? (customImages[editingImageId] || "") : ""}
               onImageSelected={(url) => {
+                const lastId = editingImageId;
                 if (editingImageId) {
                   const nextImages = { ...customImages, [editingImageId]: url };
                   pushEditorSnapshot(textBlockState, { customImages: nextImages });
@@ -1701,6 +1947,24 @@ export default function BlockPagesClient() {
                 setActiveBlockPage("text");
                 setEditingImageId(null);
                 setIsImageEditingMode(false);
+                if (typeof window !== "undefined") {
+                  window.setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                    if (lastId) {
+                      window.setTimeout(() => scrollCanvasToModifiedElement(lastId), 120);
+                    }
+                  }, 80);
+                }
+              }}
+              onBackToCanvas={() => {
+                setActiveBlockPage("text");
+                setEditingImageId(null);
+                setIsImageEditingMode(false);
+                if (typeof window !== "undefined") {
+                  window.setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                  }, 80);
+                }
               }}
               onSaveDraft={handleSaveDraft}
               onPreview={handlePreview}
@@ -1747,10 +2011,15 @@ export default function BlockPagesClient() {
                 }}
                 onUpdateBlock={updateVideoBlock}
                 onCloseBlock={() => {
-                  // Simply close the editor and go back to text/preview page
+                  // Close the editor and go back to text/preview page
                   setActiveBlockPage("text");
                   setIsVideoEditingMode(false);
                   setEditingVideoId(null);
+                  if (typeof window !== "undefined") {
+                    window.setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                    }, 80);
+                  }
                 }}
                 onSaveDraft={handleSaveDraft}
                 onPreview={handlePreview}
@@ -1790,7 +2059,14 @@ export default function BlockPagesClient() {
                 onUndo={undoDivider}
                 onRedo={redoDivider}
                 onOpenMobileSidebar={() => setShowMobileSidebar(true)}
-                onClose={() => setActiveBlockPage("text")}
+                onClose={() => {
+                  setActiveBlockPage("text");
+                  if (typeof window !== "undefined") {
+                    window.setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                    }, 80);
+                  }
+                }}
                 onApplyDivider={(appliedProps) => {
                   const block = selectedDividerBlock ?? dividerBlocks[0];
                   const propsToUse = appliedProps ?? block?.props ?? defaultDividerProps;
@@ -1850,6 +2126,11 @@ export default function BlockPagesClient() {
                 onClose={() => {
                   setShowMobileSidebar(false);
                   setActiveBlockPage("text");
+                  if (typeof window !== "undefined") {
+                    window.setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent(BLOCKPAGES_CANVAS_RESTORED_EVENT));
+                    }, 80);
+                  }
                 }}
               />
             </div>

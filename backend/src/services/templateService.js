@@ -6,6 +6,7 @@ const WorkspaceState = require('../models/WorkspaceState');
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const { assertProjectCapacity, toProject } = require('./projectService');
+const { canUserEditTemplate } = require('./templateAccessService');
 
 const DEFAULT_PAGES = [{ id: 'home', name: 'Home', path: '/' }];
 
@@ -558,11 +559,12 @@ async function getTemplate(idOrSlug) {
 }
 
 async function assertTemplateAccess(userId, template) {
-  const user = await User.findById(userId).select('plan role').lean();
+  const user = await User.findById(userId).select('plan role subscriptionStatus').lean();
   if (!user) throw ApiError.unauthorized('Your session is no longer valid. Please log in again.');
 
-  if (template.premium && user.role !== 'admin' && user.plan !== 'premium') {
-    throw ApiError.forbidden('This premium template requires a Premium plan.');
+  const canEdit = await canUserEditTemplate(user, template.slug || template.category || template.name);
+  if (!canEdit) {
+    throw ApiError.forbidden('You do not have access to edit this template. Please purchase it or upgrade your plan.');
   }
 
   await assertProjectCapacity(userId, user);

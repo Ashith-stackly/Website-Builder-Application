@@ -1,9 +1,10 @@
 import React from "react";
-import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Copy, Trash2, Check, AlertTriangle, Loader2, ArrowLeft } from "lucide-react";
+import { ChevronDown, Undo2, Redo2, Eye, Send, X, Save, Copy, Trash2, Check, AlertTriangle, Loader2 } from "lucide-react";
 import IconPreview from "./IconPreview";
 import type { IconBlockData } from "./types";
 import type { DraftSaveStatus } from "../BlockPagesClient";
 import MyWebsiteDropdown from "../MyWebsiteDropdown";
+import BlockEditorBackButton from "../BlockEditorBackButton";
  
 interface CanvasProps {
   blocks: IconBlockData[];
@@ -141,17 +142,9 @@ export default function Canvas({
               <div className="flex items-center justify-between border-b border-[#e6edf5] bg-white px-5 py-4 sm:px-6">
                 <div className="flex items-center gap-3">
                   {onBackToCanvas && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onBackToCanvas();
-                      }}
-                      className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-[#0B1D40] shadow-sm transition-colors hover:bg-gray-50"
-                      title="Back to Canvas"
-                    >
-                      <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-                      <span className="hidden sm:inline">Back</span>
-                    </button>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <BlockEditorBackButton onClick={() => onBackToCanvas()} />
+                    </div>
                   )}
                   <h2 className="text-[#0B1D40] font-bold text-[16px]">Icons Blocks</h2>
                   <button

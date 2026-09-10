@@ -6,6 +6,7 @@ import { saveBlockpagesVideoProps, resolveVideoMediaUrl } from '@/lib/blockpages
 import { VideoBlockData } from './types';
 import type { DraftSaveStatus } from '../BlockPagesClient';
 import MyWebsiteDropdown from '../MyWebsiteDropdown';
+import BlockEditorBackButton from '../BlockEditorBackButton';
  
 const UploadedVideoPlayer = ({ block, uploadUrl, posterImage, autoplay, loop, muted, showControls }: any) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -199,7 +200,12 @@ export default function Canvas({
         className="flex h-[64px] flex-shrink-0 items-center justify-between gap-4 overflow-x-auto border-b border-[#dbe3ef] bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.03)] md:px-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <MyWebsiteDropdown currentTemplate={template} />
+        <div className="flex items-center gap-3">
+          <MyWebsiteDropdown currentTemplate={template} />
+          {onCloseBlock && (
+            <BlockEditorBackButton onClick={onCloseBlock} />
+          )}
+        </div>
  
         {/* Mobile Settings Trigger */}
         <button

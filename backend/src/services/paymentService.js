@@ -2,9 +2,11 @@ const crypto = require('crypto');
 const Stripe = require('stripe');
 const Subscription = require('../models/Subscription');
 const Invoice = require('../models/Invoice');
+const TemplatePurchase = require('../models/TemplatePurchase');
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const { sanitizeUser } = require('../helpers');
+const { normalizeTemplateId } = require('./templateAccessService');
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw ApiError.badRequest('Stripe is not configured');
@@ -140,6 +142,9 @@ async function createRazorpayOrder(user, body = {}) {
       userId: user?._id?.toString() || '',
       planName: body.planName || '',
       billingPeriod: body.billingPeriod || '',
+      itemType: body.itemType || (body.templateId ? 'template' : ''),
+      templateId: body.templateId || '',
+      templateName: body.templateName || '',
     },
   });
 
@@ -231,6 +236,7 @@ async function verifyRazorpay(user, body = {}) {
   const expiryDate = buildExpiryDate(billingPeriod);
 
   let resolvedPlanName = planName;
+  let orderNotes = {};
   if (hasRazorpayConfig() && razorpay_order_id && !String(razorpay_order_id).startsWith('order_demo')) {
     try {
       const Razorpay = require('razorpay');
@@ -239,16 +245,112 @@ async function verifyRazorpay(user, body = {}) {
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
       const order = await razorpay.orders.fetch(razorpay_order_id);
-      if (order?.notes?.planName) resolvedPlanName = order.notes.planName;
+      if (order?.notes) {
+        orderNotes = order.notes;
+        if (order.notes.planName) resolvedPlanName = order.notes.planName;
+      }
     } catch {
       /* keep planName from request body */
     }
   }
 
-  const plan = normalizePlanName(resolvedPlanName);
-
   const rawAmount = Number(amount) || 0;
   const amountRupees = (rawAmount >= 100 && currency === 'INR') ? Math.round(rawAmount / 100) : (rawAmount >= 100 ? rawAmount / 100 : rawAmount);
+  const cleanPayId = (razorpay_payment_id || '').replace(/^pay_/, '').toUpperCase();
+  const invoiceId = `INV-${cleanPayId.substring(0, 10) || Math.floor(100000 + Math.random() * 899999)}`;
+  const sanitized = user ? sanitizeUser(user) : null;
+  const amountDisplay = currency === 'INR'
+    ? `₹${amountRupees}`
+    : `$${amountRupees.toFixed(2)}`;
+  const dateDisplay = startDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).replace(',', '');
+
+  const isTemplatePurchase =
+    body.itemType === 'template' ||
+    Boolean(body.templateId) ||
+    orderNotes.itemType === 'template' ||
+    Boolean(orderNotes.templateId);
+
+  if (isTemplatePurchase) {
+    const rawTemplateId = body.templateId || orderNotes.templateId || resolvedPlanName;
+    const canonicalTemplateId = normalizeTemplateId(rawTemplateId);
+    const templateName = body.templateName || orderNotes.templateName || resolvedPlanName || canonicalTemplateId;
+
+    if (user) {
+      await TemplatePurchase.findOneAndUpdate(
+        { userId: user._id, templateId: canonicalTemplateId },
+        {
+          userId: user._id,
+          templateId: canonicalTemplateId,
+          templateName,
+          status: 'completed',
+          amount: amountRupees,
+          currency,
+          paymentProvider: 'razorpay',
+          paymentId: razorpay_payment_id,
+          orderId: razorpay_order_id,
+          purchasedAt: startDate,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      try {
+        await Invoice.findOneAndUpdate(
+          { userId: user._id, invoiceId },
+          {
+            userId: user._id,
+            invoiceId,
+            date: dateDisplay,
+            amount: amountDisplay,
+            status: rawAmount === 0 ? 'Free' : 'Paid',
+            planName: templateName,
+            planTier: user.plan || 'basic',
+            websiteLabel: `Template Purchase: ${templateName}`,
+            paymentMethodLabel: instrumentLabel,
+            paymentDetail: razorpay_payment_id
+              ? `Payment ${razorpay_payment_id}${razorpay_order_id ? ` · Order ${razorpay_order_id}` : ''}`
+              : '',
+            buyerName: user.name || 'Customer',
+            buyerEmail: user.email || '',
+            buyerPhone: user.mobile || user.phone || '',
+            buyerAddress: user.address || '',
+            generatedAt: startDate.toISOString(),
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } catch (invoiceErr) {
+        console.error('Failed to persist template invoice:', invoiceErr.message);
+      }
+    }
+
+    return {
+      verified: true,
+      user: sanitized,
+      itemType: 'template',
+      templatePurchased: canonicalTemplateId,
+      templateName,
+      paymentDetails: {
+        invoiceId,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        paymentDate: startDate.toISOString(),
+        paymentMethodLabel: instrumentLabel,
+        bankName: bank,
+        cardNetwork: cardNet,
+        upiApp: upi,
+        walletName: wallet,
+        amount: amountRupees,
+        amountPaise: rawAmount,
+        currency,
+        customerName: user?.name || 'Customer',
+        customerEmail: user?.email || '',
+        customerPhone: user?.mobile || user?.phone || '',
+        customerAddress: user?.address || '',
+      },
+    };
+  }
+
+  // Otherwise: Subscription plan purchase / upgrade
+  const plan = normalizePlanName(resolvedPlanName);
 
   if (user) {
     await Subscription.findOneAndUpdate(
@@ -273,16 +375,8 @@ async function verifyRazorpay(user, body = {}) {
     await user.save();
   }
 
-  const cleanPayId = (razorpay_payment_id || '').replace(/^pay_/, '').toUpperCase();
-  const invoiceId = `INV-${cleanPayId.substring(0, 10) || Math.floor(100000 + Math.random() * 899999)}`;
-  const sanitized = user ? sanitizeUser(user) : null;
-
-  // Persist invoice to MongoDB so it is available across all sessions/devices
+  // Persist invoice for subscription to MongoDB
   if (user) {
-    const amountDisplay = currency === 'INR'
-      ? `₹${amountRupees}`
-      : `$${amountRupees.toFixed(2)}`;
-    const dateDisplay = startDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).replace(',', '');
     try {
       await Invoice.findOneAndUpdate(
         { userId: user._id, invoiceId },
@@ -308,7 +402,6 @@ async function verifyRazorpay(user, body = {}) {
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
     } catch (invoiceErr) {
-      // Non-critical — log but don't fail the payment verification
       console.error('Failed to persist invoice:', invoiceErr.message);
     }
   }

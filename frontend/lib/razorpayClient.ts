@@ -177,28 +177,48 @@ async function postRazorpayApi<T>(path: string, body: unknown): Promise<T> {
   return data;
 }
  
-export async function createRazorpayOrder(payload: {
-  amountPaise: number;
+export type CreateRazorpayOrderPayload = {
+  amountPaise?: number;
+  amount?: number;
   planName: string;
-  billingPeriod: string;
-}): Promise<RazorpayOrderResponse> {
+  billingPeriod?: string;
+  itemType?: "plan" | "template";
+  templateId?: string;
+  templateName?: string;
+};
+
+export type VerifyRazorpayPaymentPayload = RazorpayPaymentSuccess & {
+  amount?: number;
+  planName?: string;
+  billingPeriod?: string;
+  itemType?: "plan" | "template";
+  templateId?: string;
+  templateName?: string;
+};
+
+export async function createRazorpayOrder(
+  payload: CreateRazorpayOrderPayload
+): Promise<RazorpayOrderResponse> {
+  const amountPaise = payload.amountPaise ?? (payload.amount ? Math.round(payload.amount * 100) : 0);
+  const normalizedPayload = {
+    ...payload,
+    amountPaise,
+    billingPeriod: payload.billingPeriod || "one-time",
+  };
+
   if (isRazorpayDemoMode()) {
     return {
       orderId: `order_demo_${Math.random().toString(36).substring(2, 9)}`,
-      amount: payload.amountPaise,
+      amount: amountPaise,
       currency: "INR",
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
     };
   }
-  return postRazorpayApi<RazorpayOrderResponse>("/razorpay/create-order", payload);
+  return postRazorpayApi<RazorpayOrderResponse>("/razorpay/create-order", normalizedPayload);
 }
  
 export async function verifyRazorpayPayment(
-  payload: RazorpayPaymentSuccess & {
-    amount?: number;
-    planName?: string;
-    billingPeriod?: string;
-  },
+  payload: VerifyRazorpayPaymentPayload,
 ): Promise<RazorpayVerifyResponse> {
   return postRazorpayApi<RazorpayVerifyResponse>("/razorpay/verify", payload);
 }

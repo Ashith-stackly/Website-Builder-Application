@@ -79,11 +79,25 @@ async function listProjects(userId) {
 }
 
 async function createProject(userId, body) {
+  const user = await User.findById(userId).select('plan role subscriptionStatus').lean();
+  if (!user) throw ApiError.unauthorized('User not found');
+
   // ── Plan-based project limit enforcement ────────────────────────────
-  await assertProjectCapacity(userId);
+  await assertProjectCapacity(userId, user);
 
   const isBlockpages = body.editorType === 'blockpages';
   const editorType = isBlockpages ? 'blockpages' : (body.editorType || 'builder');
+
+  // ── Template Access Control for Block Pages drafts ──────────────────
+  if (isBlockpages && body.category) {
+    const { canUserEditTemplate } = require('./templateAccessService');
+    const canEdit = await canUserEditTemplate(user, body.category);
+    if (!canEdit) {
+      throw ApiError.forbidden(
+        'You do not have access to edit this template. Please purchase it or upgrade your plan.'
+      );
+    }
+  }
 
   const doc = await Workspace.create({
     userId,

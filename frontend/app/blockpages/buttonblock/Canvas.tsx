@@ -1,9 +1,10 @@
 import React from 'react';
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon, ChevronRight, Download, ShoppingBag, Check, AlertTriangle, Loader2 } from 'lucide-react';
+import { ChevronDown, Undo2, Redo2, Eye, Send, X, Play, Save, Image as ImageIcon, ChevronRight, Download, ShoppingBag, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { BlockData } from './types';
 import type { DraftSaveStatus } from '../BlockPagesClient';
 import MyWebsiteDropdown from '../MyWebsiteDropdown';
+import BlockEditorBackButton from '../BlockEditorBackButton';
  
 const renderIcon = (type: string) => {
   switch (type) {
@@ -290,14 +291,7 @@ export default function Canvas({
         <div className="flex items-center gap-3">
           <MyWebsiteDropdown />
           {onClose && (
-            <button
-              onClick={onClose}
-              className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-[13px] font-bold text-[#0B1D40] shadow-sm transition hover:bg-gray-50 cursor-pointer"
-              title="Back to Editor"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Editor</span>
-            </button>
+            <BlockEditorBackButton onClick={onClose} />
           )}
         </div>
  
