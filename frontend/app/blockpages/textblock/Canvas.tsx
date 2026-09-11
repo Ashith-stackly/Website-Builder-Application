@@ -6,7 +6,13 @@ import { routePath } from "@/lib/paths";
 import { getBlockpagesTemplateLabel, type BlockpagesTemplateId } from "@/lib/blockpagesTemplates";
 import { BlockpagesEditorProvider } from "@/lib/blockpagesEditorContext";
 import { isBlockpagesInteractiveControl } from "@/lib/blockpagesEditorInteraction";
-import { buildBlockpagesSectionStylesCss } from "@/lib/blockpagesTemplateSections";
+import {
+  buildBlockpagesSectionStylesCss,
+  dispatchBlockpagesScrollToSection,
+  getBlockpagesDefaultSectionId,
+  getBlockpagesFooterScrollId,
+  getBlockpagesHeaderScrollId,
+} from "@/lib/blockpagesTemplateSections";
 import {
   buildBlockpagesDropdownStylesCss,
   isBlockpagesTextEditingActive,
@@ -208,6 +214,14 @@ export default function TextCanvas({ state, onStateChange, onSyncTextStyles, can
  
   const selectTarget = (target: TextEditorTarget) => {
     onStateChange({ ...state, selectedTarget: target });
+    if (target === "header") {
+      dispatchBlockpagesScrollToSection(getBlockpagesHeaderScrollId(template));
+    } else if (target === "footer") {
+      dispatchBlockpagesScrollToSection(getBlockpagesFooterScrollId(template));
+    } else if (target === "main") {
+      const targetSection = state.activeSectionId ?? getBlockpagesDefaultSectionId(template);
+      dispatchBlockpagesScrollToSection(targetSection);
+    }
   };
 
   // Re-apply saved custom text overrides whenever customTexts updates (e.g. from loaded draft)

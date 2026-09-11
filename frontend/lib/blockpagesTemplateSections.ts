@@ -79,7 +79,7 @@ export function getBlockpagesDefaultSectionId(template: BlockpagesTemplateId): s
 }
 
 export function getBlockpagesHeaderScrollId(template: BlockpagesTemplateId): string {
-  return getBlockpagesDefaultSectionId(template);
+  return "header";
 }
 
 export function getBlockpagesFooterScrollId(template: BlockpagesTemplateId): string {
@@ -135,16 +135,57 @@ export function dispatchBlockpagesScrollToSection(sectionId: string) {
 }
 
 export function scrollBlockpagesCanvasToSection(sectionId: string) {
-  if (typeof document === "undefined" || !sectionId.trim()) return;
-
-  const escaped =
-    typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(sectionId) : sectionId.replace(/"/g, '\\"');
+  if (typeof document === "undefined" || !sectionId?.trim()) return;
 
   const scrollRoot = document.querySelector<HTMLElement>(
     "[data-blockpages-scroll-root], [data-textblock-canvas], [data-blockpages-preview-root]"
   );
-  const target =
+
+  const lower = sectionId.toLowerCase();
+
+  // If header or top is requested, scroll to the top of canvas
+  if (lower === "header" || lower === "top" || lower === "buyscreen-top-header" || lower === "buyscreen-header") {
+    if (scrollRoot) {
+      scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+  }
+
+  const escaped =
+    typeof CSS !== "undefined" && "escape" in CSS ? CSS.escape(sectionId) : sectionId.replace(/"/g, '\\"');
+
+  let target =
     scrollRoot?.querySelector<HTMLElement>(`#${escaped}`) ?? document.getElementById(sectionId);
+
+  // If header was targeted and not matched by ID
+  if (!target && (lower.includes("header") || lower === "header")) {
+    target =
+      scrollRoot?.querySelector<HTMLElement>(
+        "header, [data-blockpages-template-header='true'], .buyscreen-header, .buyscreen-top-header, [id*='header']"
+      ) ??
+      document.querySelector<HTMLElement>(
+        "header, [data-blockpages-template-header='true'], .buyscreen-header, .buyscreen-top-header, [id*='header']"
+      );
+    if (!target && scrollRoot) {
+      scrollRoot.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+  }
+
+  // If footer was targeted and not matched by ID
+  if (!target && (lower.includes("footer") || lower === "footer")) {
+    target =
+      scrollRoot?.querySelector<HTMLElement>(
+        "footer, [data-blockpages-template-footer='true'], .stackly-footer, [id*='footer'], [id*='contact']"
+      ) ??
+      document.querySelector<HTMLElement>(
+        "footer, [data-blockpages-template-footer='true'], .stackly-footer, [id*='footer'], [id*='contact']"
+      );
+    if (!target && scrollRoot) {
+      scrollRoot.scrollTo({ top: scrollRoot.scrollHeight, behavior: "smooth" });
+      return;
+    }
+  }
 
   if (!target) return;
 

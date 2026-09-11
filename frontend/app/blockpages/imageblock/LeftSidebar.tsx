@@ -6,7 +6,7 @@ import {
   Video, Minus, AppWindow, Columns, Heading,
   ChevronDown, Circle, ChevronLeft, ChevronRight, Plus, AlignLeft, AlignCenter, AlignRight, Ban, Pipette,
   Play, Download, ShoppingBag, FlipHorizontal, FlipVertical, RotateCcw, ArrowUpDown, SlidersHorizontal, Filter, Crop,
-  Section, X, Star, Info
+  Section, X, Star, Info, Check
 } from 'lucide-react';
 import { useBuilder } from './BuilderContext';
 import {
@@ -859,21 +859,14 @@ export default function LeftSidebar({
 
                     <div>
                       <h4 className="mb-2 text-[14px] font-bold text-white">Select Section</h4>
-                      <select
+                      <LeftSidebarSectionSelectDropdown
                         value={activeSectionId}
-                        onChange={(e) => {
-                          const targetId = e.target.value;
+                        options={templateSections}
+                        onChange={(targetId) => {
                           onUpdateTextBlockState?.({ ...textBlockState, activeSectionId: targetId });
                           dispatchBlockpagesScrollToSection(targetId);
                         }}
-                        className="w-full rounded-xl border border-[#203354] bg-[#11213A] px-3 py-2.5 text-[14px] font-bold text-white outline-none mb-4 focus:border-[#517AA5]"
-                      >
-                        {templateSections.map((sectionOption) => (
-                          <option key={sectionOption.id} value={sectionOption.id}>
-                            {sectionOption.label}
-                          </option>
-                        ))}
-                      </select>
+                      />
 
                       <h4 className="mb-2 text-[14px] font-bold text-white">Background Color</h4>
                       <div className="flex items-center gap-2 mb-4">
@@ -1609,5 +1602,73 @@ export default function LeftSidebar({
         </div>
       </StandardModal>
     </>
+  );
+}
+
+function LeftSidebarSectionSelectDropdown({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: { id: string; label: string }[];
+  onChange: (id: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find((opt) => opt.id === value) || options[0];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={dropdownRef} className="relative w-full mb-4">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-[#203354] bg-[#11213A] px-3 py-2.5 text-[14px] font-bold text-white shadow-sm transition-all duration-150 hover:border-[#517AA5] hover:bg-[#162a4a] focus:outline-none focus:ring-2 focus:ring-[#517AA5]/30"
+      >
+        <span className="truncate">{selectedOption?.label ?? "Select Section"}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-white transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-[calc(100%+4px)] z-[100] w-full max-h-56 overflow-y-auto rounded-xl border border-[#203354] bg-[#11213A] p-1.5 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-150 custom-scrollbar">
+          {options.map((option) => {
+            const isSelected = option.id === value;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  onChange(option.id);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition-colors duration-150 ${
+                  isSelected
+                    ? "bg-[#517AA5] text-white"
+                    : "text-white hover:bg-[#1a3154] active:bg-[#203b66]"
+                }`}
+              >
+                <span>{option.label}</span>
+                {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
