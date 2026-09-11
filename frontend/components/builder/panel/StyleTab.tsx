@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useEffect, useState } from "react";
 import { AlignCenter, AlignLeft, AlignRight, ChevronDown, Monitor, RotateCcw, Smartphone, Tablet } from "lucide-react";
 import { ColorSwatch } from "./controls/ColorSwatch";
@@ -7,14 +7,16 @@ import { UnitInput } from "./controls/UnitInput";
 import { SegmentedControl } from "./controls/SegmentedControl";
 import { useBuilderStore } from "@/store/builderStore";
 import type { BuilderComponent, ComponentStyles, Viewport } from "@/types/builder";
-
+ 
 const FONT_WEIGHTS = [
+  { value: "300", label: "Light" },
   { value: "400", label: "Regular" },
   { value: "500", label: "Medium" },
-  { value: "600", label: "Semi" },
+  { value: "600", label: "Semi Bold" },
   { value: "700", label: "Bold" },
+  { value: "800", label: "Extra Bold" },
 ];
-
+ 
 const FONT_FAMILIES = [
   { label: "Inter", value: "Inter, system-ui, sans-serif", google: "Inter" },
   { label: "Roboto", value: "Roboto, Arial, sans-serif", google: "Roboto" },
@@ -26,22 +28,22 @@ const FONT_FAMILIES = [
   { label: "Merriweather", value: "Merriweather, Georgia, serif", google: "Merriweather" },
   { label: "System", value: "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif" },
 ];
-
+ 
 function loadGoogleFont(fontFamily?: string) {
   if (typeof document === "undefined" || !fontFamily) return;
   const match = FONT_FAMILIES.find((font) => font.value === fontFamily && font.google);
   if (!match?.google) return;
-
+ 
   const id = `stackly-font-${match.google.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   if (document.getElementById(id)) return;
-
+ 
   const link = document.createElement("link");
   link.id = id;
   link.rel = "stylesheet";
   link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(match.google).replace(/%20/g, "+")}:wght@400;500;600;700;800&display=swap`;
   document.head.appendChild(link);
 }
-
+ 
 function Section({
   title,
   children,
@@ -56,7 +58,7 @@ function Section({
     <div className="border-b border-[#f0eae6] last:border-0">
       <button
         type="button"
-        className="flex w-full items-center justify-between px-5 py-3.5 text-left"
+        className="flex w-full cursor-pointer items-center justify-between px-5 py-3.5 text-left"
         onClick={() => setOpen((o) => !o)}
       >
         <span className="text-[11px] font-bold uppercase tracking-widest text-[#566583]">{title}</span>
@@ -68,7 +70,7 @@ function Section({
     </div>
   );
 }
-
+ 
 /** Small dot indicator showing a field has a viewport override */
 function OverrideDot({ hasOverride, onReset }: { hasOverride: boolean; onReset: () => void }) {
   if (!hasOverride) return null;
@@ -77,13 +79,13 @@ function OverrideDot({ hasOverride, onReset }: { hasOverride: boolean; onReset: 
       type="button"
       title="This field has a viewport override. Click to reset to desktop value."
       onClick={(e) => { e.stopPropagation(); onReset(); }}
-      className="ml-1 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition hover:bg-amber-200"
+      className="ml-1 inline-flex h-4 w-4 cursor-pointer flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition hover:bg-amber-200"
     >
       <RotateCcw className="h-2.5 w-2.5" />
     </button>
   );
 }
-
+ 
 export function StyleTab({
   component,
   onUpdate,
@@ -93,12 +95,12 @@ export function StyleTab({
 }) {
   const viewport = useBuilderStore((s) => s.viewport) as Viewport;
   const isResponsive = viewport !== "desktop";
-
+ 
   /* ── Resolve styles for current viewport ── */
   const baseStyles = component.styles;
   const vpOverrides = isResponsive ? (component.responsiveStyles?.[viewport] ?? {}) : {};
   const s: ComponentStyles = isResponsive ? { ...baseStyles, ...vpOverrides } : baseStyles;
-
+ 
   const selectedTextStyleTarget = useBuilderStore((state) => state.selectedTextStyleTarget);
   const selectTextStyleTarget = useBuilderStore((state) => state.selectTextStyleTarget);
   const textTarget =
@@ -117,11 +119,11 @@ export function StyleTab({
       : textTarget
         ? activeTextStyles.backgroundColor || "#0B1D40"
         : "#0B1D40";
-
+ 
   /** Check if a specific style key has a viewport override */
   const hasOverride = (key: keyof ComponentStyles) =>
     isResponsive && vpOverrides[key] !== undefined;
-
+ 
   /** Reset a specific field's viewport override back to desktop */
   const resetOverride = (key: keyof ComponentStyles) => {
     if (!isResponsive) return;
@@ -132,7 +134,7 @@ export function StyleTab({
       responsiveStyles: { ...component.responsiveStyles, [viewport]: next },
     });
   };
-
+ 
   /** Write a style patch — to responsiveStyles if on a breakpoint, else to base styles */
   const set = (patch: Partial<ComponentStyles>) => {
     if (isResponsive) {
@@ -147,13 +149,13 @@ export function StyleTab({
       onUpdate(component.id, { styles: { ...baseStyles, ...patch } });
     }
   };
-
+ 
   const setTypography = (patch: Partial<ComponentStyles>) => {
     if (!textTarget) {
       set(patch);
       return;
     }
-
+ 
     onUpdate(component.id, {
       textStyles: {
         ...(component.textStyles ?? {}),
@@ -164,13 +166,13 @@ export function StyleTab({
       },
     });
   };
-
+ 
   const ViewportIcon = viewport === "tablet" ? Tablet : viewport === "mobile" ? Smartphone : Monitor;
-
+ 
   useEffect(() => {
     loadGoogleFont(activeTextStyles.fontFamily || s.fontFamily);
   }, [activeTextStyles.fontFamily, s.fontFamily]);
-
+ 
   return (
     <div className="pb-6">
       {/* Viewport editing banner */}
@@ -182,7 +184,7 @@ export function StyleTab({
           </span>
         </div>
       )}
-
+ 
       {/* Typography */}
       <Section title="Typography">
         {textTarget && (
@@ -194,7 +196,7 @@ export function StyleTab({
               <button
                 type="button"
                 onClick={() => selectTextStyleTarget(null)}
-                className="text-[10px] font-bold text-blue-600 hover:text-blue-800"
+                className="cursor-pointer text-[10px] font-bold text-blue-600 hover:text-blue-800"
               >
                 Clear
               </button>
@@ -202,21 +204,27 @@ export function StyleTab({
           </div>
         )}
         <div>
-          <span className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Font Family</span>
-          <select
-            value={activeTextStyles.fontFamily || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              loadGoogleFont(value);
-              setTypography({ fontFamily: value });
-            }}
-            className="w-full rounded-lg border border-[#dbe3ef] bg-transparent px-2.5 py-2 text-[12px] font-bold text-[#0B1D40] outline-none focus:border-blue-400"
-          >
-            <option value="">Inherit</option>
-            {FONT_FAMILIES.map((font) => (
-              <option key={font.value} value={font.value}>{font.label}</option>
-            ))}
-          </select>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Font Family</span>
+            <OverrideDot hasOverride={hasOverride("fontFamily")} onReset={() => resetOverride("fontFamily")} />
+          </div>
+          <div className="relative">
+            <select
+              value={activeTextStyles.fontFamily || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                loadGoogleFont(value);
+                setTypography({ fontFamily: value });
+              }}
+              className="h-[38px] w-full appearance-none rounded-lg border border-[#dbe3ef] bg-[#f7f9fc] px-3 pr-8 text-[12px] font-bold text-[#0B1D40] outline-none transition hover:bg-white focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer"
+            >
+              <option value="">Inherit</option>
+              {FONT_FAMILIES.map((font) => (
+                <option key={font.value} value={font.value}>{font.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#566583]" />
+          </div>
         </div>
         <div>
           <div className="flex items-center">
@@ -229,28 +237,39 @@ export function StyleTab({
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-end gap-0.5">
-            <div className="flex-1">
-              <UnitInput
-                label="Font Size"
-                value={activeTextStyles.fontSize || ""}
-                onChange={(v) => setTypography({ fontSize: v })}
-                placeholder="16"
-              />
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Font Size</span>
+              <OverrideDot hasOverride={hasOverride("fontSize")} onReset={() => resetOverride("fontSize")} />
             </div>
-            <OverrideDot hasOverride={hasOverride("fontSize")} onReset={() => resetOverride("fontSize")} />
+            <UnitInput
+              value={activeTextStyles.fontSize || ""}
+              onChange={(v) => setTypography({ fontSize: v })}
+              placeholder="16"
+              units={["px", "rem", "em", "%"]}
+              defaultUnit="px"
+              allowAuto={false}
+            />
           </div>
-          <div>
-            <span className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Weight</span>
-            <select
-              value={activeTextStyles.fontWeight || "400"}
-              onChange={(e) => setTypography({ fontWeight: e.target.value })}
-              className="w-full rounded-lg border border-[#dbe3ef] bg-transparent px-2.5 py-2 text-[12px] font-bold text-[#0B1D40] outline-none focus:border-blue-400"
-            >
-              {FONT_WEIGHTS.map((fw) => (
-                <option key={fw.value} value={fw.value}>{fw.label}</option>
-              ))}
-            </select>
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Weight</span>
+              <OverrideDot hasOverride={hasOverride("fontWeight")} onReset={() => resetOverride("fontWeight")} />
+            </div>
+            <div className="relative h-[38px] w-full min-w-0">
+              <select
+                value={activeTextStyles.fontWeight || "400"}
+                onChange={(e) => setTypography({ fontWeight: e.target.value })}
+                className="h-full w-full appearance-none rounded-lg border border-[#dbe3ef] bg-[#f7f9fc] px-3 pr-8 text-[12px] font-bold text-[#0B1D40] outline-none transition hover:bg-white focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer"
+              >
+                {FONT_WEIGHTS.map((fw) => (
+                  <option key={fw.value} value={fw.value} className="bg-white text-[#0B1D40] py-1 font-semibold">
+                    {fw.label} ({fw.value})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#566583]" />
+            </div>
           </div>
         </div>
         <SegmentedControl
@@ -264,7 +283,7 @@ export function StyleTab({
           onChange={(v) => setTypography({ textAlign: v as ComponentStyles["textAlign"] })}
         />
       </Section>
-
+ 
       {/* Button appearance */}
       {isButtonTarget && (
         <Section title="Button">
@@ -281,7 +300,7 @@ export function StyleTab({
           />
         </Section>
       )}
-
+ 
       {/* Background */}
       <Section title="Background" defaultOpen={!isButtonTarget}>
         <div className="flex items-center">
@@ -293,74 +312,89 @@ export function StyleTab({
           <OverrideDot hasOverride={hasOverride("backgroundColor")} onReset={() => resetOverride("backgroundColor")} />
         </div>
       </Section>
-
+ 
       {/* Spacing */}
       <Section title="Spacing" defaultOpen={false}>
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-end gap-0.5">
-            <div className="flex-1">
-              <UnitInput
-                label="Padding"
-                value={s.padding || ""}
-                onChange={(v) => set({ padding: v })}
-                placeholder="16"
-              />
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Padding</span>
+              <OverrideDot hasOverride={hasOverride("padding")} onReset={() => resetOverride("padding")} />
             </div>
-            <OverrideDot hasOverride={hasOverride("padding")} onReset={() => resetOverride("padding")} />
+            <UnitInput
+              value={s.padding || ""}
+              onChange={(v) => set({ padding: v })}
+              placeholder="16"
+              units={["px", "rem", "%", "em"]}
+              defaultUnit="px"
+              allowAuto={false}
+            />
           </div>
-          <div className="flex items-end gap-0.5">
-            <div className="flex-1">
-              <UnitInput
-                label="Margin"
-                value={s.margin || ""}
-                onChange={(v) => set({ margin: v })}
-                placeholder="0"
-              />
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Margin</span>
+              <OverrideDot hasOverride={hasOverride("margin")} onReset={() => resetOverride("margin")} />
             </div>
-            <OverrideDot hasOverride={hasOverride("margin")} onReset={() => resetOverride("margin")} />
+            <UnitInput
+              value={s.margin || ""}
+              onChange={(v) => set({ margin: v })}
+              placeholder="0"
+              units={["px", "rem", "%", "em"]}
+              defaultUnit="px"
+              allowAuto={false}
+            />
           </div>
         </div>
       </Section>
-
+ 
       {/* Size */}
       <Section title="Size" defaultOpen={false}>
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-end gap-0.5">
-            <div className="flex-1">
-              <UnitInput
-                label="Width"
-                value={s.width || ""}
-                onChange={(v) => set({ width: v })}
-                placeholder="100"
-              />
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Width</span>
+              <OverrideDot hasOverride={hasOverride("width")} onReset={() => resetOverride("width")} />
             </div>
-            <OverrideDot hasOverride={hasOverride("width")} onReset={() => resetOverride("width")} />
-          </div>
-          <div className="flex items-end gap-0.5">
-            <div className="flex-1">
-              <UnitInput
-                label="Height"
-                value={s.height || ""}
-                onChange={(v) => set({ height: v })}
-                placeholder="auto"
-              />
-            </div>
-            <OverrideDot hasOverride={hasOverride("height")} onReset={() => resetOverride("height")} />
-          </div>
-        </div>
-        <div className="flex items-end gap-0.5">
-          <div className="flex-1">
             <UnitInput
-              label="Border Radius"
-              value={s.borderRadius || ""}
-              onChange={(v) => set({ borderRadius: v })}
-              placeholder="8"
+              value={s.width || ""}
+              onChange={(v) => set({ width: v })}
+              placeholder="100"
+              units={["px", "%", "rem", "vw"]}
+              defaultUnit="%"
+              allowAuto={true}
             />
           </div>
-          <OverrideDot hasOverride={hasOverride("borderRadius")} onReset={() => resetOverride("borderRadius")} />
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Height</span>
+              <OverrideDot hasOverride={hasOverride("height")} onReset={() => resetOverride("height")} />
+            </div>
+            <UnitInput
+              value={s.height || ""}
+              onChange={(v) => set({ height: v })}
+              placeholder="auto"
+              units={["px", "%", "rem", "vh"]}
+              defaultUnit="px"
+              allowAuto={true}
+            />
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Border Radius</span>
+            <OverrideDot hasOverride={hasOverride("borderRadius")} onReset={() => resetOverride("borderRadius")} />
+          </div>
+          <UnitInput
+            value={s.borderRadius || ""}
+            onChange={(v) => set({ borderRadius: v })}
+            placeholder="8"
+            units={["px", "rem", "%"]}
+            defaultUnit="px"
+            allowAuto={false}
+          />
         </div>
       </Section>
-
+ 
       {/* Position */}
       <Section title="Position" defaultOpen={false}>
         <div>
@@ -374,7 +408,7 @@ export function StyleTab({
                   key={mode || "static"}
                   type="button"
                   onClick={() => set({ position: mode })}
-                  className={`flex flex-1 items-center justify-center py-2 text-[11px] font-bold transition ${
+                  className={`flex flex-1 cursor-pointer items-center justify-center py-2 text-[11px] font-bold transition ${
                     isActive
                       ? "bg-[#0B1D40] text-white"
                       : "bg-transparent text-[#566583] hover:bg-[#f7f9fc] hover:text-[#0B1D40]"
@@ -388,22 +422,32 @@ export function StyleTab({
         </div>
         {s.position === "absolute" && (
           <div className="grid grid-cols-2 gap-3">
-            <UnitInput
-              label="Left (X)"
-              value={s.left || ""}
-              onChange={(v) => set({ left: v })}
-              placeholder="0"
-            />
-            <UnitInput
-              label="Top (Y)"
-              value={s.top || ""}
-              onChange={(v) => set({ top: v })}
-              placeholder="0"
-            />
+            <div className="min-w-0">
+              <span className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Left (X)</span>
+              <UnitInput
+                value={s.left || ""}
+                onChange={(v) => set({ left: v })}
+                placeholder="0"
+                units={["px", "%", "rem"]}
+                defaultUnit="px"
+                allowAuto={false}
+              />
+            </div>
+            <div className="min-w-0">
+              <span className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Top (Y)</span>
+              <UnitInput
+                value={s.top || ""}
+                onChange={(v) => set({ top: v })}
+                placeholder="0"
+                units={["px", "%", "rem"]}
+                defaultUnit="px"
+                allowAuto={false}
+              />
+            </div>
           </div>
         )}
       </Section>
-
+ 
       {/* Layer (Z-Index) */}
       <Section title="Layer" defaultOpen={false}>
         <div>
@@ -424,7 +468,7 @@ export function StyleTab({
           </p>
         </div>
       </Section>
-
+ 
       {/* ── Reset all styles ── */}
       <div className="border-t border-[#f0eae6] px-5 py-4">
         <button
@@ -438,7 +482,7 @@ export function StyleTab({
               onUpdate(component.id, { styles: {} });
             }
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#dbe3ef] bg-white px-3 py-2 text-[11px] font-bold text-[#566583] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#dbe3ef] bg-white px-3 py-2 text-[11px] font-bold text-[#566583] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
         >
           <RotateCcw className="h-3 w-3" />
           {isResponsive ? `Reset ${viewport} overrides` : "Reset all styles"}
@@ -447,3 +491,5 @@ export function StyleTab({
     </div>
   );
 }
+ 
+ 

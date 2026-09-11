@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import { useState } from "react";
 import { X } from "lucide-react";
 import { ImagePicker } from "@/components/assets/ImagePicker";
@@ -7,45 +7,45 @@ import { useAssetStore } from "@/store/assetStore";
 import { ContentField } from "@/components/builder/PanelFields";
 import type { PanelProps } from "@/lib/blockRegistry";
 import type { NavLink, NavigationProps } from "@/types/builder";
-
+ 
 const logoPresets = [
   "/stackly-logo.png",
   "/stackly-logo.webp",
   "/logoplan.png",
   "/portfoliologo.webp",
 ];
-
+ 
 export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) {
   const getDataUrl = useAssetStore((s) => s.getDataUrl);
   const [pickerOpen, setPickerOpen] = useState(false);
-
+ 
   const updateLink = (i: number, patch: Partial<NavLink>) => {
     const next = data.links.map((link, idx) => (idx === i ? { ...link, ...patch } : link));
     setProp("links", next);
   };
-
+ 
   const addLink = () => {
     setProp("links", [...data.links, { label: "New Link", href: "#" }]);
   };
-
+ 
   const removeLink = (i: number) => {
     if (data.links.length <= 1) return;
     setProp("links", data.links.filter((_, idx) => idx !== i));
   };
-
+ 
   const selectLogo = async (url: string, assetId?: string) => {
     let logoUrl = url;
-
+ 
     if (assetId) {
       const dataUrl = await getDataUrl(assetId);
       if (dataUrl) logoUrl = dataUrl;
     }
-
+ 
     setProp("logoUrl", logoUrl);
     setProp("logoAssetId", assetId ?? "");
     setPickerOpen(false);
   };
-
+ 
   return (
     <div className="space-y-4">
       <ContentField
@@ -61,7 +61,7 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
             <button
               type="button"
               onClick={() => setProp("logoUrl", "")}
-              className="text-[11px] font-bold text-red-500 transition hover:underline"
+              className="cursor-pointer text-[11px] font-bold text-red-500 transition hover:underline"
             >
               Remove
             </button>
@@ -79,7 +79,7 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="flex-1 rounded-lg bg-[#0B1D40] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
+              className="flex-1 cursor-pointer rounded-lg bg-[#0B1D40] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
             >
               Replace from Assets
             </button>
@@ -88,7 +88,7 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="w-full rounded-lg bg-[#0B1D40] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
+            className="w-full cursor-pointer rounded-lg bg-[#0B1D40] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
           >
             Choose from Assets
           </button>
@@ -102,7 +102,7 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
                 setProp("logoUrl", src);
                 setProp("logoAssetId", "");
               }}
-              className="truncate rounded-lg border border-[#0B1D40]/20 bg-white/60 px-2 py-2 text-[10px] font-bold text-[#0B1D40] transition hover:bg-[#0B1D40]/5"
+              className="truncate cursor-pointer rounded-lg border border-[#0B1D40]/20 bg-white/60 px-2 py-2 text-[10px] font-bold text-[#0B1D40] transition hover:bg-[#0B1D40]/5"
             >
               {src.split("/").pop()}
             </button>
@@ -126,7 +126,7 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
               <button
                 type="button"
                 onClick={() => removeLink(i)}
-                className="mt-7 shrink-0 rounded p-1 text-[#566583] transition hover:bg-red-50 hover:text-red-500"
+                className="mt-7 shrink-0 cursor-pointer rounded p-1 text-[#566583] transition hover:bg-red-50 hover:text-red-500"
                 aria-label="Remove link"
               >
                 <X size={14} />
@@ -137,7 +137,7 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
         <button
           type="button"
           onClick={addLink}
-          className="mt-2 text-[12px] font-bold text-[#0B1D40] transition hover:underline"
+          className="mt-2 cursor-pointer text-[12px] font-bold text-[#0B1D40] transition hover:underline"
         >
           + Add Link
         </button>
@@ -157,3 +157,5 @@ export function NavigationPanel({ data, setProp }: PanelProps<NavigationProps>) 
     </div>
   );
 }
+ 
+ 

@@ -286,14 +286,14 @@ export default function PropertyEditor({
     "relative hidden h-full w-[300px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-[#f4d8cc] bg-[#fff7f4] shadow-[0_18px_45px_rgba(113,63,18,0.10)] xl:flex";
  
   return (
-    <aside className={asideClass}>
+    <aside data-property-editor="true" className={asideClass}>
       {/* ── Close handle (mobile sheet) ── */}
       {onClose && (
         <div className="relative flex items-center justify-center px-6 pb-1 pt-3">
           <div className="h-1 w-10 rounded-full bg-gray-300" />
           <button
             aria-label="Close"
-            className="absolute right-4 top-3 rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="absolute right-4 top-3 cursor-pointer rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
             onClick={onClose}
             type="button"
           >
@@ -375,5 +375,6 @@ export default function PropertyEditor({
     </aside>
   );
 }
+ 
  
  

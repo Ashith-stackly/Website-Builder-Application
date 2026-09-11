@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import {
   memo,
   useCallback,
@@ -50,7 +50,7 @@ import {
 } from "lucide-react";
 import { useBuilderStore } from "@/store/builderStore";
 import type { BuilderComponent, ComponentType } from "@/types/builder";
-
+ 
 /**
  * This metadata intentionally lives in the generic `props` bag so it is
  * persisted with a builder document without changing the public component
@@ -59,7 +59,7 @@ import type { BuilderComponent, ComponentType } from "@/types/builder";
  */
 const LAYER_NAME_PROP = "__stacklyLayerName";
 const MAX_LAYER_NAME_LENGTH = 80;
-
+ 
 const TYPE_ICONS: Record<ComponentType, React.ComponentType<{ className?: string }>> = {
   navigation: Menu,
   hero: Home,
@@ -90,42 +90,42 @@ const TYPE_ICONS: Record<ComponentType, React.ComponentType<{ className?: string
   form: FileText,
   row: LayoutGrid,
 };
-
+ 
 type LayerTreeNode = {
   component: BuilderComponent;
   children: LayerTreeNode[];
 };
-
+ 
 type LayerEntry = {
   component: BuilderComponent;
   depth: number;
   parentId: string | null;
   hasVisibleChildren: boolean;
 };
-
+ 
 function childrenOf(component: BuilderComponent): BuilderComponent[] {
   // Imported legacy data is normalized before use in the store, but this
   // defensive fallback keeps the navigation panel resilient while a project
   // is loading.
   return component.children ?? [];
 }
-
+ 
 function typeLabel(type: ComponentType): string {
   return type
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
-
+ 
 function getLayerName(component: BuilderComponent): string {
   const configured = component.props?.[LAYER_NAME_PROP];
   if (typeof configured === "string" && configured.trim()) {
     return configured.trim();
   }
-
+ 
   return typeLabel(component.type);
 }
-
+ 
 function normaliseLayerName(value: string): string {
   return value
     .replace(/[\u0000-\u001f\u007f]/g, "")
@@ -133,16 +133,16 @@ function normaliseLayerName(value: string): string {
     .trim()
     .slice(0, MAX_LAYER_NAME_LENGTH);
 }
-
+ 
 function componentMatchesSearch(component: BuilderComponent, query: string): boolean {
   if (!query) return true;
-
+ 
   return [getLayerName(component), typeLabel(component.type), component.content]
     .join(" ")
     .toLocaleLowerCase()
     .includes(query);
 }
-
+ 
 /** Keep matching descendants visible with their ancestor path. */
 function buildFilteredTree(components: BuilderComponent[], query: string): LayerTreeNode[] {
   return components.flatMap((component) => {
@@ -150,11 +150,11 @@ function buildFilteredTree(components: BuilderComponent[], query: string): Layer
     if (!componentMatchesSearch(component, query) && children.length === 0) {
       return [];
     }
-
+ 
     return [{ component, children }];
   });
 }
-
+ 
 function flattenVisibleTree(
   nodes: LayerTreeNode[],
   collapsedIds: ReadonlySet<string>,
@@ -170,7 +170,7 @@ function flattenVisibleTree(
       hasVisibleChildren: node.children.length > 0,
     };
     const isExpanded = forceExpanded || !collapsedIds.has(node.component.id);
-
+ 
     return [
       entry,
       ...(isExpanded
@@ -179,7 +179,7 @@ function flattenVisibleTree(
     ];
   });
 }
-
+ 
 function collectIds(components: BuilderComponent[], ids: Set<string> = new Set()): Set<string> {
   for (const component of components) {
     ids.add(component.id);
@@ -187,11 +187,11 @@ function collectIds(components: BuilderComponent[], ids: Set<string> = new Set()
   }
   return ids;
 }
-
+ 
 function selectionLabel(count: number): string {
   return `${count} layer${count === 1 ? "" : "s"} selected`;
 }
-
+ 
 const IconButton = memo(function IconButton({
   label,
   onClick,
@@ -214,7 +214,7 @@ const IconButton = memo(function IconButton({
         event.stopPropagation();
         onClick();
       }}
-      className={`grid h-6 w-6 shrink-0 place-items-center rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+      className={`grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 ${
         danger
           ? "text-[#94a3b8] hover:bg-rose-50 hover:text-rose-600"
           : active
@@ -226,7 +226,7 @@ const IconButton = memo(function IconButton({
     </button>
   );
 });
-
+ 
 const LayerRow = memo(function LayerRow({
   entry,
   isPrimarySelected,
@@ -281,7 +281,7 @@ const LayerRow = memo(function LayerRow({
   const label = getLayerName(component);
   const isLocked = Boolean(component.locked);
   const isHidden = Boolean(component.hidden);
-
+ 
   return (
     <div
       ref={(node) => registerRowRef(component.id, node)}
@@ -290,7 +290,7 @@ const LayerRow = memo(function LayerRow({
       aria-selected={isMultiSelected}
       aria-expanded={hasVisibleChildren ? isExpanded : undefined}
       tabIndex={isTabStop ? 0 : -1}
-      className={`group flex min-h-8 w-full select-none items-center gap-1 rounded-md py-1 pr-1 text-xs outline-none transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-blue-300 ${
+      className={`group flex min-h-8 w-full cursor-pointer select-none items-center gap-1 rounded-md py-1 pr-1 text-xs outline-none transition-colors duration-100 focus-visible:ring-2 focus-visible:ring-blue-300 ${
         isPrimarySelected
           ? "bg-blue-500/[0.12] font-semibold text-blue-700"
           : isMultiSelected
@@ -307,7 +307,7 @@ const LayerRow = memo(function LayerRow({
         aria-label={`${isExpanded ? "Collapse" : "Expand"} ${label}`}
         aria-hidden={!hasVisibleChildren}
         disabled={!hasVisibleChildren}
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-[#94a3b8] transition-transform duration-150 hover:bg-[#eaf0f8] hover:text-[#0B1D40] disabled:pointer-events-none ${
+        className={`flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded text-[#94a3b8] transition-transform duration-150 hover:bg-[#eaf0f8] hover:text-[#0B1D40] disabled:pointer-events-none ${
           hasVisibleChildren ? "" : "invisible"
         }`}
         onClick={(event) => {
@@ -317,9 +317,9 @@ const LayerRow = memo(function LayerRow({
       >
         <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-150 ${isExpanded ? "rotate-90" : ""}`} />
       </button>
-
+ 
       <Icon className={`h-3.5 w-3.5 shrink-0 ${isMultiSelected ? "text-blue-500" : "text-[#94a3b8]"}`} />
-
+ 
       {isRenaming ? (
         <input
           autoFocus
@@ -347,7 +347,7 @@ const LayerRow = memo(function LayerRow({
           {label}
         </span>
       )}
-
+ 
       {!isRenaming && (
         <div className="flex shrink-0 items-center opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <IconButton label="Rename layer" onClick={() => onStartRename(component)}>
@@ -384,7 +384,7 @@ const LayerRow = memo(function LayerRow({
     </div>
   );
 });
-
+ 
 export default function LayersPanel() {
   const components = useBuilderStore((s) => s.components);
   const selectedComponentId = useBuilderStore((s) => s.selectedComponentId);
@@ -408,7 +408,7 @@ export default function LayersPanel() {
   const moveLayer = useBuilderStore((s) => s.moveLayer);
   const copyComponents = useBuilderStore((s) => s.copyComponents);
   const pasteComponents = useBuilderStore((s) => s.pasteComponents);
-
+ 
   const [query, setQuery] = useState("");
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -416,7 +416,7 @@ export default function LayersPanel() {
   const selectionAnchorRef = useRef<string | null>(null);
   const renameSettledRef = useRef(false);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
-
+ 
   const normalisedQuery = query.trim().toLocaleLowerCase();
   const filteredTree = useMemo(
     () => buildFilteredTree(components, normalisedQuery),
@@ -428,7 +428,7 @@ export default function LayersPanel() {
   );
   const componentIds = useMemo(() => collectIds(components), [components]);
   const selectedIdSet = useMemo(() => new Set(selectedComponentIds), [selectedComponentIds]);
-
+ 
   useEffect(() => {
     // A deleted/imported layer should not leave stale collapse state behind.
     setCollapsedIds((current) => {
@@ -436,48 +436,48 @@ export default function LayersPanel() {
       return next.size === current.size ? current : next;
     });
   }, [componentIds]);
-
+ 
   useEffect(() => {
     if (renamingId && !componentIds.has(renamingId)) {
       setRenamingId(null);
       setRenameValue("");
     }
   }, [componentIds, renamingId]);
-
+ 
   const focusEntry = useCallback((id: string) => {
     window.requestAnimationFrame(() => rowRefs.current.get(id)?.focus());
   }, []);
-
+ 
   const registerRowRef = useCallback((id: string, node: HTMLDivElement | null) => {
     if (node) rowRefs.current.set(id, node);
     else rowRefs.current.delete(id);
   }, []);
-
+ 
   const selectSingle = useCallback((id: string, focus = false) => {
     selectionAnchorRef.current = id;
     selectComponent(id);
     if (focus) focusEntry(id);
   }, [focusEntry, selectComponent]);
-
+ 
   const toggleSelection = useCallback((id: string, focus = false) => {
     selectionAnchorRef.current ??= id;
     toggleSelectComponent(id);
     if (focus) focusEntry(id);
   }, [focusEntry, toggleSelectComponent]);
-
+ 
   const selectRange = useCallback((id: string, focus = false) => {
     const targetIndex = visibleEntries.findIndex((entry) => entry.component.id === id);
     if (targetIndex < 0) return;
-
+ 
     const anchorId = selectionAnchorRef.current ?? selectedComponentId ?? id;
     const anchorIndex = visibleEntries.findIndex((entry) => entry.component.id === anchorId);
     const start = Math.min(anchorIndex < 0 ? targetIndex : anchorIndex, targetIndex);
     const end = Math.max(anchorIndex < 0 ? targetIndex : anchorIndex, targetIndex);
-
+ 
     setSelectedComponentIds(visibleEntries.slice(start, end + 1).map((entry) => entry.component.id));
     if (focus) focusEntry(id);
   }, [focusEntry, selectedComponentId, setSelectedComponentIds, visibleEntries]);
-
+ 
   const toggleExpand = useCallback((id: string) => {
     setCollapsedIds((current) => {
       const next = new Set(current);
@@ -486,31 +486,31 @@ export default function LayersPanel() {
       return next;
     });
   }, []);
-
+ 
   const expandAll = useCallback(() => setCollapsedIds(new Set()), []);
   const collapseAll = useCallback(() => setCollapsedIds(new Set([...componentIds])), [componentIds]);
-
+ 
   const startRename = useCallback((component: BuilderComponent) => {
     renameSettledRef.current = false;
     setRenamingId(component.id);
     setRenameValue(getLayerName(component));
   }, []);
-
+ 
   const cancelRename = useCallback(() => {
     renameSettledRef.current = true;
     setRenamingId(null);
     setRenameValue("");
   }, []);
-
+ 
   const commitRename = useCallback((component: BuilderComponent) => {
     // Enter causes a blur after this handler. Only persist the rename once,
     // and let Escape cancel without the following blur accidentally saving.
     if (renameSettledRef.current) return;
     renameSettledRef.current = true;
-
+ 
     const nextName = normaliseLayerName(renameValue);
     const configuredName = component.props?.[LAYER_NAME_PROP];
-
+ 
     // Empty values restore the default type label. `undefined` is omitted by
     // JSON serialization, while the component readers continue to ignore this
     // editor-only prop.
@@ -523,7 +523,7 @@ export default function LayersPanel() {
     setRenamingId(null);
     setRenameValue("");
   }, [renameValue, updateComponent]);
-
+ 
   const handleSelect = useCallback((event: React.MouseEvent, id: string) => {
     if (event.shiftKey) {
       selectRange(id);
@@ -535,15 +535,15 @@ export default function LayersPanel() {
     }
     selectSingle(id);
   }, [selectRange, selectSingle, toggleSelection]);
-
+ 
   const handleDuplicateSelection = useCallback(() => {
     duplicateSelectedComponents();
   }, [duplicateSelectedComponents]);
-
+ 
   const handleDeleteSelection = useCallback(() => {
     deleteSelectedComponents();
   }, [deleteSelectedComponents]);
-
+ 
   const handleTreeKeyDown = useCallback((event: ReactKeyboardEvent<HTMLDivElement>, entry: LayerEntry) => {
     const currentIndex = visibleEntries.findIndex((item) => item.component.id === entry.component.id);
     const current = currentIndex >= 0 ? visibleEntries[currentIndex] : entry;
@@ -552,7 +552,7 @@ export default function LayersPanel() {
       event.preventDefault();
       event.stopPropagation();
     };
-
+ 
     if (isMod) {
       const key = event.key.toLowerCase();
       if (key === "a") {
@@ -589,44 +589,44 @@ export default function LayersPanel() {
         return;
       }
     }
-
+ 
     if (event.key === "Delete" || event.key === "Backspace") {
       stop();
       handleDeleteSelection();
       return;
     }
-
+ 
     if (event.key === "F2") {
       stop();
       startRename(current.component);
       return;
     }
-
+ 
     if (event.key === "Escape") {
       stop();
       setSelectedComponentIds([]);
       return;
     }
-
+ 
     if (event.key === " " || event.key === "Enter") {
       stop();
       if (event.key === " ") toggleSelection(current.component.id, true);
       else selectSingle(current.component.id, true);
       return;
     }
-
+ 
     if (event.key === "Home" && visibleEntries[0]) {
       stop();
       selectSingle(visibleEntries[0].component.id, true);
       return;
     }
-
+ 
     if (event.key === "End" && visibleEntries.length > 0) {
       stop();
       selectSingle(visibleEntries[visibleEntries.length - 1].component.id, true);
       return;
     }
-
+ 
     if (event.key === "ArrowDown") {
       stop();
       if (currentIndex < visibleEntries.length - 1) {
@@ -636,7 +636,7 @@ export default function LayersPanel() {
       }
       return;
     }
-
+ 
     if (event.key === "ArrowUp") {
       stop();
       if (currentIndex > 0) {
@@ -646,7 +646,7 @@ export default function LayersPanel() {
       }
       return;
     }
-
+ 
     if (event.key === "ArrowRight") {
       stop();
       if (current.hasVisibleChildren) {
@@ -660,7 +660,7 @@ export default function LayersPanel() {
       }
       return;
     }
-
+ 
     if (event.key === "ArrowLeft") {
       stop();
       const isExpanded = current.hasVisibleChildren && (!collapsedIds.has(current.component.id) || Boolean(normalisedQuery));
@@ -671,17 +671,17 @@ export default function LayersPanel() {
       }
     }
   }, [collapsedIds, copyComponents, groupSelectedComponents, handleDeleteSelection, handleDuplicateSelection, normalisedQuery, pasteComponents, selectRange, selectSingle, setSelectedComponentIds, startRename, toggleExpand, toggleSelection, ungroupComponent, visibleEntries]);
-
+ 
   const moveUp = useCallback((id: string) => {
     if (canvasMode === "freeform") moveLayer(id, "forward");
     else moveComponentUp(id);
   }, [canvasMode, moveComponentUp, moveLayer]);
-
+ 
   const moveDown = useCallback((id: string) => {
     if (canvasMode === "freeform") moveLayer(id, "backward");
     else moveComponentDown(id);
   }, [canvasMode, moveComponentDown, moveLayer]);
-
+ 
   if (components.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
@@ -693,7 +693,7 @@ export default function LayersPanel() {
       </div>
     );
   }
-
+ 
   return (
     <section className="flex min-h-0 flex-col" aria-label="Layers">
       <div className="sticky top-0 z-10 space-y-2 border-b border-[#edf1f6] bg-white px-3 py-2.5">
@@ -720,28 +720,28 @@ export default function LayersPanel() {
               type="button"
               aria-label="Clear layer search"
               onClick={() => setQuery("")}
-              className="absolute right-1.5 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded text-[#94a3b8] hover:bg-[#eaf0f8] hover:text-[#0B1D40]"
+              className="absolute right-1.5 top-1/2 grid h-5 w-5 -translate-y-1/2 cursor-pointer place-items-center rounded text-[#94a3b8] hover:bg-[#eaf0f8] hover:text-[#0B1D40]"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           )}
         </label>
-
+ 
         <div className="flex items-center justify-between gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#94a3b8]">
             {normalisedQuery ? `${visibleEntries.length} result${visibleEntries.length === 1 ? "" : "s"}` : "Layer hierarchy"}
           </span>
           <div className="flex items-center gap-1 text-[10px] font-semibold">
-            <button type="button" onClick={expandAll} className="rounded px-1.5 py-1 text-[#566583] hover:bg-[#eef3f9] hover:text-[#0B1D40]">
+            <button type="button" onClick={expandAll} className="cursor-pointer rounded px-1.5 py-1 text-[#566583] hover:bg-[#eef3f9] hover:text-[#0B1D40]">
               Expand
             </button>
-            <button type="button" onClick={collapseAll} className="rounded px-1.5 py-1 text-[#566583] hover:bg-[#eef3f9] hover:text-[#0B1D40]">
+            <button type="button" onClick={collapseAll} className="cursor-pointer rounded px-1.5 py-1 text-[#566583] hover:bg-[#eef3f9] hover:text-[#0B1D40]">
               Collapse
             </button>
           </div>
         </div>
       </div>
-
+ 
       {selectedComponentIds.length > 1 && (
         <div className="mx-2 mt-2 flex items-center gap-1 rounded-md border border-blue-100 bg-blue-50 px-2 py-1.5 text-[11px] text-blue-800">
           <span className="min-w-0 flex-1 truncate font-semibold">{selectionLabel(selectedComponentIds.length)}</span>
@@ -781,18 +781,18 @@ export default function LayersPanel() {
           </IconButton>
         </div>
       )}
-
+ 
       {canvasMode === "freeform" && (
         <p className="mx-2 mt-2 rounded-md border border-amber-100 bg-amber-50 px-2 py-1.5 text-[10px] leading-4 text-amber-800">
           Freeform positions top-level blocks. Nested layers keep their parent&apos;s flow layout.
         </p>
       )}
-
+ 
       {visibleEntries.length === 0 ? (
         <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
           <Search className="h-5 w-5 text-[#cbd5e1]" />
           <p className="text-xs font-semibold text-[#566583]">No matching layers</p>
-          <button type="button" onClick={() => setQuery("")} className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+          <button type="button" onClick={() => setQuery("")} className="cursor-pointer text-xs font-semibold text-blue-600 hover:text-blue-700">
             Clear search
           </button>
         </div>
@@ -831,10 +831,12 @@ export default function LayersPanel() {
           })}
         </div>
       )}
-
+ 
       <p className="border-t border-[#edf1f6] px-3 py-2 text-[10px] leading-4 text-[#94a3b8]">
         <kbd className="rounded border border-[#dbe3ef] bg-[#f8fafc] px-1 font-medium text-[#566583]">↑↓</kbd> navigate · <kbd className="rounded border border-[#dbe3ef] bg-[#f8fafc] px-1 font-medium text-[#566583]">Space</kbd> multi-select · <kbd className="rounded border border-[#dbe3ef] bg-[#f8fafc] px-1 font-medium text-[#566583]">F2</kbd> rename
       </p>
     </section>
   );
 }
+ 
+ 

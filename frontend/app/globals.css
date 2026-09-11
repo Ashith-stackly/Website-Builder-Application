@@ -34,6 +34,49 @@
   --glass-border: rgba(255, 255, 255, 0.6);
 }
 
+ 
+/* ─── Builder Right Sidebar & Dialogs Cursor & Interactivity Rules ────────────── */
+[data-property-editor] button:not(:disabled),
+[data-property-editor] select:not(:disabled),
+[data-property-editor] input[type="range"]:not(:disabled),
+[data-property-editor] input[type="color"]:not(:disabled),
+[data-property-editor] input[type="checkbox"]:not(:disabled),
+[data-property-editor] input[type="radio"]:not(:disabled),
+[data-property-editor] [role="button"]:not([aria-disabled="true"]),
+[data-property-editor] [role="treeitem"],
+[data-property-editor] [data-clickable="true"],
+[data-ai-assist-dialog] button:not(:disabled),
+[data-ai-assist-dialog] select:not(:disabled),
+[data-ai-assist-dialog] [role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+ 
+[data-property-editor] button:disabled,
+[data-property-editor] input:disabled,
+[data-property-editor] select:disabled,
+[data-property-editor] textarea:disabled,
+[data-property-editor] [aria-disabled="true"],
+[data-ai-assist-dialog] button:disabled,
+[data-ai-assist-dialog] input:disabled,
+[data-ai-assist-dialog] select:disabled,
+[data-ai-assist-dialog] textarea:disabled,
+[data-ai-assist-dialog] [aria-disabled="true"] {
+  cursor: not-allowed;
+}
+ 
+[data-property-editor] input[type="text"],
+[data-property-editor] input[type="number"],
+[data-property-editor] input[type="email"],
+[data-property-editor] input[type="datetime-local"],
+[data-property-editor] textarea,
+[data-ai-assist-dialog] input[type="text"],
+[data-ai-assist-dialog] input[type="number"],
+[data-ai-assist-dialog] input:not([type]),
+[data-ai-assist-dialog] textarea {
+  cursor: text;
+}
+ 
+ 
 [data-theme="dark"] {
   --app-bg: #0a0e1a;
   --app-bg-grad: radial-gradient(1200px 600px at 100% -10%, rgba(79, 107, 237, 0.16), transparent 55%),

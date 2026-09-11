@@ -1,6 +1,14 @@
 import type { CSSProperties } from "react";
 import type { BuilderComponent, ComponentStyles } from "@/types/builder";
-
+ 
+function formatDimension(value?: string | number): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value === "number") return `${value}px`;
+  const str = String(value).trim();
+  if (/^-?\d+(\.\d+)?$/.test(str)) return `${str}px`;
+  return str;
+}
+ 
 /**
  * Convert the builder's `ComponentStyles` to a React `CSSProperties` object.
  * All keys are mapped 1:1 except for non-CSS helper fields like `layoutCols`.
@@ -8,10 +16,10 @@ import type { BuilderComponent, ComponentStyles } from "@/types/builder";
 export const toReactStyle = (styles: ComponentStyles): CSSProperties => ({
   color: styles.color,
   backgroundColor: styles.backgroundColor,
-  padding: styles.padding,
-  margin: styles.margin,
-  borderRadius: styles.borderRadius,
-  fontSize: styles.fontSize,
+  padding: formatDimension(styles.padding) ?? styles.padding,
+  margin: formatDimension(styles.margin) ?? styles.margin,
+  borderRadius: formatDimension(styles.borderRadius) ?? styles.borderRadius,
+  fontSize: formatDimension(styles.fontSize) ?? styles.fontSize,
   fontFamily: styles.fontFamily,
   fontWeight: styles.fontWeight as CSSProperties["fontWeight"],
   width: styles.width,
@@ -43,32 +51,35 @@ export const toReactStyle = (styles: ComponentStyles): CSSProperties => ({
   maxWidth: styles.maxWidth || undefined,
   objectFit: styles.objectFit as CSSProperties["objectFit"],
   aspectRatio: styles.aspectRatio || undefined,
-  letterSpacing: styles.letterSpacing || undefined,
+  letterSpacing: formatDimension(styles.letterSpacing) ?? styles.letterSpacing,
   lineHeight: styles.lineHeight || undefined,
 });
-
+ 
 /** Convenience wrapper: accept a full BuilderComponent and return CSSProperties. */
 export const getBaseStyles = (component: BuilderComponent): CSSProperties =>
   toReactStyle(component.styles);
-
+ 
 export const getTextStyles = (styles: ComponentStyles): CSSProperties => ({
   color: styles.color,
-  fontSize: styles.fontSize,
+  fontSize: formatDimension(styles.fontSize) ?? styles.fontSize,
   fontFamily: styles.fontFamily,
   fontWeight: styles.fontWeight as CSSProperties["fontWeight"],
   textAlign: styles.textAlign,
 });
-
+ 
 export const getTargetTextStyles = (
   component: BuilderComponent,
   key: string,
   fallback?: CSSProperties,
 ): CSSProperties => {
   const override = component.textStyles?.[key];
-
+ 
   return {
     ...(fallback ?? getTextStyles(component.styles)),
     ...(override ? toReactStyle(override as ComponentStyles) : {}),
   };
 };
-
+ 
+ 
+ 
+ 

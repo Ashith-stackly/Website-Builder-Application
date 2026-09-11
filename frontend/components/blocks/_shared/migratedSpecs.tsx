@@ -179,7 +179,7 @@ function ImagePanel({ data, setContent, setProp, component }: PanelProps<ImageBl
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#0B1D40]/20 bg-[#0B1D40] py-2.5 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
+        className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-[#0B1D40]/20 bg-[#0B1D40] py-2.5 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
       >
         <ImageIcon className="h-3.5 w-3.5" />
         {hasImage ? "Replace from Assets" : "Choose from Assets"}
@@ -215,7 +215,7 @@ function IconPanel({ data, setContent }: PanelProps<IconBlockProps>) {
               key={name}
               title={name}
               type="button"
-              className={`flex items-center justify-center rounded p-2 transition-all duration-150 ${active ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-[#0B1D40]/10"}`}
+              className={`flex cursor-pointer items-center justify-center rounded p-2 transition-all duration-150 ${active ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-[#0B1D40]/10"}`}
               onClick={() => setContent?.(name)}
             >
               <Icon size={16} color={active ? "white" : "#0B1D40"} />
@@ -239,7 +239,7 @@ function ColumnsPanel({ data, setContent }: PanelProps<ColumnsProps>) {
           <button
             key={count}
             type="button"
-            className={`py-2.5 text-sm font-bold transition ${data.columns === count ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
+            className={`cursor-pointer py-2.5 text-sm font-bold transition ${data.columns === count ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
             onClick={() => setContent?.(count)}
           >
             {count}
@@ -359,7 +359,7 @@ function GalleryPanel({ data, component, setContent, setProp }: PanelProps<Galle
       <button
         type="button"
         onClick={() => openPicker()}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B1D40] px-3 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#0B1D40] px-3 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#152B52]"
       >
         <ImageIcon className="h-3.5 w-3.5" />
         Add Images
@@ -372,7 +372,7 @@ function GalleryPanel({ data, component, setContent, setProp }: PanelProps<Galle
           <button
             type="button"
             onClick={() => openPicker()}
-            className="mt-1 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 transition"
+            className="mt-1 cursor-pointer rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 transition"
           >
             Add Images
           </button>
@@ -412,7 +412,7 @@ function GalleryPanel({ data, component, setContent, setProp }: PanelProps<Galle
                     type="button"
                     title="Replace image"
                     onClick={() => openPicker(index)}
-                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white/95 text-[#0B1D40] shadow-sm transition hover:bg-blue-50"
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white/95 text-[#0B1D40] shadow-sm transition hover:bg-blue-50"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                   </button>
@@ -420,7 +420,7 @@ function GalleryPanel({ data, component, setContent, setProp }: PanelProps<Galle
                     type="button"
                     title="Remove image"
                     onClick={() => removeItem(index)}
-                    className="flex h-7 w-7 items-center justify-center rounded-md bg-white/95 text-red-500 shadow-sm transition hover:bg-red-50"
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white/95 text-red-500 shadow-sm transition hover:bg-red-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -445,7 +445,7 @@ function GalleryPanel({ data, component, setContent, setProp }: PanelProps<Galle
           <button
             key={src}
             type="button"
-            className="flex items-center justify-center gap-1.5 truncate rounded-lg border border-[#0B1D40]/20 bg-white/60 px-2 py-2 text-[10px] font-bold text-[#0B1D40] transition hover:bg-[#0B1D40]/5"
+            className="flex cursor-pointer items-center justify-center gap-1.5 truncate rounded-lg border border-[#0B1D40]/20 bg-white/60 px-2 py-2 text-[10px] font-bold text-[#0B1D40] transition hover:bg-[#0B1D40]/5"
             onClick={() => addPreset(src)}
           >
             <Plus className="h-3 w-3 shrink-0" />
@@ -540,7 +540,7 @@ function TabsPanel({ data, setProp }: PanelProps<TabsProps>) {
           <button
             key={variant}
             type="button"
-            className={`py-2 text-xs font-bold capitalize transition ${data.variant === variant ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
+            className={`cursor-pointer py-2 text-xs font-bold capitalize transition ${data.variant === variant ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
             onClick={() => setProp("variant", variant)}
           >
             {variant}
@@ -581,7 +581,7 @@ function SocialLinksPanel({ data, setProp }: PanelProps<SocialLinksProps>) {
       <span className="block text-[13px] font-bold text-[#0B1D40]">Size</span>
       <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-[#0B1D40]">
         {(["sm", "md", "lg"] as const).map((size) => (
-          <button key={size} type="button" className={`py-2 text-xs font-bold uppercase ${data.size === size ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`} onClick={() => setProp("size", size)}>
+          <button key={size} type="button" className={`cursor-pointer py-2 text-xs font-bold uppercase ${data.size === size ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`} onClick={() => setProp("size", size)}>
             {size}
           </button>
         ))}
@@ -1197,7 +1197,7 @@ function RowPanel({ data, setContent, setProp }: PanelProps<RowProps>) {
                 setContent?.(layout);
                 setProp("layout", layout as RowProps["layout"]);
               }}
-              className={`flex flex-col items-center gap-2 rounded-xl border-2 px-3 py-3 text-center transition-all ${
+              className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 px-3 py-3 text-center transition-all ${
                 isActive
                   ? "border-[#0B1D40] bg-[#0B1D40]/[0.06] shadow-sm"
                   : "border-[#dbe3ef] bg-white hover:border-blue-300 hover:bg-blue-50/30"

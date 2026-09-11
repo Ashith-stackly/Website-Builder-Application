@@ -1,14 +1,14 @@
 "use client";
-
+ 
 import { useRef } from "react";
-
+ 
 const PRESET_COLORS = [
   "#0B1D40", "#152B52", "#1e3a5f", "#ffffff", "#f8fafc",
   "#f1f5f9", "#e2e8f0", "#64748b", "#ef4444", "#f97316",
   "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899",
   "#000000",
 ];
-
+ 
 export function ColorSwatch({
   label,
   value,
@@ -20,7 +20,7 @@ export function ColorSwatch({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const display = value || "#000000";
-
+ 
   return (
     <div>
       <span className="mb-2 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">{label}</span>
@@ -59,7 +59,7 @@ export function ColorSwatch({
             type="button"
             title={c}
             onClick={() => onChange(c)}
-            className={`h-5 w-5 rounded-md border-2 transition hover:scale-110 ${display === c ? "border-blue-500 scale-110" : "border-white ring-1 ring-[#dbe3ef]"}`}
+            className={`h-5 w-5 cursor-pointer rounded-md border-2 transition hover:scale-110 ${display === c ? "border-blue-500 scale-110" : "border-white ring-1 ring-[#dbe3ef]"}`}
             style={{ backgroundColor: c }}
           />
         ))}
@@ -67,3 +67,5 @@ export function ColorSwatch({
     </div>
   );
 }
+ 
+ 

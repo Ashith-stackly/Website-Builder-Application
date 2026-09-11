@@ -1,18 +1,18 @@
 "use client";
-
+ 
 import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
 import { useAITextAssist } from "@/components/builder/AIAssistDialog";
-
+ 
 /**
  * Shared primitive field components used by all block Panel components.
  * Centralising them here keeps every Panel's JSX focused on layout/logic
  * rather than repeating the same input markup.
  */
-
+ 
 export const contentInputClass =
   "w-full rounded-xl border border-[#0B1D40] bg-transparent px-4 py-2.5 text-[14px] font-semibold text-[#0B1D40] outline-none transition focus:ring-2 focus:ring-blue-100";
-
+ 
 function GenerateTextButton({
   field,
   label,
@@ -29,9 +29,9 @@ function GenerateTextButton({
     if (!assistant) return;
     return assistant.registerTextField({ field, label, value, onReplace: onChange, onInsert: onChange });
   }, [assistant, field, label, onChange, value]);
-
+ 
   if (!assistant) return null;
-
+ 
   return (
     <button
       type="button"
@@ -44,7 +44,7 @@ function GenerateTextButton({
           onInsert: onChange,
         })
       }
-      className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-extrabold text-violet-700 transition hover:bg-violet-100 hover:text-violet-900 focus:outline-none focus:ring-2 focus:ring-violet-300"
+      className="inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-extrabold text-violet-700 transition hover:bg-violet-100 hover:text-violet-900 focus:outline-none focus:ring-2 focus:ring-violet-300"
       title={`Generate ${label.toLowerCase()} with AI`}
       aria-label={`Generate ${label.toLowerCase()} with AI`}
     >
@@ -53,7 +53,7 @@ function GenerateTextButton({
     </button>
   );
 }
-
+ 
 export function ContentField({
   field,
   label,
@@ -86,7 +86,7 @@ export function ContentField({
     </div>
   );
 }
-
+ 
 export function TextareaField({
   field,
   label,
@@ -120,3 +120,5 @@ export function TextareaField({
     </div>
   );
 }
+ 
+ 

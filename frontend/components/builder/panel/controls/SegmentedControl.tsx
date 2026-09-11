@@ -1,7 +1,7 @@
 "use client";
-
+ 
 import type { ReactNode } from "react";
-
+ 
 export function SegmentedControl<T extends string>({
   label,
   value,
@@ -25,7 +25,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             title={opt.title ?? opt.label ?? opt.value}
             onClick={() => onChange(opt.value)}
-            className={`flex flex-1 items-center justify-center gap-1 py-2 text-[12px] font-bold transition ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-1 py-2 text-[12px] font-bold transition ${
               value === opt.value
                 ? "bg-[#0B1D40] text-white"
                 : "bg-transparent text-[#566583] hover:bg-[#f7f9fc] hover:text-[#0B1D40]"
@@ -39,3 +39,5 @@ export function SegmentedControl<T extends string>({
     </div>
   );
 }
+ 
+ 

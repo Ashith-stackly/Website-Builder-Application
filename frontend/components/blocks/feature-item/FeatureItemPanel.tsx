@@ -1,12 +1,12 @@
 "use client";
-
+ 
 import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ICON_NAMES } from "@/components/draggable/IconComponent";
 import { ContentField } from "@/components/builder/PanelFields";
 import type { PanelProps } from "@/lib/blockRegistry";
 import type { FeatureItemProps } from "@/types/builder";
-
+ 
 export function FeatureItemPanel({ data, setProp }: PanelProps<FeatureItemProps>) {
   return (
     <div className="space-y-4">
@@ -22,7 +22,7 @@ export function FeatureItemPanel({ data, setProp }: PanelProps<FeatureItemProps>
                 key={name}
                 title={name}
                 type="button"
-                className={`flex items-center justify-center rounded p-2 transition-all duration-150 ${isActive ? "bg-[#0B1D40]" : "hover:bg-[#0B1D40]/10"}`}
+                className={`cursor-pointer flex items-center justify-center rounded p-2 transition-all duration-150 ${isActive ? "bg-[#0B1D40]" : "hover:bg-[#0B1D40]/10"}`}
                 onClick={() => setProp("icon", name)}
               >
                 <Icon size={14} color={isActive ? "white" : "#0B1D40"} />
@@ -34,7 +34,7 @@ export function FeatureItemPanel({ data, setProp }: PanelProps<FeatureItemProps>
           Icon: <span className="font-bold text-[#0B1D40]">{data.icon}</span>
         </p>
       </div>
-
+ 
       <div>
         <span className="mb-2 block text-[13px] font-bold text-[#0B1D40]">Layout</span>
         <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#0B1D40]">
@@ -42,7 +42,7 @@ export function FeatureItemPanel({ data, setProp }: PanelProps<FeatureItemProps>
             <button
               key={layout}
               type="button"
-              className={`py-2 text-xs font-bold capitalize transition ${data.layout === layout ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
+              className={`cursor-pointer py-2 text-xs font-bold capitalize transition ${data.layout === layout ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
               onClick={() => setProp("layout", layout)}
             >
               {layout}
@@ -50,10 +50,12 @@ export function FeatureItemPanel({ data, setProp }: PanelProps<FeatureItemProps>
           ))}
         </div>
       </div>
-
+ 
       <ContentField label="Title"        value={data.title}       onChange={(v) => setProp("title", v)}       placeholder="Feature Title" />
       <ContentField label="Description"  value={data.description} onChange={(v) => setProp("description", v)} placeholder="Describe this feature..." />
       <ContentField label="Button (opt)" value={data.cta}         onChange={(v) => setProp("cta", v)}         placeholder="Learn More" />
     </div>
   );
 }
+ 
+ 

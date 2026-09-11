@@ -1,13 +1,13 @@
 "use client";
-
+ 
 import { useState, useRef } from "react";
 import { ChevronDown, Monitor, RotateCcw, Smartphone, Tablet } from "lucide-react";
 import { ColorSwatch } from "./controls/ColorSwatch";
 import { useBuilderStore } from "@/store/builderStore";
 import type { BuilderComponent, ComponentStyles, Viewport } from "@/types/builder";
-
+ 
 /* ── Collapsible section (shared pattern with StyleTab) ───────────── */
-
+ 
 function Section({
   title,
   children,
@@ -22,7 +22,7 @@ function Section({
     <div className="border-b border-[#f0eae6] last:border-0">
       <button
         type="button"
-        className="flex w-full items-center justify-between px-5 py-3.5 text-left"
+        className="flex w-full cursor-pointer items-center justify-between px-5 py-3.5 text-left"
         onClick={() => setOpen((o) => !o)}
       >
         <span className="text-[11px] font-bold uppercase tracking-widest text-[#566583]">{title}</span>
@@ -34,9 +34,9 @@ function Section({
     </div>
   );
 }
-
+ 
 /* ── Shadow presets ────────────────────────────────────────────────── */
-
+ 
 const SHADOW_PRESETS: Array<{ label: string; value: string }> = [
   { label: "None",   value: "" },
   { label: "Soft",   value: "0 2px 8px rgba(0,0,0,0.08)" },
@@ -45,13 +45,13 @@ const SHADOW_PRESETS: Array<{ label: string; value: string }> = [
   { label: "Glow",   value: "0 0 20px rgba(59,130,246,0.35)" },
   { label: "Inner",  value: "inset 0 2px 6px rgba(0,0,0,0.12)" },
 ];
-
+ 
 /* ── Border style options ─────────────────────────────────────────── */
-
+ 
 const BORDER_STYLES = ["none", "solid", "dashed", "dotted", "double"] as const;
-
+ 
 /* ── Cursor options ───────────────────────────────────────────────── */
-
+ 
 const CURSOR_OPTIONS = [
   { value: "",        label: "Default" },
   { value: "pointer", label: "Pointer" },
@@ -62,18 +62,18 @@ const CURSOR_OPTIONS = [
   { value: "not-allowed", label: "Not Allowed" },
   { value: "wait",    label: "Wait" },
 ] as const;
-
+ 
 /* ── Overflow options ─────────────────────────────────────────────── */
-
+ 
 const OVERFLOW_OPTIONS = [
   { value: "",        label: "Visible" },
   { value: "hidden",  label: "Hidden" },
   { value: "scroll",  label: "Scroll" },
   { value: "auto",    label: "Auto" },
 ] as const;
-
+ 
 /* ── Helper: parse shorthand border "2px solid #000" ──────────────── */
-
+ 
 function parseBorder(raw: string): { width: string; style: string; color: string } {
   if (!raw) return { width: "", style: "solid", color: "#0B1D40" };
   const parts = raw.trim().split(/\s+/);
@@ -83,12 +83,12 @@ function parseBorder(raw: string): { width: string; style: string; color: string
     color: parts[2] || "#0B1D40",
   };
 }
-
+ 
 function buildBorder(width: string, style: string, color: string): string {
   if (!width || width === "0") return "";
   return `${width}px ${style} ${color}`;
 }
-
+ 
 function OverrideDot({ hasOverride, onReset }: { hasOverride: boolean; onReset: () => void }) {
   if (!hasOverride) return null;
   return (
@@ -96,23 +96,23 @@ function OverrideDot({ hasOverride, onReset }: { hasOverride: boolean; onReset: 
       type="button"
       title="This field has a viewport override. Click to reset to desktop value."
       onClick={(e) => { e.stopPropagation(); onReset(); }}
-      className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition hover:bg-amber-200"
+      className="inline-flex h-4 w-4 cursor-pointer flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 transition hover:bg-amber-200"
     >
       <RotateCcw className="h-2.5 w-2.5" />
     </button>
   );
 }
-
+ 
 /* ── Parse rotation from transform ────────────────────────────────── */
-
+ 
 function parseRotation(transform: string): string {
   if (!transform) return "0";
   const match = transform.match(/rotate\((-?[\d.]+)deg\)/);
   return match ? match[1] : "0";
 }
-
+ 
 /* ── Main Component ───────────────────────────────────────────────── */
-
+ 
 export function EffectsTab({
   component,
   onUpdate,
@@ -126,10 +126,10 @@ export function EffectsTab({
   const vpOverrides = isResponsive ? (component.responsiveStyles?.[viewport] ?? {}) : {};
   const s: ComponentStyles = isResponsive ? { ...baseStyles, ...vpOverrides } : baseStyles;
   const opacityRef = useRef<HTMLInputElement>(null);
-
+ 
   const hasOverride = (key: keyof ComponentStyles) =>
     isResponsive && vpOverrides[key] !== undefined;
-
+ 
   const resetOverride = (key: keyof ComponentStyles) => {
     if (!isResponsive) return;
     const next = { ...vpOverrides };
@@ -138,7 +138,7 @@ export function EffectsTab({
       responsiveStyles: { ...component.responsiveStyles, [viewport]: next },
     });
   };
-
+ 
   const set = (patch: Partial<ComponentStyles>) => {
     if (isResponsive) {
       onUpdate(component.id, {
@@ -149,25 +149,25 @@ export function EffectsTab({
       });
       return;
     }
-
+ 
     onUpdate(component.id, { styles: { ...baseStyles, ...patch } });
   };
-
+ 
   /* ── Border sub-state ── */
   const border = parseBorder(s.border || "");
   const setBorder = (patch: Partial<{ width: string; style: string; color: string }>) => {
     const next = { ...border, ...patch };
     set({ border: buildBorder(next.width, next.style, next.color) });
   };
-
+ 
   /* ── Opacity ── */
   const opacityValue = s.opacity ? parseFloat(s.opacity) : 1;
   const opacityPercent = Math.round(opacityValue * 100);
-
+ 
   /* ── Rotation ── */
   const rotation = parseRotation(s.transform || "");
   const ViewportIcon = viewport === "tablet" ? Tablet : viewport === "mobile" ? Smartphone : Monitor;
-
+ 
   return (
     <div className="pb-6">
       {isResponsive && (
@@ -178,7 +178,7 @@ export function EffectsTab({
           </span>
         </div>
       )}
-
+ 
       {/* ─── Opacity ──────────────────────────────────────────────── */}
       <Section title="Opacity">
         <div className="flex items-center gap-3">
@@ -201,13 +201,13 @@ export function EffectsTab({
           <button
             type="button"
             onClick={() => set({ opacity: "1" })}
-            className="mt-1 text-[11px] font-bold text-blue-500 transition hover:text-blue-700"
+            className="mt-1 cursor-pointer text-[11px] font-bold text-blue-500 transition hover:text-blue-700"
           >
             Reset to 100%
           </button>
         )}
       </Section>
-
+ 
       {/* ─── Box Shadow ───────────────────────────────────────────── */}
       <Section title="Shadow">
         <div className="flex items-center justify-between gap-2">
@@ -222,7 +222,7 @@ export function EffectsTab({
                 key={preset.label}
                 type="button"
                 onClick={() => set({ boxShadow: preset.value })}
-                className={`group relative flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-center transition-all duration-200 ${
+                className={`group relative flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-center transition-all duration-200 ${
                   isActive
                     ? "border-[#0B1D40] bg-[#0B1D40]/[0.06] shadow-sm"
                     : "border-[#dbe3ef] bg-white hover:border-[#0B1D40]/30 hover:bg-[#f7f9fc]"
@@ -251,7 +251,7 @@ export function EffectsTab({
           })}
         </div>
       </Section>
-
+ 
       {/* ─── Border ───────────────────────────────────────────────── */}
       <Section title="Border" defaultOpen={false}>
         <div className="flex items-center justify-between gap-2">
@@ -279,7 +279,7 @@ export function EffectsTab({
               </span>
             </div>
           </div>
-
+ 
           {/* Style */}
           <div>
             <span className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-[#566583]">
@@ -288,7 +288,7 @@ export function EffectsTab({
             <select
               value={border.style}
               onChange={(e) => setBorder({ style: e.target.value })}
-              className="w-full rounded-lg border border-[#dbe3ef] bg-transparent px-2.5 py-2 text-[12px] font-bold capitalize text-[#0B1D40] outline-none focus:border-blue-400"
+              className="w-full cursor-pointer rounded-lg border border-[#dbe3ef] bg-transparent px-2.5 py-2 text-[12px] font-bold capitalize text-[#0B1D40] outline-none focus:border-blue-400"
             >
               {BORDER_STYLES.map((bs) => (
                 <option key={bs} value={bs}>
@@ -298,14 +298,14 @@ export function EffectsTab({
             </select>
           </div>
         </div>
-
+ 
         {/* Border color */}
         <ColorSwatch
           label="Border Color"
           value={border.color}
           onChange={(v) => setBorder({ color: v })}
         />
-
+ 
         {/* Live preview strip */}
         {border.width && border.width !== "0" && (
           <div className="mt-1 rounded-lg bg-white p-3">
@@ -319,7 +319,7 @@ export function EffectsTab({
           </div>
         )}
       </Section>
-
+ 
       {/* ─── Overflow ─────────────────────────────────────────────── */}
       <Section title="Overflow" defaultOpen={false}>
         <div className="flex items-center justify-between gap-2">
@@ -335,7 +335,7 @@ export function EffectsTab({
                 type="button"
                 title={opt.label}
                 onClick={() => set({ overflow: opt.value })}
-                className={`flex flex-1 items-center justify-center py-2 text-[11px] font-bold transition ${
+                className={`flex flex-1 cursor-pointer items-center justify-center py-2 text-[11px] font-bold transition ${
                   isActive
                     ? "bg-[#0B1D40] text-white"
                     : "bg-transparent text-[#566583] hover:bg-[#f7f9fc] hover:text-[#0B1D40]"
@@ -350,7 +350,7 @@ export function EffectsTab({
           Controls how content that overflows the block&apos;s boundaries is handled.
         </p>
       </Section>
-
+ 
       {/* ─── Cursor ───────────────────────────────────────────────── */}
       <Section title="Cursor" defaultOpen={false}>
         <div className="flex items-center justify-between gap-2">
@@ -382,7 +382,7 @@ export function EffectsTab({
           Hover each button to preview the cursor style.
         </p>
       </Section>
-
+ 
       {/* ─── Transform (Rotate) ───────────────────────────────────── */}
       <Section title="Transform" defaultOpen={false}>
         <div>
@@ -413,13 +413,13 @@ export function EffectsTab({
             <button
               type="button"
               onClick={() => set({ transform: "" })}
-              className="mt-1 text-[11px] font-bold text-blue-500 transition hover:text-blue-700"
+              className="mt-1 cursor-pointer text-[11px] font-bold text-blue-500 transition hover:text-blue-700"
             >
               Reset rotation
             </button>
           )}
         </div>
-
+ 
         {/* Rotation live preview */}
         <div className="mt-1 flex items-center justify-center rounded-lg bg-white p-4">
           <div
@@ -430,7 +430,7 @@ export function EffectsTab({
           </div>
         </div>
       </Section>
-
+ 
       {/* ─── Transition ───────────────────────────────────────────── */}
       <Section title="Transition" defaultOpen={false}>
         <div>
@@ -468,7 +468,7 @@ export function EffectsTab({
                 key={preset.label}
                 type="button"
                 onClick={() => set({ transition: preset.value })}
-                className={`rounded-lg border-2 px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                className={`cursor-pointer rounded-lg border-2 px-2.5 py-1.5 text-[10px] font-bold transition-all ${
                   isActive
                     ? "border-[#0B1D40] bg-[#0B1D40]/[0.06] text-[#0B1D40]"
                     : "border-[#dbe3ef] text-[#566583] hover:border-[#0B1D40]/30"
@@ -480,7 +480,7 @@ export function EffectsTab({
           })}
         </div>
       </Section>
-
+ 
       {/* ── Reset effects ── */}
       <div className="border-t border-[#f0eae6] px-5 py-4">
         <button
@@ -502,7 +502,7 @@ export function EffectsTab({
               onUpdate(component.id, { styles: next });
             }
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#dbe3ef] bg-white px-3 py-2 text-[11px] font-bold text-[#566583] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#dbe3ef] bg-white px-3 py-2 text-[11px] font-bold text-[#566583] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
         >
           <RotateCcw className="h-3 w-3" />
           Reset effects
@@ -511,3 +511,5 @@ export function EffectsTab({
     </div>
   );
 }
+ 
+ 

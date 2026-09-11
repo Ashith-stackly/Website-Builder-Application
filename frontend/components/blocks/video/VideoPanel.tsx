@@ -1,9 +1,9 @@
 "use client";
-
+ 
 import { ContentField } from "@/components/builder/PanelFields";
 import type { PanelProps } from "@/lib/blockRegistry";
 import type { VideoProps } from "@/types/builder";
-
+ 
 export function VideoPanel({ data, setProp }: PanelProps<VideoProps>) {
   return (
     <div className="space-y-4">
@@ -26,7 +26,7 @@ export function VideoPanel({ data, setProp }: PanelProps<VideoProps>) {
             <button
               key={ratio}
               type="button"
-              className={`py-2 text-xs font-bold transition ${(data.aspectRatio ?? "16/9") === ratio ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
+              className={`cursor-pointer py-2 text-xs font-bold transition ${(data.aspectRatio ?? "16/9") === ratio ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
               onClick={() => setProp("aspectRatio", ratio)}
             >
               {ratio}
@@ -37,3 +37,5 @@ export function VideoPanel({ data, setProp }: PanelProps<VideoProps>) {
     </div>
   );
 }
+ 
+ 
