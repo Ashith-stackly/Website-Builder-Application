@@ -185,6 +185,7 @@ type CartItem = WishlistItem & {
 };
 
 const STORAGE_SYNC_EVENT = "stackly-storage-change";
+const TEMPLATE_ACCESS_SYNC_EVENT = "stackly-template-access-change";
 
 const templates: Array<{
   title: string;
@@ -620,6 +621,7 @@ export default function Home() {
             if (!verified) throw new Error("Payment verification failed");
 
             await refreshTemplateAccess();
+            window.dispatchEvent(new Event(TEMPLATE_ACCESS_SYNC_EVENT));
             window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
             setWishlistToast(`Successfully purchased ${product.title}!`);
             window.setTimeout(() => setWishlistToast(null), 3000);

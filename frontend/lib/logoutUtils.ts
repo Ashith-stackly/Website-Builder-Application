@@ -10,7 +10,7 @@ import { clearAuthToken } from "@/lib/authToken";
 import { clearDemoSession } from "@/lib/demoAuth";
 import { LOGOUT_PRESERVED_STORAGE_KEYS } from "@/lib/rememberLogin";
 import { clearSubscriptionCache } from "@/lib/subscriptionAccess";
-import { clearTemplateAccessCache } from "@/lib/templateAccessApi";
+import { clearTemplateAccessCache, TEMPLATE_ACCESS_SYNC_EVENT } from "@/lib/templateAccessApi";
 
 // ── Storage keys that should be cleared on logout ────────────────────────
 
@@ -81,6 +81,7 @@ export async function performFullLogout(): Promise<void> {
   if (typeof window !== "undefined") {
     clearLogoutStorage(window.localStorage);
     clearLogoutStorage(window.sessionStorage);
+    window.dispatchEvent(new Event(TEMPLATE_ACCESS_SYNC_EVENT));
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
   }
 }

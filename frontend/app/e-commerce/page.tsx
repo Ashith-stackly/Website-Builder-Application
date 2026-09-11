@@ -749,10 +749,16 @@ export default function ECommercePage() {
     }
   }, []);
 
+  const prevFavoritesRef = useRef<string>("");
+
   useEffect(() => {
     if (!hasLoadedFavorites) return;
+    const serialized = JSON.stringify(favoriteProductIds);
+    if (prevFavoritesRef.current === serialized) return;
+    prevFavoritesRef.current = serialized;
+
     try {
-      window.localStorage.setItem(BUYSCREEN_FAVORITES_STORAGE_KEY, JSON.stringify(favoriteProductIds));
+      window.localStorage.setItem(BUYSCREEN_FAVORITES_STORAGE_KEY, serialized);
       window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
     } catch {
       // Ignore storage write failures.

@@ -22,7 +22,7 @@ import {
   ShoppingBag,
   AlertCircle,
 } from "lucide-react";
-import { useTemplateAccess, STORAGE_SYNC_EVENT } from "@/lib/templateAccessApi";
+import { useTemplateAccess, STORAGE_SYNC_EVENT, TEMPLATE_ACCESS_SYNC_EVENT } from "@/lib/templateAccessApi";
 import {
   createRazorpayOrder,
   openRazorpayCheckout,
@@ -270,6 +270,7 @@ export default function BlockPagesClient() {
             if (!verified) throw new Error("Payment verification failed");
 
             await refreshAccess();
+            window.dispatchEvent(new Event(TEMPLATE_ACCESS_SYNC_EVENT));
             window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
             setPurchaseSuccess(`Template ${templateLabel} unlocked successfully!`);
           } catch (err) {

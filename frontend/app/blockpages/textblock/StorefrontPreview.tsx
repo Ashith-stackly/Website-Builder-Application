@@ -388,14 +388,20 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
     }
   }, []);
 
+  const prevCartRef = useRef<string>("");
+
   useEffect(() => {
     if (!hasLoadedCart) return;
+    const serializable = cartItems.map((item) => ({
+      productId: item.product.id,
+      qty: item.qty,
+    }));
+    const serialized = JSON.stringify(serializable);
+    if (prevCartRef.current === serialized) return;
+    prevCartRef.current = serialized;
+
     try {
-      const serializable = cartItems.map((item) => ({
-        productId: item.product.id,
-        qty: item.qty,
-      }));
-      window.localStorage.setItem(BUYSCREEN_CART_STORAGE_KEY, JSON.stringify(serializable));
+      window.localStorage.setItem(BUYSCREEN_CART_STORAGE_KEY, serialized);
       window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
     } catch {
       // Ignore storage write failures.
@@ -417,10 +423,16 @@ function StorefrontPreview({ hiddenElementIds = [] }: { hiddenElementIds?: strin
     }
   }, []);
 
+  const prevFavoritesRef = useRef<string>("");
+
   useEffect(() => {
     if (!hasLoadedFavorites) return;
+    const serialized = JSON.stringify(favoriteProductIds);
+    if (prevFavoritesRef.current === serialized) return;
+    prevFavoritesRef.current = serialized;
+
     try {
-      window.localStorage.setItem(BUYSCREEN_FAVORITES_STORAGE_KEY, JSON.stringify(favoriteProductIds));
+      window.localStorage.setItem(BUYSCREEN_FAVORITES_STORAGE_KEY, serialized);
       window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
     } catch {
       // Ignore storage write failures.

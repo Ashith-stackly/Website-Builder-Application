@@ -7,6 +7,7 @@ const API_BASE_URL =
   (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api").replace(/\/$/, "");
 
 export const STORAGE_SYNC_EVENT = "stackly-storage-change";
+export const TEMPLATE_ACCESS_SYNC_EVENT = "stackly-template-access-change";
 
 export type TemplateAccessResponse = {
   authenticated: boolean;
@@ -67,37 +68,48 @@ export async function fetchTemplateAccess(
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const res = await fetch(`${API_BASE_URL}/template/access`, {
-      method: "GET",
-      headers,
-      signal,
-    });
+    // Safety timeout (6s) so slow or unreachable backend never hangs page indefinitely
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), 6000);
+    const onAbort = () => timeoutController.abort();
+    signal?.addEventListener("abort", onAbort);
 
-    if (!res.ok) {
-      return DEFAULT_UNAUTHENTICATED_ACCESS;
+    try {
+      const res = await fetch(`${API_BASE_URL}/template/access`, {
+        method: "GET",
+        headers,
+        signal: timeoutController.signal,
+      });
+
+      if (!res.ok) {
+        return cachedAccess || DEFAULT_UNAUTHENTICATED_ACCESS;
+      }
+
+      const data = await res.json();
+      if (data && data.success) {
+        const result: TemplateAccessResponse = {
+          authenticated: Boolean(data.authenticated),
+          userId: data.userId,
+          plan: data.plan || "none",
+          role: data.role || "user",
+          hasAllAccess: Boolean(data.hasAllAccess),
+          purchasedTemplates: Array.isArray(data.purchasedTemplates) ? data.purchasedTemplates : [],
+          accessibleTemplates: data.accessibleTemplates || {},
+        };
+        cachedAccess = result;
+        return result;
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener("abort", onAbort);
     }
 
-    const data = await res.json();
-    if (data && data.success) {
-      const result: TemplateAccessResponse = {
-        authenticated: Boolean(data.authenticated),
-        userId: data.userId,
-        plan: data.plan || "none",
-        role: data.role || "user",
-        hasAllAccess: Boolean(data.hasAllAccess),
-        purchasedTemplates: Array.isArray(data.purchasedTemplates) ? data.purchasedTemplates : [],
-        accessibleTemplates: data.accessibleTemplates || {},
-      };
-      cachedAccess = result;
-      return result;
-    }
-
-    return DEFAULT_UNAUTHENTICATED_ACCESS;
+    return cachedAccess || DEFAULT_UNAUTHENTICATED_ACCESS;
   } catch (err) {
-    if (err instanceof DOMException && err.name === "AbortError") {
+    if (err instanceof DOMException && err.name === "AbortError" && signal?.aborted) {
       throw err;
     }
-    return DEFAULT_UNAUTHENTICATED_ACCESS;
+    return cachedAccess || DEFAULT_UNAUTHENTICATED_ACCESS;
   }
 }
 
@@ -139,11 +151,15 @@ export function useTemplateAccess() {
   const [access, setAccess] = useState<TemplateAccessResponse>(
     () => cachedAccess || DEFAULT_UNAUTHENTICATED_ACCESS
   );
+  // Only block the UI if we don't have access cached yet
   const [isLoading, setIsLoading] = useState<boolean>(!cachedAccess);
   const mountedRef = useRef(true);
 
   const loadAccess = useCallback(async (force = false) => {
-    setIsLoading(true);
+    // Stale-while-revalidate: only show blocking loader if no cached data exists
+    if (!cachedAccess) {
+      setIsLoading(true);
+    }
     try {
       const data = await fetchTemplateAccess(undefined, force);
       if (mountedRef.current) {
@@ -160,18 +176,26 @@ export function useTemplateAccess() {
     mountedRef.current = true;
     void loadAccess(false);
 
-    const handleStorageSync = () => {
+    const handleAccessSync = () => {
       clearTemplateAccessCache();
       void loadAccess(true);
     };
 
-    window.addEventListener(STORAGE_SYNC_EVENT, handleStorageSync);
-    window.addEventListener("storage", handleStorageSync);
+    const handleStorageChange = (e: StorageEvent) => {
+      // Only react to auth token changes across tabs, not unrelated cart/favorites writes
+      if (e.key === "stackly-auth-token" || e.key === null) {
+        clearTemplateAccessCache();
+        void loadAccess(true);
+      }
+    };
+
+    window.addEventListener(TEMPLATE_ACCESS_SYNC_EVENT, handleAccessSync);
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
       mountedRef.current = false;
-      window.removeEventListener(STORAGE_SYNC_EVENT, handleStorageSync);
-      window.removeEventListener("storage", handleStorageSync);
+      window.removeEventListener(TEMPLATE_ACCESS_SYNC_EVENT, handleAccessSync);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, [loadAccess]);
 
