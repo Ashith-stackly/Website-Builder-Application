@@ -1,5 +1,5 @@
 "use client";
- 
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
@@ -41,9 +41,10 @@ import {
 import MockCheckoutModal from "@/components/MockCheckoutModal";
 import { getAuthToken } from "@/lib/authToken";
 import { performFullLogout, STORAGE_SYNC_EVENT } from "@/lib/logoutUtils";
+import { useSubscriptionAccess } from "@/lib/subscriptionAccess";
 
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
- 
+
 const navCategories = [
   { title: "LANDING PAGE", path: "/landing", icon: FaBookOpen },
   { title: "DASHBOARD", path: "/dashboard", icon: FaChartLine },
@@ -56,7 +57,7 @@ const navCategories = [
   { title: "EDUCATION", icon: FaGraduationCap },
   { title: "PHOTOGRAPHY", icon: FaCamera },
 ];
- 
+
 const HEADER_SPRING = { type: "spring" as const, stiffness: 320, damping: 30, mass: 0.9 };
 
 const dropdownVariants = {
@@ -154,7 +155,7 @@ type NavBarProps = {
   onWishlistClick?: () => void;
   keepVisible?: boolean;
 };
- 
+
 type StoredCommerceItem = {
   title?: string;
   name?: string;
@@ -165,7 +166,7 @@ type StoredCommerceItem = {
   quantity?: number;
   qty?: number;
 };
- 
+
 // STORAGE_SYNC_EVENT, clearLogoutStorage, and LOGOUT_STORAGE_KEYS are now in
 // @/lib/logoutUtils — imported above.
 
@@ -217,12 +218,12 @@ function trapTabFocus(event: React.KeyboardEvent, container: HTMLElement | null)
     firstElement.focus();
   }
 }
- 
+
 function readRawJsonArray(key: string): unknown[] {
   if (typeof window === "undefined") {
     return [];
   }
- 
+
   try {
     const raw = window.localStorage.getItem(key);
     const parsed = raw ? JSON.parse(raw) : [];
@@ -231,16 +232,16 @@ function readRawJsonArray(key: string): unknown[] {
     return [];
   }
 }
- 
+
 function readJsonArray(key: string): StoredCommerceItem[] {
   return readRawJsonArray(key).filter(
     (item): item is StoredCommerceItem => Boolean(item) && typeof item === "object",
   );
 }
- 
+
 function normalizeStoredItem(item: StoredCommerceItem) {
   const quantity = item.quantity || item.qty || 1;
- 
+
   return {
     title: item.title || item.name || "Saved item",
     type: item.type || "Template",
@@ -251,9 +252,60 @@ function normalizeStoredItem(item: StoredCommerceItem) {
     total: (typeof item.price === "number" ? item.price : 0) * quantity,
   };
 }
- 
+
+function formatPlanName(raw?: string): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower.includes("advanced")) return "Advanced";
+  if (lower.includes("business")) return "Business Plan";
+  if (lower.includes("basic")) return "Basic";
+  if (lower.includes("premium")) return "Advanced";
+  if (lower === "free" || lower === "none") return null;
+
+  return trimmed;
+}
+
+function getActivePlanFromStorage(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed[0]) {
+        const latest = parsed[0] as { planTier?: string; planName?: string; plan?: string };
+        return latest.planTier || latest.planName || latest.plan;
+      }
+    }
+  } catch { /* ignore */ }
+  return undefined;
+}
+
 export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistClick, keepVisible = false }: NavBarProps) {
   const router = useRouter();
+  const { plan: subAccessPlan } = useSubscriptionAccess();
+  const [activePlanLabel, setActivePlanLabel] = useState<string | null>(null);
+
+  const updateActivePlan = useCallback(() => {
+    const fromStorage = getActivePlanFromStorage();
+    const resolvedRaw = fromStorage || subAccessPlan;
+    const formatted = formatPlanName(resolvedRaw);
+    setActivePlanLabel(formatted);
+  }, [subAccessPlan]);
+
+  useEffect(() => {
+    updateActivePlan();
+    window.addEventListener("storage", updateActivePlan);
+    window.addEventListener(STORAGE_SYNC_EVENT, updateActivePlan);
+    window.addEventListener(PROFILE_UPDATED_EVENT, updateActivePlan);
+    return () => {
+      window.removeEventListener("storage", updateActivePlan);
+      window.removeEventListener(STORAGE_SYNC_EVENT, updateActivePlan);
+      window.removeEventListener(PROFILE_UPDATED_EVENT, updateActivePlan);
+    };
+  }, [updateActivePlan]);
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [wishlistItems, setWishlistItems] = useState<StoredCommerceItem[]>([]);
   const [cartItems, setCartItems] = useState<StoredCommerceItem[]>([]);
@@ -329,31 +381,31 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       window.removeEventListener("storage", checkAuth);
     };
   }, []);
- 
+
   const scrollLandingSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: string, closeMobile = false) => {
     const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
- 
+
     if (!currentPath.endsWith("/landing")) {
       if (closeMobile) {
         setMobileOpen(false);
       }
       return;
     }
- 
+
     event.preventDefault();
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
     window.history.pushState(null, "", `${window.location.pathname}#${sectionId}`);
- 
+
     if (closeMobile) {
       setMobileOpen(false);
     }
   };
- 
+
   const refreshStoredCommerce = () => {
     const wishlist = readJsonArray("wishlistItems");
     const cart = readJsonArray("cartItems");
     const cartCount = Number.parseInt(window.localStorage.getItem("cartCount") || "", 10);
- 
+
     setWishlistItems(wishlist);
     setCartItems(
       [
@@ -364,22 +416,22 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
       ],
     );
   };
- 
+
   useEffect(() => {
     const refreshTimer = window.setTimeout(refreshStoredCommerce, 0);
- 
+
     const handleStorageUpdate = () => refreshStoredCommerce();
- 
+
     window.addEventListener("storage", handleStorageUpdate);
     window.addEventListener(STORAGE_SYNC_EVENT, handleStorageUpdate);
- 
+
     return () => {
       window.clearTimeout(refreshTimer);
       window.removeEventListener("storage", handleStorageUpdate);
       window.removeEventListener(STORAGE_SYNC_EVENT, handleStorageUpdate);
     };
   }, []);
- 
+
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
@@ -388,7 +440,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
         setIsSearchPanelOpen(false);
       }
     };
- 
+
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -493,13 +545,13 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     const item = normalizeStoredItem(storedItem);
     return total + item.total;
   }, 0);
- 
+
   const removeWishlistItem = (title: string) => {
     const next = wishlistItems.filter((item) => (item.title || item.name) !== title);
     window.localStorage.setItem("wishlistItems", JSON.stringify(next));
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
   };
- 
+
   const moveToCartFromWishlist = (storedItem: StoredCommerceItem) => {
     const item = normalizeStoredItem(storedItem);
     const title = storedItem.title || storedItem.name || item.title;
@@ -522,7 +574,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
   };
- 
+
   const removeCartItem = (title: string) => {
     const next = cartItems.filter((item) => (item.title || item.name) !== title);
     const nextCount = next.reduce((total, item) => total + (item.quantity || item.qty || 1), 0);
@@ -531,23 +583,23 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
     showCartToast(`${title} removed from cart`);
   };
- 
+
   const updateCartQuantity = (title: string, change: -1 | 1) => {
     const next = cartItems.map((item) => {
       if ((item.title || item.name) !== title) {
         return item;
       }
- 
+
       const currentQuantity = item.quantity || item.qty || 1;
       return { ...item, quantity: Math.max(1, currentQuantity + change), qty: undefined };
     });
     const nextCount = next.reduce((total, item) => total + (item.quantity || item.qty || 1), 0);
- 
+
     window.localStorage.setItem("cartItems", JSON.stringify(next));
     window.localStorage.setItem("cartCount", String(nextCount));
     window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
   };
- 
+
   const handleCheckoutClick = () => {
     if (cartItems.length === 0) return;
     const firstItem = normalizeStoredItem(cartItems[0]);
@@ -614,7 +666,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
     setIsSearchPanelOpen(false);
     setSearchSelected(false);
   };
- 
+
   const closeMenus = () => {
     setActiveMenu(null);
     setIsProfileMenuOpen(false);
@@ -662,674 +714,670 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
   const navLockedVisible = mobileOpen || Boolean(activeMenu) || isProfileMenuOpen || isSearchPanelOpen || Boolean(activePanel);
   const navHidden = hidden && !navLockedVisible && !keepVisible;
- 
+
   return (
     <>
-    <motion.header
-      className={`stackly-navbar sticky top-0 z-[5000] overflow-visible border-b px-2 py-3 transition-colors duration-300 will-change-transform md:px-12 ${isScrolled ? "border-white/15 bg-[#06224C]/90 shadow-[0_16px_44px_rgba(2,15,38,0.24)] backdrop-blur-xl" : "border-white/10 bg-[#06224C] shadow-sm backdrop-blur-none"}`}
-      initial={false}
-      animate={{
-        y: navHidden ? -120 : 0,
-        opacity: navHidden ? 0 : 1,
-      }}
-      transition={prefersReducedMotion ? { duration: 0 } : HEADER_SPRING}
-    >
-      <nav ref={navRef} className="relative mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 overflow-visible md:gap-4">
-        <div className="flex min-w-0 items-center gap-1 md:gap-8">
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md p-1 text-white transition hover:bg-white/10 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] lg:hidden"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            onClick={() => setMobileOpen((value) => !value)}
-          >
-            <AnimatedHamburger open={mobileOpen} />
-          </button>
- 
-          <Link
-            href="/landing"
-            className="inline-flex aspect-[2/1] min-w-[75px] items-center justify-center rounded-[60%] bg-white px-2 py-2 shadow-md transition hover:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] md:min-w-[90px] md:px-4 md:py-3"
-            aria-label="Stackly home"
-          >
-            <img src={assetPath("/stackly-logo.webp")} alt="Stackly" className="h-3 w-auto object-contain md:h-5" />
-          </Link>
- 
-          <div className="hidden items-center justify-center gap-10 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
-            <Link href="/landing" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>HOME</MotionNavItem></Link>
-            <Link href="/templates" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
-            {isLoggedIn && (
-              <Link href="/dashboard" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>DASHBOARD</MotionNavItem></Link>
-            )}
-            <Link href="/aboutus" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>ABOUT US</MotionNavItem></Link>
- 
-            <div
-              className="relative"
-              onBlurCapture={(e) => {
-                const next = e.relatedTarget as Node | null;
-                if (e.currentTarget.contains(next)) return;
-                setActiveMenu(null);
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => toggleMenu("products")}
-                className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
-                aria-haspopup="true"
-                aria-expanded={activeMenu === "products"}
-              >
-                <MotionNavItem>OUR PRODUCTS</MotionNavItem> <FaChevronDown className={`text-[10px] transition-transform ${activeMenu === "products" ? "rotate-180" : ""}`} />
-              </button>
-              <AnimatePresence>{activeMenu === "products" && (<motion.div key="products-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-48 rounded-xl border border-gray-100 bg-white py-3 shadow-2xl">
-                {products.map((product) => (
-                  <Link key={product} href="/landing#templates" onClick={(event) => { closeMenus(); scrollLandingSection(event, "templates"); }} className="block border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-800 transition last:border-0 hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                    {product}
-                  </Link>
-                ))}
-              </motion.div>)}</AnimatePresence>
-            </div>
- 
-            <div
-              className="relative"
-              onBlurCapture={(e) => {
-                const next = e.relatedTarget as Node | null;
-                if (e.currentTarget.contains(next)) return;
-                setActiveMenu(null);
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => toggleMenu("categories")}
-                className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
-                aria-haspopup="true"
-                aria-expanded={activeMenu === "categories"}
-              >
-                <MotionNavItem>CATEGORIES</MotionNavItem> <FaChevronDown className={`text-[10px] transition-transform ${activeMenu === "categories" ? "rotate-180" : ""}`} />
-              </button>
-              <AnimatePresence>{activeMenu === "categories" && (<motion.div key="categories-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-[200px] rounded-xl border border-gray-100 bg-white py-2 shadow-2xl">
-                {navCategories.map(({ title, path, icon: Icon }) => {
-                  const content = (
-                    <>
-                      <Icon className="w-4 opacity-50" />
-                      {title}
-                    </>
-                  );
-                  if (path) {
-                    return (
-                      <div key={title} className="group/category relative">
-                        <Link href={path} onClick={closeMenus} className="flex items-center gap-2 border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                          {content}
-                        </Link>
-                      </div>
-                    );
-                  }
-                  return (
-                    <div key={title} className="group/category relative">
-                      <div className="flex items-center gap-2 border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-400 select-none">
-                        {content}
-                      </div>
-                    </div>
-                  );
-                })}
-              </motion.div>)}</AnimatePresence>
-            </div>
- 
-            <Link href="/landing#contact" onClick={(event) => scrollLandingSection(event, "contact")} className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>CONTACT</MotionNavItem></Link>
-          </div>
-        </div>
- 
-        <div className="ml-auto flex flex-shrink-0 items-center gap-2 md:gap-3">
-
-          {/* ── CART BUTTON — CHANGE: added focus-visible ring ── */}
-          <motion.button
-            {...iconButtonMotion}
-            type="button"
-            onClick={() => {
-              setSearchSelected(false);
-              setIsSearchPanelOpen(false);
-              setActivePanel("cart");
-            }}
-            aria-label="Open cart"
-            aria-pressed={activePanel === "cart"}
-            onFocus={() => setFocusedAction("cart")}
-            onBlur={() => setFocusedAction(null)}
-            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
-              activePanel === "cart" || focusedAction === "cart"
-                ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                : "text-[#06224C]"
-            }`}
-          >
-            <AnimatePresence>{(activePanel === "cart" || focusedAction === "cart") && <ActiveIconHighlight />}</AnimatePresence>
-            <FaCartShopping className="relative z-10 text-sm" />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-black text-white">
-                {cartCount}
-              </span>
-            )}
-          </motion.button>
-
-          {/* ── WISHLIST BUTTON — CHANGE: added focus-visible ring ── */}
-          <motion.button
-            {...iconButtonMotion}
-            type="button"
-            onClick={() => {
-              setSearchSelected(false);
-              setIsSearchPanelOpen(false);
-              if (onWishlistClick) {
-                onWishlistClick();
-                return;
-              }
-              setActivePanel("wishlist");
-            }}
-            aria-label="Open wishlist"
-            aria-pressed={activePanel === "wishlist"}
-            onFocus={() => setFocusedAction("wishlist")}
-            onBlur={() => setFocusedAction(null)}
-            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
-              activePanel === "wishlist" || focusedAction === "wishlist"
-                ? "scale-105 text-red-600 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                : "text-red-500"
-            }`}
-          >
-            <AnimatePresence>{(activePanel === "wishlist" || focusedAction === "wishlist") && <ActiveIconHighlight />}</AnimatePresence>
-            {wishlistCount > 0 ? <FaHeart className="relative z-10 text-sm" /> : <FaRegHeart className="relative z-10 text-sm" />}
-            {wishlistCount > 0 && (
-              <span className="absolute -right-1 -top-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white">
-                {wishlistCount}
-              </span>
-            )}
-          </motion.button>
-
-          {/* ── SEARCH BUTTON — CHANGE: added focus-visible ring ── */}
-          <motion.button
-            {...iconButtonMotion}
-            type="button"
-            onClick={() => {
-              setSearchSelected((prev) => !prev);
-              setIsSearchPanelOpen((prev) => !prev);
-              setActivePanel(null);
-              setIsProfileMenuOpen(false);
-              closeMenus();
-              setMobileOpen(false);
-            }}
-            aria-label="Search"
-            aria-expanded={isSearchPanelOpen}
-            aria-pressed={isSearchPanelOpen || searchSelected}
-            onFocus={() => setFocusedAction("search")}
-            onBlur={() => setFocusedAction(null)}
-            className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${
-              isSearchPanelOpen || searchSelected || focusedAction === "search"
-                ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                : "text-[#06224C]"
-            }`}
-          >
-            <AnimatePresence>{(isSearchPanelOpen || searchSelected || focusedAction === "search") && <ActiveIconHighlight />}</AnimatePresence>
-            <FaMagnifyingGlass className="relative z-10 text-sm" />
-          </motion.button>
-
-          <div
-            className="relative flex items-center"
-            onBlurCapture={(e) => {
-              const next = e.relatedTarget as Node | null;
-              if (e.currentTarget.contains(next)) return;
-              setIsProfileMenuOpen(false);
-            }}
-          >
-            <motion.button
-              {...iconButtonMotion}
+      <motion.header
+        className={`stackly-navbar sticky top-0 z-[5000] overflow-visible border-b px-2 py-3 transition-colors duration-300 will-change-transform md:px-12 ${isScrolled ? "border-white/15 bg-[#06224C]/90 shadow-[0_16px_44px_rgba(2,15,38,0.24)] backdrop-blur-xl" : "border-white/10 bg-[#06224C] shadow-sm backdrop-blur-none"}`}
+        initial={false}
+        animate={{
+          y: navHidden ? -120 : 0,
+          opacity: navHidden ? 0 : 1,
+        }}
+        transition={prefersReducedMotion ? { duration: 0 } : HEADER_SPRING}
+      >
+        <nav ref={navRef} className="relative mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 overflow-visible md:gap-4">
+          <div className="flex min-w-0 items-center gap-1 md:gap-8">
+            <button
               type="button"
-              aria-label="User Profile"
-              aria-expanded={isProfileMenuOpen}
-              onFocus={() => setFocusedAction("profile")}
-              onBlur={() => setFocusedAction(null)}
-              onClick={() => {
-                setSearchSelected(false);
-                setIsSearchPanelOpen(false);
-                setIsProfileMenuOpen((value) => !value);
-                setActiveMenu(null);
-              }}
-              className={`relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white p-[3px] shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] active:scale-95 ${
-                isProfileMenuOpen || focusedAction === "profile"
-                  ? "scale-105 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                  : ""
-              }`}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md p-1 text-white transition hover:bg-white/10 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] lg:hidden"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMobileOpen((value) => !value)}
             >
-              <AnimatePresence>{(isProfileMenuOpen || focusedAction === "profile") && <ActiveIconHighlight />}</AnimatePresence>
-              <span className="relative z-10 h-full w-full overflow-hidden rounded-full">
-                <img src={displayUser.avatar.startsWith("data:") ? displayUser.avatar : assetPath(displayUser.avatar)} alt={`${displayUser.name} profile picture`} className="h-full w-full object-cover" />
-              </span>
-            </motion.button>
- 
-            <AnimatePresence>
-              {isProfileMenuOpen && (
-                <motion.div
-                  ref={profileMenuRef}
-                  key="profile-dd"
-                  variants={dropdownVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  style={{ transformOrigin: "top right" }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") {
-                      setIsProfileMenuOpen(false);
-                      return;
-                    }
+              <AnimatedHamburger open={mobileOpen} />
+            </button>
 
-                    trapTabFocus(event, profileMenuRef.current);
-                  }}
-                  className="absolute right-0 top-full z-[100] mt-3 w-48 rounded-xl border border-gray-100 bg-white py-2 text-left shadow-2xl"
-                >
-                  <div className="mb-1 border-b border-gray-50 px-4 py-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      {isLoggedIn ? (displayUser.name || "User Menu") : "Account"}
-                    </p>
-                  </div>
-                  {isLoggedIn ? (
-                    <>
-                      <Link href="/dashboard" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                        <FaCircleUser className="w-4 opacity-50" />
-                        DASHBOARD
-                      </Link>
-                      <Link href="/dashboard/settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                        <FaGear className="w-4 opacity-50" />
-                        SETTINGS
-                      </Link>
-                      <div className="mt-1 border-t border-gray-50">
-                        <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[11px] font-black text-red-500 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:bg-red-50 cursor-pointer">
-                          <FaRightFromBracket className="w-4" />
-                          LOGOUT
-                        </button>
-                      </div>
-                      <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
-                        <Link
-                          href="/planning"
-                          onClick={closeMenus}
-                          className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
-                        >
-                          <FaLayerGroup className="w-4 opacity-80" />
-                          SUBSCRIPTIONS
-                        </Link>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <Link href="/login" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                        <FaCircleUser className="w-4 opacity-50" />
-                        LOGIN
-                      </Link>
-                      <Link href="/signup" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
-                        <FaGear className="w-4 opacity-50" />
-                        CREATE ACCOUNT
-                      </Link>
-                      <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
-                        <Link
-                          href="/planning"
-                          onClick={closeMenus}
-                          className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
-                        >
-                          <FaLayerGroup className="w-4 opacity-80" />
-                          VIEW PLANS
-                        </Link>
-                      </div>
-                    </>
-                  )}
-                </motion.div>
+            <Link
+              href="/landing"
+              className="inline-flex aspect-[2/1] min-w-[75px] items-center justify-center rounded-[60%] bg-white px-2 py-2 shadow-md transition hover:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] md:min-w-[90px] md:px-4 md:py-3"
+              aria-label="Stackly home"
+            >
+              <img src={assetPath("/stackly-logo.webp")} alt="Stackly" className="h-3 w-auto object-contain md:h-5" />
+            </Link>
+
+            <div className="hidden items-center justify-center gap-10 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
+              <Link href="/landing" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>HOME</MotionNavItem></Link>
+              <Link href="/templates" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
+              {isLoggedIn && (
+                <Link href="/dashboard" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>DASHBOARD</MotionNavItem></Link>
               )}
-            </AnimatePresence>
-          </div>
-        </div>
+              <Link href="/aboutus" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>ABOUT US</MotionNavItem></Link>
 
-        <AnimatePresence>
-          {isSearchPanelOpen && (
-            <motion.div
-              ref={searchPanelRef}
-              key="navbar-search-panel"
-              tabIndex={-1}
-              initial={{ opacity: 0, y: -8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 360, damping: 28 }}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  closeSearchPanel();
-                  return;
-                }
-
-                trapTabFocus(event, searchPanelRef.current);
-              }}
-              className="absolute right-0 top-[calc(100%+0.85rem)] z-[120] w-[min(92vw,440px)] rounded-2xl border border-white/70 bg-white p-2 text-left shadow-[0_24px_70px_rgba(2,15,38,0.28)] ring-1 ring-sky-200/70"
-            >
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  submitNavbarSearch();
+              <div
+                className="relative"
+                onBlurCapture={(e) => {
+                  const next = e.relatedTarget as Node | null;
+                  if (e.currentTarget.contains(next)) return;
+                  setActiveMenu(null);
                 }}
-                className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner transition focus-within:border-sky-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-sky-500/10 cursor-pointer"
               >
-                <FaMagnifyingGlass className="ml-4 flex-shrink-0 text-sm text-slate-400" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={navbarSearchQuery}
-                  onChange={(event) => setNavbarSearchQuery(event.target.value)}
-                  placeholder="Search websites..."
-                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 cursor-pointer"
-                  aria-label="Search websites"
-                />
                 <button
                   type="button"
-                  onClick={closeSearchPanel}
-                  className="mx-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-95 cursor-pointer"
-                  aria-label="Close search"
+                  onClick={() => toggleMenu("products")}
+                  className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                  aria-haspopup="true"
+                  aria-expanded={activeMenu === "products"}
                 >
-                  <FaXmark />
+                  <MotionNavItem>OUR PRODUCTS</MotionNavItem> <FaChevronDown className={`text-[10px] transition-transform ${activeMenu === "products" ? "rotate-180" : ""}`} />
                 </button>
-                <button
-                  type="submit"
-                  className="m-1 flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#06224C] text-white shadow-lg transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-1 active:scale-95 cursor-pointer"
-                  aria-label="Submit search"
-                >
-                  <FaMagnifyingGlass />
-                </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
- 
-      <AnimatePresence>
-      {mobileOpen && (
-        <motion.div
-          className="stackly-mobile-menu mt-3 bg-[#06224C] pb-5 pt-3 text-[11px] font-bold uppercase tracking-widest text-white shadow-[inset_0_10px_24px_-12px_rgba(0,0,0,0.55)] lg:hidden max-h-[calc(100vh-95px)] overflow-y-auto overscroll-contain"
-          variants={mobileMenuVariants}
-          initial="closed"
-          animate="open"
-          exit="closed"
-        >
-          <div className="flex flex-col">
-            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Home</Link></motion.div>
-            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/templates" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Templates</Link></motion.div>
-            {isLoggedIn && (
-              <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Dashboard</Link></motion.div>
-            )}
-            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/aboutus" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">About Us</Link></motion.div>
- 
-            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}>
-              <button
-                type="button"
-                onClick={() => setMobileSection((section) => (section === "products" ? null : "products"))}
-                className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15 cursor-pointer"
-              >
-                <span className="flex items-center gap-3"><FaBoxOpen className="opacity-70" /> Our Products</span>
-                <FaPlus className={`text-[8px] transition-transform ${mobileSection === "products" ? "rotate-45" : ""}`} />
-              </button>
-              {mobileSection === "products" && (
-                <div className="border-b border-white/5 bg-[#051a3d] py-2">
+                <AnimatePresence>{activeMenu === "products" && (<motion.div key="products-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-48 rounded-xl border border-gray-100 bg-white py-3 shadow-2xl">
                   {products.map((product) => (
-                    <Link key={`mobile-${product}`} href="/landing#templates" onClick={(event) => scrollLandingSection(event, "templates", true)} className="block px-14 py-3 text-[10px] text-gray-300 focus-visible:outline-none focus-visible:bg-white/10 focus-visible:text-white">
+                    <Link key={product} href="/landing#templates" onClick={(event) => { closeMenus(); scrollLandingSection(event, "templates"); }} className="block border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-800 transition last:border-0 hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
                       {product}
                     </Link>
                   ))}
-                </div>
-              )}
-            </motion.div>
- 
-            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}>
-              <button
-                type="button"
-                onClick={() => setMobileSection((section) => (section === "categories" ? null : "categories"))}
-                className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15 cursor-pointer"
+                </motion.div>)}</AnimatePresence>
+              </div>
+
+              <div
+                className="relative"
+                onBlurCapture={(e) => {
+                  const next = e.relatedTarget as Node | null;
+                  if (e.currentTarget.contains(next)) return;
+                  setActiveMenu(null);
+                }}
               >
-                <span className="flex items-center gap-3"><FaLayerGroup className="opacity-70" /> Categories</span>
-                <FaPlus className={`text-[8px] transition-transform ${mobileSection === "categories" ? "rotate-45" : ""}`} />
-              </button>
-              {mobileSection === "categories" && (
-                <div className="border-b border-white/5 bg-[#06224C] py-1">
+                <button
+                  type="button"
+                  onClick={() => toggleMenu("categories")}
+                  className="stackly-nav-link inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                  aria-haspopup="true"
+                  aria-expanded={activeMenu === "categories"}
+                >
+                  <MotionNavItem>CATEGORIES</MotionNavItem> <FaChevronDown className={`text-[10px] transition-transform ${activeMenu === "categories" ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>{activeMenu === "categories" && (<motion.div key="categories-dd" variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" style={{ transformOrigin: "top left" }} className="absolute left-0 top-full z-[100] mt-2 w-[200px] rounded-xl border border-gray-100 bg-white py-2 shadow-2xl">
                   {navCategories.map(({ title, path, icon: Icon }) => {
                     const content = (
                       <>
-                        <Icon className="opacity-70 w-4" />
+                        <Icon className="w-4 opacity-50" />
                         {title}
                       </>
                     );
                     if (path) {
                       return (
-                        <Link
-                          key={`mobile-${title}`}
-                          href={path}
-                          onClick={() => setMobileOpen(false)}
-                          className="flex w-full items-center gap-3 px-8 py-3.5 text-left text-[11px] font-black text-gray-300 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:bg-white/10"
-                        >
-                          {content}
-                        </Link>
+                        <div key={title} className="group/category relative">
+                          <Link href={path} onClick={closeMenus} className="flex items-center gap-2 border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                            {content}
+                          </Link>
+                        </div>
                       );
                     }
                     return (
-                      <div
-                        key={`mobile-${title}`}
-                        className="flex w-full items-center gap-3 px-8 py-3.5 text-left text-[11px] font-black text-gray-500 select-none"
-                      >
-                        {content}
+                      <div key={title} className="group/category relative">
+                        <div className="flex items-center gap-2 border-b border-gray-50 px-5 py-2.5 text-[11px] font-black text-gray-400 select-none">
+                          {content}
+                        </div>
                       </div>
                     );
                   })}
-                </div>
-              )}
-            </motion.div>
- 
-            <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing#contact" onClick={(event) => scrollLandingSection(event, "contact", true)} className="block px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Contact</Link></motion.div>
+                </motion.div>)}</AnimatePresence>
+              </div>
+
+              <Link href="/landing#contact" onClick={(event) => scrollLandingSection(event, "contact")} className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>CONTACT</MotionNavItem></Link>
+            </div>
           </div>
-        </motion.div>
-      )}
-      </AnimatePresence>
-      {/* Scroll progress bar */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute bottom-0 left-0 h-[2.5px] w-full origin-left bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-300"
-        style={{ scaleX: scrollProgress }}
-      />
-    </motion.header>
 
-    <AnimatePresence>
-      {mobileOpen && (
-        <motion.button
-          type="button"
-          aria-label="Close menu"
-          onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-[4990] bg-black/45 backdrop-blur-sm lg:hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.22 }}
-        />
-      )}
-    </AnimatePresence>
- 
-    <AnimatePresence>
-    {activePanel && (
-      <>
-        <motion.button
-          type="button"
-          aria-label={`Close ${activePanel}`}
-          onClick={() => setActivePanel(null)}
-          className="fixed inset-0 z-[9998] bg-black/50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.22 }}
-        />
-        <motion.aside
-          ref={activePanelRef}
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "100%" }}
-          transition={{ type: "spring", stiffness: 340, damping: 32 }}
-          tabIndex={-1}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setActivePanel(null);
-              return;
-            }
+          <div className="ml-auto flex flex-shrink-0 items-center gap-2 md:gap-3">
 
-            trapTabFocus(event, activePanelRef.current);
-          }}
-          className="fixed right-0 top-0 z-[9999] flex h-full w-full flex-col bg-white shadow-2xl sm:w-[400px]"
-        >
-          <div className="flex items-center justify-between border-b bg-white p-6 text-[#06224C]">
-            <h2 className="flex items-center gap-3 text-lg font-black uppercase tracking-widest">
-              {activePanel === "wishlist" ? <FaHeart className="text-red-500" /> : <FaCartShopping className="text-blue-600" />}
-              {activePanel === "wishlist" ? "My Wishlist" : "My Cart"}
-            </h2>
-            <button
+            {/* ── CART BUTTON — CHANGE: added focus-visible ring ── */}
+            <motion.button
+              {...iconButtonMotion}
               type="button"
-              onClick={() => setActivePanel(null)}
-              className="text-gray-400 transition hover:rotate-90 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-full"
-              aria-label={`Close ${activePanel}`}
+              onClick={() => {
+                setSearchSelected(false);
+                setIsSearchPanelOpen(false);
+                setActivePanel("cart");
+              }}
+              aria-label="Open cart"
+              aria-pressed={activePanel === "cart"}
+              onFocus={() => setFocusedAction("cart")}
+              onBlur={() => setFocusedAction(null)}
+              className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${activePanel === "cart" || focusedAction === "cart"
+                  ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                  : "text-[#06224C]"
+                }`}
             >
-              <FaXmark className="text-2xl" />
-            </button>
-          </div>
+              <AnimatePresence>{(activePanel === "cart" || focusedAction === "cart") && <ActiveIconHighlight />}</AnimatePresence>
+              <FaCartShopping className="relative z-10 text-sm" />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-black text-white">
+                  {cartCount}
+                </span>
+              )}
+            </motion.button>
 
-          <div className={`flex-grow overflow-y-auto ${activePanel === "cart" ? "p-0" : "space-y-6 p-6"}`}>
-            {(activePanel === "wishlist" ? wishlistItems : cartItems).length === 0 ? (
-              <div className="py-20 text-center">
-                {activePanel === "wishlist" ? (
-                  <FaRegHeart className="mx-auto mb-4 text-5xl text-gray-200" />
-                ) : (
-                  <FaCartShopping className="mx-auto mb-4 text-5xl text-gray-200" />
-                )}
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                  Your {activePanel} is empty
-                </p>
-              </div>
-            ) : activePanel === "cart" ? (
-              <div className="divide-y divide-gray-100 px-4 py-6 sm:px-6">
-                {cartItems.map((storedItem) => {
-                  const item = normalizeStoredItem(storedItem);
-                  const title = storedItem.title || storedItem.name || item.title;
+            {/* ── WISHLIST BUTTON — CHANGE: added focus-visible ring ── */}
+            <motion.button
+              {...iconButtonMotion}
+              type="button"
+              onClick={() => {
+                setSearchSelected(false);
+                setIsSearchPanelOpen(false);
+                if (onWishlistClick) {
+                  onWishlistClick();
+                  return;
+                }
+                setActivePanel("wishlist");
+              }}
+              aria-label="Open wishlist"
+              aria-pressed={activePanel === "wishlist"}
+              onFocus={() => setFocusedAction("wishlist")}
+              onBlur={() => setFocusedAction(null)}
+              className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${activePanel === "wishlist" || focusedAction === "wishlist"
+                  ? "scale-105 text-red-600 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                  : "text-red-500"
+                }`}
+            >
+              <AnimatePresence>{(activePanel === "wishlist" || focusedAction === "wishlist") && <ActiveIconHighlight />}</AnimatePresence>
+              {wishlistCount > 0 ? <FaHeart className="relative z-10 text-sm" /> : <FaRegHeart className="relative z-10 text-sm" />}
+              {wishlistCount > 0 && (
+                <span className="absolute -right-1 -top-1 z-20 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </motion.button>
 
-                  return (
-                    <div key={`cart-${title}`} className="relative flex items-start gap-3 py-4 first:pt-0">
-                      <img src={assetPath(item.image)} alt={item.alt} className="h-14 w-20 sm:h-[72px] sm:w-24 flex-shrink-0 rounded-xl object-cover" />
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-xs sm:text-base font-black uppercase tracking-wide text-[#06224C] pr-6">{item.title}</h3>
-                        <p className="mt-1 text-xs sm:text-base font-black text-blue-600">
-                          ₹ {item.price} x {item.quantity}
-                        </p>
-                        <div className="mt-2.5 flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => updateCartQuantity(title, -1)}
-                            disabled={item.quantity <= 1 || paymentLoading}
-                            className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-                            aria-label={`Decrease ${item.title} quantity`}
-                          >
-                            <FaMinus className="text-[10px]" />
-                          </button>
-                          <span className="w-5 text-center text-xs sm:text-sm font-black tabular-nums text-[#111827]">{item.quantity}</span>
-                          <button
-                            type="button"
-                            onClick={() => updateCartQuantity(title, 1)}
-                            disabled={paymentLoading}
-                            className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-                            aria-label={`Increase ${item.title} quantity`}
-                          >
-                            <FaPlus className="text-[10px]" />
-                          </button>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeCartItem(title)}
-                        className="absolute right-0 top-4 text-gray-400 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
-                        aria-label={`Remove ${item.title} from cart`}
-                      >
-                        <FaTrashCan className="text-base" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              wishlistItems.map((storedItem) => {
-                const item = normalizeStoredItem(storedItem);
-                const title = storedItem.title || storedItem.name || item.title;
+            {/* ── SEARCH BUTTON — CHANGE: added focus-visible ring ── */}
+            <motion.button
+              {...iconButtonMotion}
+              type="button"
+              onClick={() => {
+                setSearchSelected((prev) => !prev);
+                setIsSearchPanelOpen((prev) => !prev);
+                setActivePanel(null);
+                setIsProfileMenuOpen(false);
+                closeMenus();
+                setMobileOpen(false);
+              }}
+              aria-label="Search"
+              aria-expanded={isSearchPanelOpen}
+              aria-pressed={isSearchPanelOpen || searchSelected}
+              onFocus={() => setFocusedAction("search")}
+              onBlur={() => setFocusedAction(null)}
+              className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${isSearchPanelOpen || searchSelected || focusedAction === "search"
+                  ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                  : "text-[#06224C]"
+                }`}
+            >
+              <AnimatePresence>{(isSearchPanelOpen || searchSelected || focusedAction === "search") && <ActiveIconHighlight />}</AnimatePresence>
+              <FaMagnifyingGlass className="relative z-10 text-sm" />
+            </motion.button>
 
-                return (
-                  <div key={`wishlist-${title}`} className="relative flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm">
-                    <img src={assetPath(item.image)} alt={item.alt} className="h-12 w-16 flex-shrink-0 rounded-xl object-cover sm:h-16 sm:w-20" />
-                    <div className="min-w-0 flex-1 pr-6">
-                      <h3 className="truncate text-xs sm:text-sm font-black text-[#06224C]">{item.title}</h3>
-                      <p className="text-[10px] sm:text-xs italic text-gray-500">{item.type}</p>
-                      <p className="mt-1 text-xs sm:text-sm font-black text-blue-600">
-                        {item.price ? `₹ ${item.price}` : "Saved"}
+            <div
+              className="relative flex items-center"
+              onBlurCapture={(e) => {
+                const next = e.relatedTarget as Node | null;
+                if (e.currentTarget.contains(next)) return;
+                setIsProfileMenuOpen(false);
+              }}
+            >
+              <motion.button
+                {...iconButtonMotion}
+                type="button"
+                aria-label="User Profile"
+                aria-expanded={isProfileMenuOpen}
+                onFocus={() => setFocusedAction("profile")}
+                onBlur={() => setFocusedAction(null)}
+                onClick={() => {
+                  setSearchSelected(false);
+                  setIsSearchPanelOpen(false);
+                  setIsProfileMenuOpen((value) => !value);
+                  setActiveMenu(null);
+                }}
+                className={`relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white p-[3px] shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] active:scale-95 ${isProfileMenuOpen || focusedAction === "profile"
+                    ? "scale-105 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                    : ""
+                  }`}
+              >
+                <AnimatePresence>{(isProfileMenuOpen || focusedAction === "profile") && <ActiveIconHighlight />}</AnimatePresence>
+                <span className="relative z-10 h-full w-full overflow-hidden rounded-full">
+                  <img src={displayUser.avatar.startsWith("data:") ? displayUser.avatar : assetPath(displayUser.avatar)} alt={`${displayUser.name} profile picture`} className="h-full w-full object-cover" />
+                </span>
+              </motion.button>
+
+              <AnimatePresence>
+                {isProfileMenuOpen && (
+                  <motion.div
+                    ref={profileMenuRef}
+                    key="profile-dd"
+                    variants={dropdownVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    style={{ transformOrigin: "top right" }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setIsProfileMenuOpen(false);
+                        return;
+                      }
+
+                      trapTabFocus(event, profileMenuRef.current);
+                    }}
+                    className="absolute right-0 top-full z-[100] mt-3 w-48 rounded-xl border border-gray-100 bg-white py-2 text-left shadow-2xl"
+                  >
+                    <div className="mb-1 border-b border-gray-50 px-4 py-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        {isLoggedIn ? (displayUser.name || "User Menu") : "Account"}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => moveToCartFromWishlist(storedItem)}
-                        className="rounded-md bg-[#06224C] px-2 py-1 sm:px-3 sm:py-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white shadow-md transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeWishlistItem(title)}
-                      className="absolute right-2 top-2 text-gray-400 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
-                      aria-label={`Remove ${item.title} from wishlist`}
-                    >
-                      <FaXmark className="text-sm" />
-                    </button>
-                  </div>
-                );
-              })
-            )}
+                    {isLoggedIn ? (
+                      <>
+                        <Link href="/dashboard" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                          <FaCircleUser className="w-4 opacity-50" />
+                          DASHBOARD
+                        </Link>
+                        <Link href="/dashboard/settings" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                          <FaGear className="w-4 opacity-50" />
+                          SETTINGS
+                        </Link>
+                        <div className="mt-1 border-t border-gray-50">
+                          <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[11px] font-black text-red-500 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:bg-red-50 cursor-pointer">
+                            <FaRightFromBracket className="w-4" />
+                            LOGOUT
+                          </button>
+                        </div>
+                        <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
+                          <Link
+                            href="/planning"
+                            onClick={closeMenus}
+                            className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
+                          >
+                            <FaLayerGroup className="w-4 opacity-80" />
+                            {activePlanLabel || "SUBSCRIPTIONS"}
+                          </Link>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Link href="/login" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                          <FaCircleUser className="w-4 opacity-50" />
+                          LOGIN
+                        </Link>
+                        <Link href="/signup" onClick={closeMenus} className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:bg-blue-50 focus-visible:text-blue-600 cursor-pointer">
+                          <FaGear className="w-4 opacity-50" />
+                          CREATE ACCOUNT
+                        </Link>
+                        <div className="border-t border-gray-50 px-3 pb-2.5 pt-2">
+                          <Link
+                            href="/planning"
+                            onClick={closeMenus}
+                            className="flex items-center justify-center gap-3 rounded-lg border-0 bg-gradient-to-r from-slate-950 to-blue-700 px-4 py-2.5 text-[11px] font-black text-white shadow-lg shadow-blue-950/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 hover:ring-2 hover:ring-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:translate-y-0 active:scale-100 cursor-pointer"
+                          >
+                            <FaLayerGroup className="w-4 opacity-80" />
+                            {activePlanLabel || "VIEW PLANS"}
+                          </Link>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {activePanel === "cart" ? (
-            <div className="border-t bg-gray-50 p-4 sm:p-6">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs sm:text-sm font-black uppercase tracking-[0.12em] text-gray-500">Subtotal</span>
-                <span className="text-xl sm:text-2xl font-black tabular-nums text-[#06224C]">₹ {cartSubtotal.toFixed(2)}</span>
-              </div>
-              <button
-                type="button"
-                disabled={paymentLoading || cartItems.length === 0}
-                onClick={handleCheckoutClick}
-                className="flex w-full items-center justify-center rounded-xl bg-[#06224C] px-4 py-2.5 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-white shadow-md transition hover:bg-blue-900 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          <AnimatePresence>
+            {isSearchPanelOpen && (
+              <motion.div
+                ref={searchPanelRef}
+                key="navbar-search-panel"
+                tabIndex={-1}
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 360, damping: 28 }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    closeSearchPanel();
+                    return;
+                  }
+
+                  trapTabFocus(event, searchPanelRef.current);
+                }}
+                className="absolute right-0 top-[calc(100%+0.85rem)] z-[120] w-[min(92vw,440px)] rounded-2xl border border-white/70 bg-white p-2 text-left shadow-[0_24px_70px_rgba(2,15,38,0.28)] ring-1 ring-sky-200/70"
               >
-                {paymentLoading ? "Processing..." : "Checkout Now"}
-              </button>
-            </div>
-          ) : (
-            <div className="border-t bg-gray-50 p-4 sm:p-6">
-              <p className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                Items saved in wishlist are not reserved.
-              </p>
-            </div>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    submitNavbarSearch();
+                  }}
+                  className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-inner transition focus-within:border-sky-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-sky-500/10 cursor-pointer"
+                >
+                  <FaMagnifyingGlass className="ml-4 flex-shrink-0 text-sm text-slate-400" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={navbarSearchQuery}
+                    onChange={(event) => setNavbarSearchQuery(event.target.value)}
+                    placeholder="Search websites..."
+                    className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm font-semibold text-slate-700 outline-none placeholder:text-slate-400 cursor-pointer"
+                    aria-label="Search websites"
+                  />
+                  <button
+                    type="button"
+                    onClick={closeSearchPanel}
+                    className="mx-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-95 cursor-pointer"
+                    aria-label="Close search"
+                  >
+                    <FaXmark />
+                  </button>
+                  <button
+                    type="submit"
+                    className="m-1 flex h-10 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#06224C] text-white shadow-lg transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-1 active:scale-95 cursor-pointer"
+                    aria-label="Submit search"
+                  >
+                    <FaMagnifyingGlass />
+                  </button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </nav>
+
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              className="stackly-mobile-menu mt-3 bg-[#06224C] pb-5 pt-3 text-[11px] font-bold uppercase tracking-widest text-white shadow-[inset_0_10px_24px_-12px_rgba(0,0,0,0.55)] lg:hidden max-h-[calc(100vh-95px)] overflow-y-auto overscroll-contain"
+              variants={mobileMenuVariants}
+              initial="closed"
+              animate="open"
+              exit="closed"
+            >
+              <div className="flex flex-col">
+                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Home</Link></motion.div>
+                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/templates" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Templates</Link></motion.div>
+                {isLoggedIn && (
+                  <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Dashboard</Link></motion.div>
+                )}
+                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/aboutus" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">About Us</Link></motion.div>
+
+                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}>
+                  <button
+                    type="button"
+                    onClick={() => setMobileSection((section) => (section === "products" ? null : "products"))}
+                    className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15 cursor-pointer"
+                  >
+                    <span className="flex items-center gap-3"><FaBoxOpen className="opacity-70" /> Our Products</span>
+                    <FaPlus className={`text-[8px] transition-transform ${mobileSection === "products" ? "rotate-45" : ""}`} />
+                  </button>
+                  {mobileSection === "products" && (
+                    <div className="border-b border-white/5 bg-[#051a3d] py-2">
+                      {products.map((product) => (
+                        <Link key={`mobile-${product}`} href="/landing#templates" onClick={(event) => scrollLandingSection(event, "templates", true)} className="block px-14 py-3 text-[10px] text-gray-300 focus-visible:outline-none focus-visible:bg-white/10 focus-visible:text-white">
+                          {product}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}>
+                  <button
+                    type="button"
+                    onClick={() => setMobileSection((section) => (section === "categories" ? null : "categories"))}
+                    className="flex w-full items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4 text-left focus-visible:outline-none focus-visible:bg-white/15 cursor-pointer"
+                  >
+                    <span className="flex items-center gap-3"><FaLayerGroup className="opacity-70" /> Categories</span>
+                    <FaPlus className={`text-[8px] transition-transform ${mobileSection === "categories" ? "rotate-45" : ""}`} />
+                  </button>
+                  {mobileSection === "categories" && (
+                    <div className="border-b border-white/5 bg-[#06224C] py-1">
+                      {navCategories.map(({ title, path, icon: Icon }) => {
+                        const content = (
+                          <>
+                            <Icon className="opacity-70 w-4" />
+                            {title}
+                          </>
+                        );
+                        if (path) {
+                          return (
+                            <Link
+                              key={`mobile-${title}`}
+                              href={path}
+                              onClick={() => setMobileOpen(false)}
+                              className="flex w-full items-center gap-3 px-8 py-3.5 text-left text-[11px] font-black text-gray-300 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:bg-white/10"
+                            >
+                              {content}
+                            </Link>
+                          );
+                        }
+                        return (
+                          <div
+                            key={`mobile-${title}`}
+                            className="flex w-full items-center gap-3 px-8 py-3.5 text-left text-[11px] font-black text-gray-500 select-none"
+                          >
+                            {content}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing#contact" onClick={(event) => scrollLandingSection(event, "contact", true)} className="block px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Contact</Link></motion.div>
+              </div>
+            </motion.div>
           )}
-        </motion.aside>
-      </>
-    )}
-    </AnimatePresence>
+        </AnimatePresence>
+        {/* Scroll progress bar */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 left-0 h-[2.5px] w-full origin-left bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-300"
+          style={{ scaleX: scrollProgress }}
+        />
+      </motion.header>
 
-    {cartToast && (
-      <div className="fixed bottom-5 right-5 z-[20001] rounded-xl bg-[#06224C] px-5 py-3 text-sm font-bold text-white shadow-2xl">
-        {cartToast}
-      </div>
-    )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMobileOpen(false)}
+            className="fixed inset-0 z-[4990] bg-black/45 backdrop-blur-sm lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+          />
+        )}
+      </AnimatePresence>
 
-    <MockCheckoutModal
-      isOpen={checkoutProduct !== null}
-      onClose={() => setCheckoutProduct(null)}
-      onSuccess={executeCartPayment}
-      productName={checkoutProduct?.title || ""}
-      productPrice={checkoutProduct?.price || 0}
-      productImage={checkoutProduct?.image}
-      productAlt={checkoutProduct?.alt}
-      quantity={checkoutProduct?.quantity}
-    />
+      <AnimatePresence>
+        {activePanel && (
+          <>
+            <motion.button
+              type="button"
+              aria-label={`Close ${activePanel}`}
+              onClick={() => setActivePanel(null)}
+              className="fixed inset-0 z-[9998] bg-black/50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+            />
+            <motion.aside
+              ref={activePanelRef}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 340, damping: 32 }}
+              tabIndex={-1}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  setActivePanel(null);
+                  return;
+                }
+
+                trapTabFocus(event, activePanelRef.current);
+              }}
+              className="fixed right-0 top-0 z-[9999] flex h-full w-full flex-col bg-white shadow-2xl sm:w-[400px]"
+            >
+              <div className="flex items-center justify-between border-b bg-white p-6 text-[#06224C]">
+                <h2 className="flex items-center gap-3 text-lg font-black uppercase tracking-widest">
+                  {activePanel === "wishlist" ? <FaHeart className="text-red-500" /> : <FaCartShopping className="text-blue-600" />}
+                  {activePanel === "wishlist" ? "My Wishlist" : "My Cart"}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setActivePanel(null)}
+                  className="text-gray-400 transition hover:rotate-90 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-full"
+                  aria-label={`Close ${activePanel}`}
+                >
+                  <FaXmark className="text-2xl" />
+                </button>
+              </div>
+
+              <div className={`flex-grow overflow-y-auto ${activePanel === "cart" ? "p-0" : "space-y-6 p-6"}`}>
+                {(activePanel === "wishlist" ? wishlistItems : cartItems).length === 0 ? (
+                  <div className="py-20 text-center">
+                    {activePanel === "wishlist" ? (
+                      <FaRegHeart className="mx-auto mb-4 text-5xl text-gray-200" />
+                    ) : (
+                      <FaCartShopping className="mx-auto mb-4 text-5xl text-gray-200" />
+                    )}
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                      Your {activePanel} is empty
+                    </p>
+                  </div>
+                ) : activePanel === "cart" ? (
+                  <div className="divide-y divide-gray-100 px-4 py-6 sm:px-6">
+                    {cartItems.map((storedItem) => {
+                      const item = normalizeStoredItem(storedItem);
+                      const title = storedItem.title || storedItem.name || item.title;
+
+                      return (
+                        <div key={`cart-${title}`} className="relative flex items-start gap-3 py-4 first:pt-0">
+                          <img src={assetPath(item.image)} alt={item.alt} className="h-14 w-20 sm:h-[72px] sm:w-24 flex-shrink-0 rounded-xl object-cover" />
+                          <div className="min-w-0 flex-1">
+                            <h3 className="truncate text-xs sm:text-base font-black uppercase tracking-wide text-[#06224C] pr-6">{item.title}</h3>
+                            <p className="mt-1 text-xs sm:text-base font-black text-blue-600">
+                              ₹ {item.price} x {item.quantity}
+                            </p>
+                            <div className="mt-2.5 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => updateCartQuantity(title, -1)}
+                                disabled={item.quantity <= 1 || paymentLoading}
+                                className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                                aria-label={`Decrease ${item.title} quantity`}
+                              >
+                                <FaMinus className="text-[10px]" />
+                              </button>
+                              <span className="w-5 text-center text-xs sm:text-sm font-black tabular-nums text-[#111827]">{item.quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateCartQuantity(title, 1)}
+                                disabled={paymentLoading}
+                                className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-[#111827] transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                                aria-label={`Increase ${item.title} quantity`}
+                              >
+                                <FaPlus className="text-[10px]" />
+                              </button>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeCartItem(title)}
+                            className="absolute right-0 top-4 text-gray-400 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
+                            aria-label={`Remove ${item.title} from cart`}
+                          >
+                            <FaTrashCan className="text-base" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  wishlistItems.map((storedItem) => {
+                    const item = normalizeStoredItem(storedItem);
+                    const title = storedItem.title || storedItem.name || item.title;
+
+                    return (
+                      <div key={`wishlist-${title}`} className="relative flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm">
+                        <img src={assetPath(item.image)} alt={item.alt} className="h-12 w-16 flex-shrink-0 rounded-xl object-cover sm:h-16 sm:w-20" />
+                        <div className="min-w-0 flex-1 pr-6">
+                          <h3 className="truncate text-xs sm:text-sm font-black text-[#06224C]">{item.title}</h3>
+                          <p className="text-[10px] sm:text-xs italic text-gray-500">{item.type}</p>
+                          <p className="mt-1 text-xs sm:text-sm font-black text-blue-600">
+                            {item.price ? `₹ ${item.price}` : "Saved"}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => moveToCartFromWishlist(storedItem)}
+                            className="rounded-md bg-[#06224C] px-2 py-1 sm:px-3 sm:py-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white shadow-md transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeWishlistItem(title)}
+                          className="absolute right-2 top-2 text-gray-400 transition hover:text-red-600 focus-visible:outline-none focus-visible:text-red-600 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:rounded-md"
+                          aria-label={`Remove ${item.title} from wishlist`}
+                        >
+                          <FaXmark className="text-sm" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {activePanel === "cart" ? (
+                <div className="border-t bg-gray-50 p-4 sm:p-6">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs sm:text-sm font-black uppercase tracking-[0.12em] text-gray-500">Subtotal</span>
+                    <span className="text-xl sm:text-2xl font-black tabular-nums text-[#06224C]">₹ {cartSubtotal.toFixed(2)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={paymentLoading || cartItems.length === 0}
+                    onClick={handleCheckoutClick}
+                    className="flex w-full items-center justify-center rounded-xl bg-[#06224C] px-4 py-2.5 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-white shadow-md transition hover:bg-blue-900 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {paymentLoading ? "Processing..." : "Checkout Now"}
+                  </button>
+                </div>
+              ) : (
+                <div className="border-t bg-gray-50 p-4 sm:p-6">
+                  <p className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Items saved in wishlist are not reserved.
+                  </p>
+                </div>
+              )}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {cartToast && (
+        <div className="fixed bottom-5 right-5 z-[20001] rounded-xl bg-[#06224C] px-5 py-3 text-sm font-bold text-white shadow-2xl">
+          {cartToast}
+        </div>
+      )}
+
+      <MockCheckoutModal
+        isOpen={checkoutProduct !== null}
+        onClose={() => setCheckoutProduct(null)}
+        onSuccess={executeCartPayment}
+        productName={checkoutProduct?.title || ""}
+        productPrice={checkoutProduct?.price || 0}
+        productImage={checkoutProduct?.image}
+        productAlt={checkoutProduct?.alt}
+        quantity={checkoutProduct?.quantity}
+      />
     </>
   );
 }

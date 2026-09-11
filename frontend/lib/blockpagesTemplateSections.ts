@@ -28,6 +28,7 @@ const BLOG_SECTIONS: BlockpagesTemplateSection[] = [
   { id: "blog-trending", label: "Trending" },
   { id: "blog-about", label: "About" },
   { id: "blog-contact", label: "Contact" },
+  { id: "blog-faq", label: "FAQ" },
 ];
 
 const CONSTRUCTION_SECTIONS: BlockpagesTemplateSection[] = [

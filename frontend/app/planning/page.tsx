@@ -93,12 +93,12 @@ const plans = [
   },
   {
     name: "Business Plan",
-    oldPrice: "₹300",
-    newPrice: "₹150",
-    saveText: "Save 50%",
-    yearlyOldPrice: "₹3,600",
-    yearlyNewPrice: "₹1,512",
-    yearlySaveText: "Save 58%",
+    oldPrice: "₹4,300",
+    newPrice: "₹3,000",
+    saveText: "Save 30%",
+    yearlyOldPrice: "₹51,600",
+    yearlyNewPrice: "₹36,000",
+    yearlySaveText: "Save 30%",
     isRecommended: true,
     features: [
       "Free domain for 1 year",
@@ -113,12 +113,12 @@ const plans = [
   },
   {
     name: "Advanced",
-    oldPrice: "₹400",
-    newPrice: "₹280",
-    saveText: "Save 30%",
-    yearlyOldPrice: "₹4,800",
-    yearlyNewPrice: "₹3,360",
-    yearlySaveText: "Save 30%",
+    oldPrice: "₹4,300",
+    newPrice: "₹4,000",
+    saveText: "Save 7%",
+    yearlyOldPrice: "₹51,600",
+    yearlyNewPrice: "₹48,000",
+    yearlySaveText: "Save 7%",
     features: [
       "Free domain for 1 year",
       "300 GB storage space",
@@ -828,11 +828,10 @@ function PlanningPageContent() {
                     <motion.div
                       key={plan.name}
                       whileHover={{ y: -8, transition: { duration: 0.25 } }}
-                      className={`planning-plan-card relative flex flex-col justify-between rounded-3xl p-6 transition-all duration-300 sm:p-8 max-md:min-w-0 max-md:w-full max-md:max-w-full max-md:overflow-x-clip ${
-                        plan.isRecommended
+                      className={`planning-plan-card relative flex flex-col justify-between rounded-3xl p-6 transition-all duration-300 sm:p-8 max-md:min-w-0 max-md:w-full max-md:max-w-full max-md:overflow-x-clip ${plan.isRecommended
                           ? "planning-recommended-card border-2 border-blue-500/80 bg-gradient-to-b from-[#111e3b] via-[#0d162d] to-[#080d1a] shadow-2xl shadow-blue-600/30 ring-1 ring-blue-400/50 max-md:shadow-xl max-md:ring-0"
                           : "border border-white/10 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl hover:border-white/20 hover:shadow-xl"
-                      }`}
+                        }`}
                     >
                       {plan.isRecommended && (
                         <div className="planning-recommended-badge absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-1 text-xs font-extrabold tracking-wider text-white shadow-lg shadow-blue-500/40 uppercase border border-white/20 max-md:static max-md:left-auto max-md:top-0 max-md:mx-0 max-md:mb-3 max-md:w-full max-md:max-w-full max-md:translate-x-0 max-md:transform-none max-md:whitespace-normal max-md:text-center max-md:text-[10px] max-md:leading-snug max-md:tracking-wide max-md:px-3 max-md:shadow-md">
@@ -884,11 +883,10 @@ function PlanningPageContent() {
                             whileTap={{ scale: 0.98 }}
                             type="button"
                             onClick={() => handlePurchasePlan(plan)}
-                            className={`w-full rounded-2xl py-3.5 text-sm font-bold shadow-lg transition-all cursor-pointer ${
-                              plan.isRecommended
+                            className={`w-full rounded-2xl py-3.5 text-sm font-bold shadow-lg transition-all cursor-pointer ${plan.isRecommended
                                 ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-600/40 hover:from-blue-600 hover:to-indigo-700"
                                 : "bg-white text-slate-900 hover:bg-slate-100"
-                            }`}
+                              }`}
                           >
                             Select {plan.name}
                           </motion.button>

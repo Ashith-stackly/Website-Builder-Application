@@ -387,6 +387,15 @@ function isEditableButton(element: HTMLElement) {
 
   if (element.getAttribute("data-blockpages-edit-overlay") === "true") return false;
 
+  // Never consider card containers, articles, or blockpages cards as editable buttons
+  if (
+    element.classList.contains("blockpages-card") ||
+    element.hasAttribute("data-blockpages-card") ||
+    element.tagName.toLowerCase() === "article"
+  ) {
+    return false;
+  }
+
   const className = getElementClassName(element).toLowerCase();
   const tag = element.tagName.toLowerCase();
   const hasExplicitId =
@@ -436,9 +445,12 @@ function isEditableButton(element: HTMLElement) {
       return false;
     }
 
-    if (element.hasAttribute("aria-expanded")) {
-      const inFaq = element.closest("section[id*='faq' i], [id*='faq' i]");
-      if (inFaq) return false;
+    // Accordion / disclosure controls and FAQ toggles should never be editable content buttons
+    if (
+      element.hasAttribute("aria-expanded") ||
+      element.closest("section[id*='faq' i], [id*='faq' i], [aria-labelledby*='faq' i], [class*='faq' i]")
+    ) {
+      return false;
     }
 
     if (element.closest("footer") && !className.includes("bg-") && !className.includes("rounded-full")) {
@@ -939,6 +951,11 @@ function BlockpagesCanvasEnhancer({
       }
     });
 
+    // Clean up any accidental button identifiers from cards/articles/faq toggles
+    container.querySelectorAll(".blockpages-card[data-blockpages-button-id], article[data-blockpages-button-id], [data-blockpages-card][data-blockpages-button-id], [aria-expanded][data-blockpages-button-id]").forEach((el) => {
+      el.removeAttribute("data-blockpages-button-id");
+    });
+
     // 2. Synchronize Buttons
     const buttonElements = Array.from(container.querySelectorAll("button, a")).filter((el): el is HTMLElement =>
       isEditableButton(el as HTMLElement)
@@ -1178,7 +1195,7 @@ function BlockpagesCanvasEnhancer({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !onEditIcon) return;
+    if (!container || !isIconEditingMode || !onEditIcon) return;
 
     const handleClick = (event: MouseEvent) => {
       const target = event.target as Element | null;
@@ -1208,7 +1225,7 @@ function BlockpagesCanvasEnhancer({
 
     container.addEventListener("click", handleClick, true);
     return () => container.removeEventListener("click", handleClick, true);
-  }, [onEditIcon]);
+  }, [isIconEditingMode, onEditIcon]);
 
   useEffect(() => {
     const container = containerRef.current;

@@ -42,6 +42,7 @@ import {
   FaInstagram,
   FaLinkedinIn,
   FaLocationDot,
+  FaLock,
   FaMagnifyingGlass,
   FaMinus,
   FaPaperPlane,
@@ -61,6 +62,7 @@ import { hasDemoSubscription } from "@/lib/demoAuth";
 import { useSubscriptionAccess } from "@/lib/subscriptionAccess";
 import { useTemplateAccess } from "@/lib/templateAccessApi";
 import { assetPath } from "@/lib/paths";
+import { normalizePlanKey } from "@/lib/profileApi";
 import {
   loadRazorpayCheckoutScript,
   createRazorpayOrder,
@@ -196,16 +198,16 @@ const templates: Array<{
   price?: number;
   badge: "Free" | "Premium";
 }> = [
-    { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", price: 300, badge: "Premium" },
-    { title: "Digital Marketing", category: "digital-marketing", image: "/landing-optimized/digital01.webp", alt: "Digital Marketing template", description: "A polished showcase for marketing agencies.", price: 190, badge: "Premium" },
-    { title: "Restaurant", category: "restaurant", image: "/landing-optimized/foodd03.webp", alt: "Restaurant template", description: "Appetizing menu and dining layout.", price: 250, badge: "Premium" },
-    { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", price: 200, badge: "Premium" },
-    { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 150, badge: "Premium" },
-    { title: "E-Commerce", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "E-Commerce template", description: "A product-first storefront layout.", price: 290, badge: "Premium" },
-    { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 190, badge: "Premium" },
-    { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 250, badge: "Premium" },
-    { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 290, badge: "Premium" },
-    { title: "Construction", category: "construction", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 250, badge: "Premium" },
+    { title: "Classic Portfolio", category: "portfolio", image: "/landing-optimized/port.webp", alt: "Classic Portfolio template", description: "Perfect for individual creators.", price: 500, badge: "Premium" },
+    { title: "Digital Marketing", category: "digital-marketing", image: "/landing-optimized/digital01.webp", alt: "Digital Marketing template", description: "A polished showcase for marketing agencies.", price: 500, badge: "Premium" },
+    { title: "Restaurant", category: "restaurant", image: "/landing-optimized/foodd03.webp", alt: "Restaurant template", description: "Appetizing menu and dining layout.", price: 450, badge: "Premium" },
+    { title: "Blogging Page", category: "blog", image: "/landing-optimized/blog1.webp", alt: "Personal Blog template", description: "Clean layout for storytellers.", price: 450, badge: "Premium" },
+    { title: "Tech Insights", category: "blog", image: "/landing-optimized/blog2.webp", alt: "Tech Insights template", description: "Professional layout for tech news.", price: 400, badge: "Premium" },
+    { title: "E-Commerce", category: "ecommerce", image: "/landing-optimized/store11.webp", alt: "E-Commerce template", description: "A product-first storefront layout.", price: 400, badge: "Premium" },
+    { title: "Fashion", category: "ecommerce", image: "/landing-optimized/fashion06.webp", alt: "Fashion store template", description: "Editorial product grid for apparel.", price: 400, badge: "Premium" },
+    { title: "Jewelry", category: "ecommerce", image: "/landing-optimized/jewellery07.webp", alt: "Jewelry store template", description: "Elegant catalog for premium items.", price: 400, badge: "Premium" },
+    { title: "Business", category: "business", image: "/landing-optimized/business09.webp", alt: "Business template", description: "Executive layout for company sites.", price: 400, badge: "Premium" },
+    { title: "Construction", category: "construction", image: "/landing-optimized/constrctio10.webp", alt: "Construction template", description: "Strong service-site starter.", price: 400, badge: "Premium" },
   ];
 
 const features = [
@@ -736,8 +738,9 @@ export default function Home() {
     };
   }, []);
 
-  const { canEdit: canEditSubscription, isLoading: subLoading } = useSubscriptionAccess();
+  const { canEdit: canEditSubscription, isLoading: subLoading, plan: userPlan } = useSubscriptionAccess();
   const [hasDemoSub, setHasDemoSub] = useState(false);
+  const [comingSoonRequiresUpgrade, setComingSoonRequiresUpgrade] = useState(false);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -747,6 +750,32 @@ export default function Home() {
 
   const hasActiveSubscription = canEditSubscription || hasDemoSub;
 
+  const checkHasAdvancedPlan = (): boolean => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("stacklyPlanningBillingHistory");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed[0]) {
+            const latest = parsed[0] as { planTier?: string; planName?: string; plan?: string };
+            const p = latest.planTier || latest.planName || latest.plan;
+            if (p) {
+              const key = normalizePlanKey(p);
+              if (key === "advanced" || key === "premium") return true;
+            }
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    const userPlanKey = normalizePlanKey(userPlan);
+    return userPlanKey === "advanced" || userPlanKey === "premium";
+  };
+
+  const handleComingSoonAccess = (productTitle: string) => {
+    const hasAdvanced = checkHasAdvancedPlan();
+    setComingSoonRequiresUpgrade(!hasAdvanced);
+    setSuccessModalProduct(productTitle);
+  };
 
   const checkSubscriptionAndRoute = (event: React.MouseEvent, targetUrl: string) => {
     event.preventDefault();
@@ -1272,14 +1301,20 @@ export default function Home() {
               </div>
               <div className="p-6 text-center">
                 <h3 className="text-base font-bold uppercase tracking-tight text-gray-800 md:text-lg">{category.title}</h3>
-                <div className="mt-4 flex justify-center gap-6 text-[10px] font-black uppercase text-blue-600 underline">
+                <div className="mt-4 flex gap-2 w-full">
+                  <Link
+                    href={category.previewHref ?? "#templates"}
+                    className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap flex items-center justify-center"
+                  >
+                    Preview
+                  </Link>
                   <Link
                     href={hasActiveSubscription ? (category.editHref ?? "#templates") : "/planning"}
                     onClick={(e) => checkSubscriptionAndRoute(e, category.editHref ?? "#templates")}
+                    className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
                   >
                     Edit
                   </Link>
-                  <Link href={category.previewHref ?? "#templates"}>Preview</Link>
                 </div>
               </div>
             </motion.article>
@@ -1333,7 +1368,7 @@ export default function Home() {
                   <div className="flex">
                     <button
                       type="button"
-                      onClick={() => setSuccessModalProduct(product.title)}
+                      onClick={() => handleComingSoonAccess(product.title)}
                       className="cursor-pointer flex h-10 w-full items-center justify-center rounded-xl border-2 border-dashed border-blue-400 text-sm font-bold text-blue-500 transition hover:scale-[1.02] hover:bg-blue-50 hover:brightness-105 whitespace-nowrap"
                     >
                       View Template
@@ -1391,7 +1426,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {
                           if (isUnderDevelopment) {
-                            setSuccessModalProduct(template.title);
+                            handleComingSoonAccess(template.title);
                           } else {
                             toggleWishlistItem({
                               title: template.title,
@@ -1432,7 +1467,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {
                           if (isUnderDevelopment) {
-                            setSuccessModalProduct(template.title);
+                            handleComingSoonAccess(template.title);
                           } else {
                             addToCart({
                               title: template.title,
@@ -1483,7 +1518,7 @@ export default function Home() {
                           onClick={(e) => {
                             if (isUnderDevelopment) {
                               e.preventDefault();
-                              setSuccessModalProduct(template.title);
+                              handleComingSoonAccess(template.title);
                             }
                           }}
                           className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap flex items-center justify-center"
@@ -1495,7 +1530,7 @@ export default function Home() {
                           onClick={(e) => {
                             if (isUnderDevelopment) {
                               e.preventDefault();
-                              setSuccessModalProduct(template.title);
+                              handleComingSoonAccess(template.title);
                             } else if (!userCanEdit) {
                               e.preventDefault();
                               handleBuyNow({
@@ -1756,8 +1791,8 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setSuccessModalProduct(null)}
-                className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition p-1"
-                aria-label="Close success modal"
+                className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition p-1 cursor-pointer"
+                aria-label="Close modal"
               >
                 <FaXmark className="text-xl" />
               </button>
@@ -1768,30 +1803,64 @@ export default function Home() {
                   Stackly
                 </span>
                 <span className="text-sm font-semibold text-gray-500 tracking-wide">
-                  Template Status
+                  {comingSoonRequiresUpgrade ? "Access Restricted" : "Template Status"}
                 </span>
               </div>
 
-              {/* Coming Soon Body */}
-              <div className="mt-6 flex flex-col items-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                  <FaWandMagicSparkles className="text-2xl animate-pulse" />
+              {/* Body */}
+              {comingSoonRequiresUpgrade ? (
+                <div className="mt-6 flex flex-col items-center text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+                    <FaLock className="text-2xl" />
+                  </div>
+                  <h3 className="text-lg font-black text-[#0B2545]">Advanced Plan Required</h3>
+                  <p className="mt-2 text-sm font-semibold text-gray-600 leading-relaxed px-2">
+                    This feature is available with the Advanced Plan. Please upgrade to the Advanced Plan to access it.
+                  </p>
                 </div>
-                <h3 className="text-lg font-black text-[#0B2545]">Template Coming Soon!</h3>
-                <p className="mt-2 text-sm font-semibold text-gray-500 leading-relaxed px-2">
-                  The <span className="font-bold text-[#06224C]">{successModalProduct}</span> template is currently being prepared and will be available soon.
-                </p>
-              </div>
+              ) : (
+                <div className="mt-6 flex flex-col items-center text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                    <FaWandMagicSparkles className="text-2xl animate-pulse" />
+                  </div>
+                  <h3 className="text-lg font-black text-[#0B2545]">Template Coming Soon!</h3>
+                  <p className="mt-2 text-sm font-semibold text-gray-500 leading-relaxed px-2">
+                    The <span className="font-bold text-[#06224C]">{successModalProduct}</span> template is currently being prepared and will be available soon.
+                  </p>
+                </div>
+              )}
 
-              {/* Footer Button */}
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={() => setSuccessModalProduct(null)}
-                  className="w-full rounded-2xl bg-[#06224C] hover:bg-blue-900 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Got It
-                </button>
+              {/* Footer Button(s) */}
+              <div className="mt-6 flex flex-col gap-2">
+                {comingSoonRequiresUpgrade ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSuccessModalProduct(null);
+                        router.push("/planning");
+                      }}
+                      className="cursor-pointer w-full rounded-2xl bg-[#06224C] hover:bg-blue-900 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      Upgrade to Advanced Plan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSuccessModalProduct(null)}
+                      className="cursor-pointer w-full rounded-2xl border border-gray-200 hover:bg-gray-50 py-2.5 text-xs font-bold text-gray-600 transition"
+                    >
+                      Close
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSuccessModalProduct(null)}
+                    className="cursor-pointer w-full rounded-2xl bg-[#06224C] hover:bg-blue-900 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-md transition hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Got It
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>

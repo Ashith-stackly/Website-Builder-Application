@@ -674,9 +674,6 @@ function BlogMarketingTemplate() {
     }
   }, []);
 
-  const openCategoryPage = useCallback(() => {
-    router.push(START_BLOGGING_HREF);
-  }, [router]);
 
   const handleCategoryChange = useCallback((categoryId: string) => {
     flushSync(() => {
@@ -975,12 +972,11 @@ function BlogMarketingTemplate() {
                   </div>
                   <div className="grid grid-cols-1 gap-5 mt-8 @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3 @min-[640px]:@max-[1023px]:gap-6">
                     {filteredBlogs.map((category) => (
-                      <button
+                      <article
                         key={category.id}
                         id={category.id}
-                        type="button"
-                        onClick={openCategoryPage}
-                        className="blockpages-card group/card w-full flex flex-col h-full p-0 bg-[var(--blog-white)] rounded-[var(--blog-radius-md)] overflow-hidden shadow-[0_4px_20px_rgba(0,31,63,0.08)] text-left [scroll-margin-top:var(--blog-scroll-offset)] border-2 border-transparent cursor-pointer transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[4px] @max-[899px]:hover:translate-y-0 target:border-[var(--blog-accent)] target:outline-2 target:outline-[var(--blog-accent)] target:outline-offset-4 @max-[899px]:target:outline-offset-2 target:shadow-[0_14px_40px_rgba(45,140,240,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        data-blockpages-card="true"
+                        className="blockpages-card group/card w-full flex flex-col h-full p-0 bg-[var(--blog-white)] rounded-[var(--blog-radius-md)] overflow-hidden shadow-[0_4px_20px_rgba(0,31,63,0.08)] text-left [scroll-margin-top:var(--blog-scroll-offset)] border-2 border-transparent transition-[border-color,box-shadow,transform,background-color] duration-200 ease hover:border-[var(--blog-accent)] hover:bg-[#fafcff] hover:shadow-[0_14px_40px_rgba(45,140,240,0.2)] hover:-translate-y-[4px] @max-[899px]:hover:translate-y-0"
                       >
                         <div className="blog-category-card-image aspect-[16/10] w-full overflow-hidden rounded-t-[var(--blog-radius-md)] shrink-0">
                           <img
@@ -995,14 +991,20 @@ function BlogMarketingTemplate() {
                           />
                         </div>
                         <div className="flex-grow flex flex-col py-[1.15rem] px-[1.25rem] pb-[1.35rem] @max-[340px]:py-[0.85rem] @max-[340px]:px-[0.75rem] break-words [overflow-wrap:anywhere]">
-                          <h3 className="text-[1.05rem] font-bold text-[var(--blog-navy)] transition-colors duration-200 group-hover/card:text-[var(--blog-accent)] break-words [overflow-wrap:anywhere] min-h-[3rem] flex items-start">
+                          <h3
+                            data-blockpages-text-id={`blog-category-${category.id}-title`}
+                            className="text-[1.05rem] font-bold text-[var(--blog-navy)] transition-colors duration-200 group-hover/card:text-[var(--blog-accent)] break-words [overflow-wrap:anywhere] min-h-[3rem] flex items-start"
+                          >
                             {category.label}
                           </h3>
-                          <p className="mt-[0.45rem] text-[0.9rem] leading-[1.6] text-[var(--blog-navy-muted)] break-words [overflow-wrap:anywhere] flex-grow">
+                          <p
+                            data-blockpages-text-id={`blog-category-${category.id}-desc`}
+                            className="mt-[0.45rem] text-[0.9rem] leading-[1.6] text-[var(--blog-navy-muted)] break-words [overflow-wrap:anywhere] flex-grow"
+                          >
                             {category.description}
                           </p>
                         </div>
-                      </button>
+                      </article>
                     ))}
                   </div>
                 </div>
@@ -1121,7 +1123,7 @@ function BlogMarketingTemplate() {
               <BlockpagesSectionEnd sectionId="blog-contact" />
 
               {/* FAQ */}
-              <section className="w-full min-w-0" aria-labelledby="blog-faq-title">
+              <section id="blog-faq" data-blockpages-section-id="blog-faq" className="w-full min-w-0" aria-labelledby="blog-faq-title">
                 <div className="bg-[var(--blog-pink-bg)] py-[clamp(1.5rem,3.5cqw,2.25rem)] border-b-2 border-[#b8d4f5] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border">
                   <div className="w-full max-w-[var(--blog-container-wide)] mx-auto min-w-0">
                     <h2 id="blog-faq-title" className="m-0 text-[clamp(1.5rem,3.5cqw,2.25rem)] font-extrabold leading-[1.2] text-[var(--blog-navy)] text-left break-words [overflow-wrap:anywhere]">
@@ -1152,12 +1154,39 @@ function BlogMarketingTemplate() {
                               onClick={() => setOpenFaq(isOpen ? -1 : index)}
                               aria-expanded={isOpen}
                             >
-                              <span className="flex-1 min-w-0 text-[clamp(0.9rem,1.9cqw,1.05rem)] font-semibold leading-[1.4] text-[var(--blog-navy)] [word-break:break-word] break-words [overflow-wrap:anywhere]">{item.q}</span>
-                              <span className="shrink-0 w-5 text-center text-[1.25rem] leading-none font-normal text-[var(--blog-navy)]" aria-hidden>
-                                {isOpen ? "×" : "+"}
+                              <span
+                                data-blockpages-text-id={`blog-faq-q-${index + 1}`}
+                                className="flex-1 min-w-0 text-[clamp(0.9rem,1.9cqw,1.05rem)] font-semibold leading-[1.4] text-[var(--blog-navy)] [word-break:break-word] break-words [overflow-wrap:anywhere]"
+                              >
+                                {item.q}
+                              </span>
+                              <span
+                                data-blockpages-icon-slot="true"
+                                data-blockpages-icon-id={`blog-faq-icon-${index + 1}`}
+                                className="shrink-0 w-5 h-5 flex items-center justify-center text-[var(--blog-navy)]"
+                                aria-hidden
+                              >
+                                {isOpen ? (
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                ) : (
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                  </svg>
+                                )}
                               </span>
                             </button>
-                            {isOpen && <p className="m-0 pb-[1.1rem] text-[clamp(0.82rem,1.7cqw,0.9rem)] leading-[1.65] text-[#1e293b] [overflow-wrap:break-word] break-words [overflow-wrap:anywhere]">{item.a}</p>}
+                            {isOpen && (
+                              <p
+                                data-blockpages-text-id={`blog-faq-a-${index + 1}`}
+                                className="m-0 pb-[1.1rem] text-[clamp(0.82rem,1.7cqw,0.9rem)] leading-[1.65] text-[#1e293b] [overflow-wrap:break-word] break-words [overflow-wrap:anywhere]"
+                              >
+                                {item.a}
+                              </p>
+                            )}
                           </div>
                         );
                       })}
@@ -1165,6 +1194,7 @@ function BlogMarketingTemplate() {
                   </div>
                 </div>
               </section>
+              <BlockpagesSectionEnd sectionId="blog-faq" />
 
               {/* CTA */}
               <section className="bg-[var(--blog-pink-bg)] w-full max-w-full min-w-0 px-[var(--blog-safe-inline)] box-border py-[var(--blog-section-y-lg)]">
