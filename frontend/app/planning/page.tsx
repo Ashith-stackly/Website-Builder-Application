@@ -77,12 +77,12 @@ function getUserInvoiceContact(profile: UserProfile | null): PlanningInvoiceCont
 const plans = [
   {
     name: "Basic",
-    oldPrice: "₹80",
-    newPrice: "₹40",
-    saveText: "Save 50%",
-    yearlyOldPrice: "₹960",
-    yearlyNewPrice: "₹403",
-    yearlySaveText: "Save 58%",
+    oldPrice: "₹500",
+    newPrice: "₹400",
+    saveText: "Save 20%",
+    yearlyOldPrice: "₹6,000",
+    yearlyNewPrice: "₹4,800",
+    yearlySaveText: "Save 20%",
     features: [
       "Free domain for 1 year",
       "20 GB storage space",
@@ -829,8 +829,8 @@ function PlanningPageContent() {
                       key={plan.name}
                       whileHover={{ y: -8, transition: { duration: 0.25 } }}
                       className={`planning-plan-card relative flex flex-col justify-between rounded-3xl p-6 transition-all duration-300 sm:p-8 max-md:min-w-0 max-md:w-full max-md:max-w-full max-md:overflow-x-clip ${plan.isRecommended
-                          ? "planning-recommended-card border-2 border-blue-500/80 bg-gradient-to-b from-[#111e3b] via-[#0d162d] to-[#080d1a] shadow-2xl shadow-blue-600/30 ring-1 ring-blue-400/50 max-md:shadow-xl max-md:ring-0"
-                          : "border border-white/10 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl hover:border-white/20 hover:shadow-xl"
+                        ? "planning-recommended-card border-2 border-blue-500/80 bg-gradient-to-b from-[#111e3b] via-[#0d162d] to-[#080d1a] shadow-2xl shadow-blue-600/30 ring-1 ring-blue-400/50 max-md:shadow-xl max-md:ring-0"
+                        : "border border-white/10 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl hover:border-white/20 hover:shadow-xl"
                         }`}
                     >
                       {plan.isRecommended && (
@@ -884,8 +884,8 @@ function PlanningPageContent() {
                             type="button"
                             onClick={() => handlePurchasePlan(plan)}
                             className={`w-full rounded-2xl py-3.5 text-sm font-bold shadow-lg transition-all cursor-pointer ${plan.isRecommended
-                                ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-600/40 hover:from-blue-600 hover:to-indigo-700"
-                                : "bg-white text-slate-900 hover:bg-slate-100"
+                              ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-600/40 hover:from-blue-600 hover:to-indigo-700"
+                              : "bg-white text-slate-900 hover:bg-slate-100"
                               }`}
                           >
                             Select {plan.name}
