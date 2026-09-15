@@ -1289,36 +1289,46 @@ export default function Home() {
         <SectionHeading>Categories</SectionHeading>
         {/* Added key to force re-render/re-animation when state changes */}
         <motion.div key={`categories-${submittedSearch}`} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          {visibleCategories.map((category) => (
-            <motion.article key={category.title} className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl" variants={scaleIn} whileHover={softHover}>
-              <div className="relative h-44 overflow-hidden md:h-52">
-                <img src={assetPath(category.image)} alt={category.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
-                {category.badge && (
-                  <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase ${category.badge === "Free" ? "bg-green-500 text-white" : "bg-yellow-400 text-[#06224C]"}`}>
-                    {category.badge}
-                  </span>
-                )}
-              </div>
-              <div className="p-6 text-center">
-                <h3 className="text-base font-bold uppercase tracking-tight text-gray-800 md:text-lg">{category.title}</h3>
-                <div className="mt-4 flex gap-2 w-full">
-                  <Link
-                    href={category.previewHref ?? "#templates"}
-                    className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap flex items-center justify-center"
-                  >
-                    Preview
-                  </Link>
-                  <Link
-                    href={hasActiveSubscription ? (category.editHref ?? "#templates") : "/planning"}
-                    onClick={(e) => checkSubscriptionAndRoute(e, category.editHref ?? "#templates")}
-                    className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
-                  >
-                    Edit
-                  </Link>
+          {visibleCategories.map((category) => {
+            const categorySlug = (category.editHref || "").split("template=")[1] || category.title.toLowerCase();
+            const categoryCanEdit = canEditTemplate(categorySlug);
+
+            return (
+              <motion.article key={category.title} className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl" variants={scaleIn} whileHover={softHover}>
+                <div className="relative h-44 overflow-hidden md:h-52">
+                  <img src={assetPath(category.image)} alt={category.alt} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                  {category.badge && (
+                    <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase ${category.badge === "Free" ? "bg-green-500 text-white" : "bg-yellow-400 text-[#06224C]"}`}>
+                      {category.badge}
+                    </span>
+                  )}
                 </div>
-              </div>
-            </motion.article>
-          ))}
+                <div className="p-6 text-center">
+                  <h3 className="text-base font-bold uppercase tracking-tight text-gray-800 md:text-lg">{category.title}</h3>
+                  <div className="mt-4 flex gap-2 w-full">
+                    <Link
+                      href={category.previewHref ?? "#templates"}
+                      className="flex-1 rounded-xl border-2 border-dashed border-blue-400 py-2.5 text-center text-sm font-bold text-blue-500 transition hover:scale-[1.03] hover:bg-blue-50 hover:brightness-105 px-2 whitespace-nowrap flex items-center justify-center"
+                    >
+                      Preview
+                    </Link>
+                    <Link
+                      href={categoryCanEdit ? (category.editHref ?? "#templates") : "/planning"}
+                      onClick={(e) => {
+                        if (!categoryCanEdit) {
+                          e.preventDefault();
+                          router.push("/planning");
+                        }
+                      }}
+                      className="flex-1 rounded-xl bg-[#06224C] py-2.5 text-center text-sm font-bold text-white transition hover:scale-[1.03] hover:bg-blue-900 hover:brightness-110 px-2 whitespace-nowrap flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                    >
+                      {categoryCanEdit ? "Edit" : "Buy"}
+                    </Link>
+                  </div>
+                </div>
+              </motion.article>
+            );
+          })}
         </motion.div>
 
 

@@ -122,6 +122,22 @@ const FALLBACK_TEMPLATES: Record<string, Omit<Template, "builderData" | "pages" 
   },
 };
 
+function findFallbackTemplate(rawId: string): Omit<Template, "builderData" | "pages" | "componentCount"> {
+  if (FALLBACK_TEMPLATES[rawId]) return FALLBACK_TEMPLATES[rawId];
+  const lower = rawId.toLowerCase();
+  const values = Object.values(FALLBACK_TEMPLATES);
+
+  const matched = values.find((t) =>
+    t._id === lower ||
+    t.slug === lower ||
+    t.category === lower ||
+    lower.includes(t.category) ||
+    lower.includes(t.slug)
+  );
+
+  return matched || FALLBACK_TEMPLATES.tpl_portfolio_1;
+}
+
 function getTemplatePreviewRoute(template: Template): string {
   const id = (template._id ?? "").toLowerCase();
   const slug = (template.slug ?? "").toLowerCase();
@@ -176,16 +192,11 @@ export default function TemplatePreviewClient() {
     const rawId = searchParams.get("id") || searchParams.get("template") || "tpl_construction_1";
     const templateId = rawId === "construction" ? "tpl_construction_1"
       : rawId === "portfolio" ? "tpl_portfolio_1"
-      : rawId === "restaurant" ? "tpl_restaurant_1"
-      : rawId === "blog" ? "tpl_blog_1"
-      : rawId === "ecommerce" || rawId === "store" ? "tpl_ecommerce_1"
-      : rawId === "business" || rawId === "digital-marketing" ? "tpl_business_1"
-      : rawId;
-
-    if (templateId === "tpl_blog_1") {
-      router.replace("/blog");
-      return;
-    }
+        : rawId === "restaurant" ? "tpl_restaurant_1"
+          : rawId === "blog" ? "tpl_blog_1"
+            : rawId === "ecommerce" || rawId === "store" ? "tpl_ecommerce_1"
+              : rawId === "business" || rawId === "digital-marketing" ? "tpl_business_1"
+                : rawId;
 
     const controller = new AbortController();
     let settled = false;
@@ -195,7 +206,7 @@ export default function TemplatePreviewClient() {
       if (settled) return;
       settled = true;
       controller.abort();
-      const fallback = FALLBACK_TEMPLATES[templateId] || FALLBACK_TEMPLATES.tpl_construction_1;
+      const fallback = findFallbackTemplate(templateId);
       setTemplate({
         ...fallback,
         pages: [{ id: "home", name: "Home", path: "/" }],
@@ -215,13 +226,14 @@ export default function TemplatePreviewClient() {
         settled = true;
         clearTimeout(fallbackTimer);
         setTemplate(data);
+        setIsLoading(false);
       } catch (err: unknown) {
         if (settled) return;
         settled = true;
         clearTimeout(fallbackTimer);
         if (err instanceof DOMException && err.name === "AbortError") return;
 
-        const fallback = FALLBACK_TEMPLATES[templateId] || FALLBACK_TEMPLATES.tpl_construction_1;
+        const fallback = findFallbackTemplate(templateId);
         if (fallback) {
           setTemplate({
             ...fallback,
@@ -232,10 +244,9 @@ export default function TemplatePreviewClient() {
         } else {
           setError(err instanceof Error ? err.message : "Failed to load template.");
         }
+        setIsLoading(false);
       } finally {
-        if (!settled) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     }
 
@@ -245,7 +256,7 @@ export default function TemplatePreviewClient() {
       clearTimeout(fallbackTimer);
       controller.abort();
     };
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   // ── Generate Preview HTML ──────────────────────────────────────────
   const previewHtml = useMemo(() => {
@@ -386,11 +397,10 @@ export default function TemplatePreviewClient() {
               type="button"
               onClick={() => setViewport(key)}
               title={label}
-              className={`rounded-lg px-3 py-2 text-xs transition ${
-                viewport === key
+              className={`rounded-lg px-3 py-2 text-xs transition ${viewport === key
                   ? "bg-[#06224C] text-white shadow-sm"
                   : "text-gray-500 hover:text-[#06224C]"
-              }`}
+                }`}
             >
               <Icon />
             </button>
@@ -402,11 +412,10 @@ export default function TemplatePreviewClient() {
           type="button"
           onClick={handleClone}
           disabled={!!cloningId}
-          className={`hidden items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition sm:inline-flex ${
-            cloningId
+          className={`hidden items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition sm:inline-flex ${cloningId
               ? "cursor-not-allowed bg-gray-400"
               : "bg-[#06224C] hover:bg-blue-900 hover:scale-[1.02]"
-          }`}
+            }`}
         >
           {cloningId ? "Cloning..." : (<><FaRocket /> {isBlogCategory(template.category) ? "Start Blog" : "Use This Template"}</>)}
         </button>
@@ -552,11 +561,10 @@ export default function TemplatePreviewClient() {
               type="button"
               onClick={handleClone}
               disabled={!!cloningId}
-              className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em] text-white transition ${
-                cloningId
+              className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-[0.2em] text-white transition ${cloningId
                   ? "cursor-not-allowed bg-gray-400"
                   : "bg-[#06224C] shadow-lg hover:bg-blue-900 hover:scale-[1.01]"
-              }`}
+                }`}
             >
               {cloningId ? "Creating Project..." : (<><FaRocket /> {isBlogCategory(template.category) ? "Start Blog" : "Use This Template"}</>)}
             </button>

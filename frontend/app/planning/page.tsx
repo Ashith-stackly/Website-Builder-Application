@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { activateFrontendSubscription } from "@/lib/demoAuth";
+import { clearTemplateAccessCache, TEMPLATE_ACCESS_SYNC_EVENT, STORAGE_SYNC_EVENT } from "@/lib/templateAccessApi";
+import { clearSubscriptionCache } from "@/lib/subscriptionAccess";
 import { notifyProfileUpdated } from "@/lib/profileApi";
 import { downloadPlanningInvoiceForEntry } from "@/lib/planningInvoiceHtml";
 import { saveInvoiceToBackend } from "@/lib/invoiceApi";
@@ -441,9 +443,16 @@ function PlanningPageContent() {
 
     const active = getActivePrice(selectedPlan);
     let finalAmount = opts.isFree ? "₹0" : active.newPrice;
-    if (!opts.isFree && typeof details?.amount === "number" && details.amount > 0) {
-      const rupees = details.amount >= 1000 ? Math.round(details.amount / 100) : details.amount;
-      finalAmount = `₹${rupees}`;
+
+    if (!opts.isFree) {
+      const detailsPaise = (details as { amountPaise?: number } | undefined)?.amountPaise;
+      if (typeof detailsPaise === "number" && detailsPaise > 0) {
+        const rupees = Math.round(detailsPaise / 100);
+        finalAmount = `₹${rupees.toLocaleString("en-IN")}`;
+      } else if (typeof details?.amount === "number" && details.amount > 0) {
+        const rupees = details.amount > 100000 ? Math.round(details.amount / 100) : details.amount;
+        finalAmount = `₹${rupees.toLocaleString("en-IN")}`;
+      }
     }
 
     const userName = details?.customerName || verifiedUser?.name || userProfile?.name || "User";
@@ -502,7 +511,22 @@ function PlanningPageContent() {
 
     setPaymentLoading(false);
     setIsFreeCheckout(false);
-    activateFrontendSubscription();
+
+    const rawPlanName = (selectedPlan?.name || "").toLowerCase();
+    if (rawPlanName.includes("business") || rawPlanName.includes("advanced") || rawPlanName.includes("premium")) {
+      activateFrontendSubscription();
+    } else {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem("stackly-demo-subscription");
+      }
+    }
+
+    clearTemplateAccessCache();
+    clearSubscriptionCache();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(TEMPLATE_ACCESS_SYNC_EVENT));
+      window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
+    }
 
     // Re-fetch subscription from backend so Current Plan UI updates immediately
     void fetchMySubscription().then((sub) => {
