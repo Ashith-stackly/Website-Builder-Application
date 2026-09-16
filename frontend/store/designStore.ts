@@ -144,3 +144,8 @@ export const useDesignStore = create<DesignState>((set) => ({
     });
   },
 }));
+
+if (typeof window !== "undefined") {
+  (window as unknown as Record<string, unknown>).__designStore = useDesignStore;
+}
+

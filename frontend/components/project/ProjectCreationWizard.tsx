@@ -10,10 +10,11 @@ import {
   FaImage,
   FaCheck,
 } from "react-icons/fa6";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { createProject } from "@/lib/projectApi";
 import { getAuthToken } from "@/lib/authToken";
 import { useProjectStore } from "@/store/projectStore";
+import { useSubscriptionAccess } from "@/lib/subscriptionAccess";
 
 export const PROJECT_CATEGORIES = [
   { title: "E-commerce", description: "Online store, products, and sales pages" },
@@ -33,29 +34,29 @@ export const TEMPLATE_STYLES = [
 
 /** All possible sections a category template can use. */
 export const ALL_SECTIONS: Record<string, { label: string; description: string }> = {
-  navigation:      { label: "Navigation",    description: "Header with links and action" },
-  hero:            { label: "Hero",          description: "Main headline section" },
-  features:        { label: "Features",      description: "Service or value cards" },
-  gallery:         { label: "Gallery",       description: "Multiple image showcase" },
-  contact:         { label: "Contact",       description: "Lead capture section" },
+  navigation: { label: "Navigation", description: "Header with links and action" },
+  hero: { label: "Hero", description: "Main headline section" },
+  features: { label: "Features", description: "Service or value cards" },
+  gallery: { label: "Gallery", description: "Multiple image showcase" },
+  contact: { label: "Contact", description: "Lead capture section" },
   "pricing-table": { label: "Pricing Table", description: "Plan comparison cards" },
-  testimonial:     { label: "Testimonial",   description: "Customer review quotes" },
-  form:            { label: "Form",          description: "Custom input form" },
-  footer:          { label: "Footer",        description: "Bottom links and branding" },
-  tabs:            { label: "Tabs",          description: "Tabbed content panels" },
-  map:             { label: "Map",           description: "Embedded location map" },
+  testimonial: { label: "Testimonial", description: "Customer review quotes" },
+  form: { label: "Form", description: "Custom input form" },
+  footer: { label: "Footer", description: "Bottom links and branding" },
+  tabs: { label: "Tabs", description: "Tabbed content panels" },
+  map: { label: "Map", description: "Embedded location map" },
 };
 
 /**
  * Maps each project category to the section IDs used by its template generator.
  */
 export const CATEGORY_SECTIONS: Record<string, string[]> = {
-  "E-commerce":       ["navigation", "hero", "features", "gallery", "pricing-table", "testimonial", "contact", "footer"],
-  Portfolio:          ["navigation", "hero", "gallery", "features", "testimonial", "form", "footer"],
-  Blog:               ["navigation", "hero", "features", "gallery", "tabs", "contact", "footer"],
-  Business:           ["navigation", "hero", "features", "pricing-table", "testimonial", "form", "footer"],
-  Restaurant:         ["navigation", "hero", "gallery", "features", "testimonial", "map", "contact", "footer"],
-  Construction:       ["navigation", "hero", "features", "gallery", "testimonial", "contact", "footer"],
+  "E-commerce": ["navigation", "hero", "features", "gallery", "pricing-table", "testimonial", "contact", "footer"],
+  Portfolio: ["navigation", "hero", "gallery", "features", "testimonial", "form", "footer"],
+  Blog: ["navigation", "hero", "features", "gallery", "tabs", "contact", "footer"],
+  Business: ["navigation", "hero", "features", "pricing-table", "testimonial", "form", "footer"],
+  Restaurant: ["navigation", "hero", "gallery", "features", "testimonial", "map", "contact", "footer"],
+  Construction: ["navigation", "hero", "features", "gallery", "testimonial", "contact", "footer"],
   "Digital Marketing": ["navigation", "hero", "features", "pricing-table", "testimonial", "contact", "footer"],
 };
 
@@ -80,8 +81,21 @@ export default function ProjectCreationWizard({
   onProjectCreated,
 }: ProjectCreationWizardProps) {
   const router = useRouter();
+  const {
+    plan: currentPlan,
+    subscriptionStatus,
+    isLoading: isSubscriptionLoading,
+    canEdit: canEditSections,
+  } = useSubscriptionAccess();
+
+  const hasActiveSubscription =
+    subscriptionStatus === "active" &&
+    Boolean(currentPlan) &&
+    currentPlan !== "none" &&
+    currentPlan !== "free";
+
   const isClient = React.useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => true,
     () => false
   );
@@ -561,291 +575,383 @@ export default function ProjectCreationWizard({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm" onClick={handleClose} />
 
-      {/* Modal Card */}
-      <div
-        ref={modalRef}
-        className="relative w-full max-w-[95vw] sm:max-w-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] text-slate-900 dark:text-slate-100"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-8 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm sm:text-base">
-              <FaWandMagicSparkles />
-            </span>
-            <div>
-              <h3 id="create-project-title" className="text-base sm:text-xl font-bold tracking-tight text-[#0A2357] dark:text-white">
-                Create New Project
-              </h3>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                Step {step} of 4:{" "}
-                {step === 1
-                  ? "Project Name"
-                  : step === 2
-                  ? "Select Category"
-                  : step === 3
-                  ? "Choose Style"
-                  : "Customize Sections"}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Close modal"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
-          >
-            <FaXmark className="text-base sm:text-lg" />
-          </button>
+      {isSubscriptionLoading ? (
+        <div className="relative z-10 w-full max-w-[95vw] sm:max-w-md bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl sm:rounded-[2rem] shadow-2xl p-8 flex flex-col items-center justify-center text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Checking subscription status...
+          </p>
         </div>
-
-        {/* Progress Bar */}
-        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 shrink-0" role="progressbar" aria-valuenow={(step / 4) * 100} aria-valuemin={0} aria-valuemax={100}>
-          <div
-            className="bg-[#0A2357] dark:bg-blue-500 h-1 transition-all duration-300"
-            style={{ width: `${(step / 4) * 100}%` }}
-          />
-        </div>
-
-        {/* Modal Body */}
-        <div ref={stepContainerRef} className="p-4 sm:p-8 flex-1 overflow-y-auto min-h-0">
-          {/* STEP 1: Name */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <label htmlFor="project-name-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                What would you like to name your project?
-              </label>
-              <input
-                id="project-name-input"
-                ref={inputRef}
-                type="text"
-                value={projectData.name}
-                onChange={handleNameChange}
-                onKeyDown={(e) => e.key === "Enter" && handleNext()}
-                placeholder="e.g. Acme Studio"
-                maxLength={40}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
-              />
-              <p className="text-[11px] sm:text-xs text-slate-400">
-                Letters, numbers, and spaces only. Max 40 characters.
-              </p>
-            </div>
-          )}
-
-          {/* STEP 2: Category */}
-          {step === 2 && (
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Select your website type
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3" role="radiogroup" aria-label="Website Category">
-                {PROJECT_CATEGORIES.map((cat, idx) => {
-                  const isSelected = projectData.category === cat.title;
-                  return (
-                    <button
-                      key={cat.title}
-                      data-category={cat.title}
-                      type="button"
-                      role="radio"
-                      aria-checked={isSelected}
-                      onClick={() => {
-                        const newSections = CATEGORY_SECTIONS[cat.title] ?? DEFAULT_SECTION_IDS;
-                        setProjectData({ ...projectData, category: cat.title, sections: [...newSections] });
-                        setError("");
-                      }}
-                      onKeyDown={(e) => handleCategoryKeyDown(e, idx)}
-                      className={`flex flex-col items-start p-3 sm:p-4 rounded-xl border text-left transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
-                        isSelected
-                          ? "border-[#0A2357] dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm"
-                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800"
-                      }`}
-                    >
-                      <div className="flex w-full items-center justify-between">
-                        <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                          {cat.title}
-                        </span>
-                        {isSelected && <FaCheck className="text-xs text-[#0A2357] dark:text-blue-400" />}
-                      </div>
-                      <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
-                        {cat.description}
-                      </span>
-                    </button>
-                  );
-                })}
+      ) : !hasActiveSubscription ? (
+        <div
+          ref={modalRef}
+          className="relative z-10 w-full max-w-[95vw] sm:max-w-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col text-slate-900 dark:text-slate-100"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                <Lock className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 id="create-project-title" className="text-base sm:text-lg font-bold tracking-tight text-[#0A2357] dark:text-white">
+                  Subscription Plan Required
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Project Creation Restriction
+                </p>
               </div>
             </div>
-          )}
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Close modal"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+            >
+              <FaXmark className="text-base sm:text-lg" />
+            </button>
+          </div>
 
-          {/* STEP 3: Style */}
-          {step === 3 && (
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Choose a visual template style
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" role="radiogroup" aria-label="Template Style">
-                {TEMPLATE_STYLES.map((style, idx) => {
-                  const isSelected = projectData.template === style.title;
-                  return (
-                    <button
-                      key={style.title}
-                      data-template={style.title}
-                      type="button"
-                      role="radio"
-                      aria-checked={isSelected}
-                      onClick={() => {
-                        setProjectData({ ...projectData, template: style.title });
-                        setError("");
-                      }}
-                      onKeyDown={(e) => handleTemplateKeyDown(e, idx)}
-                      className={`flex flex-col rounded-xl border overflow-hidden text-left transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
-                        isSelected
-                          ? "border-[#0A2357] dark:border-blue-500 bg-blue-50/30 dark:bg-blue-900/20 shadow-md ring-2 ring-[#0A2357] dark:ring-blue-500"
-                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800"
-                      }`}
-                    >
-                      <div className="h-28 sm:h-32 w-full bg-slate-100 dark:bg-slate-700 relative overflow-hidden flex items-center justify-center">
-                        <img
-                          src={style.image}
-                          alt={style.title}
-                          className="h-full w-full object-cover transition duration-300 hover:scale-105"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center -z-10 text-slate-300">
-                          <FaImage className="text-2xl" />
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-sm text-slate-900 dark:text-white">
-                            {style.title}
+          {/* Body */}
+          <div className="p-6 sm:p-8 flex flex-col items-center justify-center text-center space-y-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-md">
+              <Lock className="h-8 w-8" />
+            </div>
+
+            <div className="max-w-md space-y-2">
+              <h4 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                Active Subscription Required
+              </h4>
+              <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                You need an active subscription plan to create and build projects. Please select a subscription plan first to unlock project creation.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                handleClose();
+                router.push("/planning");
+              }}
+              className="w-full sm:w-auto min-w-[200px] flex items-center justify-center gap-2.5 rounded-xl bg-[#0A2357] dark:bg-blue-600 px-8 py-3.5 text-xs sm:text-sm font-bold text-white shadow-xl hover:bg-blue-900 dark:hover:bg-blue-700 transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 active:scale-95"
+            >
+              <span>Upgrade / Choose Plan</span>
+              <FaArrowRight className="text-xs" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Modal Card for Subscribed Users */
+        <div
+          ref={modalRef}
+          className="relative w-full max-w-[95vw] sm:max-w-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] text-slate-900 dark:text-slate-100"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 sm:p-8 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm sm:text-base">
+                <FaWandMagicSparkles />
+              </span>
+              <div>
+                <h3 id="create-project-title" className="text-base sm:text-xl font-bold tracking-tight text-[#0A2357] dark:text-white">
+                  Create New Project
+                </h3>
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                  Step {step} of 4:{" "}
+                  {step === 1
+                    ? "Project Name"
+                    : step === 2
+                      ? "Select Category"
+                      : step === 3
+                        ? "Choose Style"
+                        : "Customize Sections"}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Close modal"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+            >
+              <FaXmark className="text-base sm:text-lg" />
+            </button>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 shrink-0" role="progressbar" aria-valuenow={(step / 4) * 100} aria-valuemin={0} aria-valuemax={100}>
+            <div
+              className="bg-[#0A2357] dark:bg-blue-500 h-1 transition-all duration-300"
+              style={{ width: `${(step / 4) * 100}%` }}
+            />
+          </div>
+
+          {/* Modal Body */}
+          <div ref={stepContainerRef} className="p-4 sm:p-8 flex-1 overflow-y-auto min-h-0">
+            {/* STEP 1: Name */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <label htmlFor="project-name-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  What would you like to name your project?
+                </label>
+                <input
+                  id="project-name-input"
+                  ref={inputRef}
+                  type="text"
+                  value={projectData.name}
+                  onChange={handleNameChange}
+                  onKeyDown={(e) => e.key === "Enter" && handleNext()}
+                  placeholder="e.g. Acme Studio"
+                  maxLength={40}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition"
+                />
+                <p className="text-[11px] sm:text-xs text-slate-400">
+                  Letters, numbers, and spaces only. Max 40 characters.
+                </p>
+              </div>
+            )}
+
+            {/* STEP 2: Category */}
+            {step === 2 && (
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Select your website type
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3" role="radiogroup" aria-label="Website Category">
+                  {PROJECT_CATEGORIES.map((cat, idx) => {
+                    const isSelected = projectData.category === cat.title;
+                    return (
+                      <button
+                        key={cat.title}
+                        data-category={cat.title}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => {
+                          const newSections = CATEGORY_SECTIONS[cat.title] ?? DEFAULT_SECTION_IDS;
+                          setProjectData({ ...projectData, category: cat.title, sections: [...newSections] });
+                          setError("");
+                        }}
+                        onKeyDown={(e) => handleCategoryKeyDown(e, idx)}
+                        className={`flex flex-col items-start p-3 sm:p-4 rounded-xl border text-left transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${isSelected
+                            ? "border-[#0A2357] dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-sm"
+                            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800"
+                          }`}
+                      >
+                        <div className="flex w-full items-center justify-between">
+                          <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                            {cat.title}
                           </span>
                           {isSelected && <FaCheck className="text-xs text-[#0A2357] dark:text-blue-400" />}
                         </div>
-                        <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 block">
-                          {style.description}
+                        <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+                          {cat.description}
                         </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* STEP 4: Sections */}
-          {step === 4 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            {/* STEP 3: Style */}
+            {step === 3 && (
+              <div className="space-y-3">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Select website sections
+                  Choose a visual template style
                 </label>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {projectData.sections.length} selected
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-label="Sections selection">
-                {currentSections.map((sec, idx) => {
-                  const isChecked = projectData.sections.includes(sec.id);
-                  return (
-                    <button
-                      key={sec.id}
-                      data-section={sec.id}
-                      type="button"
-                      role="checkbox"
-                      aria-checked={isChecked}
-                      onClick={() => toggleSection(sec.id)}
-                      onKeyDown={(e) => handleSectionKeyDown(e, idx)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border text-left transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${
-                        isChecked
-                          ? "border-[#0A2357] dark:border-blue-500 bg-blue-50/40 dark:bg-blue-900/20"
-                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
-                          isChecked
-                            ? "border-[#0A2357] dark:border-blue-500 bg-[#0A2357] dark:bg-blue-500 text-white"
-                            : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
-                        }`}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" role="radiogroup" aria-label="Template Style">
+                  {TEMPLATE_STYLES.map((style, idx) => {
+                    const isSelected = projectData.template === style.title;
+                    return (
+                      <button
+                        key={style.title}
+                        data-template={style.title}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => {
+                          setProjectData({ ...projectData, template: style.title });
+                          setError("");
+                        }}
+                        onKeyDown={(e) => handleTemplateKeyDown(e, idx)}
+                        className={`flex flex-col rounded-xl border overflow-hidden text-left transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${isSelected
+                            ? "border-[#0A2357] dark:border-blue-500 bg-blue-50/30 dark:bg-blue-900/20 shadow-md ring-2 ring-[#0A2357] dark:ring-blue-500"
+                            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800"
+                          }`}
                       >
-                        {isChecked && <FaCheck className="text-[10px]" />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">
-                          {sec.label}
-                        </span>
-                        <span className="block text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                          {sec.description}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                        <div className="h-28 sm:h-32 w-full bg-slate-100 dark:bg-slate-700 relative overflow-hidden flex items-center justify-center">
+                          <img
+                            src={style.image}
+                            alt={style.title}
+                            className="h-full w-full object-cover transition duration-300 hover:scale-105"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center -z-10 text-slate-300">
+                            <FaImage className="text-2xl" />
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-sm text-slate-900 dark:text-white">
+                              {style.title}
+                            </span>
+                            {isSelected && <FaCheck className="text-xs text-[#0A2357] dark:text-blue-400" />}
+                          </div>
+                          <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 block">
+                            {style.description}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="mt-3 rounded-lg bg-red-50 dark:bg-red-900/30 p-2.5 sm:p-3 text-[11px] sm:text-xs font-semibold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 flex items-center justify-between">
-              <span>{error}</span>
-            </div>
-          )}
-        </div>
+            {/* STEP 4: Sections */}
+            {step === 4 && (
+              !canEditSections ? (
+                <div className="flex flex-col items-center justify-center py-6 px-4 text-center space-y-4 sm:space-y-5">
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-md">
+                    <Lock className="h-6 w-6 sm:h-7 sm:w-7" />
+                  </div>
 
-        {/* Footer Controls */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-          {step > 1 ? (
-            <button
-              ref={backBtnRef}
-              type="button"
-              onClick={handleBack}
-              onKeyDown={handleBackKeyDown}
-              disabled={isBuilding}
-              className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50"
-            >
-              Back
-            </button>
-          ) : (
-            <div />
-          )}
-
-          {step < 4 ? (
-            <button
-              ref={continueBtnRef}
-              type="button"
-              onClick={handleNext}
-              onKeyDown={handleContinueKeyDown}
-              className="flex items-center gap-2 rounded-xl bg-[#0A2357] dark:bg-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-900 dark:hover:bg-blue-700 transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20"
-            >
-              Continue
-              <FaArrowRight className="text-xs" />
-            </button>
-          ) : (
-            <button
-              ref={buildBtnRef}
-              type="button"
-              onClick={handleBuild}
-              onKeyDown={handleBuildKeyDown}
-              disabled={isBuilding}
-              className="flex items-center gap-2 rounded-xl bg-[#0A2357] dark:bg-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-900 dark:hover:bg-blue-700 transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isBuilding ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Building Workspace...
-                </>
+                  <div className="max-w-md space-y-2">
+                    <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      Website Section Editing
+                    </h4>
+                    <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                      Website section editing isn't available on your current plan. Upgrade your plan to unlock editing and customization features.
+                    </p>
+                  </div>
+                </div>
               ) : (
-                <>
-                  <FaWandMagicSparkles className="text-xs" />
-                  Build Website
-                </>
-              )}
-            </button>
-          )}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Select website sections
+                    </label>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {projectData.sections.length} selected
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-label="Sections selection">
+                    {currentSections.map((sec, idx) => {
+                      const isChecked = projectData.sections.includes(sec.id);
+                      return (
+                        <button
+                          key={sec.id}
+                          data-section={sec.id}
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isChecked}
+                          onClick={() => toggleSection(sec.id)}
+                          onKeyDown={(e) => handleSectionKeyDown(e, idx)}
+                          className={`flex items-center gap-3 p-3 rounded-xl border text-left transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${isChecked
+                              ? "border-[#0A2357] dark:border-blue-500 bg-blue-50/40 dark:bg-blue-900/20"
+                              : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800"
+                            }`}
+                        >
+                          <div
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${isChecked
+                                ? "border-[#0A2357] dark:border-blue-500 bg-[#0A2357] dark:bg-blue-500 text-white"
+                                : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+                              }`}
+                          >
+                            {isChecked && <FaCheck className="text-[10px]" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">
+                              {sec.label}
+                            </span>
+                            <span className="block text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                              {sec.description}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <div className="mt-3 rounded-lg bg-red-50 dark:bg-red-900/30 p-2.5 sm:p-3 text-[11px] sm:text-xs font-semibold text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 flex items-center justify-between">
+                <span>{error}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Footer Controls */}
+          <div className="flex items-center justify-between p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+            {step > 1 ? (
+              <button
+                ref={backBtnRef}
+                type="button"
+                onClick={handleBack}
+                onKeyDown={handleBackKeyDown}
+                disabled={isBuilding}
+                className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50"
+              >
+                Back
+              </button>
+            ) : (
+              <div />
+            )}
+
+            {step < 4 ? (
+              <button
+                ref={continueBtnRef}
+                type="button"
+                onClick={handleNext}
+                onKeyDown={handleContinueKeyDown}
+                className="flex items-center gap-2 rounded-xl bg-[#0A2357] dark:bg-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-900 dark:hover:bg-blue-700 transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20"
+              >
+                Continue
+                <FaArrowRight className="text-xs" />
+              </button>
+            ) : !canEditSections ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  router.push("/planning");
+                }}
+                className="flex items-center gap-2 rounded-xl bg-[#0A2357] dark:bg-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-900 dark:hover:bg-blue-700 transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 active:scale-95"
+              >
+                <span>Upgrade Plan</span>
+                <FaArrowRight className="text-xs" />
+              </button>
+            ) : (
+              <button
+                ref={buildBtnRef}
+                type="button"
+                onClick={handleBuild}
+                onKeyDown={handleBuildKeyDown}
+                disabled={isBuilding}
+                className="flex items-center gap-2 rounded-xl bg-[#0A2357] dark:bg-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-blue-900 dark:hover:bg-blue-700 transition cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isBuilding ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Building Workspace...
+                  </>
+                ) : (
+                  <>
+                    <FaWandMagicSparkles className="text-xs" />
+                    Build Website
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>,
     document.body
   );

@@ -172,6 +172,10 @@ export default function TemplatesPage() {
   }, [activeCategory, deferredSearchQuery]);
 
   useEffect(() => {
+    router.replace("/landing#templates");
+  }, [router]);
+
+  useEffect(() => {
     const controller = new AbortController();
     void fetchTemplates(controller.signal);
     return () => controller.abort();
@@ -303,11 +307,10 @@ export default function TemplatesPage() {
                 key={value}
                 type="button"
                 onClick={() => setActiveCategory(value)}
-                className={`whitespace-nowrap rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${
-                  isActive
+                className={`whitespace-nowrap rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition ${isActive
                     ? "bg-[#06224C] text-white shadow-md"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-[#06224C]"
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -483,11 +486,10 @@ export default function TemplatesPage() {
                       type="button"
                       onClick={() => handleClone(template._id, template.name)}
                       disabled={cloningId === template._id}
-                      className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition hover:scale-[1.02] ${
-                        cloningId === template._id
+                      className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition hover:scale-[1.02] ${cloningId === template._id
                           ? "cursor-not-allowed bg-gray-400"
                           : "bg-[#06224C] hover:bg-blue-900"
-                      }`}
+                        }`}
                     >
                       {cloningId === template._id ? (
                         "Cloning..."

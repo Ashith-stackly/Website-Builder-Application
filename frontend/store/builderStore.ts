@@ -459,12 +459,18 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
   const surfaceText    = bold ? "#e8edf5" : "#0B1D40";
   const cardBg         = minimal ? "#ffffff" : bold ? "#162032" : "#ffffff";
   const cardText       = bold ? "#e8edf5" : "#0B1D40";
-  const sectionRadius  = minimal ? "0" : bold ? "24px" : "16px";
-  const sectionPadding = minimal ? "56px 24px" : bold ? "52px 36px" : "44px 32px";
-  const cardPadding    = minimal ? "40px 20px" : bold ? "48px 32px" : "40px 28px";
-  const footerRadius   = minimal ? "0" : bold ? "24px" : "16px";
+
+  // Section-level chrome: Modern → clean edges, Bold → rounded cards, Minimal → flat
+  const sectionRadius  = minimal ? "0" : bold ? "20px" : "0";
+  const sectionPadding = minimal ? "48px 24px" : bold ? "48px 36px" : "48px 36px";
+  const sectionMargin  = minimal ? "0" : bold ? "0 0 12px" : "0";
+  const sectionBorder  = minimal ? undefined : bold ? "1px solid rgba(255,255,255,0.08)" : undefined;
+  const sectionShadow  = minimal ? undefined : bold ? "0 12px 36px -8px rgba(15, 23, 42, 0.3)" : undefined;
+
+  const cardPadding    = minimal ? "40px 20px" : bold ? "48px 36px" : "44px 32px";
+  const footerRadius   = minimal ? "0" : bold ? "20px" : "0";
   const galleryBg      = minimal ? "#f8f8f8" : bold ? "#111b2e" : "#f5f7fc";
-  const galleryPadding = minimal ? "32px 16px" : bold ? "40px 28px" : "32px 24px";
+  const galleryPadding = minimal ? "32px 16px" : bold ? "40px 32px" : "36px 28px";
   const contactBg      = minimal ? "#f5f5f5" : bold ? "#0B1D40" : "#eef4fb";
   const contactColor   = bold ? "#ffffff" : "#0B1D40";
   const navBg          = minimal ? "#ffffff" : bold ? "#070d18" : "#ffffff";
@@ -477,25 +483,98 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
 
   const baseHeroStyles: Partial<ComponentStyles> = {
     backgroundColor: heroBg,
+    backgroundImage: bold
+      ? "radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.3) 0%, transparent 65%), linear-gradient(135deg, #070d19 0%, #0B1D40 50%, #1e1b4b 100%)"
+      : minimal ? undefined
+      : "linear-gradient(135deg, #e0e7ff 0%, #eef4fb 50%, #f0fdf4 100%)",
     color: heroColor,
-    padding: bold ? "72px 48px" : minimal ? "64px 32px" : "56px 40px",
-    borderRadius: minimal ? "0" : bold ? "28px" : "18px",
-    margin: minimal ? "0 0 0" : "0 0 20px",
+    padding: bold ? "72px 48px" : minimal ? "56px 32px" : "60px 40px",
+    borderRadius: minimal ? "0" : bold ? "24px" : "0",
+    margin: minimal ? "0" : bold ? "0 0 12px" : "0",
+    border: minimal ? undefined : bold ? "1px solid rgba(59, 130, 246, 0.2)" : undefined,
+    boxShadow: minimal ? undefined : bold ? "0 25px 60px -15px rgba(11, 29, 64, 0.4)" : undefined,
     ...(minimal ? { textAlign: "center" as const } : {}),
   };
 
   const navStyles = {
     backgroundColor: navBg,
     color: navColor,
-    borderRadius: minimal ? "0" : bold ? "20px" : "12px",
+    borderRadius: minimal ? "0" : bold ? "16px" : "0",
+    border: minimal ? undefined : bold ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0",
+    boxShadow: minimal ? undefined : "0 4px 20px -2px rgba(11, 29, 64, 0.06)",
   };
 
-  const featuresStyles  = { backgroundColor: surface, color: surfaceText, padding: sectionPadding, borderRadius: sectionRadius };
-  const galleryStyles   = { backgroundColor: galleryBg, color: bold ? "#e8edf5" : "#0B1D40", padding: galleryPadding, borderRadius: sectionRadius };
-  const pricingStyles   = { backgroundColor: surface, color: surfaceText, padding: cardPadding, borderRadius: sectionRadius };
-  const testimonialStyles = { backgroundColor: cardBg, color: cardText, padding: cardPadding, borderRadius: sectionRadius };
-  const footerStyles    = { borderRadius: footerRadius, backgroundColor: bold ? "#070d18" : undefined, color: bold ? "#c0c8d8" : undefined };
-  const contactStyles   = { backgroundColor: contactBg, color: contactColor, borderRadius: sectionRadius };
+  const featuresStyles: Partial<ComponentStyles> = {
+    backgroundColor: surface,
+    backgroundImage: bold
+      ? "linear-gradient(145deg, #0e1726 0%, #162032 100%)"
+      : minimal ? undefined
+      : "linear-gradient(180deg, #ffffff 0%, #f0f4fb 100%)",
+    color: surfaceText,
+    padding: sectionPadding,
+    borderRadius: sectionRadius,
+    margin: sectionMargin,
+    border: sectionBorder,
+    boxShadow: sectionShadow,
+  };
+  const galleryStyles: Partial<ComponentStyles> = {
+    backgroundColor: galleryBg,
+    backgroundImage: bold ? "linear-gradient(180deg, #111b2e 0%, #0e1726 100%)" : undefined,
+    color: bold ? "#e8edf5" : "#0B1D40",
+    padding: galleryPadding,
+    borderRadius: sectionRadius,
+    margin: sectionMargin,
+    border: sectionBorder,
+    boxShadow: sectionShadow,
+  };
+  const pricingStyles: Partial<ComponentStyles> = {
+    backgroundColor: surface,
+    backgroundImage: bold
+      ? "linear-gradient(180deg, #0e1726 0%, #111b2e 100%)"
+      : minimal ? undefined
+      : "linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%)",
+    color: surfaceText,
+    padding: cardPadding,
+    borderRadius: sectionRadius,
+    margin: sectionMargin,
+    border: sectionBorder,
+    boxShadow: sectionShadow,
+  };
+  const testimonialStyles: Partial<ComponentStyles> = {
+    backgroundColor: cardBg,
+    backgroundImage: bold
+      ? "linear-gradient(135deg, #162032 0%, #1a2840 100%)"
+      : minimal ? undefined
+      : "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f4fb 100%)",
+    color: cardText,
+    padding: cardPadding,
+    borderRadius: sectionRadius,
+    margin: sectionMargin,
+    border: minimal ? undefined : bold ? "1px solid rgba(255,255,255,0.06)" : undefined,
+    boxShadow: sectionShadow,
+  };
+  const footerStyles: Partial<ComponentStyles> = {
+    borderRadius: footerRadius,
+    backgroundColor: bold ? "#050a14" : "#0B1D40",
+    backgroundImage: bold ? "linear-gradient(180deg, #090f20 0%, #030712 100%)" : "linear-gradient(180deg, #0B1D40 0%, #070d19 100%)",
+    color: bold ? "#c0c8d8" : "#cbd5e1",
+    border: minimal ? undefined : bold ? "1px solid rgba(255,255,255,0.08)" : undefined,
+    boxShadow: bold ? "0 -4px 20px rgba(0, 0, 0, 0.15)" : undefined,
+    padding: "40px 36px 28px",
+    margin: sectionMargin,
+  };
+  const contactStyles: Partial<ComponentStyles> = {
+    backgroundColor: contactBg,
+    backgroundImage: bold
+      ? "radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%), linear-gradient(135deg, #0B1D40 0%, #0f172a 100%)"
+      : minimal ? undefined
+      : "linear-gradient(135deg, #eef4fb 0%, #e0e7ff 100%)",
+    color: contactColor,
+    borderRadius: sectionRadius,
+    margin: sectionMargin,
+    border: minimal ? undefined : bold ? "1px solid rgba(59, 130, 246, 0.2)" : undefined,
+    boxShadow: sectionShadow,
+  };
 
   // Persisted template categories use the API value "store", while the
   // original requirements flow used the display value "E-Commerce".
@@ -508,14 +587,25 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       ? "construction"
       : ["digital-marketing", "marketing", "digital"].includes(rawCategoryKey)
         ? "digital-marketing"
-        : rawCategoryKey;
+        : ["nexora", "agency"].includes(rawCategoryKey)
+          ? "nexora"
+          : rawCategoryKey;
 
   const templates: Record<string, () => BuilderComponent[]> = {
     "e-commerce": () => [
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Shop" }, { label: "Collections" }, { label: "Reviews" }, { label: "Contact" }], "Shop Now"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
         props: { ...heroDefaults, title: "Launch a storefront customers trust", description: "Showcase collections, highlight offers, and guide shoppers from discovery to checkout with a polished commerce homepage.", cta: { label: "Explore Products", href: "#products" }, layout: heroLayout, align: minimal ? "center" : "left" },
-        styles: baseHeroStyles,
+        styles: {
+          ...baseHeroStyles,
+          backgroundColor: bold ? "#042f2e" : minimal ? "#ffffff" : "#ecfdf5",
+          backgroundImage: bold
+            ? "radial-gradient(ellipse at 80% 20%, rgba(16, 185, 129, 0.3) 0%, transparent 65%), linear-gradient(135deg, #022c22 0%, #064e3b 50%, #042f2e 100%)"
+            : minimal ? undefined
+            : "linear-gradient(135deg, #d1fae5 0%, #ecfdf5 50%, #f0fdf4 100%)",
+          border: minimal ? undefined : bold ? "1px solid rgba(16, 185, 129, 0.25)" : "1px solid #a7f3d0",
+          boxShadow: minimal ? undefined : bold ? "0 25px 60px -15px rgba(4, 47, 46, 0.4)" : "0 12px 35px -5px rgba(16, 185, 129, 0.08)",
+        },
       }),
       withComponentOverrides("features", 2, {
         props: { ...featuresDefaults, heading: "Built for selling", items: [
@@ -535,7 +625,16 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Work" }, { label: "About" }, { label: "Services" }, { label: "Contact" }], "Hire Me"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
         props: { ...heroDefaults, title: "Showcase your work with clarity", description: "Present your best projects, tell your story, and make it simple for clients to start a conversation.", cta: { label: "View Work", href: "#work" }, layout: heroLayout, align: minimal ? "center" : "left" },
-        styles: baseHeroStyles,
+        styles: {
+          ...baseHeroStyles,
+          backgroundColor: bold ? "#190d2e" : minimal ? "#ffffff" : "#faf5ff",
+          backgroundImage: bold
+            ? "radial-gradient(ellipse at 80% 20%, rgba(168, 85, 247, 0.3) 0%, transparent 65%), linear-gradient(135deg, #120726 0%, #2e1065 50%, #1e1b4b 100%)"
+            : minimal ? undefined
+            : "linear-gradient(135deg, #ede9fe 0%, #faf5ff 50%, #fdf4ff 100%)",
+          border: minimal ? undefined : bold ? "1px solid rgba(168, 85, 247, 0.25)" : "1px solid #ddd6fe",
+          boxShadow: minimal ? undefined : bold ? "0 25px 60px -15px rgba(46, 16, 101, 0.4)" : "0 12px 35px -5px rgba(168, 85, 247, 0.08)",
+        },
       }),
       withComponentOverrides("gallery", 2, { content: "/landing-optimized/port.webp|Signature portfolio homepage\n/landing-optimized/portfolio03.webp|Agency case study\n/landing-optimized/portfolio04.webp|Minimal project grid", styles: galleryStyles }),
       withComponentOverrides("features", 3, { props: { ...featuresDefaults, heading: "What you bring to clients", items: [
@@ -587,14 +686,33 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Menu" }, { label: "About" }, { label: "Reservations" }, { label: "Contact" }], "Reserve"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
         props: { ...heroDefaults, title: "Create a mouth-watering restaurant website", description: "Showcase signature dishes, share your story, and help guests find, call, or reserve from any device.", cta: { label: "View Menu", href: "#menu" }, layout: heroLayout, align: minimal ? "center" : "left" },
-        styles: { ...baseHeroStyles, backgroundColor: bold ? "#2e0d0d" : minimal ? "#ffffff" : "#FFF5F5", color: bold ? "#ffffff" : "#0A1E3D" },
+        styles: {
+          ...baseHeroStyles,
+          backgroundColor: bold ? "#2a0a0a" : minimal ? "#ffffff" : "#fff7ed",
+          backgroundImage: bold
+            ? "radial-gradient(ellipse at 80% 20%, rgba(245, 158, 11, 0.25) 0%, transparent 65%), linear-gradient(135deg, #1c0505 0%, #3f1212 50%, #451a03 100%)"
+            : minimal ? undefined
+            : "linear-gradient(135deg, #ffedd5 0%, #fff7ed 50%, #fef2f2 100%)",
+          color: bold ? "#ffffff" : "#431407",
+          border: minimal ? undefined : bold ? "1px solid rgba(245, 158, 11, 0.25)" : "1px solid #fed7aa",
+          boxShadow: minimal ? undefined : bold ? "0 25px 60px -15px rgba(69, 26, 3, 0.4)" : "0 12px 35px -5px rgba(154, 52, 18, 0.08)",
+        },
       }),
       withComponentOverrides("gallery", 2, { content: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop|Premium ribeye steak\nhttps://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=800&auto=format&fit=crop|Wood-fired pizza\nhttps://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop|Classic cheeseburger", styles: galleryStyles }),
       withComponentOverrides("features", 3, { props: { ...featuresDefaults, heading: "Restaurant essentials", items: [
         { title: "Signature menu", description: "Highlight best sellers, prices, and seasonal dishes." },
         { title: "Guest confidence", description: "Tell your story and show atmosphere before guests arrive." },
         { title: "Reservation path", description: "Make contact, hours, and booking details easy to find." },
-      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#220a0a" : minimal ? "#ffffff" : "#FFF5F5", ...(bold ? { color: "#ffffff" } : {}) } }),
+      ] }, styles: {
+        ...featuresStyles,
+        backgroundColor: bold ? "#220a0a" : minimal ? "#ffffff" : "#fffbf5",
+        backgroundImage: bold
+          ? "linear-gradient(145deg, #1c0606 0%, #2a0a0a 100%)"
+          : minimal ? undefined
+          : "linear-gradient(180deg, #ffffff 0%, #fff7ed 100%)",
+        color: bold ? "#ffffff" : "#431407",
+        border: minimal ? undefined : bold ? "1px solid rgba(255,255,255,0.08)" : "1px solid #fed7aa",
+      } }),
       withComponentOverrides("testimonial", 4, { props: { ...testimonialDefaults, heading: "Guest reviews" }, styles: testimonialStyles }),
       withComponentOverrides("map", 5, { props: { ...mapDefaults, address: "123 Culinary Avenue, Food District", zoom: 14, height: "320px" }, styles: { backgroundColor: cardBg, padding: "20px", borderRadius: sectionRadius } }),
       withComponentOverrides("contact", 6, { props: { ...contactDefaults, title: "Book a table", description: "Invite guests to reserve, call, or ask about private dining.", inputPlaceholder: "guest@example.com", cta: { label: "Reserve Now", href: "#contact" } }, styles: contactStyles }),
@@ -604,13 +722,32 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Projects" }, { label: "Safety" }, { label: "Contact" }], "Request Quote"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
         props: { ...heroDefaults, title: "Building Excellence with Precision", description: "Heavy machinery, project showcases, safety commitments, and expert building contracting.", cta: { label: "Explore Projects", href: "#projects" }, layout: heroLayout, align: minimal ? "center" : "left" },
-        styles: { ...baseHeroStyles, backgroundColor: bold ? "#061325" : minimal ? "#ffffff" : "#0A1E3D", color: minimal ? "#0A1E3D" : "#ffffff" },
+        styles: {
+          ...baseHeroStyles,
+          backgroundColor: bold ? "#090d16" : minimal ? "#ffffff" : "#f1f5f9",
+          backgroundImage: bold
+            ? "radial-gradient(ellipse at 80% 20%, rgba(234, 179, 8, 0.2) 0%, transparent 65%), linear-gradient(135deg, #070c16 0%, #1e293b 50%, #0f172a 100%)"
+            : minimal ? undefined
+            : "linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #fef3c7 100%)",
+          color: minimal ? "#0f172a" : "#ffffff",
+          border: minimal ? undefined : bold ? "1px solid rgba(234, 179, 8, 0.3)" : "1px solid #cbd5e1",
+          boxShadow: minimal ? undefined : bold ? "0 25px 60px -15px rgba(15, 23, 42, 0.5)" : "0 12px 35px -5px rgba(15, 23, 42, 0.08)",
+        },
       }),
       withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "Construction & Engineering Services", items: [
         { title: "Commercial Construction", description: "State-of-the-art office buildings and retail developments." },
         { title: "Heavy Civil & Infrastructure", description: "Roads, bridges, and large-scale site preparation." },
         { title: "Safety & Quality Control", description: "Uncompromising safety standards on every job site." },
-      ] }, styles: { ...featuresStyles, backgroundColor: bold ? "#0a1f3c" : minimal ? "#ffffff" : "#F8F9FA", ...(bold ? { color: "#ffffff" } : {}) } }),
+      ] }, styles: {
+        ...featuresStyles,
+        backgroundColor: bold ? "#0f172a" : minimal ? "#ffffff" : "#f8fafc",
+        backgroundImage: bold
+          ? "linear-gradient(145deg, #0b1329 0%, #1e293b 100%)"
+          : minimal ? undefined
+          : "linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)",
+        color: bold ? "#ffffff" : "#0f172a",
+        border: minimal ? undefined : bold ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0",
+      } }),
       withComponentOverrides("gallery", 3, { content: "/landing-optimized/construction02.webp|Industrial project site\n/landing-optimized/constrctio10.webp|Heavy equipment operation", styles: galleryStyles }),
       withComponentOverrides("contact", 4, { props: { ...contactDefaults, title: "Request a Project Quote", description: "Speak with our contracting engineers about your next build.", inputPlaceholder: "contractor@example.com", cta: { label: "Get Quote", href: "#contact" } }, styles: contactStyles }),
       withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Heavy construction, infrastructure, and contracting."), styles: footerStyles }),
@@ -619,7 +756,17 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("navigation", 0, { props: templateNav(projectName, [{ label: "Services" }, { label: "Growth Stats" }, { label: "Reviews" }, { label: "Contact" }], "Book Strategy Call"), styles: navStyles }),
       withComponentOverrides("hero", 1, {
         props: { ...heroDefaults, title: "Accelerate Your Business Growth", description: "High-converting digital marketing strategies, SEO, brand positioning, and performance campaigns.", cta: { label: "Get Started", href: "#services" }, layout: heroLayout, align: minimal ? "center" : "left" },
-        styles: { ...baseHeroStyles, backgroundColor: bold ? "#08152c" : minimal ? "#ffffff" : "#0A1E3D", color: minimal ? "#0A1E3D" : "#ffffff" },
+        styles: {
+          ...baseHeroStyles,
+          backgroundColor: bold ? "#060919" : minimal ? "#ffffff" : "#eef2ff",
+          backgroundImage: bold
+            ? "radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.35) 0%, transparent 65%), linear-gradient(135deg, #060818 0%, #1e1b4b 50%, #082f49 100%)"
+            : minimal ? undefined
+            : "linear-gradient(135deg, #e0e7ff 0%, #eef2ff 50%, #ecfeff 100%)",
+          color: minimal ? "#0f172a" : "#ffffff",
+          border: minimal ? undefined : bold ? "1px solid rgba(6, 182, 212, 0.3)" : "1px solid #c7d2fe",
+          boxShadow: minimal ? undefined : bold ? "0 25px 60px -15px rgba(30, 27, 75, 0.45)" : "0 12px 35px -5px rgba(99, 102, 241, 0.08)",
+        },
       }),
       withComponentOverrides("features", 2, { props: { ...featuresDefaults, heading: "Growth & Marketing Capabilities", items: [
         { title: "SEO & Organic Search", description: "Drive targeted search traffic and rank higher." },
@@ -630,6 +777,435 @@ const buildCategoryTemplate = (category: string, projectName: string, style: str
       withComponentOverrides("form", 4, { props: { ...formDefaults, heading: "Schedule a Growth Consultation", description: "Let us analyze your current marketing channels.", submitLabel: "Request Call" } }),
       withComponentOverrides("footer", 5, { props: templateFooter(projectName, "Digital marketing, brand growth, and performance ads."), styles: footerStyles }),
     ],
+
+    /* ── Nexora / Agency ─────────────────────────────────────────── */
+    nexora: () => {
+      let order = 0;
+      return [
+        // 1. HEADER / NAVIGATION
+        withComponentOverrides("navigation", order++, {
+          props: {
+            ...navigationDefaults,
+            brand: "NEXORA",
+            links: [
+              { label: "Home" },
+              { label: "About" },
+              { label: "Services" },
+              { label: "Work" },
+              { label: "Process" },
+              { label: "Pricing" },
+              { label: "Contact" },
+            ],
+            cta: { label: "Let's Talk", href: "#contact" },
+          },
+          styles: {
+            ...navStyles,
+            backgroundColor: "#ffffff",
+            color: "#0B1D40",
+            padding: "16px 32px",
+            borderRadius: bold ? "16px" : "0",
+            border: bold ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e2e8f0",
+            boxShadow: "0 4px 20px -2px rgba(11, 29, 64, 0.07)",
+          },
+        }),
+
+        // 2. HERO SECTION
+        withComponentOverrides("hero", order++, {
+          props: {
+            ...heroDefaults,
+            title: "Transforming Ideas Into Digital Experiences",
+            description: "We design and build high-performance digital products that help ambitious brands grow, connect and lead.",
+            cta: { label: "Start a Project", href: "#contact" },
+            layout: "split",
+            align: "left",
+          },
+          styles: {
+            ...baseHeroStyles,
+            backgroundColor: "#070d19",
+            backgroundImage: "radial-gradient(ellipse at 85% 20%, rgba(59, 130, 246, 0.35) 0%, rgba(15, 23, 42, 0) 70%), linear-gradient(135deg, #070d19 0%, #0B1D40 50%, #1e1b4b 100%)",
+            color: "#ffffff",
+            padding: "80px 48px",
+            borderRadius: bold ? "24px" : "0",
+            border: bold ? "1px solid rgba(59, 130, 246, 0.25)" : undefined,
+            boxShadow: bold ? "0 25px 65px -15px rgba(11, 29, 64, 0.4)" : undefined,
+          },
+        }),
+
+        // 3. TRUSTED BY - COMPACT STRIP
+        withComponentOverrides("features", order++, {
+          props: {
+            ...featuresDefaults,
+            heading: "Trusted by teams building what comes next",
+            items: [
+              { title: "ORBIT", description: "Enterprise SaaS" },
+              { title: "VERTEX", description: "Cloud Infrastructure" },
+              { title: "NOVA", description: "FinTech Solutions" },
+              { title: "LUMEN", description: "Digital Commerce" },
+              { title: "APEX", description: "Data Analytics" },
+              { title: "QUANTUM", description: "AI Research" },
+            ],
+            columns: 3,
+          },
+          styles: {
+            backgroundColor: "#ffffff",
+            color: "#0B1D40",
+            padding: "36px 32px",
+            borderRadius: "0",
+            border: undefined,
+            boxShadow: undefined,
+          },
+        }),
+
+        // 4. ABOUT SECTION - EDITORIAL LAYOUT
+        withComponentOverrides("features", order++, {
+          props: {
+            ...featuresDefaults,
+            heading: "Built for ambitious digital teams",
+            items: [
+              { title: "120+ Projects Delivered", description: "From startups to global enterprises, we've shipped products that scale." },
+              { title: "48 Global Clients", description: "Nexora partners with forward-thinking businesses to turn complex ideas into simple, engaging and scalable digital experiences." },
+              { title: "12 Countries Reached", description: "Our distributed team delivers world-class work across time zones." },
+              { title: "98% Client Satisfaction", description: "Consistently exceeding expectations through collaboration and craft." },
+            ],
+            columns: 2,
+          },
+          styles: {
+            backgroundColor: "#f8fafc",
+            backgroundImage: "linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%)",
+            color: "#0B1D40",
+            padding: "64px 40px",
+            borderRadius: bold ? "20px" : "0",
+            border: bold ? "1px solid #c7d2fe" : undefined,
+            boxShadow: bold ? "0 12px 35px -5px rgba(99, 102, 241, 0.1)" : undefined,
+          },
+        }),
+
+        // 5. SERVICES
+        withComponentOverrides("features", order++, {
+          props: {
+            ...featuresDefaults,
+            heading: "Everything you need to move faster",
+            items: [
+              { title: "Product Design", description: "Human-centered interfaces designed for clarity and conversion." },
+              { title: "Web Development", description: "Fast, scalable and responsive experiences built for modern businesses." },
+              { title: "Mobile Applications", description: "Intuitive mobile products designed around real customer needs." },
+              { title: "AI & Automation", description: "Intelligent workflows that reduce complexity and unlock productivity." },
+              { title: "E-Commerce", description: "High-converting digital storefronts built for growth." },
+              { title: "Digital Strategy", description: "Clear product and growth strategies backed by research and insight." },
+            ],
+            columns: 3,
+          },
+          styles: {
+            backgroundColor: "#ffffff",
+            color: "#0B1D40",
+            padding: "64px 40px",
+            borderRadius: bold ? "20px" : "0",
+            border: undefined,
+            boxShadow: undefined,
+          },
+        }),
+
+        // 6. WHY CHOOSE US / STATS - HIGH IMPACT BAND
+        withComponentOverrides("features", order++, {
+          props: {
+            ...featuresDefaults,
+            heading: "Built to create measurable impact",
+            items: [
+              { title: "4.9/5 Average Client Rating", description: "Strategy First — Every project starts with deep research and a clear plan." },
+              { title: "2.4M+ Users Reached", description: "Design That Converts — Interfaces crafted for engagement and results." },
+              { title: "35% Average Conversion Lift", description: "Engineering Excellence — Clean, scalable code built for performance." },
+              { title: "99.9% Platform Reliability", description: "Long-Term Partnership — We grow with you beyond launch day." },
+            ],
+            columns: 2,
+          },
+          styles: {
+            backgroundColor: "#070e1b",
+            backgroundImage: "radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.35) 0%, transparent 50%), radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%), linear-gradient(145deg, #070e1b 0%, #0d1e3d 50%, #050a14 100%)",
+            color: "#ffffff",
+            padding: "68px 40px",
+            borderRadius: bold ? "24px" : "0",
+            border: bold ? "1px solid rgba(99, 102, 241, 0.3)" : undefined,
+            boxShadow: bold ? "0 25px 60px -10px rgba(15, 35, 75, 0.45)" : undefined,
+          },
+        }),
+
+        // 7. FEATURED WORK / PORTFOLIO
+        withComponentOverrides("features", order++, {
+          props: {
+            ...featuresDefaults,
+            heading: "Selected work",
+            items: [
+              { title: "AURORA — Digital Banking Experience", description: "A complete digital banking platform redesign that increased user engagement by 40% and reduced support tickets by 60%." },
+              { title: "VITALIS — Healthcare Platform", description: "An intuitive patient-provider platform serving 200K+ users across 12 hospitals." },
+              { title: "MONARCH — Luxury E-Commerce", description: "A premium online shopping experience with a 52% increase in average order value." },
+              { title: "PULSE — AI Productivity Platform", description: "An intelligent workspace tool that saves teams an average of 12 hours per week." },
+            ],
+            columns: 2,
+          },
+          styles: {
+            backgroundColor: "#f8fafc",
+            color: "#0B1D40",
+            padding: "64px 40px",
+            borderRadius: bold ? "20px" : "0",
+            border: undefined,
+            boxShadow: undefined,
+          },
+        }),
+
+        // 8. PROCESS — HOW WE WORK
+        withComponentOverrides("features", order++, {
+          props: {
+            ...featuresDefaults,
+            heading: "From first idea to lasting impact",
+            items: [
+              { title: "01 — Discover", description: "We understand your users, goals and business challenges." },
+              { title: "02 — Define", description: "We turn insights into a focused product strategy." },
+              { title: "03 — Design", description: "We create intuitive experiences that people love to use." },
+              { title: "04 — Build", description: "We engineer fast, reliable and scalable products." },
+              { title: "05 — Launch & Grow", description: "We measure, optimize and continuously improve." },
+            ],
+            columns: 3,
+          },
+          styles: {
+            backgroundColor: "#ffffff",
+            color: "#0B1D40",
+            padding: "64px 40px",
+            borderRadius: bold ? "20px" : "0",
+            border: undefined,
+            boxShadow: undefined,
+          },
+        }),
+
+        // 9. TESTIMONIALS
+        withComponentOverrides("testimonial", order++, {
+          props: {
+            ...testimonialDefaults,
+            heading: "What our clients say",
+            items: [
+              {
+                quote: "Working with Nexora transformed the way we think about our digital product. The team delivered beyond expectations.",
+                name: "Sarah Mitchell",
+                role: "VP Product, Aurora",
+                rating: 5,
+              },
+              {
+                quote: "From strategy to launch, every stage was handled with clarity and precision.",
+                name: "Daniel Carter",
+                role: "Founder, Vertex",
+                rating: 5,
+              },
+              {
+                quote: "Nexora helped us turn a complicated idea into an experience our customers immediately understood.",
+                name: "Maya Rodriguez",
+                role: "Head of Growth, Lumen",
+                rating: 5,
+              },
+            ],
+            layout: "cards",
+          },
+          styles: {
+            backgroundColor: "#f0fdf4",
+            backgroundImage: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f4fb 100%)",
+            color: "#0B1D40",
+            padding: "64px 40px",
+            borderRadius: bold ? "20px" : "0",
+            border: bold ? "1px solid #bbf7d0" : undefined,
+            boxShadow: bold ? "0 12px 35px -5px rgba(34, 197, 94, 0.08)" : undefined,
+          },
+        }),
+
+        // 10. TECHNOLOGY / EXPERTISE
+        withComponentOverrides("features", order++, {
+          props: {
+            ...featuresDefaults,
+            heading: "Technology that moves business forward",
+            items: [
+              { title: "AI & Machine Learning", description: "Custom models and intelligent automation for smarter products." },
+              { title: "Cloud Platforms", description: "Scalable infrastructure on AWS, GCP and Azure." },
+              { title: "Modern Web", description: "React, Next.js, TypeScript — fast and maintainable." },
+              { title: "Mobile", description: "Native and cross-platform apps for iOS and Android." },
+              { title: "Data & Analytics", description: "Dashboards, pipelines and insights that drive decisions." },
+              { title: "Automation", description: "CI/CD, testing and workflow automation at scale." },
+            ],
+            columns: 3,
+          },
+          styles: {
+            backgroundColor: "#090f20",
+            backgroundImage: "radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.3) 0%, transparent 60%), linear-gradient(180deg, #090f20 0%, #0f1c3f 100%)",
+            color: "#ffffff",
+            padding: "68px 40px",
+            borderRadius: bold ? "22px" : "0",
+            border: bold ? "1px solid rgba(59, 130, 246, 0.3)" : undefined,
+            boxShadow: bold ? "0 25px 60px -10px rgba(11, 29, 64, 0.45)" : undefined,
+          },
+        }),
+
+        // 11. PRICING / PACKAGES
+        withComponentOverrides("pricing-table", order++, {
+          props: {
+            ...pricingTableDefaults,
+            heading: "Choose the right way to start",
+            tiers: [
+              {
+                name: "Starter",
+                price: "$1,500",
+                period: "per project",
+                features: ["Product strategy", "UX/UI design", "Landing page", "Basic analytics"],
+                cta: "Get Started",
+                highlighted: false,
+              },
+              {
+                name: "Growth",
+                price: "$4,500",
+                period: "per project",
+                features: ["Product strategy", "UX/UI design", "Full website", "Integrations", "Analytics", "Optimization"],
+                cta: "Start Growing",
+                highlighted: true,
+              },
+              {
+                name: "Scale",
+                price: "Custom",
+                period: "contact us",
+                features: ["Product strategy", "Design system", "Web/mobile development", "AI & automation", "Continuous optimization"],
+                cta: "Contact Us",
+                highlighted: false,
+              },
+            ],
+          },
+          styles: {
+            ...pricingStyles,
+            backgroundColor: "#ffffff",
+            color: "#0B1D40",
+            padding: "68px 40px",
+            borderRadius: bold ? "22px" : "0",
+            border: undefined,
+            boxShadow: undefined,
+          },
+        }),
+
+        // 12. FAQ
+        withComponentOverrides("accordion", order++, {
+          props: {
+            items: [
+              { title: "How long does a project take?", content: "Most projects take 4–12 weeks depending on scope and complexity. We provide a clear timeline during the Define phase so you always know what to expect." },
+              { title: "What industries do you work with?", content: "We work across technology, finance, healthcare, e-commerce, education and more. Our process adapts to the specific needs of each industry." },
+              { title: "Can you redesign an existing website?", content: "Absolutely. We regularly help companies modernize their digital presence — from visual refresh to full architecture overhaul." },
+              { title: "Do you provide ongoing support?", content: "Yes. After launch we offer maintenance, optimization and growth packages to ensure your product keeps performing." },
+              { title: "Can you integrate AI and automation?", content: "Yes — it is one of our core capabilities. We build custom AI features, workflow automation and intelligent analytics into digital products." },
+            ],
+            allowMultiple: false,
+          },
+          styles: {
+            backgroundColor: "#f8fafc",
+            color: "#0B1D40",
+            padding: "52px 32px",
+            borderRadius: bold ? "18px" : "0",
+            border: undefined,
+            boxShadow: undefined,
+          },
+        }),
+
+        // 13. FINAL CTA
+        withComponentOverrides("contact", order++, {
+          props: {
+            ...contactDefaults,
+            title: "Have an idea worth building?",
+            description: "Let's turn your next big idea into a digital experience people remember.",
+            inputPlaceholder: "your@email.com",
+            cta: { label: "Start a Conversation", href: "#contact" },
+          },
+          styles: {
+            backgroundColor: "#070d19",
+            backgroundImage: "radial-gradient(circle at 100% 0%, rgba(244, 63, 94, 0.3) 0%, transparent 45%), radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.35) 0%, transparent 45%), linear-gradient(135deg, #070d19 0%, #0f172a 50%, #1e1b4b 100%)",
+            color: "#ffffff",
+            padding: "72px 44px",
+            borderRadius: bold ? "24px" : "0",
+            border: bold ? "1px solid rgba(168, 85, 247, 0.35)" : undefined,
+            boxShadow: bold ? "0 25px 60px -10px rgba(17, 34, 77, 0.45)" : undefined,
+          },
+        }),
+
+        // 14. CONTACT FORM
+        withComponentOverrides("form", order++, {
+          props: {
+            ...formDefaults,
+            heading: "Let's build something remarkable",
+            description: "hello@nexora.example  ·  +1 555 014 2026  ·  Global / Remote",
+            fields: [
+              { name: "name", type: "text" as const, label: "Name", placeholder: "Your name", required: true },
+              { name: "email", type: "email" as const, label: "Email", placeholder: "you@company.com", required: true },
+              { name: "company", type: "text" as const, label: "Company", placeholder: "Company name" },
+              { name: "projectType", type: "select" as const, label: "Project Type", placeholder: "Select type", options: ["Product Design", "Web Development", "Mobile App", "AI & Automation", "E-Commerce", "Digital Strategy"] },
+              { name: "message", type: "textarea" as const, label: "Message", placeholder: "Tell us about your project...", required: true },
+            ],
+            submitLabel: "Send Inquiry",
+            successMessage: "Thank you! We'll be in touch shortly.",
+          },
+          styles: {
+            backgroundColor: "#ffffff",
+            color: "#0B1D40",
+            padding: "60px 40px",
+            borderRadius: bold ? "20px" : "0",
+            border: undefined,
+            boxShadow: undefined,
+          },
+        }),
+
+        // 15. FOOTER
+        withComponentOverrides("footer", order++, {
+          props: {
+            brand: "NEXORA",
+            tagline: "Transforming Ideas Into Digital Experiences",
+            columns: [
+              {
+                title: "Company",
+                links: [
+                  { label: "About", href: "#" },
+                  { label: "Work", href: "#" },
+                  { label: "Careers", href: "#" },
+                  { label: "Contact", href: "#" },
+                ],
+              },
+              {
+                title: "Services",
+                links: [
+                  { label: "Product Design", href: "#" },
+                  { label: "Development", href: "#" },
+                  { label: "AI & Automation", href: "#" },
+                  { label: "E-Commerce", href: "#" },
+                ],
+              },
+              {
+                title: "Resources",
+                links: [
+                  { label: "Insights", href: "#" },
+                  { label: "Case Studies", href: "#" },
+                  { label: "FAQ", href: "#" },
+                  { label: "Support", href: "#" },
+                ],
+              },
+            ],
+            copyright: "© 2026 Nexora. All rights reserved.  ·  Privacy Policy  ·  Terms",
+            socials: [
+              { platform: "linkedin", url: "#" },
+              { platform: "instagram", url: "#" },
+              { platform: "twitter", url: "#" },
+            ],
+          },
+          styles: {
+            ...footerStyles,
+            backgroundColor: "#050a14",
+            backgroundImage: "linear-gradient(180deg, #090f20 0%, #030712 100%)",
+            color: "#cbd5e1",
+            borderRadius: bold ? "24px" : "0",
+            border: bold ? "1px solid rgba(255, 255, 255, 0.08)" : undefined,
+            boxShadow: undefined,
+            padding: "52px 40px 32px",
+          },
+        }),
+      ];
+    },
+    agency: () => templates.nexora!(),
   };
 
   const allComponents = templates[categoryKey]?.() ?? null;
@@ -718,11 +1294,11 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
   const projectName = requirements.projectName || "Stackly Studio";
   const category = requirements.category || "Business";
   const style = requirements.style || "Modern";
-  const selectedSections = requirements.sections.length > 0 ? requirements.sections : undefined;
+  const selectedSections = requirements.sections?.length ? requirements.sections : undefined;
   const categoryTemplate = buildCategoryTemplate(category, projectName, style, selectedSections);
   if (categoryTemplate) return categoryTemplate;
   const copy = categoryCopy[category] || categoryCopy.Business;
-  const fallbackSections = requirements.sections.length > 0 ? requirements.sections : ["navigation", "hero", "features", "contact"];
+  const fallbackSections = requirements.sections?.length ? requirements.sections : ["navigation", "hero", "features", "contact"];
   const sectionTypes: ComponentType[] = fallbackSections
     .map((section) => {
       if (section === "gallery") return "gallery";
@@ -766,8 +1342,8 @@ const createRequirementComponents = (requirements: BuilderRequirements) => {
           ...component.styles,
           backgroundColor: isMinimal ? "#ffffff" : isBold ? "#0B1D40" : "#eef4fb",
           color: isBold ? "#ffffff" : "#0B1D40",
-          borderRadius: isMinimal ? "0" : isBold ? "28px" : "18px",
-          padding: isBold ? "72px 48px" : isMinimal ? "64px 32px" : "56px 40px",
+          borderRadius: isMinimal ? "0" : isBold ? "24px" : "0",
+          padding: isBold ? "72px 48px" : isMinimal ? "64px 32px" : "60px 40px",
           ...(isMinimal ? { textAlign: "center" as const } : {}),
         },
       };
@@ -2056,4 +2632,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     }
   },
 }));
+
+if (typeof window !== "undefined") {
+  (window as unknown as Record<string, unknown>).__builderStore = useBuilderStore;
+}
+
 

@@ -16,6 +16,7 @@ function formatDimension(value?: string | number): string | undefined {
 export const toReactStyle = (styles: ComponentStyles): CSSProperties => ({
   color: styles.color,
   backgroundColor: styles.backgroundColor,
+  backgroundImage: styles.backgroundImage,
   padding: formatDimension(styles.padding) ?? styles.padding,
   margin: formatDimension(styles.margin) ?? styles.margin,
   borderRadius: formatDimension(styles.borderRadius) ?? styles.borderRadius,

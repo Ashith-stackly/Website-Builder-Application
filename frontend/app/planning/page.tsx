@@ -271,6 +271,12 @@ function PlanningPageContent() {
     return normalizePlanForComparison(planName) === normalizePlanForComparison(activeSubscription.plan);
   };
 
+  const isAdvancedPlanActive = isCurrentPlan("Advanced") || Boolean(
+    activeSubscription &&
+    activeSubscription.subscriptionStatus === "active" &&
+    normalizePlanForComparison(activeSubscription.plan) === "advanced"
+  );
+
   const invoiceContact = getUserInvoiceContact(userProfile);
 
   /** Stackly-branded HTML invoice using ₹ (INR) currency symbol. */
@@ -390,6 +396,24 @@ function PlanningPageContent() {
     scrollToTop();
   }, [planningView]);
 
+  useEffect(() => {
+    if (subscriptionLoading) return;
+    if (isAdvancedPlanActive) {
+      if (
+        planningView === "payment" &&
+        (isFreeCheckout || (selectedPlan && normalizePlanForComparison(selectedPlan.name) === "basic"))
+      ) {
+        setPlanningView("plans");
+        setSelectedPlan(null);
+        setIsFreeCheckout(false);
+        setPaymentError(
+          "You are already subscribed to the Advanced Plan. The Basic Plan is not available while your Advanced Plan is active."
+        );
+        syncPlanningUrl({ view: "plans" }, "replace");
+      }
+    }
+  }, [subscriptionLoading, isAdvancedPlanActive, planningView, selectedPlan, isFreeCheckout, syncPlanningUrl]);
+
   function getActivePrice(plan: Plan) {
     return {
       oldPrice: billingYearly ? plan.yearlyOldPrice : plan.oldPrice,
@@ -400,6 +424,15 @@ function PlanningPageContent() {
   }
 
   function handlePurchasePlan(plan: Plan, freeCheckout = false) {
+    const isBasicSelection = freeCheckout || normalizePlanForComparison(plan.name) === "basic";
+
+    if (isAdvancedPlanActive && isBasicSelection) {
+      setPaymentError(
+        "You are already subscribed to the Advanced Plan. The Basic Plan is not available while your Advanced Plan is active."
+      );
+      return;
+    }
+
     setViewResolved(true);
     setSelectedPlan(plan);
     setPlanningView("payment");
@@ -748,6 +781,26 @@ function PlanningPageContent() {
                 </motion.p>
               </div>
 
+              {paymentError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mx-auto max-w-3xl rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-xs sm:text-sm font-semibold text-amber-200 flex items-start gap-3 shadow-lg backdrop-blur-md"
+                >
+                  <Lock className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p>{paymentError}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentError(null)}
+                    className="text-amber-400 hover:text-white text-xs font-bold shrink-0 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </motion.div>
+              )}
+
               {/* BILLING TOGGLE */}
               <motion.div variants={fadeUpVariants} className="planning-billing-section flex w-full min-w-0 max-w-full flex-col items-center gap-4 pt-2">
                 <div className="planning-billing-toggle-wrap relative flex w-full min-w-0 max-w-full flex-wrap items-stretch justify-center gap-1.5 rounded-2xl border border-white/15 bg-slate-900/90 p-1.5 shadow-2xl backdrop-blur-xl md:w-auto md:flex-nowrap md:items-center md:gap-3 md:rounded-full">
@@ -800,7 +853,15 @@ function PlanningPageContent() {
 
                 <button
                   type="button"
-                  onClick={() => handlePurchasePlan(plans[0], true)}
+                  onClick={() => {
+                    if (isAdvancedPlanActive) {
+                      setPaymentError(
+                        "You are already subscribed to the Advanced Plan. The Basic Plan is not available while your Advanced Plan is active."
+                      );
+                      return;
+                    }
+                    handlePurchasePlan(plans[0], true);
+                  }}
                   className="group inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-blue-300 transition-colors cursor-pointer"
                 >
                   <span>Looking to test first? Activate Free Plan</span>
@@ -901,6 +962,19 @@ function PlanningPageContent() {
                           >
                             ✓ Current Plan
                           </div>
+                        ) : isAdvancedPlanActive && normalizePlanForComparison(plan.name) === "basic" ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPaymentError(
+                                "You are already subscribed to the Advanced Plan. The Basic Plan is not available while your Advanced Plan is active."
+                              );
+                            }}
+                            className="w-full rounded-2xl py-3.5 text-xs sm:text-sm font-bold text-center bg-slate-800/80 text-slate-400 border border-white/10 hover:border-amber-500/50 hover:text-amber-300 transition-all cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <Lock className="h-4 w-4 text-amber-400 shrink-0" />
+                            <span>Basic Plan Unavailable</span>
+                          </button>
                         ) : (
                           <motion.button
                             whileHover={{ scale: 1.02 }}

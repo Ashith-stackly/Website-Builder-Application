@@ -111,7 +111,7 @@ export const heroSpec: BlockSpec<HeroProps> = {
     const mediaHtml =
       data.media?.type === "image" && data.media.src
         ? `<img src="${escapeHtml(data.media.src)}" alt="${escapeHtml(data.media.alt ?? data.title)}" style="max-width:100%;height:auto;border-radius:12px;" />`
-        : `<div class="hero-placeholder"><div class="hero-placeholder-bar"></div><div class="hero-placeholder-block" style="height:64px"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="hero-placeholder-block" style="height:80px"></div><div class="hero-placeholder-block" style="height:80px"></div></div></div>`;
+        : `<div class="hero-abstract-visual"><div class="hero-abstract-ring"></div><div class="hero-abstract-dots"><span></span><span></span><span></span></div></div>`;
     const textHtml =
       `<div class="hero-text">` +
       `<h1>${escapeHtml(data.title)}</h1>` +

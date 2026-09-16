@@ -38,6 +38,7 @@ export type ComponentType =
 export interface ComponentStyles {
   color?: string;
   backgroundColor?: string;
+  backgroundImage?: string;
   padding?: string;
   margin?: string;
   borderRadius?: string;

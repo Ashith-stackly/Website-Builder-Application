@@ -42,6 +42,7 @@ import MockCheckoutModal from "@/components/MockCheckoutModal";
 import { getAuthToken } from "@/lib/authToken";
 import { performFullLogout, STORAGE_SYNC_EVENT } from "@/lib/logoutUtils";
 import { useSubscriptionAccess } from "@/lib/subscriptionAccess";
+import { clearTemplateAccessCache, TEMPLATE_ACCESS_SYNC_EVENT } from "@/lib/templateAccessApi";
 
 const products = ["PREMIUM TEMPLATES", "UI KITS", "WORDPRESS THEMES", "FREE ASSETS"];
 
@@ -253,6 +254,27 @@ function normalizeStoredItem(item: StoredCommerceItem) {
   };
 }
 
+function getTemplateSlugFromTitle(title: string): string {
+  const normalized = title.trim().toLowerCase();
+
+  if (normalized.includes("portfolio")) return "portfolio";
+  if (normalized.includes("digital marketing") || normalized.includes("digital-marketing")) return "digital-marketing";
+  if (normalized.includes("restaurant")) return "restaurant";
+  if (normalized.includes("blog") || normalized.includes("tech insights")) return "blog";
+  if (
+    normalized.includes("e-commerce") ||
+    normalized.includes("ecommerce") ||
+    normalized.includes("fashion") ||
+    normalized.includes("jewelry")
+  ) {
+    return "ecommerce";
+  }
+  if (normalized.includes("business")) return "business";
+  if (normalized.includes("construction")) return "construction";
+
+  return normalized.replace(/\s+/g, "-");
+}
+
 function formatPlanName(raw?: string): string | null {
   if (!raw) return null;
   const trimmed = raw.trim();
@@ -384,8 +406,9 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
   const scrollLandingSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: string, closeMobile = false) => {
     const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+    const isLanding = currentPath === "/" || currentPath.endsWith("/landing");
 
-    if (!currentPath.endsWith("/landing")) {
+    if (!isLanding) {
       if (closeMobile) {
         setMobileOpen(false);
       }
@@ -615,6 +638,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
   const executeCartPayment = async () => {
     if (!checkoutProduct) return;
+    const currentCart = [...cartItems];
     setCheckoutProduct(null);
     setPaymentLoading(true);
     try {
@@ -630,7 +654,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
       openRazorpayCheckout({
         order,
-        planLabel: `Purchase of ${cartItems.length} items from Stackly`,
+        planLabel: `Purchase of ${currentCart.length} items from Stackly`,
         customerName: "Demo Customer",
         customerEmail: "customer@example.com",
         customerPhone: "9876543210",
@@ -638,13 +662,36 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
         onSuccess: async (response) => {
           setPaymentLoading(true);
           try {
-            const verified = await verifyRazorpayPayment(response);
-            if (!verified) throw new Error("Payment verification failed");
+            const verifiedSlugs = new Set<string>();
+            const itemsToVerify = currentCart.length > 0 ? currentCart : [];
+
+            for (const storedItem of itemsToVerify) {
+              const item = normalizeStoredItem(storedItem);
+              const slug = getTemplateSlugFromTitle(item.title);
+
+              if (slug && !verifiedSlugs.has(slug)) {
+                const verified = await verifyRazorpayPayment({
+                  ...response,
+                  itemType: "template",
+                  templateId: slug,
+                  templateName: item.title,
+                });
+                if (!verified) throw new Error(`Payment verification failed for ${item.title}`);
+                verifiedSlugs.add(slug);
+              }
+            }
+
+            if (verifiedSlugs.size === 0) {
+              const verified = await verifyRazorpayPayment(response);
+              if (!verified) throw new Error("Payment verification failed");
+            }
 
             showCartToast("Payment Successful!");
 
             window.localStorage.setItem("cartItems", "[]");
             window.localStorage.setItem("cartCount", "0");
+            clearTemplateAccessCache();
+            window.dispatchEvent(new Event(TEMPLATE_ACCESS_SYNC_EVENT));
             window.dispatchEvent(new Event(STORAGE_SYNC_EVENT));
             setActivePanel(null);
           } catch (err) {
@@ -747,7 +794,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
 
             <div className="hidden items-center justify-center gap-10 text-[13px] font-bold uppercase tracking-wide text-white lg:flex">
               <Link href="/landing" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm"><MotionNavItem>HOME</MotionNavItem></Link>
-              <Link href="/templates" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
+              <Link href="/landing#templates" onClick={(event) => scrollLandingSection(event, "templates")} className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>TEMPLATES</MotionNavItem></Link>
               {isLoggedIn && (
                 <Link href="/dashboard" className="stackly-nav-link whitespace-nowrap transition hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded-sm cursor-pointer"><MotionNavItem>DASHBOARD</MotionNavItem></Link>
               )}
@@ -844,8 +891,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               onFocus={() => setFocusedAction("cart")}
               onBlur={() => setFocusedAction(null)}
               className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${activePanel === "cart" || focusedAction === "cart"
-                  ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                  : "text-[#06224C]"
+                ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                : "text-[#06224C]"
                 }`}
             >
               <AnimatePresence>{(activePanel === "cart" || focusedAction === "cart") && <ActiveIconHighlight />}</AnimatePresence>
@@ -875,8 +922,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               onFocus={() => setFocusedAction("wishlist")}
               onBlur={() => setFocusedAction(null)}
               className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${activePanel === "wishlist" || focusedAction === "wishlist"
-                  ? "scale-105 text-red-600 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                  : "text-red-500"
+                ? "scale-105 text-red-600 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                : "text-red-500"
                 }`}
             >
               <AnimatePresence>{(activePanel === "wishlist" || focusedAction === "wishlist") && <ActiveIconHighlight />}</AnimatePresence>
@@ -906,8 +953,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
               onFocus={() => setFocusedAction("search")}
               onBlur={() => setFocusedAction(null)}
               className={`stackly-icon-button relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] ${isSearchPanelOpen || searchSelected || focusedAction === "search"
-                  ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                  : "text-[#06224C]"
+                ? "scale-105 text-blue-700 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                : "text-[#06224C]"
                 }`}
             >
               <AnimatePresence>{(isSearchPanelOpen || searchSelected || focusedAction === "search") && <ActiveIconHighlight />}</AnimatePresence>
@@ -936,8 +983,8 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
                   setActiveMenu(null);
                 }}
                 className={`relative isolate inline-flex h-9 w-9 items-center justify-center rounded-full bg-white p-[3px] shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(255,255,255,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#06224C] active:scale-95 ${isProfileMenuOpen || focusedAction === "profile"
-                    ? "scale-105 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
-                    : ""
+                  ? "scale-105 ring-2 ring-sky-300 ring-offset-2 ring-offset-[#06224C] shadow-[0_8px_22px_rgba(56,189,248,0.32)]"
+                  : ""
                   }`}
               >
                 <AnimatePresence>{(isProfileMenuOpen || focusedAction === "profile") && <ActiveIconHighlight />}</AnimatePresence>
@@ -1095,7 +1142,7 @@ export default function NavBar({ wishlistCount: wishlistCountProp, onWishlistCli
             >
               <div className="flex flex-col">
                 <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Home</Link></motion.div>
-                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/templates" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Templates</Link></motion.div>
+                <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/landing#templates" onClick={(event) => scrollLandingSection(event, "templates", true)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10 cursor-pointer">Templates</Link></motion.div>
                 {isLoggedIn && (
                   <motion.div variants={mobileItemVariants} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}><Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block border-b border-white/5 px-6 py-4 focus-visible:outline-none focus-visible:bg-white/10">Dashboard</Link></motion.div>
                 )}

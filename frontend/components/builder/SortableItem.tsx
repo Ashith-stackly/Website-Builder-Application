@@ -44,7 +44,7 @@ function SortableItem({
   return (
     <div
       ref={setNodeRef}
-      className={`group relative w-full max-w-[900px] ${isDragging ? "opacity-40" : ""}`}
+      className={`group relative w-full max-w-[1200px] ${isDragging ? "opacity-40" : ""}`}
       style={{
         transform: CSS.Transform.toString(transform),
         transition: [transition, "opacity 200ms ease"].filter(Boolean).join(", "),

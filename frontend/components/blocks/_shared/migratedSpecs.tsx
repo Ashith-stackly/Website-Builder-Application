@@ -1033,7 +1033,13 @@ export const accordionSpec: BlockSpec<AccordionProps> = {
   read: readAccordion,
   Renderer: AccordionComponent,
   Panel: AccordionPanel,
-  exportHtml: (data, styleAttr) => `<div${styleAttr}>${data.items.map((item, index) => `<details${index === 0 ? " open" : ""}><summary style="padding:12px 16px;font-weight:700;cursor:pointer">${escapeHtml(item.title)}</summary><div style="padding:12px 16px;color:#566583">${escapeHtml(item.content)}</div></details>`).join("")}</div>`,
+  exportHtml: (data, styleAttr) => {
+    const attr = styleAttr.replace('class="', 'class="stackly-accordion ');
+    const items = data.items.map((item, index) =>
+      `<div class="accordion-item${index === 0 ? ' accordion-item--open' : ''}"><details${index === 0 ? ' open' : ''}><summary class="accordion-summary"><span class="accordion-title">${escapeHtml(item.title)}</span><svg class="accordion-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary><div class="accordion-content">${escapeHtml(item.content)}</div></details></div>`
+    ).join('');
+    return `<div${attr}><div class="accordion-list">${items}</div></div>`;
+  },
   ai: { description: "Expandable FAQ/content accordion.", exampleOutput: accordionDefaults },
 };
 
@@ -1100,8 +1106,14 @@ export const pricingTableSpec: BlockSpec<PricingTableProps> = {
   Panel: PricingTablePanel,
   exportHtml: (data, styleAttr) => {
     const attr = styleAttr.replace('class="', 'class="stackly-pricing-table ');
-    const heading = data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : "";
-    const tiers = data.tiers.map((tier) => `<div class="pricing-tier"><h3>${escapeHtml(tier.name)}</h3><div class="pricing-price">${escapeHtml(tier.price)}<small>${escapeHtml(tier.period)}</small></div><ul class="pricing-features">${tier.features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join("")}</ul><button class="pricing-cta">${escapeHtml(tier.cta)}</button></div>`).join("");
+    const heading = data.heading ? `<h2 style="text-align:center;margin-bottom:32px">${escapeHtml(data.heading)}</h2>` : "";
+    const checkSvg = '<svg class="pricing-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    const tiers = data.tiers.map((tier) => {
+      const tierClass = tier.highlighted ? 'pricing-tier pricing-tier--highlighted' : 'pricing-tier';
+      const badge = tier.highlighted ? '<div class="pricing-badge">Most Popular</div>' : '';
+      const features = tier.features.map((feature) => `<li>${checkSvg}<span>${escapeHtml(feature)}</span></li>`).join('');
+      return `<div class="${tierClass}">${badge}<h3 class="pricing-tier-name">${escapeHtml(tier.name)}</h3><div class="pricing-price">${escapeHtml(tier.price)}<small>${escapeHtml(tier.period)}</small></div><ul class="pricing-features">${features}</ul><button class="pricing-cta">${escapeHtml(tier.cta)}</button></div>`;
+    }).join('');
     return `<section${attr}>${heading}<div class="pricing-grid">${tiers}</div></section>`;
   },
   ai: { description: "A multi-tier pricing table.", exampleOutput: pricingTableDefaults },
@@ -1118,8 +1130,15 @@ export const testimonialSpec: BlockSpec<TestimonialProps> = {
   Panel: TestimonialPanel,
   exportHtml: (data, styleAttr) => {
     const attr = styleAttr.replace('class="', 'class="stackly-testimonial ');
-    const heading = data.heading ? `<h2 style="text-align:center">${escapeHtml(data.heading)}</h2>` : "";
-    const items = data.items.map((item) => `<article class="testimonial-card"><blockquote>"${escapeHtml(item.quote)}"</blockquote><p class="testimonial-name">${escapeHtml(item.name)}</p><p class="testimonial-role">${escapeHtml(item.role)}</p></article>`).join("");
+    const heading = data.heading ? `<h2 style="text-align:center;margin-bottom:32px">${escapeHtml(data.heading)}</h2>` : "";
+    const starFull = '<svg class="testimonial-star testimonial-star--filled" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+    const starEmpty = '<svg class="testimonial-star" width="16" height="16" viewBox="0 0 24 24" fill="#e2e8f0" stroke="#e2e8f0" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+    const items = data.items.map((item) => {
+      const rating = item.rating ?? 5;
+      const stars = Array.from({ length: 5 }, (_, i) => i < rating ? starFull : starEmpty).join('');
+      const initial = item.name.charAt(0).toUpperCase();
+      return `<article class="testimonial-card"><div class="testimonial-stars">${stars}</div><blockquote>\u201c${escapeHtml(item.quote)}\u201d</blockquote><div class="testimonial-author"><div class="testimonial-avatar">${initial}</div><div><p class="testimonial-name">${escapeHtml(item.name)}</p><p class="testimonial-role">${escapeHtml(item.role)}</p></div></div></article>`;
+    }).join('');
     return `<section${attr}>${heading}<div class="testimonial-grid">${items}</div></section>`;
   },
   ai: { description: "Customer testimonial cards.", exampleOutput: testimonialDefaults },
