@@ -1,8 +1,10 @@
 "use client";
 
 import { Star } from "lucide-react";
-import type { BuilderComponent, TestimonialProps } from "@/types/builder";
-import { getBaseStyles } from "./componentStyles";
+import InlineText from "@/components/builder/InlineText";
+import type { BuilderComponent, TestimonialProps, TestimonialItem } from "@/types/builder";
+import { getItemStyle, getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
+import { useBuilderStore } from "@/store/builderStore";
 
 export const testimonialDefaults: TestimonialProps = {
   heading: "What Our Customers Say",
@@ -29,10 +31,21 @@ export const testimonialDefaults: TestimonialProps = {
   layout: "cards",
 };
 
-import { useBuilderStore } from "@/store/builderStore";
+/* ── Safe reader ────────────────────────────────────────────────────── */
+function readTestimonialData(component: BuilderComponent): TestimonialProps {
+  const p = component.props as Record<string, unknown> | undefined;
+  if (!p || typeof p !== "object") return testimonialDefaults;
+  const layout = p.layout === "carousel" || p.layout === "stack" ? p.layout : "cards";
+  return {
+    heading: typeof p.heading === "string" ? p.heading : testimonialDefaults.heading,
+    items: Array.isArray(p.items) ? (p.items as TestimonialItem[]) : testimonialDefaults.items,
+    layout,
+  };
+}
 
 export default function TestimonialComponent({
   component,
+  onPatch,
 }: {
   component: BuilderComponent;
   children?: React.ReactNode;
@@ -40,24 +53,47 @@ export default function TestimonialComponent({
   onUpdate?: (content: string | null) => void;
   onPatch?: (patch: Partial<BuilderComponent>) => void;
 }) {
-  const props = (component.props as unknown as TestimonialProps) || testimonialDefaults;
-  const base = getBaseStyles(component);
+  const data = readTestimonialData(component);
+  const textStyle = getTextStyles(component.styles);
   const viewport = useBuilderStore((s) => s.viewport);
+  const selectSubItem = useBuilderStore((s) => s.selectSubItem);
+  const selectedSubItem = useBuilderStore((s) => s.selectedSubItem);
 
-  const colCount = Math.min(props.items.length, 3);
+  const items = data.items;
+  const heading = data.heading ?? "";
+
+  const colCount = Math.min(items.length, 3);
   const currentCols = viewport === "mobile"
     ? 1
     : (viewport === "tablet" ? 2 : colCount);
 
+  const isCardSelected = (index: number) =>
+    selectedSubItem?.componentId === component.id && selectedSubItem.itemIndex === index;
+
+  function saveHeading(value: string) {
+    onPatch?.({ props: { heading: value } });
+  }
+
+  function saveItemField(index: number, field: keyof TestimonialItem, value: string | number) {
+    const next = items.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    );
+    onPatch?.({ props: { items: next } });
+  }
+
   return (
-    <div style={base} className="w-full py-6">
-      {props.heading && (
-        <h2
+    <div className="w-full py-6" style={toReactStyle(component.styles)}>
+      {heading && (
+        <InlineText
+          componentId={component.id}
+          textKey="testimonial.heading"
+          textLabel="Testimonial heading"
+          as="h2"
+          value={heading}
+          onSave={saveHeading}
           className="mb-8 text-center text-2xl font-extrabold sm:text-3xl"
-          style={{ color: base.color || "#0B1D40" }}
-        >
-          {props.heading}
-        </h2>
+          style={getTargetTextStyles(component, "testimonial.heading", textStyle)}
+        />
       )}
 
       <div
@@ -67,10 +103,27 @@ export default function TestimonialComponent({
           maxWidth: 960,
         }}
       >
-        {props.items.map((item, i) => (
+        {items.map((item, i) => (
           <div
             key={i}
-            className="flex flex-col rounded-2xl border border-[#e6edf5] bg-white p-6 shadow-[0_4px_16px_rgba(15,35,75,0.06)] transition-all duration-200 hover:shadow-[0_8px_30px_rgba(15,35,75,0.12)] hover:-translate-y-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              selectSubItem({
+                componentId: component.id,
+                itemIndex: i,
+                element: "testimonial",
+              });
+            }}
+            className={`flex flex-col cursor-pointer transition-all duration-200 hover:shadow-[0_8px_30px_rgba(15,35,75,0.12)] hover:-translate-y-1 ${
+              isCardSelected(i) ? "ring-2 ring-violet-500 ring-offset-2" : ""
+            }`}
+            style={getItemStyle(item.style, {
+              backgroundColor: "#ffffff",
+              borderRadius: "16px",
+              border: "1px solid #e6edf5",
+              padding: "24px",
+              boxShadow: "0 4px 16px rgba(15,35,75,0.06)",
+            })}
           >
             {/* Stars */}
             {item.rating && (
@@ -84,9 +137,20 @@ export default function TestimonialComponent({
               </div>
             )}
 
-            <p className="flex-1 text-[15px] font-medium italic leading-relaxed text-[#566583]">
-              &ldquo;{item.quote}&rdquo;
-            </p>
+            <InlineText
+              componentId={component.id}
+              textKey={`testimonial.${i}.quote`}
+              textLabel={`Testimonial ${i + 1} quote`}
+              as="p"
+              value={`\u201c${item.quote}\u201d`}
+              onSave={(v) => {
+                // Strip smart quotes on save
+                const clean = v.replace(/[\u201c\u201d""]/g, "").trim();
+                saveItemField(i, "quote", clean);
+              }}
+              className="flex-1 text-[15px] font-medium italic leading-relaxed text-[#566583]"
+              style={getTargetTextStyles(component, `testimonial.${i}.quote`, { color: "#566583" })}
+            />
 
             <div className="mt-5 flex items-center gap-3 border-t border-[#f0f3f8] pt-4">
               {/* Avatar */}
@@ -94,8 +158,26 @@ export default function TestimonialComponent({
                 {item.name.charAt(0)}
               </div>
               <div>
-                <p className="text-sm font-bold text-[#0B1D40]">{item.name}</p>
-                <p className="text-xs font-medium text-[#94a3b8]">{item.role}</p>
+                <InlineText
+                  componentId={component.id}
+                  textKey={`testimonial.${i}.name`}
+                  textLabel={`Testimonial ${i + 1} author`}
+                  as="p"
+                  value={item.name}
+                  onSave={(v) => saveItemField(i, "name", v)}
+                  className="text-sm font-bold text-[#0B1D40]"
+                  style={getTargetTextStyles(component, `testimonial.${i}.name`, { color: "#0B1D40" })}
+                />
+                <InlineText
+                  componentId={component.id}
+                  textKey={`testimonial.${i}.role`}
+                  textLabel={`Testimonial ${i + 1} role`}
+                  as="p"
+                  value={item.role}
+                  onSave={(v) => saveItemField(i, "role", v)}
+                  className="text-xs font-medium text-[#94a3b8]"
+                  style={getTargetTextStyles(component, `testimonial.${i}.role`, { color: "#94a3b8" })}
+                />
               </div>
             </div>
           </div>
@@ -104,4 +186,3 @@ export default function TestimonialComponent({
     </div>
   );
 }
-

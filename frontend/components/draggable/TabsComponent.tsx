@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { BuilderComponent, TabsProps } from "@/types/builder";
-import { getBaseStyles } from "./componentStyles";
+import type { BuilderComponent, TabsProps, TabItem } from "@/types/builder";
+import { getItemStyle, getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
+import { useBuilderStore } from "@/store/builderStore";
+import InlineText from "@/components/builder/InlineText";
 
 export const tabsDefaults: TabsProps = {
   items: [
@@ -15,6 +17,7 @@ export const tabsDefaults: TabsProps = {
 
 export default function TabsComponent({
   component,
+  onPatch,
 }: {
   component: BuilderComponent;
   children?: React.ReactNode;
@@ -23,9 +26,19 @@ export default function TabsComponent({
   onPatch?: (patch: Partial<BuilderComponent>) => void;
 }) {
   const props = (component.props as unknown as TabsProps) || tabsDefaults;
-  const base = getBaseStyles(component);
   const [active, setActive] = useState(0);
   const variant = props.variant || "underline";
+  const selectSubItem = useBuilderStore((s) => s.selectSubItem);
+  const selectedSubItem = useBuilderStore((s) => s.selectedSubItem);
+  const textStyle = getTextStyles(component.styles);
+
+  const isTabSelected =
+    selectedSubItem?.componentId === component.id && selectedSubItem.itemIndex === active;
+
+  function saveTabField(index: number, field: keyof TabItem, value: string) {
+    const next = props.items.map((it, idx) => (idx === index ? { ...it, [field]: value } : it));
+    onPatch?.({ props: { items: next } });
+  }
 
   const tabClasses: Record<string, (isActive: boolean) => string> = {
     underline: (a: boolean) =>
@@ -42,8 +55,10 @@ export default function TabsComponent({
       }`,
   };
 
+  const activeItem = props.items[active];
+
   return (
-    <div style={base} className="w-full py-4">
+    <div style={toReactStyle(component.styles)} className="w-full py-4">
       {/* Tab header */}
       <div
         className={`flex gap-1 ${
@@ -57,16 +72,49 @@ export default function TabsComponent({
             className={tabClasses[variant]?.(i === active) || tabClasses.underline(i === active)}
             onClick={() => setActive(i)}
           >
-            {item.label}
+            <InlineText
+              componentId={component.id}
+              textKey={`tabs.${i}.label`}
+              textLabel={`Tab ${i + 1} label`}
+              as="span"
+              value={item.label}
+              onSave={(v) => saveTabField(i, "label", v)}
+            />
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div className="mt-5 rounded-xl border border-[#e6edf5] bg-white p-6 shadow-[0_2px_12px_rgba(15,35,75,0.04)]">
-        <p className="text-sm font-medium leading-relaxed text-[#566583]">
-          {props.items[active]?.content}
-        </p>
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          selectSubItem({
+            componentId: component.id,
+            itemIndex: active,
+            element: "tab",
+          });
+        }}
+        className={`mt-5 cursor-pointer rounded-xl transition-all duration-200 ${
+          isTabSelected ? "ring-2 ring-violet-500 ring-offset-2" : ""
+        }`}
+        style={getItemStyle(activeItem?.style, {
+          backgroundColor: "#ffffff",
+          border: "1px solid #e6edf5",
+          padding: "24px",
+          borderRadius: "12px",
+          boxShadow: "0 2px 12px rgba(15,35,75,0.04)",
+        })}
+      >
+        <InlineText
+          componentId={component.id}
+          textKey={`tabs.${active}.content`}
+          textLabel={`Tab ${active + 1} content`}
+          as="p"
+          value={activeItem?.content || ""}
+          onSave={(v) => saveTabField(active, "content", v)}
+          className="text-sm font-medium leading-relaxed text-[#566583]"
+          style={getTargetTextStyles(component, `tabs.${active}.content`, textStyle)}
+        />
       </div>
     </div>
   );

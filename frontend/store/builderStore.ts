@@ -1565,6 +1565,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   components: [],
   selectedComponentId: null,
   selectedTextStyleTarget: null,
+  selectedSubItem: null,
   currentProjectId: null,
   currentProjectName: null,
   isDirty: false,
@@ -1764,8 +1765,42 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       selectedComponentId: selectionId,
       selectedComponentIds: selectionId ? [selectionId] : [],
       selectedTextStyleTarget: null,
+      selectedSubItem: null,
     };
   }),
+  selectSubItem: (sub) => set(() => ({
+    selectedSubItem: sub,
+    selectedTextStyleTarget: null,
+  })),
+  updateSubItemStyle: (componentId, itemIndex, itemsKey, stylePatch) =>
+    set((state) => ({
+      ...captureHistory(state),
+      components: updateNodeById(state.components, componentId, (c) => {
+        const props = (c.props as Record<string, unknown>) ?? {};
+        const rawTarget = props[itemsKey];
+        if (Array.isArray(rawTarget)) {
+          const items = [...rawTarget];
+          if (itemIndex < 0 || itemIndex >= items.length) return c;
+          items[itemIndex] = {
+            ...(items[itemIndex] as Record<string, unknown>),
+            style: { ...(((items[itemIndex] as Record<string, unknown>)?.style as Record<string, unknown>) ?? {}), ...stylePatch },
+          };
+          return { ...c, props: { ...props, [itemsKey]: items } };
+        } else if (rawTarget && typeof rawTarget === "object") {
+          return {
+            ...c,
+            props: {
+              ...props,
+              [itemsKey]: {
+                ...(rawTarget as Record<string, unknown>),
+                style: { ...(((rawTarget as Record<string, unknown>)?.style as Record<string, unknown>) ?? {}), ...stylePatch },
+              },
+            },
+          };
+        }
+        return c;
+      }),
+    })),
   selectTextStyleTarget: (target) => set((state) => {
     const selectionId = state.canvasMode === "freeform"
       ? resolveFreeformSelectionId(state.components, target?.componentId ?? null)

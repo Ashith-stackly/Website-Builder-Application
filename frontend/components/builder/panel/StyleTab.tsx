@@ -96,18 +96,49 @@ export function StyleTab({
   const viewport = useBuilderStore((s) => s.viewport) as Viewport;
   const isResponsive = viewport !== "desktop";
  
+  /* ── Sub-item selection (per-card / per-item editing) ── */
+  const selectedSubItem = useBuilderStore((state) => state.selectedSubItem);
+  const selectSubItem = useBuilderStore((state) => state.selectSubItem);
+  const updateSubItemStyle = useBuilderStore((state) => state.updateSubItemStyle);
+  const subItem =
+    selectedSubItem?.componentId === component.id ? selectedSubItem : null;
+
+  /* ── Resolve sub-item styles if a sub-item is selected ── */
+  const ITEMS_KEY_MAP: Record<string, string> = {
+    features: "items",
+    "pricing-table": "tiers",
+    testimonial: "items",
+    footer: "columns",
+    accordion: "items",
+    tabs: "items",
+    gallery: "items",
+    hero: "media",
+    contact: "items",
+  };
+  const itemsKey = ITEMS_KEY_MAP[component.type] ?? "items";
+  const rawTarget = (component.props as Record<string, unknown>)?.[itemsKey];
+  const subItemData = subItem
+    ? Array.isArray(rawTarget)
+      ? (rawTarget[subItem.itemIndex] as Record<string, unknown>)
+      : (rawTarget as Record<string, unknown>)
+    : null;
+  const subItemStyles: ComponentStyles = (subItemData?.style as ComponentStyles) ?? {};
+
   /* ── Resolve styles for current viewport ── */
   const baseStyles = component.styles;
   const vpOverrides = isResponsive ? (component.responsiveStyles?.[viewport] ?? {}) : {};
   const s: ComponentStyles = isResponsive ? { ...baseStyles, ...vpOverrides } : baseStyles;
  
+  /* ── Effective styles: sub-item overrides section-level ── */
+  const effectiveStyles: ComponentStyles = subItem ? { ...s, ...subItemStyles } : s;
+
   const selectedTextStyleTarget = useBuilderStore((state) => state.selectedTextStyleTarget);
   const selectTextStyleTarget = useBuilderStore((state) => state.selectTextStyleTarget);
   const textTarget =
     selectedTextStyleTarget?.componentId === component.id
       ? selectedTextStyleTarget
       : null;
-  const activeTextStyles = textTarget ? component.textStyles?.[textTarget.key] ?? {} : s;
+  const activeTextStyles = textTarget ? component.textStyles?.[textTarget.key] ?? {} : effectiveStyles;
   const defaultTextColor = component.type === "button" || textTarget?.key.endsWith(".cta") ? "#ffffff" : "#000000";
   const isButtonTarget =
     component.type === "button" ||
@@ -135,8 +166,13 @@ export function StyleTab({
     });
   };
  
-  /** Write a style patch — to responsiveStyles if on a breakpoint, else to base styles */
+  /** Write a style patch — to sub-item, responsiveStyles, or base styles */
   const set = (patch: Partial<ComponentStyles>) => {
+    if (subItem) {
+      // Write to the sub-item's per-item style
+      updateSubItemStyle(component.id, subItem.itemIndex, itemsKey, patch);
+      return;
+    }
     if (isResponsive) {
       // Write only the delta to the viewport override
       onUpdate(component.id, {
@@ -182,6 +218,24 @@ export function StyleTab({
           <span className="text-[11px] font-bold text-amber-800">
             Editing {viewport === "tablet" ? "Tablet" : "Mobile"} overrides
           </span>
+        </div>
+      )}
+ 
+      {/* Sub-item editing banner */}
+      {subItem && (
+        <div className="mx-5 mb-3 mt-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-[11px] font-bold text-violet-800">
+              Editing Item #{subItem.itemIndex + 1}{subItem.element ? ` → ${subItem.element}` : ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => selectSubItem(null)}
+              className="cursor-pointer text-[10px] font-bold text-violet-600 hover:text-violet-800"
+            >
+              Clear
+            </button>
+          </div>
         </div>
       )}
  
@@ -305,14 +359,88 @@ export function StyleTab({
       <Section title="Background" defaultOpen={!isButtonTarget}>
         <div className="flex items-center">
           <ColorSwatch
-            label={component.type === "button" ? "Block Background" : "Background Color"}
-            value={s.backgroundColor || "#ffffff"}
+            label={subItem ? "Item Background" : component.type === "button" ? "Block Background" : "Background Color"}
+            value={effectiveStyles.backgroundColor || "#ffffff"}
             onChange={(v) => set({ backgroundColor: v })}
           />
           <OverrideDot hasOverride={hasOverride("backgroundColor")} onReset={() => resetOverride("backgroundColor")} />
         </div>
       </Section>
- 
+
+      {/* Border & Shadow */}
+      <Section title="Border & Shadow" defaultOpen={Boolean(subItem)}>
+        <div className="space-y-3">
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Border</span>
+              <OverrideDot hasOverride={hasOverride("border")} onReset={() => resetOverride("border")} />
+            </div>
+            <div className="flex gap-1.5 mb-2">
+              {[
+                { label: "None", val: "none" },
+                { label: "Thin", val: "1px solid #dbe3ef" },
+                { label: "Medium", val: "2px solid #dbe3ef" },
+                { label: "Dark", val: "2px solid #0B1D40" },
+              ].map((b) => (
+                <button
+                  key={b.label}
+                  type="button"
+                  onClick={() => set({ border: b.val })}
+                  className={`px-2 py-1 text-[11px] font-bold rounded border transition ${
+                    effectiveStyles.border === b.val
+                      ? "border-[#0B1D40] bg-[#0B1D40] text-white"
+                      : "border-[#dbe3ef] bg-[#f7f9fc] text-[#566583] hover:bg-white"
+                  }`}
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={effectiveStyles.border || ""}
+              onChange={(e) => set({ border: e.target.value })}
+              placeholder="e.g. 1px solid #dbe3ef"
+              className="h-[36px] w-full rounded-lg border border-[#dbe3ef] bg-[#f7f9fc] px-3 text-[12px] font-medium text-[#0B1D40] outline-none transition hover:bg-white focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0">
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Radius</span>
+                <OverrideDot hasOverride={hasOverride("borderRadius")} onReset={() => resetOverride("borderRadius")} />
+              </div>
+              <UnitInput
+                value={effectiveStyles.borderRadius || ""}
+                onChange={(v) => set({ borderRadius: v })}
+                placeholder="8"
+                units={["px", "rem", "%"]}
+                defaultUnit="px"
+                allowAuto={false}
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="block text-[12px] font-bold uppercase tracking-wider text-[#566583]">Shadow</span>
+                <OverrideDot hasOverride={hasOverride("boxShadow")} onReset={() => resetOverride("boxShadow")} />
+              </div>
+              <select
+                value={effectiveStyles.boxShadow || ""}
+                onChange={(e) => set({ boxShadow: e.target.value })}
+                className="h-[38px] w-full appearance-none rounded-lg border border-[#dbe3ef] bg-[#f7f9fc] px-3 text-[12px] font-bold text-[#0B1D40] outline-none transition hover:bg-white focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 cursor-pointer"
+              >
+                <option value="">None</option>
+                <option value="0 1px 3px rgba(0,0,0,0.08)">Small</option>
+                <option value="0 4px 16px rgba(15,35,75,0.08)">Medium</option>
+                <option value="0 10px 30px rgba(15,35,75,0.12)">Large</option>
+                <option value="0 20px 40px rgba(11,29,64,0.18)">Elevated</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </Section>
+
       {/* Spacing */}
       <Section title="Spacing" defaultOpen={false}>
         <div className="grid grid-cols-2 gap-3">
@@ -322,7 +450,7 @@ export function StyleTab({
               <OverrideDot hasOverride={hasOverride("padding")} onReset={() => resetOverride("padding")} />
             </div>
             <UnitInput
-              value={s.padding || ""}
+              value={effectiveStyles.padding || ""}
               onChange={(v) => set({ padding: v })}
               placeholder="16"
               units={["px", "rem", "%", "em"]}
@@ -336,7 +464,7 @@ export function StyleTab({
               <OverrideDot hasOverride={hasOverride("margin")} onReset={() => resetOverride("margin")} />
             </div>
             <UnitInput
-              value={s.margin || ""}
+              value={effectiveStyles.margin || ""}
               onChange={(v) => set({ margin: v })}
               placeholder="0"
               units={["px", "rem", "%", "em"]}
@@ -356,7 +484,7 @@ export function StyleTab({
               <OverrideDot hasOverride={hasOverride("width")} onReset={() => resetOverride("width")} />
             </div>
             <UnitInput
-              value={s.width || ""}
+              value={effectiveStyles.width || ""}
               onChange={(v) => set({ width: v })}
               placeholder="100"
               units={["px", "%", "rem", "vw"]}
@@ -370,7 +498,7 @@ export function StyleTab({
               <OverrideDot hasOverride={hasOverride("height")} onReset={() => resetOverride("height")} />
             </div>
             <UnitInput
-              value={s.height || ""}
+              value={effectiveStyles.height || ""}
               onChange={(v) => set({ height: v })}
               placeholder="auto"
               units={["px", "%", "rem", "vh"]}
@@ -385,7 +513,7 @@ export function StyleTab({
             <OverrideDot hasOverride={hasOverride("borderRadius")} onReset={() => resetOverride("borderRadius")} />
           </div>
           <UnitInput
-            value={s.borderRadius || ""}
+            value={effectiveStyles.borderRadius || ""}
             onChange={(v) => set({ borderRadius: v })}
             placeholder="8"
             units={["px", "rem", "%"]}

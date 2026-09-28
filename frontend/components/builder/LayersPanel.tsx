@@ -49,7 +49,7 @@ import {
   X,
 } from "lucide-react";
 import { useBuilderStore } from "@/store/builderStore";
-import type { BuilderComponent, ComponentType } from "@/types/builder";
+import type { BuilderComponent, ComponentType, SubItemSelection } from "@/types/builder";
  
 /**
  * This metadata intentionally lives in the generic `props` bag so it is
@@ -103,11 +103,194 @@ type LayerEntry = {
   hasVisibleChildren: boolean;
 };
  
+function makeSubNode(
+  id: string,
+  type: ComponentType,
+  label: string,
+  extraProps: Record<string, unknown>,
+  children: BuilderComponent[] = [],
+): BuilderComponent {
+  return {
+    id,
+    type,
+    content: label,
+    order: 0,
+    styles: {},
+    children,
+    props: { [LAYER_NAME_PROP]: label, ...extraProps },
+  };
+}
+
 function childrenOf(component: BuilderComponent): BuilderComponent[] {
-  // Imported legacy data is normalized before use in the store, but this
-  // defensive fallback keeps the navigation panel resilient while a project
-  // is loading.
-  return component.children ?? [];
+  if (component.children && component.children.length > 0) {
+    return component.children;
+  }
+
+  if (component.type === "features") {
+    const items = Array.isArray(component.props?.items)
+      ? (component.props.items as Array<Record<string, unknown>>)
+      : [];
+    return items.map((item, idx) => {
+      const cardId = `${component.id}:item:${idx}`;
+      const cardTitle = typeof item.title === "string" && item.title ? item.title : `Feature ${idx + 1}`;
+      return makeSubNode(
+        cardId,
+        "feature-item",
+        `Feature ${idx + 1}`,
+        { __subItem: { componentId: component.id, itemIndex: idx, element: "card" } },
+        [
+          makeSubNode(`${cardId}:icon`, "icon", "Badge / Number", {
+            __textTarget: { componentId: component.id, key: `features.${idx}.icon`, label: `Feature ${idx + 1} badge` },
+          }),
+          makeSubNode(`${cardId}:title`, "heading", cardTitle, {
+            __textTarget: { componentId: component.id, key: `features.${idx}.title`, label: `Feature ${idx + 1} title` },
+          }),
+          makeSubNode(`${cardId}:desc`, "text", "Description", {
+            __textTarget: { componentId: component.id, key: `features.${idx}.description`, label: `Feature ${idx + 1} description` },
+          }),
+        ],
+      );
+    });
+  }
+
+  if (component.type === "pricing-table") {
+    const tiers = Array.isArray(component.props?.tiers)
+      ? (component.props.tiers as Array<Record<string, unknown>>)
+      : [];
+    return tiers.map((tier, idx) => {
+      const tierId = `${component.id}:tier:${idx}`;
+      const tierName = typeof tier.name === "string" && tier.name ? tier.name : `Tier ${idx + 1}`;
+      return makeSubNode(
+        tierId,
+        "pricing-table",
+        tierName,
+        { __subItem: { componentId: component.id, itemIndex: idx, element: "tier" } },
+        [
+          makeSubNode(`${tierId}:name`, "heading", "Plan Name", {
+            __textTarget: { componentId: component.id, key: `pricing.tier.${idx}.name`, label: `Tier ${idx + 1} name` },
+          }),
+          makeSubNode(`${tierId}:price`, "text", "Price", {
+            __textTarget: { componentId: component.id, key: `pricing.tier.${idx}.price`, label: `Tier ${idx + 1} price` },
+          }),
+          makeSubNode(`${tierId}:cta`, "button", "Button", {
+            __textTarget: { componentId: component.id, key: `pricing.tier.${idx}.cta`, label: `Tier ${idx + 1} button` },
+          }),
+        ],
+      );
+    });
+  }
+
+  if (component.type === "testimonial") {
+    const items = Array.isArray(component.props?.items)
+      ? (component.props.items as Array<Record<string, unknown>>)
+      : [];
+    return items.map((item, idx) => {
+      const itemId = `${component.id}:test:${idx}`;
+      const authorName = typeof item.name === "string" && item.name ? item.name : `Review ${idx + 1}`;
+      return makeSubNode(
+        itemId,
+        "testimonial",
+        authorName,
+        { __subItem: { componentId: component.id, itemIndex: idx, element: "testimonial" } },
+        [
+          makeSubNode(`${itemId}:quote`, "text", "Quote", {
+            __textTarget: { componentId: component.id, key: `testimonial.${idx}.quote`, label: `Testimonial ${idx + 1} quote` },
+          }),
+          makeSubNode(`${itemId}:name`, "heading", "Author", {
+            __textTarget: { componentId: component.id, key: `testimonial.${idx}.name`, label: `Testimonial ${idx + 1} author` },
+          }),
+        ],
+      );
+    });
+  }
+
+  if (component.type === "accordion") {
+    const items = Array.isArray(component.props?.items)
+      ? (component.props.items as Array<Record<string, unknown>>)
+      : [];
+    return items.map((item, idx) => {
+      const itemId = `${component.id}:acc:${idx}`;
+      const title = typeof item.title === "string" && item.title ? item.title : `Item ${idx + 1}`;
+      return makeSubNode(
+        itemId,
+        "accordion",
+        title,
+        { __subItem: { componentId: component.id, itemIndex: idx, element: "item" } },
+        [
+          makeSubNode(`${itemId}:title`, "heading", "Title", {
+            __textTarget: { componentId: component.id, key: `accordion.${idx}.title`, label: `Accordion ${idx + 1} title` },
+          }),
+          makeSubNode(`${itemId}:content`, "text", "Content", {
+            __textTarget: { componentId: component.id, key: `accordion.${idx}.content`, label: `Accordion ${idx + 1} content` },
+          }),
+        ],
+      );
+    });
+  }
+
+  if (component.type === "tabs") {
+    const items = Array.isArray(component.props?.items)
+      ? (component.props.items as Array<Record<string, unknown>>)
+      : [];
+    return items.map((item, idx) => {
+      const itemId = `${component.id}:tab:${idx}`;
+      const label = typeof item.label === "string" && item.label ? item.label : `Tab ${idx + 1}`;
+      return makeSubNode(
+        itemId,
+        "tabs",
+        label,
+        { __subItem: { componentId: component.id, itemIndex: idx, element: "tab" } },
+        [
+          makeSubNode(`${itemId}:label`, "heading", "Label", {
+            __textTarget: { componentId: component.id, key: `tabs.${idx}.label`, label: `Tab ${idx + 1} label` },
+          }),
+          makeSubNode(`${itemId}:content`, "text", "Content", {
+            __textTarget: { componentId: component.id, key: `tabs.${idx}.content`, label: `Tab ${idx + 1} content` },
+          }),
+        ],
+      );
+    });
+  }
+
+  if (component.type === "footer") {
+    const cols = Array.isArray(component.props?.columns)
+      ? (component.props.columns as Array<Record<string, unknown>>)
+      : [];
+    return cols.map((col, idx) => {
+      const colId = `${component.id}:col:${idx}`;
+      const title = typeof col.title === "string" && col.title ? col.title : `Column ${idx + 1}`;
+      return makeSubNode(
+        colId,
+        "footer",
+        title,
+        { __subItem: { componentId: component.id, itemIndex: idx, element: "column" } },
+        [
+          makeSubNode(`${colId}:title`, "heading", "Title", {
+            __textTarget: { componentId: component.id, key: `footer.column.${idx}.title`, label: `Footer Column ${idx + 1} title` },
+          }),
+        ],
+      );
+    });
+  }
+
+  if (component.type === "hero") {
+    return [
+      makeSubNode(`${component.id}:title`, "heading", "Headline", {
+        __textTarget: { componentId: component.id, key: "hero.title", label: "Hero title" },
+      }),
+      makeSubNode(`${component.id}:desc`, "text", "Description", {
+        __textTarget: { componentId: component.id, key: "hero.description", label: "Hero description" },
+      }),
+      makeSubNode(`${component.id}:cta`, "button", "Button", {
+        __textTarget: { componentId: component.id, key: "hero.cta", label: "Hero button" },
+      }),
+      makeSubNode(`${component.id}:media`, "image", "Visual / Media", {
+        __subItem: { componentId: component.id, itemIndex: 0, element: "visual" },
+      }),
+    ];
+  }
+
+  return [];
 }
  
 function typeLabel(type: ComponentType): string {
@@ -259,7 +442,7 @@ const LayerRow = memo(function LayerRow({
   isExpanded: boolean;
   isRenaming: boolean;
   renameValue: string;
-  onSelect: (event: React.MouseEvent, id: string) => void;
+  onSelect: (event: React.MouseEvent, entry: LayerEntry) => void;
   onToggleExpand: (id: string) => void;
   onStartRename: (component: BuilderComponent) => void;
   onRenameChange: (value: string) => void;
@@ -281,7 +464,7 @@ const LayerRow = memo(function LayerRow({
   const label = getLayerName(component);
   const isLocked = Boolean(component.locked);
   const isHidden = Boolean(component.hidden);
- 
+
   return (
     <div
       ref={(node) => registerRowRef(component.id, node)}
@@ -298,7 +481,7 @@ const LayerRow = memo(function LayerRow({
             : "font-medium text-[#566583] hover:bg-black/[0.04] hover:text-[#0B1D40]"
       }`}
       style={{ paddingLeft: `${8 + depth * 14}px` }}
-      onClick={(event) => onSelect(event, component.id)}
+      onClick={(event) => onSelect(event, entry)}
       onKeyDown={(event) => onRowKeyDown(event, entry)}
     >
       <button
@@ -348,7 +531,7 @@ const LayerRow = memo(function LayerRow({
         </span>
       )}
  
-      {!isRenaming && (
+      {!isRenaming && !component.props?.__subItem && !component.props?.__textTarget && (
         <div className="flex shrink-0 items-center opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <IconButton label="Rename layer" onClick={() => onStartRename(component)}>
             <Pencil className="h-3.5 w-3.5" />
@@ -389,6 +572,10 @@ export default function LayersPanel() {
   const components = useBuilderStore((s) => s.components);
   const selectedComponentId = useBuilderStore((s) => s.selectedComponentId);
   const selectedComponentIds = useBuilderStore((s) => s.selectedComponentIds);
+  const selectedSubItem = useBuilderStore((s) => s.selectedSubItem);
+  const selectSubItem = useBuilderStore((s) => s.selectSubItem);
+  const selectedTextStyleTarget = useBuilderStore((s) => s.selectedTextStyleTarget);
+  const selectTextStyleTarget = useBuilderStore((s) => s.selectTextStyleTarget);
   const canvasMode = useBuilderStore((s) => s.canvasMode);
   const selectComponent = useBuilderStore((s) => s.selectComponent);
   const toggleSelectComponent = useBuilderStore((s) => s.toggleSelectComponent);
@@ -491,6 +678,7 @@ export default function LayersPanel() {
   const collapseAll = useCallback(() => setCollapsedIds(new Set([...componentIds])), [componentIds]);
  
   const startRename = useCallback((component: BuilderComponent) => {
+    if (component.props?.__subItem || component.props?.__textTarget) return;
     renameSettledRef.current = false;
     setRenamingId(component.id);
     setRenameValue(getLayerName(component));
@@ -524,25 +712,49 @@ export default function LayersPanel() {
     setRenameValue("");
   }, [renameValue, updateComponent]);
  
-  const handleSelect = useCallback((event: React.MouseEvent, id: string) => {
-    if (event.shiftKey) {
-      selectRange(id);
+  const selectEntry = useCallback((entry: LayerEntry, focus = false) => {
+    const subItem = entry.component.props?.__subItem as SubItemSelection | undefined;
+    if (subItem) {
+      selectionAnchorRef.current = entry.component.id;
+      selectComponent(subItem.componentId);
+      selectSubItem(subItem);
+      if (focus) focusEntry(entry.component.id);
       return;
     }
-    if (event.metaKey || event.ctrlKey) {
-      toggleSelection(id);
+    const textTarget = entry.component.props?.__textTarget as { componentId: string; key: string; label: string } | undefined;
+    if (textTarget) {
+      selectionAnchorRef.current = entry.component.id;
+      selectComponent(textTarget.componentId);
+      selectTextStyleTarget(textTarget);
+      if (focus) focusEntry(entry.component.id);
       return;
     }
-    selectSingle(id);
-  }, [selectRange, selectSingle, toggleSelection]);
+    selectSingle(entry.component.id, focus);
+  }, [focusEntry, selectComponent, selectSubItem, selectTextStyleTarget, selectSingle]);
+
+  const handleSelect = useCallback((event: React.MouseEvent, entry: LayerEntry) => {
+    const isSynthetic = Boolean(entry.component.props?.__subItem || entry.component.props?.__textTarget);
+    if (!isSynthetic) {
+      if (event.shiftKey) {
+        selectRange(entry.component.id);
+        return;
+      }
+      if (event.metaKey || event.ctrlKey) {
+        toggleSelection(entry.component.id);
+        return;
+      }
+    }
+    selectEntry(entry);
+  }, [selectRange, toggleSelection, selectEntry]);
  
   const handleDuplicateSelection = useCallback(() => {
     duplicateSelectedComponents();
   }, [duplicateSelectedComponents]);
  
   const handleDeleteSelection = useCallback(() => {
+    if (selectedSubItem || selectedTextStyleTarget) return;
     deleteSelectedComponents();
-  }, [deleteSelectedComponents]);
+  }, [deleteSelectedComponents, selectedSubItem, selectedTextStyleTarget]);
  
   const handleTreeKeyDown = useCallback((event: ReactKeyboardEvent<HTMLDivElement>, entry: LayerEntry) => {
     const currentIndex = visibleEntries.findIndex((item) => item.component.id === entry.component.id);
@@ -610,8 +822,15 @@ export default function LayersPanel() {
  
     if (event.key === " " || event.key === "Enter") {
       stop();
-      if (event.key === " ") toggleSelection(current.component.id, true);
-      else selectSingle(current.component.id, true);
+      if (event.key === " ") {
+        if (!current.component.props?.__subItem && !current.component.props?.__textTarget) {
+          toggleSelection(current.component.id, true);
+        } else {
+          selectEntry(current, true);
+        }
+      } else {
+        selectEntry(current, true);
+      }
       return;
     }
  
@@ -800,13 +1019,37 @@ export default function LayersPanel() {
         <div className="px-2 py-2" role="tree" aria-label="Page layers" aria-multiselectable="true">
           {visibleEntries.map((entry) => {
             const id = entry.component.id;
+            const subItem = entry.component.props?.__subItem as SubItemSelection | undefined;
+            const textTarget = entry.component.props?.__textTarget as { componentId: string; key: string } | undefined;
+
+            const isPrimary = (() => {
+              if (subItem) {
+                return (
+                  selectedComponentId === subItem.componentId &&
+                  selectedSubItem?.componentId === subItem.componentId &&
+                  selectedSubItem?.itemIndex === subItem.itemIndex &&
+                  selectedSubItem?.element === subItem.element
+                );
+              }
+              if (textTarget) {
+                return (
+                  selectedComponentId === textTarget.componentId &&
+                  selectedTextStyleTarget?.componentId === textTarget.componentId &&
+                  selectedTextStyleTarget?.key === textTarget.key
+                );
+              }
+              return selectedComponentId === id && !selectedSubItem && !selectedTextStyleTarget;
+            })();
+
+            const isMulti = subItem || textTarget ? isPrimary : selectedIdSet.has(id);
+
             return (
               <LayerRow
                 key={id}
                 entry={entry}
-                isPrimarySelected={selectedComponentId === id}
-                isTabStop={selectedComponentId === id || (!selectedComponentId && visibleEntries[0]?.component.id === id)}
-                isMultiSelected={selectedIdSet.has(id)}
+                isPrimarySelected={isPrimary}
+                isTabStop={isPrimary || (!selectedComponentId && visibleEntries[0]?.component.id === id)}
+                isMultiSelected={isMulti}
                 isExpanded={Boolean(normalisedQuery) || !collapsedIds.has(id)}
                 isRenaming={renamingId === id}
                 renameValue={renamingId === id ? renameValue : ""}

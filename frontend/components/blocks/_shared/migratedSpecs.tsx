@@ -71,7 +71,7 @@ import { ContentField, contentInputClass, TextareaField } from "@/components/bui
 import { DropZone } from "@/components/assets/DropZone";
 import { ImagePicker } from "@/components/assets/ImagePicker";
 import { useAssetStore } from "@/store/assetStore";
-import { escapeHtml } from "@/lib/htmlUtils";
+import { escapeHtml, styleToString } from "@/lib/htmlUtils";
 import { useState, useCallback } from "react";
 
 type ContentProps = { content: string };
@@ -520,34 +520,174 @@ function MapPanel({ data, setProp }: PanelProps<MapProps>) {
 }
 
 function AccordionPanel({ data, setProp }: PanelProps<AccordionProps>) {
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const updateItem = (index: number, field: string, value: string) => {
+    const updated = items.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    );
+    setProp("items", updated);
+  };
+
+  const addItem = () => {
+    setProp("items", [...items, { title: "New Question", content: "Answer goes here." }]);
+  };
+
+  const removeItem = (index: number) => {
+    setProp("items", items.filter((_, i) => i !== index));
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <label className="flex items-center gap-2 text-[12px] font-bold text-[#0B1D40]">
-        <input checked={Boolean(data.allowMultiple)} onChange={(event) => setProp("allowMultiple", event.target.checked)} type="checkbox" />
+        <input checked={Boolean(data.allowMultiple)} onChange={(event) => setProp("allowMultiple", event.target.checked)} type="checkbox" className="accent-[#0B1D40]" />
         Allow multiple open items
       </label>
-      <JsonArrayField label="Items" value={data.items} onChange={(value) => setProp("items", value)} />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold text-[#0B1D40]">Items ({items.length})</span>
+          <button
+            type="button"
+            onClick={addItem}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#0B1D40] px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-[#152B52]"
+          >
+            <Plus className="h-3 w-3" />
+            Add Item
+          </button>
+        </div>
+
+        {items.length === 0 ? (
+          <p className="py-4 text-center text-xs italic text-gray-500">No accordion items added yet.</p>
+        ) : (
+          items.map((item, index) => (
+            <div key={index} className="space-y-2 rounded-xl border border-[#dbe3ef] bg-white p-3 shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                <span className="text-xs font-bold text-[#0B1D40]">Item #{index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => removeItem(index)}
+                  className="cursor-pointer rounded p-1 text-red-500 transition hover:bg-red-50"
+                  title="Remove item"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Title</label>
+                <input
+                  className={`${contentInputClass} text-[12px] py-1.5`}
+                  type="text"
+                  value={item.title || ""}
+                  onChange={(e) => updateItem(index, "title", e.target.value)}
+                  placeholder="e.g. How does it work?"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Content</label>
+                <textarea
+                  className={`${contentInputClass} min-h-[60px] resize-none text-[12px]`}
+                  value={item.content || ""}
+                  onChange={(e) => updateItem(index, "content", e.target.value)}
+                  placeholder="Answer text..."
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
 
 function TabsPanel({ data, setProp }: PanelProps<TabsProps>) {
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const updateItem = (index: number, field: string, value: string) => {
+    const updated = items.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    );
+    setProp("items", updated);
+  };
+
+  const addItem = () => {
+    setProp("items", [...items, { label: "New Tab", content: "Tab content goes here." }]);
+  };
+
+  const removeItem = (index: number) => {
+    setProp("items", items.filter((_, i) => i !== index));
+  };
+
   return (
-    <div className="space-y-3">
-      <span className="block text-[13px] font-bold text-[#0B1D40]">Variant</span>
-      <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-[#0B1D40]">
-        {(["underline", "pills", "boxed"] as const).map((variant) => (
-          <button
-            key={variant}
-            type="button"
-            className={`cursor-pointer py-2 text-xs font-bold capitalize transition ${data.variant === variant ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
-            onClick={() => setProp("variant", variant)}
-          >
-            {variant}
-          </button>
-        ))}
+    <div className="space-y-4">
+      <div>
+        <span className="block text-[13px] font-bold text-[#0B1D40]">Variant</span>
+        <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-xl border border-[#0B1D40]">
+          {(["underline", "pills", "boxed"] as const).map((variant) => (
+            <button
+              key={variant}
+              type="button"
+              className={`cursor-pointer py-2 text-xs font-bold capitalize transition ${data.variant === variant ? "bg-[#0B1D40] text-white" : "text-[#0B1D40] hover:bg-black/5"}`}
+              onClick={() => setProp("variant", variant)}
+            >
+              {variant}
+            </button>
+          ))}
+        </div>
       </div>
-      <JsonArrayField<TabItem[]> label="Tabs" value={data.items} onChange={(value) => setProp("items", value)} />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold text-[#0B1D40]">Tabs ({items.length})</span>
+          <button
+            type="button"
+            onClick={addItem}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#0B1D40] px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-[#152B52]"
+          >
+            <Plus className="h-3 w-3" />
+            Add Tab
+          </button>
+        </div>
+
+        {items.length === 0 ? (
+          <p className="py-4 text-center text-xs italic text-gray-500">No tabs added yet.</p>
+        ) : (
+          items.map((item, index) => (
+            <div key={index} className="space-y-2 rounded-xl border border-[#dbe3ef] bg-white p-3 shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                <span className="text-xs font-bold text-[#0B1D40]">Tab #{index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => removeItem(index)}
+                  className="cursor-pointer rounded p-1 text-red-500 transition hover:bg-red-50"
+                  title="Remove tab"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Label</label>
+                <input
+                  className={`${contentInputClass} text-[12px] py-1.5`}
+                  type="text"
+                  value={item.label || ""}
+                  onChange={(e) => updateItem(index, "label", e.target.value)}
+                  placeholder="Tab label"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Content</label>
+                <textarea
+                  className={`${contentInputClass} min-h-[60px] resize-none text-[12px]`}
+                  value={item.content || ""}
+                  onChange={(e) => updateItem(index, "content", e.target.value)}
+                  placeholder="Tab content..."
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -605,10 +745,176 @@ function CountdownPanel({ data, setProp }: PanelProps<CountdownProps>) {
 }
 
 function PricingTablePanel({ data, setProp }: PanelProps<PricingTableProps>) {
+  const tiers = Array.isArray(data.tiers) ? data.tiers : [];
+
+  const updateTier = (index: number, field: string, value: unknown) => {
+    const updated = tiers.map((tier, i) =>
+      i === index ? { ...tier, [field]: value } : tier
+    );
+    setProp("tiers", updated);
+  };
+
+  const addTier = () => {
+    const newTier = {
+      name: "New Plan",
+      price: "$0",
+      period: "/month",
+      features: ["Feature 1", "Feature 2"],
+      cta: "Get Started",
+      highlighted: false,
+    };
+    setProp("tiers", [...tiers, newTier]);
+  };
+
+  const removeTier = (index: number) => {
+    setProp("tiers", tiers.filter((_, i) => i !== index));
+  };
+
+  const updateFeature = (tierIndex: number, featureIndex: number, value: string) => {
+    const tier = tiers[tierIndex];
+    const features = [...tier.features];
+    features[featureIndex] = value;
+    updateTier(tierIndex, "features", features);
+  };
+
+  const addFeature = (tierIndex: number) => {
+    const tier = tiers[tierIndex];
+    updateTier(tierIndex, "features", [...tier.features, "New feature"]);
+  };
+
+  const removeFeature = (tierIndex: number, featureIndex: number) => {
+    const tier = tiers[tierIndex];
+    updateTier(tierIndex, "features", tier.features.filter((_, i) => i !== featureIndex));
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <ContentField label="Heading" value={data.heading ?? ""} onChange={(value) => setProp("heading", value)} />
-      <JsonArrayField label="Tiers" value={data.tiers} onChange={(value) => setProp("tiers", value)} />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold text-[#0B1D40]">Pricing Tiers ({tiers.length})</span>
+          <button
+            type="button"
+            onClick={addTier}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#0B1D40] px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-[#152B52]"
+          >
+            <Plus className="h-3 w-3" />
+            Add Tier
+          </button>
+        </div>
+
+        {tiers.length === 0 ? (
+          <p className="py-4 text-center text-xs italic text-gray-500">No pricing tiers added yet.</p>
+        ) : (
+          tiers.map((tier, index) => (
+            <div key={index} className="space-y-3 rounded-xl border border-[#dbe3ef] bg-white p-3.5 shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                <span className="text-xs font-bold text-[#0B1D40]">Tier #{index + 1}</span>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-[#566583]">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(tier.highlighted)}
+                      onChange={(e) => updateTier(index, "highlighted", e.target.checked)}
+                      className="accent-[#0B1D40]"
+                    />
+                    Highlight
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => removeTier(index)}
+                    className="cursor-pointer rounded p-1 text-red-500 transition hover:bg-red-50 hover:text-red-700"
+                    title="Remove tier"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Plan Name</label>
+                  <input
+                    className={`${contentInputClass} text-[12px] py-1.5`}
+                    type="text"
+                    value={tier.name || ""}
+                    onChange={(e) => updateTier(index, "name", e.target.value)}
+                    placeholder="e.g. Professional"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">CTA Label</label>
+                  <input
+                    className={`${contentInputClass} text-[12px] py-1.5`}
+                    type="text"
+                    value={tier.cta || ""}
+                    onChange={(e) => updateTier(index, "cta", e.target.value)}
+                    placeholder="e.g. Get Started"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Price</label>
+                  <input
+                    className={`${contentInputClass} text-[12px] py-1.5`}
+                    type="text"
+                    value={tier.price || ""}
+                    onChange={(e) => updateTier(index, "price", e.target.value)}
+                    placeholder="e.g. $29"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Period</label>
+                  <input
+                    className={`${contentInputClass} text-[12px] py-1.5`}
+                    type="text"
+                    value={tier.period || ""}
+                    onChange={(e) => updateTier(index, "period", e.target.value)}
+                    placeholder="e.g. /month"
+                  />
+                </div>
+              </div>
+
+              {/* Features list */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-[#0B1D40]">Features</label>
+                  <button
+                    type="button"
+                    onClick={() => addFeature(index)}
+                    className="cursor-pointer text-[10px] font-bold text-blue-600 hover:text-blue-800"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {tier.features.map((feature, fi) => (
+                    <div key={fi} className="flex items-center gap-1.5">
+                      <input
+                        className={`${contentInputClass} flex-1 text-[11px] py-1`}
+                        type="text"
+                        value={feature}
+                        onChange={(e) => updateFeature(index, fi, e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeFeature(index, fi)}
+                        className="cursor-pointer rounded p-0.5 text-red-400 transition hover:text-red-600"
+                        title="Remove feature"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -728,25 +1034,289 @@ function TestimonialPanel({ data, setProp }: PanelProps<TestimonialProps>) {
 }
 
 function FooterPanel({ data, setProp }: PanelProps<FooterProps>) {
+  const columns = Array.isArray(data.columns) ? data.columns : [];
+  const socials = Array.isArray(data.socials) ? data.socials : [];
+
+  const updateColumn = (index: number, field: string, value: unknown) => {
+    const updated = columns.map((col, i) =>
+      i === index ? { ...col, [field]: value } : col
+    );
+    setProp("columns", updated);
+  };
+
+  const addColumn = () => {
+    setProp("columns", [...columns, { title: "Links", links: [{ label: "Link", href: "#" }] }]);
+  };
+
+  const removeColumn = (index: number) => {
+    setProp("columns", columns.filter((_, i) => i !== index));
+  };
+
+  const updateColumnLink = (colIdx: number, linkIdx: number, field: string, value: string) => {
+    const col = columns[colIdx];
+    const links = col.links.map((link, i) =>
+      i === linkIdx ? { ...link, [field]: value } : link
+    );
+    updateColumn(colIdx, "links", links);
+  };
+
+  const addColumnLink = (colIdx: number) => {
+    const col = columns[colIdx];
+    updateColumn(colIdx, "links", [...col.links, { label: "New Link", href: "#" }]);
+  };
+
+  const removeColumnLink = (colIdx: number, linkIdx: number) => {
+    const col = columns[colIdx];
+    updateColumn(colIdx, "links", col.links.filter((_, i) => i !== linkIdx));
+  };
+
+  const updateSocial = (index: number, field: string, value: string) => {
+    const updated = socials.map((s, i) =>
+      i === index ? { ...s, [field]: value } : s
+    );
+    setProp("socials", updated);
+  };
+
+  const addSocial = () => {
+    setProp("socials", [...socials, { platform: "website", url: "#" }]);
+  };
+
+  const removeSocial = (index: number) => {
+    setProp("socials", socials.filter((_, i) => i !== index));
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <ContentField label="Brand" value={data.brand} onChange={(value) => setProp("brand", value)} />
       <ContentField label="Tagline" value={data.tagline ?? ""} onChange={(value) => setProp("tagline", value)} />
       <ContentField label="Copyright" value={data.copyright ?? ""} onChange={(value) => setProp("copyright", value)} />
-      <JsonArrayField label="Columns" value={data.columns} onChange={(value) => setProp("columns", value)} />
-      <JsonArrayField label="Socials" value={data.socials ?? []} onChange={(value) => setProp("socials", value)} />
+
+      {/* Columns */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold text-[#0B1D40]">Link Columns ({columns.length})</span>
+          <button
+            type="button"
+            onClick={addColumn}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#0B1D40] px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-[#152B52]"
+          >
+            <Plus className="h-3 w-3" />
+            Add Column
+          </button>
+        </div>
+        {columns.map((col, ci) => (
+          <div key={ci} className="space-y-2 rounded-xl border border-[#dbe3ef] bg-white p-3 shadow-sm">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
+              <input
+                className={`${contentInputClass} flex-1 text-[12px] py-1 font-bold`}
+                type="text"
+                value={col.title}
+                onChange={(e) => updateColumn(ci, "title", e.target.value)}
+                placeholder="Column title"
+              />
+              <button
+                type="button"
+                onClick={() => removeColumn(ci)}
+                className="ml-2 cursor-pointer rounded p-1 text-red-500 transition hover:bg-red-50"
+                title="Remove column"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {col.links.map((link, li) => (
+              <div key={li} className="flex items-center gap-1.5">
+                <input
+                  className={`${contentInputClass} flex-1 text-[11px] py-1`}
+                  type="text"
+                  value={link.label}
+                  onChange={(e) => updateColumnLink(ci, li, "label", e.target.value)}
+                  placeholder="Label"
+                />
+                <input
+                  className={`${contentInputClass} w-[80px] text-[11px] py-1`}
+                  type="text"
+                  value={link.href}
+                  onChange={(e) => updateColumnLink(ci, li, "href", e.target.value)}
+                  placeholder="URL"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeColumnLink(ci, li)}
+                  className="cursor-pointer rounded p-0.5 text-red-400 hover:text-red-600"
+                >
+                  <Minus className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => addColumnLink(ci)}
+              className="cursor-pointer text-[10px] font-bold text-blue-600 hover:text-blue-800"
+            >
+              + Add Link
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Socials */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold text-[#0B1D40]">Social Links ({socials.length})</span>
+          <button
+            type="button"
+            onClick={addSocial}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#0B1D40] px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-[#152B52]"
+          >
+            <Plus className="h-3 w-3" />
+            Add
+          </button>
+        </div>
+        {socials.map((s, si) => (
+          <div key={si} className="flex items-center gap-1.5">
+            <select
+              className={`${contentInputClass} w-[90px] cursor-pointer bg-white text-[11px] py-1`}
+              value={s.platform}
+              onChange={(e) => updateSocial(si, "platform", e.target.value)}
+            >
+              {["twitter", "linkedin", "github", "facebook", "instagram", "youtube", "website"].map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <input
+              className={`${contentInputClass} flex-1 text-[11px] py-1`}
+              type="text"
+              value={s.url}
+              onChange={(e) => updateSocial(si, "url", e.target.value)}
+              placeholder="URL"
+            />
+            <button
+              type="button"
+              onClick={() => removeSocial(si)}
+              className="cursor-pointer rounded p-0.5 text-red-400 hover:text-red-600"
+            >
+              <Minus className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function FormPanel({ data, setProp }: PanelProps<FormProps>) {
+  const fields = Array.isArray(data.fields) ? data.fields : [];
+
+  const updateField = (index: number, key: string, value: unknown) => {
+    const updated = fields.map((f, i) =>
+      i === index ? { ...f, [key]: value } : f
+    );
+    setProp("fields", updated);
+  };
+
+  const addField = () => {
+    setProp("fields", [...fields, {
+      name: `field_${fields.length + 1}`,
+      type: "text" as const,
+      label: "New Field",
+      placeholder: "",
+      required: false,
+    }]);
+  };
+
+  const removeField = (index: number) => {
+    setProp("fields", fields.filter((_, i) => i !== index));
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <ContentField label="Heading" value={data.heading ?? ""} onChange={(value) => setProp("heading", value)} />
       <ContentField label="Description" value={data.description ?? ""} onChange={(value) => setProp("description", value)} />
       <ContentField label="Submit Label" value={data.submitLabel} onChange={(value) => setProp("submitLabel", value)} />
       <ContentField label="Success Message" value={data.successMessage ?? ""} onChange={(value) => setProp("successMessage", value)} />
-      <JsonArrayField label="Fields" value={data.fields} onChange={(value) => setProp("fields", value)} />
+
+      {/* Form Fields */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold text-[#0B1D40]">Form Fields ({fields.length})</span>
+          <button
+            type="button"
+            onClick={addField}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#0B1D40] px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-[#152B52]"
+          >
+            <Plus className="h-3 w-3" />
+            Add Field
+          </button>
+        </div>
+
+        {fields.length === 0 ? (
+          <p className="py-4 text-center text-xs italic text-gray-500">No form fields added yet.</p>
+        ) : (
+          fields.map((field, index) => (
+            <div key={index} className="space-y-2 rounded-xl border border-[#dbe3ef] bg-white p-3 shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                <span className="text-xs font-bold text-[#0B1D40]">Field #{index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => removeField(index)}
+                  className="cursor-pointer rounded p-1 text-red-500 transition hover:bg-red-50"
+                  title="Remove field"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Label</label>
+                  <input
+                    className={`${contentInputClass} text-[12px] py-1.5`}
+                    type="text"
+                    value={field.label || ""}
+                    onChange={(e) => updateField(index, "label", e.target.value)}
+                    placeholder="e.g. Email Address"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Type</label>
+                  <select
+                    className={`${contentInputClass} cursor-pointer bg-white text-[12px] py-1.5`}
+                    value={field.type}
+                    onChange={(e) => updateField(index, "type", e.target.value)}
+                  >
+                    <option value="text">Text</option>
+                    <option value="email">Email</option>
+                    <option value="tel">Phone</option>
+                    <option value="textarea">Textarea</option>
+                    <option value="select">Select</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-bold text-[#0B1D40]">Placeholder</label>
+                <input
+                  className={`${contentInputClass} text-[12px] py-1.5`}
+                  type="text"
+                  value={field.placeholder || ""}
+                  onChange={(e) => updateField(index, "placeholder", e.target.value)}
+                  placeholder="e.g. Enter your email..."
+                />
+              </div>
+
+              <label className="flex items-center gap-2 text-[11px] font-bold text-[#566583]">
+                <input
+                  type="checkbox"
+                  checked={Boolean(field.required)}
+                  onChange={(e) => updateField(index, "required", e.target.checked)}
+                  className="accent-[#0B1D40]"
+                />
+                Required field
+              </label>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -1035,9 +1605,11 @@ export const accordionSpec: BlockSpec<AccordionProps> = {
   Panel: AccordionPanel,
   exportHtml: (data, styleAttr) => {
     const attr = styleAttr.replace('class="', 'class="stackly-accordion ');
-    const items = data.items.map((item, index) =>
-      `<div class="accordion-item${index === 0 ? ' accordion-item--open' : ''}"><details${index === 0 ? ' open' : ''}><summary class="accordion-summary"><span class="accordion-title">${escapeHtml(item.title)}</span><svg class="accordion-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary><div class="accordion-content">${escapeHtml(item.content)}</div></details></div>`
-    ).join('');
+    const items = data.items.map((item, index) => {
+      const itemStyleStr = styleToString(item.style);
+      const itemStyleAttr = itemStyleStr ? ` style="${escapeHtml(itemStyleStr)}"` : "";
+      return `<div class="accordion-item${index === 0 ? ' accordion-item--open' : ''}"${itemStyleAttr}><details${index === 0 ? ' open' : ''}><summary class="accordion-summary"><span class="accordion-title">${escapeHtml(item.title)}</span><svg class="accordion-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary><div class="accordion-content">${escapeHtml(item.content)}</div></details></div>`;
+    }).join('');
     return `<div${attr}><div class="accordion-list">${items}</div></div>`;
   },
   ai: { description: "Expandable FAQ/content accordion.", exampleOutput: accordionDefaults },
@@ -1052,7 +1624,11 @@ export const tabsSpec: BlockSpec<TabsProps> = {
   read: readTabs,
   Renderer: TabsComponent,
   Panel: TabsPanel,
-  exportHtml: (data, styleAttr) => `<div${styleAttr}>${data.items.map((item) => `<div style="margin-bottom:12px"><h4 style="font-weight:700">${escapeHtml(item.label)}</h4><p style="color:#566583">${escapeHtml(item.content)}</p></div>`).join("")}</div>`,
+  exportHtml: (data, styleAttr) => `<div${styleAttr}>${data.items.map((item) => {
+    const itemStyleStr = styleToString(item.style);
+    const itemStyleAttr = itemStyleStr ? ` style="${escapeHtml(itemStyleStr)}"` : "";
+    return `<div class="tabs-panel"${itemStyleAttr} style="margin-bottom:12px"><h4 style="font-weight:700">${escapeHtml(item.label)}</h4><p style="color:#566583">${escapeHtml(item.content)}</p></div>`;
+  }).join("")}</div>`,
   ai: { description: "Tabbed content panels.", exampleOutput: tabsDefaults },
 };
 
@@ -1112,7 +1688,9 @@ export const pricingTableSpec: BlockSpec<PricingTableProps> = {
       const tierClass = tier.highlighted ? 'pricing-tier pricing-tier--highlighted' : 'pricing-tier';
       const badge = tier.highlighted ? '<div class="pricing-badge">Most Popular</div>' : '';
       const features = tier.features.map((feature) => `<li>${checkSvg}<span>${escapeHtml(feature)}</span></li>`).join('');
-      return `<div class="${tierClass}">${badge}<h3 class="pricing-tier-name">${escapeHtml(tier.name)}</h3><div class="pricing-price">${escapeHtml(tier.price)}<small>${escapeHtml(tier.period)}</small></div><ul class="pricing-features">${features}</ul><button class="pricing-cta">${escapeHtml(tier.cta)}</button></div>`;
+      const tierStyleStr = styleToString(tier.style);
+      const tierStyleAttr = tierStyleStr ? ` style="${escapeHtml(tierStyleStr)}"` : "";
+      return `<div class="${tierClass}"${tierStyleAttr}>${badge}<h3 class="pricing-tier-name">${escapeHtml(tier.name)}</h3><div class="pricing-price">${escapeHtml(tier.price)}<small>${escapeHtml(tier.period)}</small></div><ul class="pricing-features">${features}</ul><button class="pricing-cta">${escapeHtml(tier.cta)}</button></div>`;
     }).join('');
     return `<section${attr}>${heading}<div class="pricing-grid">${tiers}</div></section>`;
   },
@@ -1137,7 +1715,9 @@ export const testimonialSpec: BlockSpec<TestimonialProps> = {
       const rating = item.rating ?? 5;
       const stars = Array.from({ length: 5 }, (_, i) => i < rating ? starFull : starEmpty).join('');
       const initial = item.name.charAt(0).toUpperCase();
-      return `<article class="testimonial-card"><div class="testimonial-stars">${stars}</div><blockquote>\u201c${escapeHtml(item.quote)}\u201d</blockquote><div class="testimonial-author"><div class="testimonial-avatar">${initial}</div><div><p class="testimonial-name">${escapeHtml(item.name)}</p><p class="testimonial-role">${escapeHtml(item.role)}</p></div></div></article>`;
+      const itemStyleStr = styleToString(item.style);
+      const itemStyleAttr = itemStyleStr ? ` style="${escapeHtml(itemStyleStr)}"` : "";
+      return `<article class="testimonial-card"${itemStyleAttr}><div class="testimonial-stars">${stars}</div><blockquote>\u201c${escapeHtml(item.quote)}\u201d</blockquote><div class="testimonial-author"><div class="testimonial-avatar">${initial}</div><div><p class="testimonial-name">${escapeHtml(item.name)}</p><p class="testimonial-role">${escapeHtml(item.role)}</p></div></div></article>`;
     }).join('');
     return `<section${attr}>${heading}<div class="testimonial-grid">${items}</div></section>`;
   },
@@ -1156,7 +1736,11 @@ export const footerSpec: BlockSpec<FooterProps> = {
   exportHtml: (data, styleAttr) => {
     const attr = styleAttr.replace('class="', 'class="stackly-footer ');
     const brandHtml = `<div class="footer-brand"><strong>${escapeHtml(data.brand)}</strong><p>${escapeHtml(data.tagline || "")}</p></div>`;
-    const colsHtml = data.columns.map((column) => `<div class="footer-col"><h4>${escapeHtml(column.title)}</h4>${column.links.map((link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`).join("")}</div>`).join("");
+    const colsHtml = data.columns.map((column) => {
+      const colStyleStr = styleToString(column.style);
+      const colStyleAttr = colStyleStr ? ` style="${escapeHtml(colStyleStr)}"` : "";
+      return `<div class="footer-col"${colStyleAttr}><h4>${escapeHtml(column.title)}</h4>${column.links.map((link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`).join("")}</div>`;
+    }).join("");
     return `<footer${attr}><div class="footer-grid">${brandHtml}${colsHtml}</div><hr class="footer-divider"/><p class="footer-copyright">${escapeHtml(data.copyright || "")}</p></footer>`;
   },
   ai: { description: "A footer with columns and social links.", exampleOutput: footerDefaults },

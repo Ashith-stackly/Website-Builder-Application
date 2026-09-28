@@ -3,9 +3,9 @@
 import InlineText from "@/components/builder/InlineText";
 import { readHero } from "@/components/blocks/hero/spec";
 import type { BuilderComponent } from "@/types/builder";
-import { getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
-
+import { getItemStyle, getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
 import { useBuilderStore } from "@/store/builderStore";
+import { Image as ImageIcon } from "lucide-react";
 
 export default function HeroComponent({
   component,
@@ -17,9 +17,11 @@ export default function HeroComponent({
   onPatch?: (patch: Partial<BuilderComponent>) => void;
 }) {
   // Typed read — falls back to legacy pipe `content` for pre-migration documents.
-  const { title, description, cta, layout, align } = readHero(component);
+  const { title, description, cta, layout, align, media } = readHero(component);
   const textStyle = getTextStyles(component.styles);
   const viewport = useBuilderStore((s) => s.viewport);
+  const selectSubItem = useBuilderStore((s) => s.selectSubItem);
+  const selectedSubItem = useBuilderStore((s) => s.selectedSubItem);
 
   /**
    * Update one field of one item immutably.
@@ -36,6 +38,9 @@ export default function HeroComponent({
 
   const isCentered = layout === "centered" || align === "center";
   const isMobile = viewport === "mobile";
+  const isVisualSelected =
+    selectedSubItem?.componentId === component.id && selectedSubItem.element === "visual";
+
   const gridStyle = isCentered
     ? { display: "flex", flexDirection: "column" as const, alignItems: "center", textAlign: "center" as const }
     : isMobile
@@ -51,15 +56,44 @@ export default function HeroComponent({
           <InlineText componentId={component.id} textKey="hero.cta" textLabel="Hero button" as="button" value={cta.label} onSave={(v) => saveCtaLabel(v)} className={`mt-6 px-5 py-3 text-sm font-bold shadow-sm transition hover:opacity-90 ${isCentered ? "mx-auto inline-block" : ""}`} style={getTargetTextStyles(component, "hero.cta", { color: "#ffffff", backgroundColor: "#0B1D40", borderRadius: "6px" })} />
         </div>
         {!isCentered && (
-          <div className="min-h-[180px] rounded-lg border border-[#dbe3ef] bg-white p-4 shadow-sm">
-            <div className="mb-3 h-3 w-24 rounded-full bg-[#dbe3ef]" />
-            <div className="grid gap-3">
-              <div className="h-16 rounded bg-[#f7f9fc]" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="h-20 rounded bg-[#f7f9fc]" />
-                <div className="h-20 rounded bg-[#f7f9fc]" />
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              selectSubItem({
+                componentId: component.id,
+                itemIndex: 0,
+                element: "visual",
+              });
+            }}
+            className={`cursor-pointer overflow-hidden transition-all duration-200 ${
+              isVisualSelected ? "ring-2 ring-violet-500 ring-offset-2" : ""
+            }`}
+            style={getItemStyle(media?.style, {
+              minHeight: "220px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#f7f9fc",
+              border: "1px solid #dbe3ef",
+              borderRadius: "12px",
+              padding: "16px",
+            })}
+          >
+            {media?.type === "image" && media.src ? (
+              <img
+                src={media.src}
+                alt={media.alt || title || "Hero visual"}
+                className="max-h-[360px] w-full object-cover rounded-lg"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center w-full">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <ImageIcon className="h-6 w-6" />
+                </div>
+                <p className="text-sm font-bold text-[#0B1D40]">Hero Visual Area</p>
+                <p className="mt-1 text-xs text-[#566583]">Select to customize background, border, or set image in panel</p>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

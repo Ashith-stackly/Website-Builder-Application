@@ -90,6 +90,8 @@ const applyTextStyleOverrides = (component: BuilderComponent, html: string) => {
     result = result.replace(/<h3>/g, (tag) => addStyleToTag(tag, textStyleAttr(component, `features.${index++}.title`)));
     index = 0;
     result = result.replace(/<p>/g, (tag) => addStyleToTag(tag, textStyleAttr(component, `features.${index++}.description`)));
+    index = 0;
+    result = result.replace(/<div class="features-num">/g, (tag) => addStyleToTag(tag, textStyleAttr(component, `features.${index++}.icon`)));
   }
 
   if (component.type === "navigation") {
@@ -441,7 +443,8 @@ ${freeformCss}
       /* ── Navigation ───────────────────────────────────────────── */
       nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; position: relative; }
       .nav-brand-group { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; min-width: max-content; }
-      .nav-logo { display: block; height: 36px; width: auto; max-width: 120px; object-fit: contain; flex-shrink: 0; }
+      .nav-logo-link { display: flex; align-items: center; flex-shrink: 0; text-decoration: none; }
+      .nav-logo { display: block; height: auto; max-height: 48px; object-fit: contain; flex-shrink: 0; }
       .nav-links { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
       .nav-cta { white-space: nowrap; }
       .mobile-only { display: none !important; }
@@ -453,6 +456,7 @@ ${freeformCss}
       .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
       @media (max-width: 768px) {
         .nav-hamburger { display: flex; }
+        .nav-logo { max-width: 80px; }
         .mobile-only { display: inline-flex !important; width: 100%; justify-content: center; margin-top: 12px; }
         .desktop-only { display: none !important; }
         .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: flex-start; background: #fff; border-top: 1px solid rgba(0,0,0,.08); box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 12px 16px; z-index: 200; border-radius: 0 0 12px 12px; }

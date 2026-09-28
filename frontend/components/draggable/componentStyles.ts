@@ -80,7 +80,19 @@ export const getTargetTextStyles = (
     ...(override ? toReactStyle(override as ComponentStyles) : {}),
   };
 };
- 
- 
- 
+export const getItemStyle = (
+  itemStyle?: Partial<ComponentStyles>,
+  defaults?: CSSProperties,
+): CSSProperties => {
+  const base = defaults ? { ...defaults } : {};
+  if (!itemStyle) return base;
+  const converted = toReactStyle(itemStyle as ComponentStyles);
+  const overrides: CSSProperties = {};
+  for (const [k, v] of Object.entries(converted)) {
+    if (v !== undefined && v !== null && v !== "") {
+      (overrides as Record<string, unknown>)[k] = v;
+    }
+  }
+  return { ...base, ...overrides };
+};
  

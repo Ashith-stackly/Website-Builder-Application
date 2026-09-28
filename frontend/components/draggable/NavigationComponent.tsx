@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu as MenuIcon, X as XIcon } from "lucide-react";
 import InlineText from "@/components/builder/InlineText";
 import { readNavigation } from "@/components/blocks/navigation/spec";
-import type { BuilderComponent } from "@/types/builder";
+import type { BuilderComponent, NavigationLogoConfig } from "@/types/builder";
 import { useBuilderStore } from "@/store/builderStore";
 import { getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
 
@@ -18,10 +18,20 @@ export default function NavigationComponent({
   onUpdate?: (content: string | null) => void;
   onPatch?: (patch: Partial<BuilderComponent>) => void;
 }) {
-  const { brand, logoUrl, links, cta } = readNavigation(component);
+  const { brand, logo: logoConfig, logoUrl, links, cta } = readNavigation(component);
   const textStyle = getTextStyles(component.styles);
   const viewport = useBuilderStore((s) => s.viewport);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Resolve effective logo config (with legacy fallback)
+  const logo: NavigationLogoConfig = logoConfig ?? { type: "text" };
+
+  // For legacy compat: if logo.type is "text" but legacy logoUrl exists, treat as image-text
+  const effectiveType: NavigationLogoConfig["type"] =
+    logo.type === "text" && logoUrl ? "image-text" : logo.type;
+  const effectiveSrc = logo.src || logoUrl || "";
+  const effectiveWidth = logo.width ?? 120;
+  const effectiveAlt = logo.alt || `${brand} logo`;
 
   function saveProp<K extends "brand">(key: K, value: string) {
     onPatch?.({ props: { [key]: value } });
@@ -39,6 +49,29 @@ export default function NavigationComponent({
   const isMobile = viewport === "mobile" || viewport === "tablet";
   const isTablet = viewport === "tablet";
 
+  const showBrandText = effectiveType === "text" || effectiveType === "image-text";
+  const showLogoImage = (effectiveType === "image" || effectiveType === "image-text") && effectiveSrc;
+
+  /** Renders the logo image element, preventing builder-time navigation */
+  const renderLogoImage = () => {
+    if (!showLogoImage) return null;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={effectiveSrc}
+        alt={effectiveAlt}
+        className="shrink-0 object-contain max-w-[80px] sm:max-w-[120px] md:max-w-none"
+        style={{
+          width: isMobile ? `${Math.min(effectiveWidth, 100)}px` : `${effectiveWidth}px`,
+          height: "auto",
+          maxHeight: "48px",
+        }}
+        onError={(e) => { e.currentTarget.style.display = "none"; }}
+        draggable={false}
+      />
+    );
+  };
+
   return (
     <nav
       className="relative flex w-full flex-col border border-[#dbe3ef] shadow-sm transition-all duration-300"
@@ -47,24 +80,20 @@ export default function NavigationComponent({
       {/* Main bar */}
       <div className="flex w-full items-center justify-between gap-4 p-4">
         {/* Brand Group */}
-        <div className="flex min-w-0 items-center gap-3">
-          {logoUrl && (
-            <img
-              src={logoUrl}
-              alt={`${brand} logo`}
-              className="h-9 w-auto max-w-[120px] shrink-0 object-contain"
+        <div className="flex shrink-0 items-center gap-3">
+          {renderLogoImage()}
+          {showBrandText && (
+            <InlineText
+              componentId={component.id}
+              textKey="navigation.brand"
+              textLabel="Navigation brand"
+              as="span"
+              value={brand}
+              onSave={(v) => saveProp("brand", v)}
+              className="text-lg font-bold whitespace-nowrap"
+              style={getTargetTextStyles(component, "navigation.brand", textStyle)}
             />
           )}
-          <InlineText
-            componentId={component.id}
-            textKey="navigation.brand"
-            textLabel="Navigation brand"
-            as="span"
-            value={brand}
-            onSave={(v) => saveProp("brand", v)}
-            className="text-lg font-bold"
-            style={getTargetTextStyles(component, "navigation.brand", textStyle)}
-          />
         </div>
 
         {/* Desktop & Tablet Links (hidden on Mobile) */}
@@ -168,5 +197,3 @@ export default function NavigationComponent({
     </nav>
   );
 }
-
-

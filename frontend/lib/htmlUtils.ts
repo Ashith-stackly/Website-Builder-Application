@@ -11,3 +11,16 @@ export const escapeHtml = (value: string): string =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+
+/** Converts a style object into an inline CSS style attribute string. */
+export const styleToString = (styles?: Record<string, unknown> | null): string => {
+  if (!styles || typeof styles !== "object") return "";
+  return Object.entries(styles)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => {
+      const kebab = key.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+      return `${kebab}:${value}`;
+    })
+    .join(";");
+};
+

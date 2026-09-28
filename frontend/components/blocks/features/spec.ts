@@ -18,10 +18,10 @@
  */
 
 import type { BlockSpec } from "@/lib/blockRegistry";
-import type { BuilderComponent, FeatureRecord, FeaturesProps } from "@/types/builder";
+import type { BuilderComponent, ComponentStyles, FeatureRecord, FeaturesProps } from "@/types/builder";
 import FeaturesComponent from "@/components/draggable/FeaturesComponent";
 import { FeaturesPanel } from "./FeaturesPanel";
-import { escapeHtml } from "@/lib/htmlUtils";
+import { escapeHtml, styleToString } from "@/lib/htmlUtils";
 import { LayoutGrid } from "lucide-react";
 
 export const FEATURES_SCHEMA_VERSION = 1;
@@ -58,6 +58,9 @@ function readFeatureRecord(v: unknown): FeatureRecord {
     };
     if (isString(obj.icon)) record.icon = obj.icon;
     if (isString(obj.badge)) record.badge = obj.badge;
+    if (obj.style && typeof obj.style === "object") {
+      record.style = obj.style as Partial<ComponentStyles>;
+    }
     return record;
   }
   if (isString(v)) {
@@ -146,7 +149,11 @@ export const featuresSpec: BlockSpec<FeaturesProps> = {
       : "";
     const cols = data.columns ?? 3;
     const cards = data.items
-      .map(({ title, description }, index) => `<article><div class="features-num">${index + 1}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></article>`)
+      .map(({ title, description, style }, index) => {
+        const itemStyleStr = styleToString(style);
+        const itemStyleAttr = itemStyleStr ? ` style="${escapeHtml(itemStyleStr)}"` : "";
+        return `<article${itemStyleAttr}><div class="features-num">${index + 1}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></article>`;
+      })
       .join("");
     const attr = styleAttr.replace('class="', 'class="stackly-features ');
     return `<section${attr}>${heading}<div class="stackly-features-grid" data-columns="${cols}">${cards}</div></section>`;

@@ -127,13 +127,43 @@ export interface NavLink {
  *   stay co-located and can be toggled via a single feature flag.
  * - `schemaVersion` enables forward migrations without full re-writes.
  */
+/**
+ * Structured logo configuration for the Navigation block.
+ *
+ * - `"text"` — display `brand` text only (default / backward-compat).
+ * - `"image"` — display a logo image only; brand text is hidden.
+ * - `"image-text"` — display logo image followed by brand text.
+ */
+export interface NavigationLogoConfig {
+  type: "text" | "image" | "image-text";
+  /** Image URL (data-URL, object-URL, or external URL). */
+  src?: string;
+  /** Asset-library id when the logo was picked from imported assets. */
+  assetId?: string;
+  /** Alt text for the logo image. */
+  alt?: string;
+  /** Displayed width in pixels (height is auto to preserve aspect ratio). */
+  width?: number;
+  /** URL the logo links to (defaults to "/"). */
+  href?: string;
+  /** Whether the logo link opens in a new tab. */
+  openInNewTab?: boolean;
+}
+
 export interface NavigationProps {
   schemaVersion?: number;
   brand: string;
-  /** Future: URL for a logo image; falls back to `brand` text when absent. */
+  /**
+   * @deprecated Use `logo.src` instead. Kept for backward compatibility —
+   * the reader auto-migrates this into `logo` when present.
+   */
   logoUrl?: string;
-  /** Asset-library id for the selected logo, when chosen from imported assets. */
+  /**
+   * @deprecated Use `logo.assetId` instead. Kept for backward compatibility.
+   */
   logoAssetId?: string;
+  /** Structured logo configuration. */
+  logo?: NavigationLogoConfig;
   links: NavLink[];
   cta: {
     label: string;
@@ -182,6 +212,7 @@ export interface HeroProps {
     type: "image" | "placeholder";
     src?: string;
     alt?: string;
+    style?: Partial<ComponentStyles>;
   };
 }
 
@@ -237,6 +268,8 @@ export interface FeatureRecord {
   icon?: string;
   /** Future: pill label e.g. "New", "Popular". */
   badge?: string;
+  /** Per-item visual overrides (card background, border, shadow, etc.). */
+  style?: Partial<ComponentStyles>;
 }
 
 /**
@@ -285,6 +318,8 @@ export interface MapProps {
 export interface AccordionItem {
   title: string;
   content: string;
+  /** Per-item visual overrides. */
+  style?: Partial<ComponentStyles>;
 }
 
 export interface AccordionProps {
@@ -295,6 +330,8 @@ export interface AccordionProps {
 export interface TabItem {
   label: string;
   content: string;
+  /** Per-tab visual overrides. */
+  style?: Partial<ComponentStyles>;
 }
 
 export interface TabsProps {
@@ -330,6 +367,8 @@ export interface PricingTier {
   features: string[];
   cta: string;
   highlighted?: boolean;
+  /** Per-tier visual overrides (card background, border, shadow, etc.). */
+  style?: Partial<ComponentStyles>;
 }
 
 export interface PricingTableProps {
@@ -396,6 +435,8 @@ export interface TestimonialItem {
   role: string;
   avatar?: string;
   rating?: number;
+  /** Per-testimonial visual overrides. */
+  style?: Partial<ComponentStyles>;
 }
 
 export interface TestimonialProps {
@@ -407,6 +448,8 @@ export interface TestimonialProps {
 export interface FooterColumn {
   title: string;
   links: { label: string; href: string }[];
+  /** Per-column visual overrides. */
+  style?: Partial<ComponentStyles>;
 }
 
 export interface FooterProps {
@@ -552,10 +595,29 @@ export interface AILayoutSuggestion {
   };
 }
 
+/**
+ * Tracks which inner element is selected within a section component.
+ * Used for per-item style editing in sections like Features, Pricing, etc.
+ */
+export interface SubItemSelection {
+  /** Parent section component ID. */
+  componentId: string;
+  /** Index of the selected item in the section's items array. */
+  itemIndex: number;
+  /** Optional: which element within the item ("card", "title", "description", "icon", "cta"). */
+  element?: string;
+}
+
 export interface BuilderState {
   components: BuilderComponent[];
   selectedComponentId: string | null;
   selectedTextStyleTarget: { componentId: string; key: string; label: string } | null;
+  /** Which inner element (card/item) within a section is selected. */
+  selectedSubItem: SubItemSelection | null;
+  /** Select an inner element within a section. */
+  selectSubItem: (sub: SubItemSelection | null) => void;
+  /** Update a specific item's style within a section's items array. */
+  updateSubItemStyle: (componentId: string, itemIndex: number, itemsKey: string, stylePatch: Partial<ComponentStyles>) => void;
   currentProjectId: string | null;
   currentProjectName: string | null;
   isDirty: boolean;

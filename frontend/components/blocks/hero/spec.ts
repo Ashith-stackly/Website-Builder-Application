@@ -13,7 +13,7 @@ import type { BlockSpec } from "@/lib/blockRegistry";
 import type { BuilderComponent, HeroProps } from "@/types/builder";
 import HeroComponent from "@/components/draggable/HeroComponent";
 import { HeroPanel } from "./HeroPanel";
-import { escapeHtml } from "@/lib/htmlUtils";
+import { escapeHtml, styleToString } from "@/lib/htmlUtils";
 import { LayoutTemplate } from "lucide-react";
 import { HERO_SCHEMA_VERSION, heroDefaults } from "./defaults";
 
@@ -50,6 +50,7 @@ function readMedia(v: unknown): HeroProps["media"] {
     type: asOpt(obj.type, MEDIA_TYPES) ?? "placeholder",
     src: isString(obj.src) ? obj.src : undefined,
     alt: isString(obj.alt) ? obj.alt : undefined,
+    style: obj.style && typeof obj.style === "object" ? (obj.style as HeroProps["media"] extends { style?: infer S } ? S : never) : undefined,
   };
 }
 
@@ -108,10 +109,12 @@ export const heroSpec: BlockSpec<HeroProps> = {
   Panel: HeroPanel,
   exportHtml: (data, styleAttr) => {
     const href = data.cta.href ?? "#";
+    const mediaStyle = styleToString(data.media?.style);
+    const mediaStyleAttr = mediaStyle ? ` style="${escapeHtml(mediaStyle)}"` : "";
     const mediaHtml =
       data.media?.type === "image" && data.media.src
-        ? `<img src="${escapeHtml(data.media.src)}" alt="${escapeHtml(data.media.alt ?? data.title)}" style="max-width:100%;height:auto;border-radius:12px;" />`
-        : `<div class="hero-abstract-visual"><div class="hero-abstract-ring"></div><div class="hero-abstract-dots"><span></span><span></span><span></span></div></div>`;
+        ? `<img src="${escapeHtml(data.media.src)}" alt="${escapeHtml(data.media.alt ?? data.title)}"${mediaStyleAttr || ' style="max-width:100%;height:auto;border-radius:12px;"'} />`
+        : `<div class="hero-abstract-visual"${mediaStyleAttr}><div class="hero-abstract-ring"></div><div class="hero-abstract-dots"><span></span><span></span><span></span></div></div>`;
     const textHtml =
       `<div class="hero-text">` +
       `<h1>${escapeHtml(data.title)}</h1>` +

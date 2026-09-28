@@ -1,8 +1,9 @@
 "use client";
 
 import { Send } from "lucide-react";
+import InlineText from "@/components/builder/InlineText";
 import type { BuilderComponent, FormProps } from "@/types/builder";
-import { getBaseStyles } from "./componentStyles";
+import { getTargetTextStyles, getTextStyles, toReactStyle } from "./componentStyles";
 import { useBuilderStore } from "@/store/builderStore";
 
 export const formDefaults: FormProps = {
@@ -19,8 +20,22 @@ export const formDefaults: FormProps = {
   successMessage: "Thank you! We'll be in touch soon.",
 };
 
+/* ── Safe reader ────────────────────────────────────────────────────── */
+function readFormData(component: BuilderComponent): FormProps {
+  const p = component.props as Record<string, unknown> | undefined;
+  if (!p || typeof p !== "object") return formDefaults;
+  return {
+    heading: typeof p.heading === "string" ? p.heading : formDefaults.heading,
+    description: typeof p.description === "string" ? p.description : formDefaults.description,
+    fields: Array.isArray(p.fields) ? (p.fields as FormProps["fields"]) : formDefaults.fields,
+    submitLabel: typeof p.submitLabel === "string" ? p.submitLabel : formDefaults.submitLabel,
+    successMessage: typeof p.successMessage === "string" ? p.successMessage : formDefaults.successMessage,
+  };
+}
+
 export default function FormComponent({
   component,
+  onPatch,
 }: {
   component: BuilderComponent;
   children?: React.ReactNode;
@@ -28,8 +43,8 @@ export default function FormComponent({
   onUpdate?: (content: string | null) => void;
   onPatch?: (patch: Partial<BuilderComponent>) => void;
 }) {
-  const props = (component.props as unknown as FormProps) || formDefaults;
-  const base = getBaseStyles(component);
+  const data = readFormData(component);
+  const textStyle = getTextStyles(component.styles);
   const viewport = useBuilderStore((s) => s.viewport);
 
   const fieldClass =
@@ -39,18 +54,35 @@ export default function FormComponent({
     ? "grid grid-cols-1 gap-4"
     : "grid grid-cols-1 gap-4 sm:grid-cols-2";
 
+  function saveProp(field: keyof FormProps, value: unknown) {
+    onPatch?.({ props: { [field]: value } });
+  }
+
   return (
-    <div style={base} className="mx-auto w-full max-w-[640px] py-6">
-      {props.heading && (
-        <h2
+    <div className="mx-auto w-full max-w-[640px] py-6" style={toReactStyle(component.styles)}>
+      {data.heading && (
+        <InlineText
+          componentId={component.id}
+          textKey="form.heading"
+          textLabel="Form heading"
+          as="h2"
+          value={data.heading}
+          onSave={(v) => saveProp("heading", v)}
           className="mb-2 text-center text-2xl font-extrabold"
-          style={{ color: base.color || "#0B1D40" }}
-        >
-          {props.heading}
-        </h2>
+          style={getTargetTextStyles(component, "form.heading", textStyle)}
+        />
       )}
-      {props.description && (
-        <p className="mb-6 text-center text-sm font-medium text-[#566583]">{props.description}</p>
+      {data.description && (
+        <InlineText
+          componentId={component.id}
+          textKey="form.description"
+          textLabel="Form description"
+          as="p"
+          value={data.description}
+          onSave={(v) => saveProp("description", v)}
+          className="mb-6 text-center text-sm font-medium text-[#566583]"
+          style={getTargetTextStyles(component, "form.description", { color: "#566583" })}
+        />
       )}
 
       <form
@@ -59,7 +91,7 @@ export default function FormComponent({
       >
         {/* 2-col grid for text/email/tel, full-width for textarea/select */}
         <div className={gridClass}>
-          {props.fields
+          {data.fields
             .filter((f) => f.type !== "textarea")
             .map((field) => (
               <div key={field.name} className={field.type === "select" ? "sm:col-span-2" : ""}>
@@ -87,7 +119,7 @@ export default function FormComponent({
         </div>
 
         {/* Textarea fields */}
-        {props.fields
+        {data.fields
           .filter((f) => f.type === "textarea")
           .map((field) => (
             <div key={field.name}>
@@ -104,15 +136,16 @@ export default function FormComponent({
             </div>
           ))}
 
-        <button
-          type="submit"
+        <InlineText
+          componentId={component.id}
+          textKey="form.submitLabel"
+          textLabel="Form submit button"
+          as="button"
+          value={data.submitLabel}
+          onSave={(v) => saveProp("submitLabel", v)}
           className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0B1D40] py-3.5 text-sm font-bold text-white shadow-[0_4px_16px_rgba(11,29,64,0.25)] transition hover:bg-[#152B52] hover:shadow-lg active:scale-[0.98]"
-        >
-          <Send className="h-4 w-4" />
-          {props.submitLabel}
-        </button>
+        />
       </form>
     </div>
   );
 }
-

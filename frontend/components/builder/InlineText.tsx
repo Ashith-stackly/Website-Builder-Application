@@ -3,7 +3,7 @@
 import { type CSSProperties, type FocusEvent, type KeyboardEvent, type LegacyRef, type MouseEvent, type PointerEvent, useLayoutEffect, useRef, useState } from "react";
 import { useBuilderStore } from "@/store/builderStore";
 
-type InlineTextTag = "span" | "h1" | "h2" | "h3" | "p" | "figcaption" | "button";
+type InlineTextTag = "span" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "figcaption" | "button" | "div";
 
 export default function InlineText({
   as = "span",
